@@ -43,6 +43,7 @@ class HoverConfig:
     linear_drag: float = 0.12
     angular_drag: float = 2.0e-5
     stick_motor_strength: float = 100.0
+    roll_stick_gain: float = 1.0
     stick_spring: float = 25.0
     stick_damping: float = 8.0
     foreleg_joint_limit: float = 0.65
@@ -173,8 +174,15 @@ def render_target_band(
 class ConnectomeController(nn.Module):
     """Leaky-rate network whose only recurrent edges come from MaleCNS."""
 
-    def __init__(self, graph_path: Path, neural_dt: float = 0.01) -> None:
+    def __init__(
+        self,
+        graph_path: Path,
+        neural_dt: float = 0.01,
+        retinal_receptive_field: int = 1,
+    ) -> None:
         super().__init__()
+        if retinal_receptive_field < 1 or retinal_receptive_field % 2 != 1:
+            raise ValueError("retinal_receptive_field must be a positive odd integer")
         graph = np.load(graph_path)
         node_ids = graph["node_ids"]
         edge_pre = graph["edge_pre"]
@@ -199,6 +207,7 @@ class ConnectomeController(nn.Module):
 
         self.n_nodes = len(node_ids)
         self.neural_dt = neural_dt
+        self.retinal_receptive_field = retinal_receptive_field
         self.register_buffer("node_ids", torch.from_numpy(node_ids))
         self.register_buffer("edge_pre", torch.from_numpy(edge_pre))
         self.register_buffer("edge_post", torch.from_numpy(edge_post))
@@ -250,6 +259,13 @@ class ConnectomeController(nn.Module):
         return torch.zeros(batch, self.n_nodes, device=device, dtype=dtype)
 
     def sample_retina(self, image: Tensor) -> Tensor:
+        if self.retinal_receptive_field > 1:
+            image = functional.avg_pool2d(
+                image[:, None],
+                self.retinal_receptive_field,
+                stride=1,
+                padding=self.retinal_receptive_field // 2,
+            )[:, 0]
         grid = self.visual_grid.expand(image.shape[0], -1, -1, -1)
         sampled = functional.grid_sample(
             image[:, None], grid, mode="bilinear", padding_mode="zeros", align_corners=True
@@ -336,8 +352,9 @@ class ForelegStickPlant(nn.Module):
         limit = self.config.foreleg_joint_limit
         sine_limit = math.sin(limit)
         joint_rest = torch.asin((self.rest * sine_limit).clamp(-1.0, 1.0))
+        axis_gain = motor_drive.new_tensor((self.config.roll_stick_gain, 1.0, 1.0, 1.0))
         acceleration = (
-            self.config.stick_motor_strength * sine_limit * motor_drive
+            self.config.stick_motor_strength * axis_gain * sine_limit * motor_drive
             - self.config.stick_spring * (state.joint_position - joint_rest)
             - self.config.stick_damping * state.joint_velocity
         )
@@ -496,8 +513,9 @@ def motor_target_for_rc(
     sine_limit = math.sin(config.foreleg_joint_limit)
     target_joint = torch.asin((stick_target * sine_limit).clamp(-1.0, 1.0))
     rest_joint = torch.asin((rest * sine_limit).clamp(-1.0, 1.0))
+    axis_gain = rc.new_tensor((config.roll_stick_gain, 1.0, 1.0, 1.0))
     return (
         config.stick_spring
         * (target_joint - rest_joint)
-        / (config.stick_motor_strength * sine_limit)
+        / (config.stick_motor_strength * axis_gain * sine_limit)
     )

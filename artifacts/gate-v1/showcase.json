@@ -1,0 +1,40 @@
+{
+  "actor_inputs": [
+    "monochrome_fpv",
+    "roll",
+    "pitch",
+    "recurrent_neural_state"
+  ],
+  "actor_outputs": [
+    "right_foreleg_roll_pitch",
+    "left_foreleg_yaw_throttle"
+  ],
+  "external_actor_state_machine": false,
+  "gate_center_m": [
+    4.599999904632568,
+    -0.800000011920929,
+    1.100000023841858
+  ],
+  "gate_config": {
+    "drone_radius": 0.09,
+    "edge_softness": 0.018,
+    "inner_radius": 0.62,
+    "maximum_distance": 4.6,
+    "maximum_height": 1.1,
+    "maximum_lateral_offset": 0.8,
+    "maximum_obliquity_degrees": 20.0,
+    "minimum_distance": 4.6,
+    "minimum_height": 1.1,
+    "minimum_lateral_offset": 0.8,
+    "minimum_obliquity_degrees": 20.0,
+    "outer_radius": 0.76
+  },
+  "gate_yaw_degrees": -29.865808486938477,
+  "mass_scale": 0.9949771165847778,
+  "max_tilt_degrees": 17.449220657348633,
+  "pass_time_seconds": 5.859999656677246,
+  "privileged_gate_geometry_given_to_actor": false,
+  "sampled_episodes": 128,
+  "seed": 10031,
+  "selected_episode": 1
+}

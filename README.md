@@ -20,6 +20,8 @@ can be trained for the task—not that a biological fly knows how to fly a quadc
   acceptance tests and initial RTX 5080 results.
 - [`docs/HOVER_MILESTONE.md`](docs/HOVER_MILESTONE.md): the first passing
   connectome-to-forelegs-to-sticks takeoff and visual-height hover result.
+- [`docs/GATE_MILESTONE.md`](docs/GATE_MILESTONE.md): the first recorded annular-gate
+  traversal and the larger randomized evaluation, including failed acceptance criteria.
 - [`data/README.md`](data/README.md): exact MaleCNS v1.0 snapshot, provenance,
   licensing, and what was intentionally not downloaded.
 - `data/raw/malecns-v1.0/`: locally downloaded Feather tables (ignored by Git because
@@ -45,6 +47,15 @@ This result uses a compact, auditable 498-neuron MaleCNS subgraph and abstract b
 two-axis foreleg/stick kinematics.  It is not an articulated fly-leg, FlyGym, or independent
 MuJoCo transfer result.  See the milestone document and committed machine-readable report
 for the exact boundary and remaining limitations.
+
+The next annular-gate checkpoint is also implemented and recorded, but is not yet a
+passing goal-level result.  A denser 1,122-neuron MaleCNS subgraph lifts and traverses a
+1.24 m inner-diameter gate whose centre begins 0.8 m off-axis and whose plane is 20 degrees
+oblique.  It succeeds on 40.5% of 1,024 held-out trials with randomized side, obliquity
+sign, and mass; freezing the first FPV frame reduces success to zero.  The committed
+[`showcase.mp4`](artifacts/gate-v1/showcase.mp4) contains one complete traversal with a
+schematic rendering of both forelegs moving the virtual transmitter sticks.  The broad
+random-geometry task remains harder, and neither result is simulator transfer.
 
 ## Proposed first implementation slice
 
