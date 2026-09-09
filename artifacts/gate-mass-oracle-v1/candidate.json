@@ -1,0 +1,8 @@
+{
+  "counts_toward_direct_sensor_goal": false,
+  "intercept": -0.05,
+  "kind": "privileged_non_biological_mass_oracle",
+  "mass_slope": 0.1,
+  "motor_pool_bias": "b = intercept + mass_slope * z",
+  "normalization": "z = (mass_scale - 1) / 0.08, clamped to [-1, 1]"
+}

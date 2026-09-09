@@ -137,3 +137,42 @@ def test_acceleration_interface_requires_sensor_and_injects_push_pull() -> None:
     assert drive[0, controller.acceleration_nodes[1]] == 0.0
     assert drive[1, controller.acceleration_nodes[0]] == 0.0
     assert drive[1, controller.acceleration_nodes[1]] > 0.0
+
+
+def test_proprioception_interface_requires_sensor_and_injects_complementary_position() -> None:
+    controller = ConnectomeController(
+        Path(__file__).resolve().parents[1] / "artifacts" / "gate-v1" / "connectome.npz"
+    )
+    controller.proprioception_nodes = controller.attitude_nodes[:2]
+    controller.proprioception_channels = torch.tensor([0, 1])
+    image = torch.zeros(2, 32, 32)
+    attitude = torch.zeros(2, 2)
+    force = torch.tensor([[0.0, 0.0, 9.81], [0.0, 0.0, 9.81]])
+
+    with pytest.raises(ValueError, match="requires foreleg stick position"):
+        controller.sensory_drive(image, attitude, force)
+    stick_position = torch.tensor([[0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, -1.0]])
+    drive = controller.sensory_drive(image, attitude, force, stick_position)
+
+    assert drive[0, controller.proprioception_nodes[0]] > 0.0
+    assert drive[0, controller.proprioception_nodes[1]] == 0.0
+    assert drive[1, controller.proprioception_nodes[0]] == 0.0
+    assert drive[1, controller.proprioception_nodes[1]] > 0.0
+
+
+def test_privileged_throttle_pool_bias_is_batch_specific() -> None:
+    controller = ConnectomeController(
+        Path(__file__).resolve().parents[1] / "artifacts" / "gate-v1" / "connectome.npz"
+    )
+    image = torch.zeros(2, 32, 32)
+    attitude = torch.zeros(2, 2)
+    state = controller.initial_state(2, device=torch.device("cpu"), dtype=torch.float32)
+
+    motor, _ = controller(
+        image,
+        attitude,
+        state,
+        privileged_throttle_pool_bias=torch.tensor([0.2, -0.2]),
+    )
+
+    assert motor[0, 3] > motor[1, 3]

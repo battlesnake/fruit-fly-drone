@@ -131,6 +131,54 @@ heavy outcomes, but reduced fresh 1,024-flight completion from 38.09% to 35.25%,
 constant-1g control retained nearly all of the effect. This is why v2 changes pathway
 edges only and keeps the original throttle biases.
 
+## Throttle-stick proprioception diagnostic
+
+[`gate-proprio-diagnostic-v1`](../artifacts/gate-proprio-diagnostic-v1/) adds four traced
+left-prothoracic `SNpp50`/`SNpp51` MaleCNS cells annotated as femoral chordotonal-organ
+claw homologues. The published MaleCNS annotations do not resolve the flexion/extension
+tuning of these particular cells, so assigning the two anatomical types to complementary
+high/low virtual-stick positions is explicitly an engineering mapping. The relevant
+position-coding physiology comes from the open-access
+[FeCO circuit study](https://doi.org/10.1038/s41467-025-59302-3).
+
+The resulting graph has 1,147 neurons and 4,542 edges. It is an exact warm extension of
+the v2 graph: 1,138 neurons and 4,469 edges are shared by body ID and endpoints, and the
+search can change only 73 edges touching the nine added circuit cells. On a fresh,
+balanced 1,024-flight suite the selected candidate improved the unchanged warm start
+from 41.41% to 49.41%, mostly by reducing lateral error. This is not a successful
+proprioception result. Constant position retained 48.73%, mass-rank-swapped position
+retained exactly 49.41%, and the measured position-by-acceleration intervention was only
+`-5.96e-8`. The added pathway supplied useful anatomical capacity, but no meaningful
+dependence on live stick position was demonstrated. The checkpoint is retained as a
+negative result and is not promoted as the current actor.
+
+## Privileged exact-mass upper bound
+
+[`gate-mass-oracle-v1`](../artifacts/gate-mass-oracle-v1/) freezes every v2 connectome
+parameter and tests one narrow question: would correct mass-dependent collective trim be
+enough? Exact simulator mass selects an external differential bias on the existing
+throttle motor pools, `b = -0.05 + 0.10 z`, where
+`z = clamp((mass_scale - 1) / 0.08, -1, 1)`. This adds two runtime calibration parameters
+outside the connectome and therefore **does not count toward the direct-sensor goal**.
+
+The calibration scored 100% on its 256-flight held-out validation and again passed all
+1,024 fresh balanced final flights. On the identical final suite, the unchanged
+controller scored 42.77%, the validation-selected mass-independent constant trim scored
+40.62%, and shuffling mass labels inside matched gate-side/obliquity strata scored only
+10.06%. True physics mass was not shuffled. The result is strong causal evidence that
+the current fixed-geometry task is limited by mass-dependent throttle calibration. The
+shuffled control is actively harmful because it applies the wrong correction; it does
+not imply that the fly inferred mass.
+
+This does not establish that exact mass should be a deployed input, nor that injecting
+mass into sensory neurons would reproduce the oracle. The current plant also scales
+inertia with its mass multiplier, so that scalar identifies more than weight alone. The
+next experiment is to delay the oracle for 0.5–1.5 seconds, measure how much calibration
+time the task permits, and use its required correction as a training target for the
+recurrent stick-position/acceleration circuit. Mass remains a training label; deployment
+must infer the correction from its sensor history. Rotor-speed feedback is the next
+candidate measurement if stick position and acceleration are insufficient.
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:
@@ -161,6 +209,18 @@ Re-run the bounded 109-edge search under AIRA with:
 ```bash
 scripts/run_gate_acceleration_es.sh \
   --output-dir runs/gate/acceleration-es-recheck
+```
+
+Re-run the negative throttle-stick proprioception search and the privileged mass oracle
+with:
+
+```bash
+scripts/run_gate_proprioception_es.sh \
+  --graph artifacts/gate-proprio-diagnostic-v1/connectome.npz \
+  --output-dir runs/gate/proprioception-recheck
+
+scripts/run_gate_mass_oracle.sh \
+  --output-dir runs/gate/mass-oracle-recheck
 ```
 
 Record another seeded successful flight and foreleg/stick visualization with:

@@ -112,6 +112,16 @@ Model timestamping, exposure, transport delay, dropped frames, noise, and actuat
 before hardware transfer. World pose, velocity, and gate coordinates are
 teacher/critic/evaluation information only.
 
+Mass and frame dimensions are vehicle configuration, not live sensor measurements. A
+fixed value is already absorbed by the trained dynamics and adds no information. If a
+known configuration value is tested across vehicles, it must enter through a declared
+input population and any memory or calibration must remain in recurrent neural state;
+directly changing motor-pool bias is only a privileged upper-bound experiment. Prefer
+measurements that reveal realized dynamics—stick/joint position, accelerometer and gyro,
+then modeled rotor-speed or motor-current telemetry—to nominal frame dimensions. A
+single frame-size scalar cannot describe inertia, thrust authority, actuator response,
+or drag.
+
 ## 3. Connectome model
 
 Keep the raw Feather files immutable. Build a versioned derived graph with every filter,

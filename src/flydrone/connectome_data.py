@@ -40,6 +40,9 @@ OUTPUT_POOLS: dict[str, tuple[str, str]] = {
 ATTITUDE_CHANNELS = ("roll_pos", "roll_neg", "pitch_pos", "pitch_neg")
 ACCELERATION_CHANNELS = ("specific_force_z_above_1g", "specific_force_z_below_1g")
 ACCELERATION_OUTPUT_POOLS = ("throttle_pos", "throttle_neg")
+PROPRIOCEPTION_CHANNELS = ("throttle_joint_high", "throttle_joint_low")
+PROPRIOCEPTION_TYPES = {"SNpp50": 0, "SNpp51": 1}
+PROPRIOCEPTION_OUTPUT_POOLS = ("throttle_pos", "throttle_neg")
 
 # Presynaptic transmitter hypotheses.  The raw labels and counts remain in the derived
 # manifest so these signs can be ablated.  "unclear" is kept excitatory rather than
@@ -65,6 +68,7 @@ class BuildConfig:
     visual_per_eye: int = 24
     attitude_per_channel: int = 8
     acceleration_per_channel: int = 0
+    throttle_proprioception: bool = False
 
 
 def _read_annotations(path: Path) -> dict[str, list[Any]]:
@@ -80,6 +84,11 @@ def _read_annotations(path: Path) -> dict[str, list[Any]]:
         "assignedOlHex2",
         "rootSide",
         "somaSide",
+        "class",
+        "entryNerve",
+        "mancBodyid",
+        "mancType",
+        "synonyms",
     )
     return feather.read_table(path, columns=columns, memory_map=True).to_pydict()
 
@@ -389,6 +398,64 @@ def build_hover_scaffold(raw_dir: Path, output: Path, config: BuildConfig) -> di
                 raise RuntimeError("selected acceleration cell does not reach both throttle pools")
             selected_nodes.update(path)
             route_lengths.append(len(path) - 1)
+
+    # The optional leg-position interface uses the four traced left prothoracic
+    # SNpp50/SNpp51 cells in MaleCNS.  Both types are annotated as FeCO-claw homologues,
+    # but the release does not assign flexion/extension tuning to these particular
+    # neurons.  Keep the two anatomical type cohorts separate and declare the mapping
+    # to complementary high/low virtual-joint signals as an engineering approximation.
+    if config.throttle_proprioception:
+        proprioception_mask = np.asarray(
+            [
+                status == "Traced"
+                and neuron_class == "mechanosensory_proprioceptive"
+                and subclass == "chordotonal organ"
+                and entry_nerve == "ProLN"
+                and root_side == "L"
+                and cell_type in PROPRIOCEPTION_TYPES
+                for status, neuron_class, subclass, entry_nerve, root_side, cell_type in zip(
+                    annotations["status"],
+                    annotations["class"],
+                    annotations["subclass"],
+                    annotations["entryNerve"],
+                    annotations["rootSide"],
+                    annotations["type"],
+                    strict=True,
+                )
+            ]
+        )
+        selected_proprioception_ids = np.sort(body_ids[proprioception_mask])
+        selected_proprioception_rows = np.asarray(
+            [body_to_annotation[int(body)] for body in selected_proprioception_ids], dtype=np.int64
+        )
+        proprioception_channels = np.asarray(
+            [
+                PROPRIOCEPTION_TYPES[annotations["type"][row]]
+                for row in selected_proprioception_rows
+            ],
+            dtype=np.int64,
+        )
+        if len(selected_proprioception_ids) < len(PROPRIOCEPTION_CHANNELS) or set(
+            proprioception_channels.tolist()
+        ) != set(range(len(PROPRIOCEPTION_CHANNELS))):
+            raise RuntimeError(
+                "left ProLN SNpp50/SNpp51 proprioceptors do not cover both engineered channels"
+            )
+        proprioception_routes = {name: routes[name] for name in PROPRIOCEPTION_OUTPUT_POOLS}
+        proprioception_input_indices = np.searchsorted(eligible_ids, selected_proprioception_ids)
+        for input_index in proprioception_input_indices:
+            for distance, next_hop in proprioception_routes.values():
+                path = trace_path(int(input_index), distance, next_hop, config.max_path_hops)
+                if not path:
+                    raise RuntimeError(
+                        "selected throttle proprioceptor does not reach both throttle pools"
+                    )
+                selected_nodes.update(path)
+                route_lengths.append(len(path) - 1)
+    else:
+        selected_proprioception_ids = np.empty(0, dtype=np.int64)
+        selected_proprioception_rows = np.empty(0, dtype=np.int64)
+        proprioception_channels = np.empty(0, dtype=np.int64)
     selected_global_indices = np.asarray(sorted(selected_nodes), dtype=np.int64)
     selected_body_ids = eligible_ids[selected_global_indices]
     graph_index = {int(body): index for index, body in enumerate(selected_body_ids)}
@@ -429,6 +496,9 @@ def build_hover_scaffold(raw_dir: Path, output: Path, config: BuildConfig) -> di
     acceleration_graph_indices = np.asarray(
         [graph_index[int(body)] for body in selected_acceleration_ids], dtype=np.int64
     )
+    proprioception_graph_indices = np.asarray(
+        [graph_index[int(body)] for body in selected_proprioception_ids], dtype=np.int64
+    )
 
     pool_names = tuple(OUTPUT_POOLS)
     pool_members: list[int] = []
@@ -459,6 +529,11 @@ def build_hover_scaffold(raw_dir: Path, output: Path, config: BuildConfig) -> di
             acceleration_node_indices=acceleration_graph_indices,
             acceleration_channels=acceleration_channels,
         )
+    if config.throttle_proprioception:
+        graph_arrays.update(
+            proprioception_node_indices=proprioception_graph_indices,
+            proprioception_channels=proprioception_channels,
+        )
     np.savez_compressed(output, **graph_arrays)
 
     node_types = [annotations["type"][body_to_annotation[int(body)]] for body in selected_body_ids]
@@ -468,7 +543,9 @@ def build_hover_scaffold(raw_dir: Path, output: Path, config: BuildConfig) -> di
         transmitter_counts[label] = transmitter_counts.get(label, 0) + 1
     manifest: dict[str, Any] = {
         "format": (
-            "flydrone-connectome-v2"
+            "flydrone-connectome-v3"
+            if config.throttle_proprioception
+            else "flydrone-connectome-v2"
             if required_acceleration
             else "flydrone-hover-connectome-v1"
         ),
@@ -487,6 +564,7 @@ def build_hover_scaffold(raw_dir: Path, output: Path, config: BuildConfig) -> di
             "visual_per_eye": config.visual_per_eye,
             "attitude_per_channel": config.attitude_per_channel,
             "acceleration_per_channel": config.acceleration_per_channel,
+            "throttle_proprioception": config.throttle_proprioception,
         },
         "raw_files": {
             path.name: {"bytes": path.stat().st_size, "sha256": _sha256(path)}
@@ -500,6 +578,7 @@ def build_hover_scaffold(raw_dir: Path, output: Path, config: BuildConfig) -> di
             "visual_nodes": int(len(visual_graph_indices)),
             "attitude_nodes": int(len(attitude_graph_indices)),
             "acceleration_nodes": int(len(acceleration_graph_indices)),
+            "proprioception_nodes": int(len(proprioception_graph_indices)),
             "route_hops_min": int(min(route_lengths)),
             "route_hops_max": int(max(route_lengths)),
             "node_types": len({cell_type for cell_type in node_types if cell_type}),
@@ -523,6 +602,29 @@ def build_hover_scaffold(raw_dir: Path, output: Path, config: BuildConfig) -> di
             "cells_per_channel": config.acceleration_per_channel,
             "reachable_output_pools": list(ACCELERATION_OUTPUT_POOLS),
             "engineering_mapping_not_claimed_physiology": True,
+        },
+        "proprioception_interface": {
+            "injection_layer": "MaleCNS left ProLN SNpp50/SNpp51 FeCO-claw-type cells",
+            "measurement": "completed-step normalized left throttle-stick joint position",
+            "normalization": "complementary (position + 1)/2 and (1 - position)/2 channels",
+            "channels": list(PROPRIOCEPTION_CHANNELS),
+            "type_to_channel": {
+                cell_type: PROPRIOCEPTION_CHANNELS[channel]
+                for cell_type, channel in PROPRIOCEPTION_TYPES.items()
+            },
+            "body_ids": [int(body) for body in selected_proprioception_ids],
+            "manc_body_ids": [
+                (
+                    int(annotations["mancBodyid"][row])
+                    if annotations["mancBodyid"][row] is not None
+                    else None
+                )
+                for row in selected_proprioception_rows
+            ],
+            "reachable_output_pools": list(PROPRIOCEPTION_OUTPUT_POOLS),
+            "physiology_source_url": "https://www.nature.com/articles/s41467-025-59302-3",
+            "engineering_mapping_not_claimed_physiology": True,
+            "directional_tuning_unresolved_in_malecns_release": True,
         },
         "output_pools": {
             name: {

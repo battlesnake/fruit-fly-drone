@@ -96,6 +96,18 @@ masses does not; this is useful recurrent feedback, not demonstrated mass identi
 or a solved gate task. See the [annular-gate milestone](docs/GATE_MILESTONE.md) for the
 controls and limitations.
 
+Two newer diagnostics sharpen the next step. Adding a four-cell throttle-stick
+proprioception route improved a fresh balanced suite to 49.4%, but constant and shuffled
+position controls retained essentially all of the gain, so that checkpoint is rejected
+as evidence of position sensing. In contrast, an explicitly privileged two-parameter
+trim driven by the simulator's exact mass achieved 1024/1024, while shuffled mass labels
+achieved only 103/1024. This is an upper bound showing that mass-dependent collective
+calibration can solve the present task; it is not an onboard sensor or a valid deployed
+fly controller. The next experiment must infer the same correction recurrently from
+real actuation and inertial feedback. The full evidence is retained under
+[`gate-proprio-diagnostic-v1`](artifacts/gate-proprio-diagnostic-v1/) and
+[`gate-mass-oracle-v1`](artifacts/gate-mass-oracle-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.
@@ -138,4 +150,5 @@ checkpoint has yet been transferred to an independent simulator.
 - [HHMI Janelia MaleCNS project](https://www.janelia.org/project-team/flyem/male-cns-connectome)
 - [MaleCNS v1.0 downloads and licence](https://male-cns.janelia.org/download/)
 - [Peer-reviewed MaleCNS paper](https://doi.org/10.1016/j.cell.2026.08.015)
+- [Femoral chordotonal proprioception circuits](https://doi.org/10.1038/s41467-025-59302-3)
 - [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/)

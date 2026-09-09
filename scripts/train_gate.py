@@ -1310,6 +1310,10 @@ def evaluate_gate(
     frozen_acceleration: bool = False,
     swapped_acceleration: bool = False,
     disabled_acceleration_channel: str | None = None,
+    frozen_proprioception: bool = False,
+    swapped_proprioception: bool = False,
+    privileged_mass_trim: tuple[float, float] | None = None,
+    shuffled_privileged_mass: bool = False,
     balanced_strata: bool = False,
     teacher_takeover_at_seconds: float | None = None,
 ) -> dict[str, Any]:
@@ -1373,6 +1377,16 @@ def evaluate_gate(
     acceleration_permutation = torch.empty(episodes, dtype=torch.long, device=device)
     mass_order = torch.argsort(mass_scale)
     acceleration_permutation[mass_order] = torch.flip(mass_order, dims=(0,))
+    privileged_mass_code = ((mass_scale - 1.0) / 0.08).clamp(-1.0, 1.0)
+    if shuffled_privileged_mass:
+        if not balanced_strata:
+            raise ValueError("shuffled mass oracle requires balanced geometry strata")
+        shuffled_code = privileged_mass_code.clone()
+        geometry_code = codes.bitwise_and(6)
+        for stratum in (0, 2, 4, 6):
+            indices = torch.nonzero(geometry_code == stratum, as_tuple=False).squeeze(-1)
+            shuffled_code[indices] = privileged_mass_code[indices].roll(1)
+        privileged_mass_code = shuffled_code
     for step in range(step_count):
         previous_position = state.position
         teacher_has_control = teacher or (
@@ -1407,7 +1421,24 @@ def evaluate_gate(
                     specific_force[:, 2].clamp_(max=9.81)
                 else:
                     specific_force[:, 2].clamp_(min=9.81)
-            motor, neural = controller(image, state.euler[:, :2], neural, specific_force)
+            stick_position = stick_state.position
+            if frozen_proprioception:
+                stick_position = torch.zeros_like(stick_position)
+                stick_position[:, 3] = -1.0
+            elif swapped_proprioception:
+                stick_position = stick_position[acceleration_permutation]
+            privileged_bias = None
+            if privileged_mass_trim is not None:
+                intercept, slope = privileged_mass_trim
+                privileged_bias = intercept + slope * privileged_mass_code
+            motor, neural = controller(
+                image,
+                state.euler[:, :2],
+                neural,
+                specific_force,
+                stick_position,
+                privileged_throttle_pool_bias=privileged_bias,
+            )
             if not frozen_visual and step < round(1.0 / hover_config.dt):
                 target_motor = motor_target_for_rc(
                     actor_teacher_gate_rc(controller, state, gate, hover_config),
@@ -1477,6 +1508,18 @@ def evaluate_gate(
     valid_radial = crossing_radial[~crossing_radial.isnan()]
     valid_lateral = crossing_lateral[~crossing_lateral.isnan()]
     valid_vertical = crossing_vertical[~crossing_vertical.isnan()]
+    crossing_mask = ~crossing_vertical.isnan()
+    if valid_vertical.numel() > 1:
+        centered_mass = mass_scale[crossing_mask] - mass_scale[crossing_mask].mean()
+        centered_vertical = valid_vertical - valid_vertical.mean()
+        mass_vertical_correlation = float(
+            (centered_mass * centered_vertical).mean()
+            / (
+                centered_mass.square().mean().sqrt() * centered_vertical.square().mean().sqrt()
+            ).clamp_min(1.0e-12)
+        )
+    else:
+        mass_vertical_correlation = None
     success_rate = float(success.float().mean())
     action_diagnostic = None
     if diagnostic_prediction:
@@ -1499,6 +1542,14 @@ def evaluate_gate(
             if swapped_acceleration
             else f"disabled_{disabled_acceleration_channel}_accelerometer_channel"
             if disabled_acceleration_channel is not None
+            else "constant_initial_throttle_joint_position"
+            if frozen_proprioception
+            else "mass_rank_swapped_throttle_joint_position"
+            if swapped_proprioception
+            else "shuffled_privileged_mass_conditioned_throttle_trim"
+            if privileged_mass_trim is not None and shuffled_privileged_mass
+            else "privileged_mass_conditioned_throttle_trim"
+            if privileged_mass_trim is not None
             else "connectome"
         ),
         "episodes": episodes,
@@ -1553,6 +1604,7 @@ def evaluate_gate(
             if valid_lateral.numel()
             else None
         ),
+        "mass_vertical_error_correlation": mass_vertical_correlation,
         "initial_visual_centre_offset_min_degrees": float(torch.rad2deg(centre_offset).min()),
         "gate_obliquity_min_degrees": float(torch.rad2deg(obliquity).min()),
         "success_by_stratum": {

@@ -14,6 +14,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 ARTIFACT_DIR = REPO_ROOT / "artifacts" / "gate-v1"
 ACCEL_ARTIFACT_DIR = REPO_ROOT / "artifacts" / "gate-accel-v1"
 ACCEL_V2_ARTIFACT_DIR = REPO_ROOT / "artifacts" / "gate-accel-v2"
+PROPRIO_DIAGNOSTIC_DIR = REPO_ROOT / "artifacts" / "gate-proprio-diagnostic-v1"
+MASS_ORACLE_DIR = REPO_ROOT / "artifacts" / "gate-mass-oracle-v1"
 
 
 def sha256(path: Path) -> str:
@@ -145,3 +147,75 @@ def test_edge_searched_accelerometer_checkpoint_is_bound_and_improves_gate_succe
         search["final"]["candidate_below_1g_channel_disabled"]["success_rate"]
         < search["final"]["candidate"]["success_rate"]
     )
+
+
+def test_throttle_proprioception_diagnostic_is_bound_but_not_sensor_dependent() -> None:
+    graph_path = PROPRIO_DIAGNOSTIC_DIR / "connectome.npz"
+    checkpoint_path = PROPRIO_DIAGNOSTIC_DIR / "candidate.pt"
+    report = json.loads((PROPRIO_DIAGNOSTIC_DIR / "report.json").read_text())
+    manifest = json.loads((PROPRIO_DIAGNOSTIC_DIR / "connectome-manifest.json").read_text())
+    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+
+    assert report["graph_sha256"] == sha256(graph_path)
+    assert report["candidate_checkpoint_sha256"] == sha256(checkpoint_path)
+    assert checkpoint["graph_sha256"] == sha256(graph_path)
+    assert manifest["source_license"] == "CC BY 4.0"
+    assert manifest["selection"]["proprioception_nodes"] == 4
+    assert manifest["proprioception_interface"]["engineering_mapping_not_claimed_physiology"]
+    assert manifest["proprioception_interface"]["directional_tuning_unresolved_in_malecns_release"]
+
+    controller = ConnectomeController(
+        graph_path,
+        neural_dt=checkpoint["hover_config"]["dt"],
+        retinal_receptive_field=checkpoint["retinal_receptive_field"],
+    )
+    controller.load_state_dict(checkpoint["controller"])
+    assert controller.uses_proprioception
+    assert controller.n_nodes == 1147
+    assert controller.edge_pre.numel() == 4542
+
+    final = report["final"]
+    assert final["candidate"]["success_rate"] == 506 / 1024
+    assert final["candidate_constant_proprioception"]["success_rate"] == 499 / 1024
+    assert (
+        final["candidate_mass_rank_swapped_proprioception"]["success_rate"]
+        == final["candidate"]["success_rate"]
+    )
+    assert (
+        abs(
+            report["position_acceleration_probe"]["candidate"][
+                "position_x_acceleration_interaction"
+            ]
+        )
+        < 1e-6
+    )
+    assert report["sensor_dependence_checks"] == {
+        "live_success_differs_from_episode_swapped_position": False,
+        "live_success_exceeds_constant_position": True,
+        "position_acceleration_interaction_exceeds_1e_6": False,
+    }
+    assert report["sensor_dependence_demonstrated"] is False
+    assert report["promoted_as_controller"] is False
+    assert report["goal_passed"] is False
+
+
+def test_privileged_mass_oracle_is_effective_but_excluded_from_sensor_goal() -> None:
+    report = json.loads((MASS_ORACLE_DIR / "report.json").read_text())
+    candidate = json.loads((MASS_ORACLE_DIR / "candidate.json").read_text())
+
+    assert report["graph_sha256"] == sha256(ACCEL_V2_ARTIFACT_DIR / "connectome.npz")
+    assert report["checkpoint_sha256"] == sha256(ACCEL_V2_ARTIFACT_DIR / "controller.pt")
+    assert report["controller_parameters_changed"] is False
+    assert report["per_episode_neuronal_drive_bias_changed"] is True
+    assert report["synaptic_weights_changed"] is False
+    assert report["connectome_edges_changed"] is False
+    assert report["counts_toward_direct_sensor_goal"] is False
+    assert candidate == report["selected_mass_conditioned_trim"]
+    assert candidate["kind"] == "privileged_non_biological_mass_oracle"
+
+    final = report["final"]
+    assert final["mass_conditioned_trim"]["success_rate"] == 1.0
+    assert final["unchanged_controller"]["success_rate"] == 438 / 1024
+    assert final["validation_selected_constant_trim"]["success_rate"] == 416 / 1024
+    assert final["mass_labels_shuffled_within_geometry"]["success_rate"] == 103 / 1024
+    assert all(report["causal_checks"].values())

@@ -1,0 +1,212 @@
+{
+  "acceleration_interface": {
+    "cells_per_channel": 4,
+    "channels": [
+      "specific_force_z_above_1g",
+      "specific_force_z_below_1g"
+    ],
+    "engineering_mapping_not_claimed_physiology": true,
+    "injection_layer": "additional MaleCNS wind_gravity mechanosensory cells",
+    "measurement": "body-frame specific force from the completed physics interval",
+    "normalization": "(body_z - 1g) / 0.25g, clamped to +/-2, push/pull",
+    "reachable_output_pools": [
+      "throttle_pos",
+      "throttle_neg"
+    ]
+  },
+  "attitude_interface": {
+    "cells_per_channel": 8,
+    "channels": [
+      "roll_pos",
+      "roll_neg",
+      "pitch_pos",
+      "pitch_neg"
+    ],
+    "injection_layer": "MaleCNS wind_gravity mechanosensory cells"
+  },
+  "config": {
+    "acceleration_per_channel": 4,
+    "attitude_per_channel": 8,
+    "induced_weight_threshold": 10,
+    "max_path_hops": 8,
+    "path_weight_threshold": 20,
+    "throttle_proprioception": true,
+    "visual_per_eye": 96
+  },
+  "format": "flydrone-connectome-v3",
+  "output_pool_order": [
+    "roll_pos",
+    "roll_neg",
+    "pitch_pos",
+    "pitch_neg",
+    "yaw_pos",
+    "yaw_neg",
+    "throttle_pos",
+    "throttle_neg"
+  ],
+  "output_pools": {
+    "pitch_neg": {
+      "body_ids": [
+        810098,
+        821635,
+        827188,
+        1050031705,
+        1050189039
+      ],
+      "side": "R",
+      "type": "Ti flexor MN"
+    },
+    "pitch_pos": {
+      "body_ids": [
+        804257,
+        815678
+      ],
+      "side": "R",
+      "type": "Ti extensor MN"
+    },
+    "roll_neg": {
+      "body_ids": [
+        803314,
+        805313
+      ],
+      "side": "R",
+      "type": "Pleural remotor/abductor MN"
+    },
+    "roll_pos": {
+      "body_ids": [
+        801824,
+        802072,
+        805745,
+        810535
+      ],
+      "side": "R",
+      "type": "Tergopleural/Pleural promotor MN"
+    },
+    "throttle_neg": {
+      "body_ids": [
+        807165,
+        809912,
+        818057,
+        819384,
+        909831
+      ],
+      "side": "L",
+      "type": "Ti flexor MN"
+    },
+    "throttle_pos": {
+      "body_ids": [
+        800636,
+        815344
+      ],
+      "side": "L",
+      "type": "Ti extensor MN"
+    },
+    "yaw_neg": {
+      "body_ids": [
+        802509,
+        803803
+      ],
+      "side": "L",
+      "type": "Pleural remotor/abductor MN"
+    },
+    "yaw_pos": {
+      "body_ids": [
+        800061,
+        801173,
+        807281,
+        934091
+      ],
+      "side": "L",
+      "type": "Tergopleural/Pleural promotor MN"
+    }
+  },
+  "proprioception_interface": {
+    "body_ids": [
+      815843,
+      817680,
+      912317,
+      935383
+    ],
+    "channels": [
+      "throttle_joint_high",
+      "throttle_joint_low"
+    ],
+    "directional_tuning_unresolved_in_malecns_release": true,
+    "engineering_mapping_not_claimed_physiology": true,
+    "injection_layer": "MaleCNS left ProLN SNpp50/SNpp51 FeCO-claw-type cells",
+    "manc_body_ids": [
+      13310,
+      21776,
+      42121,
+      null
+    ],
+    "measurement": "completed-step normalized left throttle-stick joint position",
+    "normalization": "complementary (position + 1)/2 and (1 - position)/2 channels",
+    "physiology_source_url": "https://www.nature.com/articles/s41467-025-59302-3",
+    "reachable_output_pools": [
+      "throttle_pos",
+      "throttle_neg"
+    ],
+    "type_to_channel": {
+      "SNpp50": "throttle_joint_high",
+      "SNpp51": "throttle_joint_low"
+    }
+  },
+  "raw_files": {
+    "body-annotations-male-cns-v1.0-minconf-0.5.feather": {
+      "bytes": 14483314,
+      "sha256": "2177e246113e4cfbf1e7772ec37c6da1955ff22e8063d0b1f833101f99a9a3b2"
+    },
+    "body-neurotransmitters-male-cns-v1.0.feather": {
+      "bytes": 43282834,
+      "sha256": "95c9289220663abeb3409f3ad9e5a7f8a53f8093f5139d15502cd08da8879621"
+    },
+    "connectome-weights-male-cns-v1.0-minconf-0.5.feather": {
+      "bytes": 1051241946,
+      "sha256": "e35da783d1c686b2b58b3b87cd6a403ae43bfcfba8bff28e08ef752c1a56afc1"
+    }
+  },
+  "selection": {
+    "acceleration_nodes": 8,
+    "attitude_nodes": 32,
+    "edges": 4542,
+    "eligible_traced_nodes": 165122,
+    "node_types": 292,
+    "nodes": 1147,
+    "path_edges": 1060438,
+    "proprioception_nodes": 4,
+    "route_hops_max": 7,
+    "route_hops_min": 1,
+    "transmitters": {
+      "acetylcholine": 693,
+      "gaba": 194,
+      "glutamate": 251,
+      "unclear": 9
+    },
+    "visual_nodes": 192
+  },
+  "source": "MaleCNS v1.0",
+  "source_license": "CC BY 4.0",
+  "source_license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "source_url": "https://male-cns.janelia.org/download/",
+  "transformation_notice": "This project selected a task-specific subgraph, converted synapse counts to normalized initial magnitudes, and added engineered sensor/output mappings.",
+  "transmitter_sign_hypothesis": {
+    "acetylcholine": 1.0,
+    "dopamine": 1.0,
+    "gaba": -1.0,
+    "glutamate": -1.0,
+    "histamine": -1.0,
+    "octopamine": 1.0,
+    "serotonin": 1.0,
+    "tyramine": 1.0,
+    "unclear": 1.0
+  },
+  "visual_interface": {
+    "eyes": {
+      "L": 96,
+      "R": 96
+    },
+    "injection_layer": "MaleCNS L1 cells with assignedOlHex1/2",
+    "reason": "MaleCNS ol_sensory photoreceptor rows do not carry assigned hex coordinates"
+  }
+}

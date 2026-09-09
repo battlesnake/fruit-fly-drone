@@ -199,6 +199,8 @@ class ConnectomeController(nn.Module):
         attitude_channels = graph["attitude_channels"]
         acceleration_nodes = graph.get("acceleration_node_indices", np.empty(0, dtype=np.int64))
         acceleration_channels = graph.get("acceleration_channels", np.empty(0, dtype=np.int64))
+        proprioception_nodes = graph.get("proprioception_node_indices", np.empty(0, dtype=np.int64))
+        proprioception_channels = graph.get("proprioception_channels", np.empty(0, dtype=np.int64))
         pool_offsets = graph["output_pool_offsets"]
         pool_indices = graph["output_pool_indices"]
 
@@ -230,6 +232,14 @@ class ConnectomeController(nn.Module):
         self.register_buffer(
             "acceleration_channels",
             torch.from_numpy(acceleration_channels),
+            persistent=False,
+        )
+        self.register_buffer(
+            "proprioception_nodes", torch.from_numpy(proprioception_nodes), persistent=False
+        )
+        self.register_buffer(
+            "proprioception_channels",
+            torch.from_numpy(proprioception_channels),
             persistent=False,
         )
         self.register_buffer("pool_offsets", torch.from_numpy(pool_offsets))
@@ -291,11 +301,16 @@ class ConnectomeController(nn.Module):
     def uses_accelerometer(self) -> bool:
         return bool(self.acceleration_nodes.numel())
 
+    @property
+    def uses_proprioception(self) -> bool:
+        return bool(self.proprioception_nodes.numel())
+
     def sensory_drive(
         self,
         image: Tensor,
         roll_pitch: Tensor,
         body_specific_force: Tensor | None = None,
+        stick_position: Tensor | None = None,
     ) -> Tensor:
         drive = torch.zeros(image.shape[0], self.n_nodes, device=image.device, dtype=image.dtype)
         retina = self.sample_retina(image)
@@ -324,6 +339,15 @@ class ConnectomeController(nn.Module):
             )
             acceleration = acceleration_push_pull[:, self.acceleration_channels]
             drive = drive.index_add(1, self.acceleration_nodes, 2.0 * acceleration)
+        if self.uses_proprioception:
+            if stick_position is None:
+                raise ValueError("this connectome graph requires foreleg stick position")
+            throttle_joint = stick_position[:, 3].clamp(-1.0, 1.0)
+            position_channels = torch.stack(
+                ((throttle_joint + 1.0) / 2.0, (1.0 - throttle_joint) / 2.0), dim=-1
+            )
+            proprioception = position_channels[:, self.proprioception_channels]
+            drive = drive.index_add(1, self.proprioception_nodes, 2.0 * proprioception)
         return drive
 
     def forward(
@@ -332,6 +356,8 @@ class ConnectomeController(nn.Module):
         roll_pitch: Tensor,
         state: Tensor,
         body_specific_force: Tensor | None = None,
+        stick_position: Tensor | None = None,
+        privileged_throttle_pool_bias: Tensor | None = None,
     ) -> tuple[Tensor, Tensor]:
         # Recurrent values are deviations from each neuron's baseline rate.  A centered
         # activation avoids multiplying small sensory changes by sigmoid'(0)=0.25 at
@@ -340,7 +366,27 @@ class ConnectomeController(nn.Module):
         edge_weight = self.edge_sign * self.edge_magnitude
         messages = activity[:, self.edge_pre] * edge_weight
         recurrent = torch.zeros_like(state).index_add(1, self.edge_post, messages)
-        drive = recurrent + self.bias + self.sensory_drive(image, roll_pitch, body_specific_force)
+        drive = (
+            recurrent
+            + self.bias
+            + self.sensory_drive(image, roll_pitch, body_specific_force, stick_position)
+        )
+        if privileged_throttle_pool_bias is not None:
+            if privileged_throttle_pool_bias.shape != (image.shape[0],):
+                raise ValueError("privileged throttle-pool bias must have shape (batch,)")
+            throttle_positive_begin = int(self.pool_offsets[6].item())
+            throttle_positive_end = int(self.pool_offsets[7].item())
+            throttle_negative_end = int(self.pool_offsets[8].item())
+            throttle_positive = self.pool_indices[throttle_positive_begin:throttle_positive_end]
+            throttle_negative = self.pool_indices[throttle_positive_end:throttle_negative_end]
+            positive_values = privileged_throttle_pool_bias[:, None].expand(
+                -1, len(throttle_positive)
+            )
+            negative_values = -privileged_throttle_pool_bias[:, None].expand(
+                -1, len(throttle_negative)
+            )
+            drive = drive.index_add(1, throttle_positive, positive_values)
+            drive = drive.index_add(1, throttle_negative, negative_values)
         # Membrane state is bounded for numerical stability but not to [-1, 1], which
         # would artificially cap an antagonist pair below the calibrated stick range.
         target = 5.0 * torch.tanh(drive / 5.0)

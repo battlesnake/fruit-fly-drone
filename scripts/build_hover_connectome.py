@@ -28,6 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--visual-per-eye", type=int, default=24)
     parser.add_argument("--attitude-per-channel", type=int, default=8)
     parser.add_argument("--acceleration-per-channel", type=int, default=0)
+    parser.add_argument("--throttle-proprioception", action="store_true")
     return parser.parse_args()
 
 
@@ -40,6 +41,7 @@ def main() -> int:
         visual_per_eye=args.visual_per_eye,
         attitude_per_channel=args.attitude_per_channel,
         acceleration_per_channel=args.acceleration_per_channel,
+        throttle_proprioception=args.throttle_proprioception,
     )
     manifest = build_hover_scaffold(args.raw_dir, args.output, config)
     print(json.dumps(manifest["selection"], indent=2, sort_keys=True))
