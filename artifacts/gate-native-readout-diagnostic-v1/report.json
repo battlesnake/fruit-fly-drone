@@ -1,0 +1,121 @@
+{
+  "artifact": "gate-native-readout-diagnostic-v1",
+  "claim": "A fixed anatomical throttle readout plus one internal antagonist bias cannot turn the selected recurrent mass code into a calibrated correction across time.",
+  "runtime_contract": {
+    "actor_inputs": [
+      "FPV image",
+      "roll/pitch",
+      "instantaneous body specific force"
+    ],
+    "external_actor_state_machine": false,
+    "external_clock": false,
+    "external_history_features": 0,
+    "external_mass_estimate": false,
+    "state": "persistent leaky connectome membrane state only"
+  },
+  "source": {
+    "checkpoint": "artifacts/gate-accel-v2/controller.pt",
+    "checkpoint_sha256": "1fbfeb15297ce57fd71b331fbe7b6d39facade7fafec266f6b678b8ddbbbb8b6",
+    "encoder_checkpoint": "runs/gate/native-latent-motif-readout-source/selection-checkpoints/update-0180.pt",
+    "encoder_checkpoint_sha256": "25f94d1d3dcb5192642855aadd4f48a80f7918fd78cf58e7e10dc07b13e87f47",
+    "encoder_report": "runs/gate/native-latent-motif-readout-source/report.json",
+    "encoder_report_sha256": "f0e1508f254c72227ed56b281bd73d95d84145db091cb7e4186967701e55edba",
+    "graph": "artifacts/gate-accel-v2/connectome.npz",
+    "graph_sha256": "d385bcb96f18fad904d263ab34cbead73c794f9c90961d7961671761d323f3ea",
+    "license": "CC BY 4.0 derived graph; see data/README.md"
+  },
+  "protocol": {
+    "fit_episodes_per_condition": 512,
+    "audit_episodes_per_condition": 512,
+    "conditions": [
+      "clean live inputs",
+      "live inputs with 0.1 mg body-Z noise",
+      "black FPV, zero roll/pitch, and constant 1g after 0.75 seconds"
+    ],
+    "matched_mass_geometry": true,
+    "matched_launch_throttle_perturbations": "plus/minus 0.002",
+    "readout": "37 fixed-sign existing edges from 19 sources to two throttle motor pools",
+    "motor_pool_sizes": [
+      2,
+      5
+    ],
+    "one_shared_readout_across_conditions_and_times": true,
+    "fitted_internal_antagonist_bias_bound": 0.2,
+    "late_acceptance": {
+      "minimum_r2": 0.9,
+      "slope_range": [
+        0.8,
+        1.2
+      ],
+      "maximum_absolute_offset": 0.01,
+      "maximum_normalized_rmse": 0.2,
+      "maximum_per_pool_current_rmse": 0.05
+    }
+  },
+  "fit": {
+    "antagonist_bias": 0.04662376005204269,
+    "antagonist_bias_at_bound": false,
+    "edge_coefficients_at_zero": 8,
+    "edge_coefficients_at_upper_bound": 1,
+    "linearized_training_replay": {
+      "r2": 0.2432402983067231,
+      "signed_slope": 0.2788801020312145,
+      "normalized_rmse": 0.869919365052461
+    }
+  },
+  "held_out": {
+    "overall": {
+      "r2": 0.24028484277588058,
+      "signed_slope": 0.26004243596961363,
+      "normalized_rmse": 0.8716164048617485,
+      "bias_offset_error": -0.00081602586090063,
+      "per_pool_current_rmse": 0.04543297688830703
+    },
+    "clean_live": {
+      "0.75_seconds": {
+        "r2": 0.15707818780114913,
+        "signed_slope": 0.1971984862962076,
+        "normalized_rmse": 0.9181077345272999,
+        "bias_offset_error": 0.026746947373602836
+      },
+      "1_second": {
+        "r2": 0.13925510413298503,
+        "signed_slope": 0.09916878334039242,
+        "normalized_rmse": 0.9277633835558585,
+        "bias_offset_error": -0.012978200971701881
+      },
+      "1.5_seconds": {
+        "r2": -0.04969345832012406,
+        "signed_slope": 0.008132812715913705,
+        "normalized_rmse": 1.024545488653444,
+        "bias_offset_error": -0.015403364417579724
+      }
+    },
+    "neutral_suffix": {
+      "1_second": {
+        "r2": 0.34552689526522995,
+        "signed_slope": 0.22444149627350332,
+        "normalized_rmse": 0.8089951203405186,
+        "bias_offset_error": -0.012601894422914484
+      },
+      "1.5_seconds": {
+        "r2": -0.491477501011627,
+        "signed_slope": 0.09386639764195037,
+        "normalized_rmse": 1.2212606196105837,
+        "bias_offset_error": 0.04982428281416773
+      }
+    }
+  },
+  "outcome": {
+    "readout_feasible": false,
+    "flight_evaluation_run": false,
+    "goal_passed": false,
+    "promoted_checkpoint": false,
+    "failed_preregistered_checks": 44,
+    "conclusion": "Stop this hand-selected motif and static-readout scaffold; test bounded end-to-end trajectory optimization next."
+  },
+  "full_local_reports": {
+    "runs/gate/native-latent-motif-readout-source/report.json": "f0e1508f254c72227ed56b281bd73d95d84145db091cb7e4186967701e55edba",
+    "runs/gate/native-readout-antagonist-bias-v1/report.json": "a32db7fe2e9a3d32e61e3685647b27325df37970c09d54429d52e3ddf6f843c8"
+  }
+}

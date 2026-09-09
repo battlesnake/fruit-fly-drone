@@ -207,18 +207,27 @@ memory.
 
 It is a negative controller result. The retained code was not calibrated: at 1.5 seconds
 its signed slope was 0.447 and R² was -1.915. With continuing live inputs, the same
-checkpoint fell to r=0.151, slope=0.013, and R²=-8.504. The stability criterion selected
-an earlier checkpoint, which also failed, so the script deliberately skipped anatomical
-return fitting and flight evaluation. The conclusion is therefore **memory capacity is
-present, while robust readout and calibration remain unresolved**.
+checkpoint fell to r=0.151, slope=0.013, and R²=-8.504.
 
-The next bounded test should freeze a few later retained-code checkpoints and fit only
-their real throttle-return edges across early live prefixes and both live and neutral
-late continuations, with one shared time-independent readout. If common-mode offset makes
-that infeasible, one small existing anatomical reference branch may be enabled for
-offset cancellation. Only a readout that has near-unit slope, small offset, and bounded
-amplitude in every held-out time window should proceed to autonomous evaluation. Mass
-remains a training label only.
+A subsequent bounded test retained every 20-update encoder checkpoint and selected update
+180 by neutral-suffix ordering. It froze the encoder and fitted all 37 existing signed
+edges from 19 source neurons into the two throttle motor pools. The readout was one
+time-independent function shared by all conditions and times. It also allowed one learned
+antagonist motor-pool bias (`c=0.04662`, below its ±0.2 bound) to cancel common-mode offset.
+Exact mass still appeared only in the fitting target; deployment inputs and state were
+unchanged.
+
+That more permissive readout also failed held-out replay. Its overall correction slope was
+0.260, R² was 0.240, and normalized RMSE was 0.872. Under clean live sensing, slope fell
+from 0.197 at 0.75 seconds to 0.099 at 1.0 seconds and 0.008 at 1.5 seconds. The neutral
+suffix preserved ordering better but not usable gain: slope was 0.224 at 1.0 seconds and
+0.094 at 1.5 seconds. The linearized training replay was already poor, so recurrent
+feedback after fitting is not the main explanation. The preregistered screen rejected the
+readout before flight evaluation. The conclusion is therefore **memory capacity is
+present, but this hand-selected mass-code-and-static-readout scaffold cannot supply robust
+control calibration**. It should not be broadened into another motif search; the next
+experiment should optimize bounded end-to-end trajectory loss through the recurrent actor
+and plant. Mass remains a training label only.
 
 ## Reproduction
 

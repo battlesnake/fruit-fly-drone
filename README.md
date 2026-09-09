@@ -109,12 +109,16 @@ normalized mass from the first 0.25 seconds with R²=0.983. More importantly, an
 18-neuron native recurrent motif retained mass ordering to 1.5 seconds after all visual,
 attitude, and acceleration inputs were neutralized at 0.75 seconds (Pearson r=0.921 at
 the last training checkpoint). That is genuine internal hysteresis with no external
-history feature, clock, estimator, or actor state machine. Its offset and gain were
-wrong, however, and continuing live inputs destabilized the code, so it was not connected
-to the motor pools or promoted as a flight controller. The full evidence is retained under
+history feature, clock, estimator, or actor state machine. A follow-up fit used all 37
+real signed edges into the throttle motor pools plus one fixed internal antagonist bias;
+held-out gain still collapsed from slope 0.197 at 0.75 seconds to 0.008 at 1.5 seconds.
+The readout was rejected before flight evaluation. Thus the graph has demonstrated memory,
+but this hand-selected mass-code scaffold is not a usable controller. The evidence is
+retained under
 [`gate-proprio-diagnostic-v1`](artifacts/gate-proprio-diagnostic-v1/) and
 [`gate-mass-oracle-v1`](artifacts/gate-mass-oracle-v1/), with a compact recurrence record
-under [`gate-recurrence-diagnostic-v1`](artifacts/gate-recurrence-diagnostic-v1/).
+under [`gate-recurrence-diagnostic-v1`](artifacts/gate-recurrence-diagnostic-v1/) and its
+[`native-readout follow-up`](artifacts/gate-native-readout-diagnostic-v1/).
 
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover

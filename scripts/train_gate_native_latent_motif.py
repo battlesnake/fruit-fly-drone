@@ -86,6 +86,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--gradient-clip", type=float, default=1.0)
     parser.add_argument("--selection-interval", type=int, default=20)
     parser.add_argument(
+        "--save-selection-checkpoints",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Retain every held-out selection checkpoint for bounded readout audits.",
+    )
+    parser.add_argument(
         "--neutral-training-every",
         type=int,
         default=2,
@@ -1322,6 +1328,9 @@ def main() -> int:
     )
     args.output_dir.mkdir(parents=True, exist_ok=True)
     best_encoder_path = args.output_dir / "best-encoder.pt"
+    selection_checkpoint_dir = args.output_dir / "selection-checkpoints"
+    if args.save_selection_checkpoints:
+        selection_checkpoint_dir.mkdir(parents=True, exist_ok=True)
     candidate_path = args.output_dir / "candidate.pt"
     progress_path = args.output_dir / "progress.json"
     history: list[dict[str, Any]] = []
@@ -1424,6 +1433,18 @@ def main() -> int:
             min(item["r2"] for item in [*live_items, *neutral_items]),
             -float(probe["losses"]["temporal"]),
         )
+        selection_checkpoint_path: Path | None = None
+        if args.save_selection_checkpoints:
+            selection_checkpoint_path = selection_checkpoint_dir / f"update-{update:04d}.pt"
+            save_checkpoint(
+                selection_checkpoint_path,
+                controller,
+                source_checkpoint,
+                args,
+                spec,
+                selected_update=update,
+                kind="readout_audit_selection_checkpoint",
+            )
         if best_key is None or key > best_key:
             best_key = key
             save_checkpoint(
@@ -1441,6 +1462,11 @@ def main() -> int:
             "training": training,
             "held_out_live": probe,
             "held_out_neutral_after_establishment": neutral,
+            "selection_checkpoint": (
+                stable_path(selection_checkpoint_path)
+                if selection_checkpoint_path is not None
+                else None
+            ),
             "selection_key": key,
             "best_key": best_key,
         }
