@@ -1,4 +1,19 @@
 {
+  "acceleration_interface": {
+    "cells_per_channel": 4,
+    "channels": [
+      "specific_force_z_above_1g",
+      "specific_force_z_below_1g"
+    ],
+    "engineering_mapping_not_claimed_physiology": true,
+    "injection_layer": "additional MaleCNS wind_gravity mechanosensory cells",
+    "measurement": "body-frame specific force from the completed physics interval",
+    "normalization": "(body_z - 1g) / 0.25g, clamped to +/-2, push/pull",
+    "reachable_output_pools": [
+      "throttle_pos",
+      "throttle_neg"
+    ]
+  },
   "attitude_interface": {
     "cells_per_channel": 8,
     "channels": [
@@ -10,13 +25,14 @@
     "injection_layer": "MaleCNS wind_gravity mechanosensory cells"
   },
   "config": {
+    "acceleration_per_channel": 4,
     "attitude_per_channel": 8,
     "induced_weight_threshold": 10,
     "max_path_hops": 8,
     "path_weight_threshold": 20,
     "visual_per_eye": 96
   },
-  "format": "flydrone-hover-connectome-v1",
+  "format": "flydrone-connectome-v2",
   "output_pool_order": [
     "roll_pos",
     "roll_neg",
@@ -118,17 +134,18 @@
     }
   },
   "selection": {
+    "acceleration_nodes": 8,
     "attitude_nodes": 32,
-    "edges": 4324,
+    "edges": 4469,
     "eligible_traced_nodes": 165122,
-    "node_types": 277,
-    "nodes": 1122,
+    "node_types": 285,
+    "nodes": 1138,
     "path_edges": 1060438,
     "route_hops_max": 7,
     "route_hops_min": 3,
     "transmitters": {
-      "acetylcholine": 676,
-      "gaba": 187,
+      "acetylcholine": 687,
+      "gaba": 192,
       "glutamate": 250,
       "unclear": 9
     },

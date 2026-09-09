@@ -135,6 +135,10 @@
     "visual_nodes": 48
   },
   "source": "MaleCNS v1.0",
+  "source_license": "CC BY 4.0",
+  "source_license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "source_url": "https://male-cns.janelia.org/download/",
+  "transformation_notice": "This project selected a task-specific subgraph, converted synapse counts to normalized initial magnitudes, and added engineered sensor/output mappings.",
   "transmitter_sign_hypothesis": {
     "acetylcholine": 1.0,
     "dopamine": 1.0,

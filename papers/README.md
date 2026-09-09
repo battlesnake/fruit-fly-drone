@@ -26,3 +26,11 @@ official open-access PDFs):
 
 PDFs are tracked through Git LFS to avoid placing large binary blobs in ordinary Git
 history.
+
+## Licence and attribution
+
+All five mirrored PDFs state that they are available under the
+[Creative Commons Attribution 4.0 International licence](https://creativecommons.org/licenses/by/4.0/).
+Copyright remains with their respective authors. Redistribution must retain attribution,
+identify the source, link the licence, and indicate any changes. These files are
+unmodified copies downloaded from the official bioRxiv and Nature records linked above.

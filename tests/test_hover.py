@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+import pytest
 import torch
 
 from flydrone.hover import (
+    ConnectomeController,
     DifferentiableQuad,
     ForelegStickPlant,
     HoverConfig,
@@ -89,10 +93,47 @@ def test_mass_randomization_changes_thrust_acceleration() -> None:
     state = quad.initial_state(
         2, device=torch.device("cpu"), dtype=torch.float64, position=position
     )
-    rc = torch.tensor(
-        [[0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 1.0]], dtype=torch.float64
-    )
+    rc = torch.tensor([[0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 1.0]], dtype=torch.float64)
 
     next_state = quad(rc, state, torch.tensor([0.9, 1.1], dtype=torch.float64))
 
     assert next_state.velocity[0, 2] > next_state.velocity[1, 2]
+
+
+def test_completed_interval_specific_force_includes_mass_and_ground_constraint() -> None:
+    config = HoverConfig(linear_drag=0.0)
+    quad = DifferentiableQuad(config)
+    position = torch.tensor([[0.0, 0.0, 1.0], [0.0, 0.0, 1.0]])
+    state = quad.initial_state(
+        2, device=torch.device("cpu"), dtype=torch.float32, position=position
+    )
+    state.actuator[:, 0] = 0.7
+    rc = torch.tensor([[0.0, 0.0, 0.0, 0.7], [0.0, 0.0, 0.0, 0.7]])
+
+    next_state = quad(rc, state, torch.tensor([0.92, 1.08]))
+    grounded = quad.initial_state(1, device=torch.device("cpu"), dtype=torch.float32)
+    grounded = quad(torch.zeros(1, 4), grounded)
+
+    assert torch.allclose(next_state.specific_force[:, :2], torch.zeros(2, 2))
+    assert next_state.specific_force[0, 2] > next_state.specific_force[1, 2]
+    assert torch.allclose(grounded.specific_force, torch.tensor([[0.0, 0.0, 9.81]]))
+
+
+def test_acceleration_interface_requires_sensor_and_injects_push_pull() -> None:
+    controller = ConnectomeController(
+        Path(__file__).resolve().parents[1] / "artifacts" / "gate-v1" / "connectome.npz"
+    )
+    controller.acceleration_nodes = controller.attitude_nodes[:2]
+    controller.acceleration_channels = torch.tensor([0, 1])
+    image = torch.zeros(2, 32, 32)
+    attitude = torch.zeros(2, 2)
+
+    with pytest.raises(ValueError, match="requires body specific force"):
+        controller.sensory_drive(image, attitude)
+    force = torch.tensor([[0.0, 0.0, 1.25 * 9.81], [0.0, 0.0, 0.75 * 9.81]])
+    drive = controller.sensory_drive(image, attitude, force)
+
+    assert drive[0, controller.acceleration_nodes[0]] > 0.0
+    assert drive[0, controller.acceleration_nodes[1]] == 0.0
+    assert drive[1, controller.acceleration_nodes[0]] == 0.0
+    assert drive[1, controller.acceleration_nodes[1]] > 0.0

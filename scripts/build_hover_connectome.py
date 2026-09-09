@@ -16,9 +16,7 @@ from flydrone.connectome_data import BuildConfig, build_hover_scaffold  # noqa: 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--raw-dir", type=Path, default=REPO_ROOT / "data" / "raw" / "malecns-v1.0"
-    )
+    parser.add_argument("--raw-dir", type=Path, default=REPO_ROOT / "data" / "raw" / "malecns-v1.0")
     parser.add_argument(
         "--output",
         type=Path,
@@ -29,6 +27,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-path-hops", type=int, default=8)
     parser.add_argument("--visual-per-eye", type=int, default=24)
     parser.add_argument("--attitude-per-channel", type=int, default=8)
+    parser.add_argument("--acceleration-per-channel", type=int, default=0)
     return parser.parse_args()
 
 
@@ -40,6 +39,7 @@ def main() -> int:
         max_path_hops=args.max_path_hops,
         visual_per_eye=args.visual_per_eye,
         attitude_per_channel=args.attitude_per_channel,
+        acceleration_per_channel=args.acceleration_per_channel,
     )
     manifest = build_hover_scaffold(args.raw_dir, args.output, config)
     print(json.dumps(manifest["selection"], indent=2, sort_keys=True))

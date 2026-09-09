@@ -62,12 +62,20 @@ class QuadState:
     euler: Tensor
     rates: Tensor
     actuator: Tensor
+    specific_force: Tensor
 
     def detach(self) -> QuadState:
         return QuadState(*(value.detach() for value in self.as_tuple()))
 
-    def as_tuple(self) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
-        return self.position, self.velocity, self.euler, self.rates, self.actuator
+    def as_tuple(self) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor, Tensor]:
+        return (
+            self.position,
+            self.velocity,
+            self.euler,
+            self.rates,
+            self.actuator,
+            self.specific_force,
+        )
 
 
 @dataclass
@@ -149,18 +157,13 @@ def render_target_band(
     wall_valid = (rays_world[..., 0] > 1.0e-4) & (wall_time > 0.0)
     wall_height = origin[..., 2] + wall_time * rays_world[..., 2]
     band = torch.exp(
-        -0.5
-        * torch.square(
-            (wall_height - target_height[:, None, None]) / config.target_band_width
-        )
+        -0.5 * torch.square((wall_height - target_height[:, None, None]) / config.target_band_width)
     )
     wall_pixels = torch.where(wall_valid, band, torch.zeros_like(band))
 
     downward = rays_world[..., 2] < -1.0e-4
     floor_time = -origin[..., 2] / rays_world[..., 2].clamp_max(-1.0e-4)
-    floor_before_wall = downward & (floor_time > 0.0) & (
-        (~wall_valid) | (floor_time < wall_time)
-    )
+    floor_before_wall = downward & (floor_time > 0.0) & ((~wall_valid) | (floor_time < wall_time))
     floor_checker_x = origin[..., 0] + floor_time * rays_world[..., 0]
     floor_checker_y = origin[..., 1] + floor_time * rays_world[..., 1]
     # A faint continuous texture provides optic-flow information without encoding target Z.
@@ -194,6 +197,8 @@ class ConnectomeController(nn.Module):
         visual_eye = graph["visual_eye"]
         attitude_nodes = graph["attitude_node_indices"]
         attitude_channels = graph["attitude_channels"]
+        acceleration_nodes = graph.get("acceleration_node_indices", np.empty(0, dtype=np.int64))
+        acceleration_channels = graph.get("acceleration_channels", np.empty(0, dtype=np.int64))
         pool_offsets = graph["output_pool_offsets"]
         pool_indices = graph["output_pool_indices"]
 
@@ -217,6 +222,16 @@ class ConnectomeController(nn.Module):
         self.register_buffer("visual_nodes", torch.from_numpy(visual_nodes))
         self.register_buffer("attitude_nodes", torch.from_numpy(attitude_nodes))
         self.register_buffer("attitude_channels", torch.from_numpy(attitude_channels))
+        # Reconstruct these interface mappings from the graph.  Non-persistent buffers
+        # keep the committed pre-accelerometer checkpoints strictly loadable.
+        self.register_buffer(
+            "acceleration_nodes", torch.from_numpy(acceleration_nodes), persistent=False
+        )
+        self.register_buffer(
+            "acceleration_channels",
+            torch.from_numpy(acceleration_channels),
+            persistent=False,
+        )
         self.register_buffer("pool_offsets", torch.from_numpy(pool_offsets))
         self.register_buffer("pool_indices", torch.from_numpy(pool_indices))
         self.register_buffer("visual_grid", self._make_visual_grid(visual_hex, visual_eye))
@@ -272,10 +287,17 @@ class ConnectomeController(nn.Module):
         )
         return sampled[:, 0, :, 0]
 
-    def sensory_drive(self, image: Tensor, roll_pitch: Tensor) -> Tensor:
-        drive = torch.zeros(
-            image.shape[0], self.n_nodes, device=image.device, dtype=image.dtype
-        )
+    @property
+    def uses_accelerometer(self) -> bool:
+        return bool(self.acceleration_nodes.numel())
+
+    def sensory_drive(
+        self,
+        image: Tensor,
+        roll_pitch: Tensor,
+        body_specific_force: Tensor | None = None,
+    ) -> Tensor:
+        drive = torch.zeros(image.shape[0], self.n_nodes, device=image.device, dtype=image.dtype)
         retina = self.sample_retina(image)
         drive = drive.index_add(1, self.visual_nodes, 5.0 * retina)
         normalized_attitude = (roll_pitch / math.radians(30.0)).clamp(-1.5, 1.5)
@@ -289,9 +311,28 @@ class ConnectomeController(nn.Module):
             dim=-1,
         )
         attitude = push_pull[:, self.attitude_channels]
-        return drive.index_add(1, self.attitude_nodes, 4.0 * attitude)
+        drive = drive.index_add(1, self.attitude_nodes, 4.0 * attitude)
+        if self.uses_accelerometer:
+            if body_specific_force is None:
+                raise ValueError("this connectome graph requires body specific force")
+            # The first causal altitude experiment uses only centered body-Z specific
+            # force.  No world-frame rotation, mass estimate, integration, or history is
+            # computed outside the connectome.
+            centered_z = ((body_specific_force[:, 2] - 9.81) / (0.25 * 9.81)).clamp(-2.0, 2.0)
+            acceleration_push_pull = torch.stack(
+                (centered_z.clamp_min(0.0), (-centered_z).clamp_min(0.0)), dim=-1
+            )
+            acceleration = acceleration_push_pull[:, self.acceleration_channels]
+            drive = drive.index_add(1, self.acceleration_nodes, 2.0 * acceleration)
+        return drive
 
-    def forward(self, image: Tensor, roll_pitch: Tensor, state: Tensor) -> tuple[Tensor, Tensor]:
+    def forward(
+        self,
+        image: Tensor,
+        roll_pitch: Tensor,
+        state: Tensor,
+        body_specific_force: Tensor | None = None,
+    ) -> tuple[Tensor, Tensor]:
         # Recurrent values are deviations from each neuron's baseline rate.  A centered
         # activation avoids multiplying small sensory changes by sigmoid'(0)=0.25 at
         # every hop; physical motor-pool rates below remain nonnegative sigmoids.
@@ -299,7 +340,7 @@ class ConnectomeController(nn.Module):
         edge_weight = self.edge_sign * self.edge_magnitude
         messages = activity[:, self.edge_pre] * edge_weight
         recurrent = torch.zeros_like(state).index_add(1, self.edge_post, messages)
-        drive = recurrent + self.bias + self.sensory_drive(image, roll_pitch)
+        drive = recurrent + self.bias + self.sensory_drive(image, roll_pitch, body_specific_force)
         # Membrane state is bounded for numerical stability but not to [-1, 1], which
         # would artificially cap an antagonist pair below the calibrated stick range.
         target = 5.0 * torch.tanh(drive / 5.0)
@@ -413,12 +454,17 @@ class DifferentiableQuad(nn.Module):
             position = zeros3.clone()
         if euler is None:
             euler = zeros3.clone()
+        world_up = zeros3.new_tensor((0.0, 0.0, 9.81)).expand(batch, -1)
+        specific_force = torch.einsum(
+            "bij,bj->bi", rotation_matrix(euler).transpose(1, 2), world_up
+        )
         return QuadState(
             position=position,
             velocity=zeros3.clone(),
             euler=euler,
             rates=zeros3.clone(),
             actuator=torch.zeros(batch, 4, device=device, dtype=dtype),
+            specific_force=specific_force,
         )
 
     def forward(self, rc: Tensor, state: QuadState, mass_scale: Tensor | None = None) -> QuadState:
@@ -483,7 +529,10 @@ class DifferentiableQuad(nn.Module):
             on_ground & (velocity[:, 2] < 0.0), torch.zeros_like(velocity[:, 2]), velocity[:, 2]
         )
         velocity = torch.cat((velocity[:, :2], vertical_velocity[:, None]), dim=1)
-        return QuadState(position, velocity, euler, rates, actuator)
+        completed_world_acceleration = (velocity - state.velocity) / config.dt
+        specific_force_world = completed_world_acceleration - gravity
+        specific_force = torch.einsum("bij,bj->bi", rotation.transpose(1, 2), specific_force_world)
+        return QuadState(position, velocity, euler, rates, actuator, specific_force)
 
 
 def teacher_rc(
@@ -503,9 +552,7 @@ def teacher_rc(
     return torch.stack((roll, pitch, yaw, throttle), dim=1)
 
 
-def motor_target_for_rc(
-    rc: Tensor, config: HoverConfig = DEFAULT_HOVER_CONFIG
-) -> Tensor:
+def motor_target_for_rc(rc: Tensor, config: HoverConfig = DEFAULT_HOVER_CONFIG) -> Tensor:
     """Steady-state antagonist difference needed to hold measured stick positions."""
 
     stick_target = torch.cat((rc[:, :3], 2.0 * rc[:, 3:4] - 1.0), dim=1)

@@ -177,7 +177,7 @@ def main() -> int:
             hover_config=hover_config,
             gate_config=gate_config,
         )
-        motor, neural = controller(image, state.euler[:, :2], neural)
+        motor, neural = controller(image, state.euler[:, :2], neural, state.specific_force)
         rc, stick_state = leg_plant(motor, stick_state)
         if step % capture_stride == 0:
             captured["image"].append((255.0 * image).byte().cpu().numpy())
@@ -201,9 +201,7 @@ def main() -> int:
         cleared |= passed & (signed >= 0.4)
         lifted |= state.position[:, 2] > 0.15
         recontact |= lifted & (state.position[:, 2] <= 0.01)
-        max_tilt = torch.maximum(
-            max_tilt, torch.linalg.vector_norm(state.euler[:, :2], dim=1)
-        )
+        max_tilt = torch.maximum(max_tilt, torch.linalg.vector_norm(state.euler[:, :2], dim=1))
         saturation_steps += (stick_state.position.abs() > 0.98).any(dim=1)
 
     success = (

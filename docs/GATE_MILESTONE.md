@@ -74,10 +74,35 @@ the same initial conditions for the actor, teacher, and frozen-image control.
 | Mean maximum tilt | 17.7 degrees | 16.7 degrees | 22.4 degrees |
 
 Every nominal episode reaches the gate plane; unsuccessful flights cross too far from its
-centre.  Median radial crossing error is 0.614 m and the 90th percentile is 1.610 m.  A
-teacher takeover after three seconds recovers 77.1% of trials, while a takeover after four
-seconds cannot improve the 40.5% outcome.  The remaining problem is therefore early visual
-aiming and closed-loop correction, not lift authority or failure to reach the gate.
+centre. Median radial crossing error is 0.614 m and the 90th percentile is 1.610 m. A
+later component audit found 0.420 m mean absolute lateral error and 0.656 m mean absolute
+vertical error, with a 0.457 m upward bias. The hidden mass randomization is especially
+important: the checkpoint succeeds on 72.8% of heavier-than-nominal vehicles but only
+5.3% of lighter ones. A teacher takeover after three seconds recovers 77.1% of trials,
+while a takeover after four seconds cannot improve the 40.5% outcome. The next work must
+therefore address both early visual aiming and mass-robust vertical feedback.
+
+## Direct accelerometer checkpoint
+
+[`gate-accel-v1`](../artifacts/gate-accel-v1/) tests a minimal inertial interface without
+changing the old pilot. Eight additional annotated MaleCNS `wind_gravity` Johnston's-organ
+cells receive push/pull body-Z specific force centered on 1g. They connect through real
+MaleCNS paths to the two throttle motor pools. The sensor-to-neuron assignment is an
+explicit engineering mapping, not a claim about the cells' calibrated physiology.
+
+All 1,122 old neurons and 4,324 old edges are frozen. New-to-old boundaries begin at
+zero; old-to-new edges and new biases are held at zero so a constant-1g sensor exactly
+reproduces the original controller. Only 109 edges whose presynaptic neuron belongs to
+the new acceleration pathway can learn. The resulting graph has 1,138 neurons and 4,469
+edges.
+
+On the same 1,024-flight suite, live acceleration improves success from 40.53% to 41.89%
+and reduces mean absolute vertical crossing error from 0.656 m to 0.601 m. Light-mass
+success rises from 5.31% to 7.35%. Holding the trained controller's sensor at 1g returns
+success to exactly 40.53%, establishing that the change depends on time-varying inertial
+input. Swapping sensor traces by mass rank yields 41.80%, however, so this small benefit
+looks like generic damping rather than learned vehicle-mass identification. It is useful
+causal progress, but still far below the 90% goal.
 
 ## Reproduction
 
@@ -90,6 +115,18 @@ scripts/run_gate_training.sh \
   --output-dir runs/gate/recheck --evaluate-only \
   --evaluation-stage paired --evaluation-episodes 1024 \
   --evaluation-seconds 12 --teacher-takeover-audit-seconds 3 4
+```
+
+Re-run the direct-accelerometer checkpoint and its constant-1g and mass-rank-swapped-trace
+controls with:
+
+```bash
+scripts/run_gate_training.sh \
+  --graph artifacts/gate-accel-v1/connectome.npz \
+  --checkpoint artifacts/gate-accel-v1/controller.pt \
+  --output-dir runs/gate/accel-recheck --evaluate-only \
+  --evaluation-stage paired --evaluation-episodes 1024 \
+  --evaluation-seconds 12
 ```
 
 Record another seeded successful flight and foreleg/stick visualization with:

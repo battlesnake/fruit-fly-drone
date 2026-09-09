@@ -12,6 +12,7 @@ from flydrone.hover import PLANT_MODEL_VERSION, ConnectomeController
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ARTIFACT_DIR = REPO_ROOT / "artifacts" / "gate-v1"
+ACCEL_ARTIFACT_DIR = REPO_ROOT / "artifacts" / "gate-accel-v1"
 
 
 def sha256(path: Path) -> str:
@@ -66,3 +67,39 @@ def test_gate_showcase_records_a_real_success() -> None:
     assert (ARTIFACT_DIR / "showcase-trajectory.npz").stat().st_size > 50_000
     assert showcase["external_actor_state_machine"] is False
     assert showcase["privileged_gate_geometry_given_to_actor"] is False
+
+
+def test_accelerometer_checkpoint_is_bound_and_sensor_dependent() -> None:
+    graph_path = ACCEL_ARTIFACT_DIR / "connectome.npz"
+    checkpoint_path = ACCEL_ARTIFACT_DIR / "controller.pt"
+    report = json.loads((ACCEL_ARTIFACT_DIR / "report.json").read_text())
+    manifest = json.loads(
+        (ACCEL_ARTIFACT_DIR / "connectome-manifest.json").read_text()
+    )
+    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+
+    assert report["graph_sha256"] == sha256(graph_path)
+    assert report["checkpoint_sha256"] == sha256(checkpoint_path)
+    assert checkpoint["graph_sha256"] == sha256(graph_path)
+    assert manifest["source_license"] == "CC BY 4.0"
+    assert manifest["selection"]["acceleration_nodes"] == 8
+
+    controller = ConnectomeController(
+        graph_path,
+        neural_dt=checkpoint["hover_config"]["dt"],
+        retinal_receptive_field=checkpoint["retinal_receptive_field"],
+    )
+    controller.load_state_dict(checkpoint["controller"])
+    assert controller.uses_accelerometer
+    assert controller.n_nodes == 1138
+    assert controller.edge_pre.numel() == 4469
+
+    live = report["evaluation"]
+    constant = report["constant_1g_accelerometer_ablation"]
+    assert report["passed"] is False
+    assert live["success_rate"] > constant["success_rate"]
+    assert (
+        live["crossing_error_components_m"]["vertical_absolute_mean"]
+        < constant["crossing_error_components_m"]["vertical_absolute_mean"]
+    )
+    assert report["frozen_visual_ablation"]["success_rate"] == 0.0

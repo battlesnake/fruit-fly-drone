@@ -9,6 +9,7 @@ from flydrone.gate import (
     AnnularGate,
     GateConfig,
     classify_gate_crossing,
+    crossing_coordinates,
     initial_gate_geometry,
     render_annular_gate,
     sample_annular_gates,
@@ -35,9 +36,7 @@ def test_gate_crossing_requires_whole_drone_inside_aperture() -> None:
     config = GateConfig(inner_radius=0.6, outer_radius=0.75, drone_radius=0.1)
     center = torch.tensor([[2.0, 0.0, 1.0]]).expand(3, -1)
     gate = AnnularGate(center=center, yaw=torch.zeros(3))
-    previous = torch.tensor(
-        [[1.9, 0.0, 1.0], [1.9, 0.55, 1.0], [1.9, 1.0, 1.0]]
-    )
+    previous = torch.tensor([[1.9, 0.0, 1.0], [1.9, 0.55, 1.0], [1.9, 1.0, 1.0]])
     current = previous + torch.tensor((0.2, 0.0, 0.0))
 
     passed, collision, missed = classify_gate_crossing(previous, current, gate, config)
@@ -45,6 +44,21 @@ def test_gate_crossing_requires_whole_drone_inside_aperture() -> None:
     assert passed.tolist() == [True, False, False]
     assert collision.tolist() == [False, True, False]
     assert missed.tolist() == [False, False, True]
+
+
+def test_crossing_coordinates_preserve_signed_lateral_and_vertical_error() -> None:
+    gate = AnnularGate(
+        center=torch.tensor([[2.0, 0.0, 1.0], [2.0, 0.0, 1.0]]),
+        yaw=torch.zeros(2),
+    )
+    previous = torch.tensor([[1.8, -0.3, 1.2], [2.1, 0.4, 0.7]])
+    current = torch.tensor([[2.2, -0.3, 1.2], [2.3, 0.4, 0.7]])
+
+    directed, lateral, vertical = crossing_coordinates(previous, current, gate)
+
+    assert directed.tolist() == [True, False]
+    assert torch.allclose(lateral, torch.tensor([-0.3, 0.4]))
+    assert torch.allclose(vertical, torch.tensor([0.2, -0.3]))
 
 
 def test_oblique_annulus_renders_off_centre_with_dark_aperture() -> None:
@@ -70,9 +84,7 @@ def test_fixed_l1_receptive_fields_see_every_strict_launch_gate() -> None:
     batch = 128
     quad = DifferentiableQuad()
     state = quad.initial_state(batch, device=torch.device("cpu"), dtype=torch.float32)
-    gate = sample_annular_gates(
-        batch, device=torch.device("cpu"), dtype=torch.float32, strict=True
-    )
+    gate = sample_annular_gates(batch, device=torch.device("cpu"), dtype=torch.float32, strict=True)
     image = render_annular_gate(state, gate, resolution=32)
     controller = ConnectomeController(
         REPO_ROOT / "artifacts" / "hover-v1" / "connectome.npz",
@@ -96,6 +108,7 @@ def test_distillation_teacher_does_not_use_hidden_velocity_or_rates() -> None:
         euler=state.euler,
         rates=torch.tensor([[5.0, -4.0, 3.0], [-2.0, 3.0, -4.0]]),
         actuator=state.actuator,
+        specific_force=state.specific_force,
     )
 
     assert torch.equal(teacher_gate_rc(state, gate), teacher_gate_rc(perturbed, gate))

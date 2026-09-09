@@ -150,9 +150,7 @@ def render_annular_gate(
     # camera-left.  The original height-band raster is horizontally symmetric and did
     # not expose its legacy mirror convention; gate steering must use physical screen
     # right = -body-Y explicitly.
-    rays_body = torch.stack(
-        (rays_body[..., 0], -rays_body[..., 1], rays_body[..., 2]), dim=-1
-    )
+    rays_body = torch.stack((rays_body[..., 0], -rays_body[..., 1], rays_body[..., 2]), dim=-1)
     body_to_world = rotation_matrix(state.euler)
     rays_world = torch.einsum("bij,hwj->bhwi", body_to_world, rays_body)
     origin = state.position[:, None, None, :]
@@ -180,12 +178,8 @@ def render_annular_gate(
     gate_lateral = (hit_offset * gate.lateral[:, None, None, :]).sum(dim=-1)
     gate_vertical = hit_offset[..., 2]
     radial = torch.sqrt(gate_lateral.square() + gate_vertical.square() + 1.0e-8)
-    outer = torch.sigmoid(
-        (gate_config.outer_radius - radial) / gate_config.edge_softness
-    )
-    inner = torch.sigmoid(
-        (radial - gate_config.inner_radius) / gate_config.edge_softness
-    )
+    outer = torch.sigmoid((gate_config.outer_radius - radial) / gate_config.edge_softness)
+    inner = torch.sigmoid((radial - gate_config.inner_radius) / gate_config.edge_softness)
     # Fixed paint asymmetry makes the pose of a monocular circular gate observable
     # without encoding task state or using a gate detector.
     paint = (
@@ -205,16 +199,25 @@ def crossing_geometry(
 ) -> tuple[Tensor, Tensor]:
     """Return directed-crossing mask and radial distance at the swept plane crossing."""
 
+    directed, lateral, vertical = crossing_coordinates(previous_position, position, gate)
+    radial = torch.sqrt(lateral.square() + vertical.square())
+    return directed, radial
+
+
+def crossing_coordinates(
+    previous_position: Tensor,
+    position: Tensor,
+    gate: AnnularGate,
+) -> tuple[Tensor, Tensor, Tensor]:
+    """Return directed-crossing mask and signed in-plane crossing coordinates."""
+
     previous_signed, _, _ = gate_coordinates(previous_position, gate)
     signed, _, _ = gate_coordinates(position, gate)
     directed = (previous_signed < 0.0) & (signed >= 0.0)
-    fraction = (-previous_signed / (signed - previous_signed).clamp_min(1.0e-8)).clamp(
-        0.0, 1.0
-    )
+    fraction = (-previous_signed / (signed - previous_signed).clamp_min(1.0e-8)).clamp(0.0, 1.0)
     crossing = previous_position + fraction[:, None] * (position - previous_position)
     _, lateral, vertical = gate_coordinates(crossing, gate)
-    radial = torch.sqrt(lateral.square() + vertical.square())
-    return directed, radial
+    return directed, lateral, vertical
 
 
 def classify_gate_crossing(
@@ -228,8 +231,8 @@ def classify_gate_crossing(
     directed, radial = crossing_geometry(previous_position, position, gate)
     clean_radius = config.inner_radius - config.drone_radius
     pass_gate = directed & (radial <= clean_radius)
-    ring_collision = directed & (radial > clean_radius) & (
-        radial <= config.outer_radius + config.drone_radius
+    ring_collision = (
+        directed & (radial > clean_radius) & (radial <= config.outer_radius + config.drone_radius)
     )
     miss = directed & ~pass_gate & ~ring_collision
     return pass_gate, ring_collision, miss
@@ -248,9 +251,7 @@ def teacher_gate_rc_state_feedback(
     line_progress = (state.position * travel_direction).sum(dim=1, keepdim=True)
     line_error = state.position - line_progress * travel_direction
     desired_velocity = 0.82 * travel_direction - 1.45 * line_error
-    desired_velocity[:, 2] = (
-        1.1 * (gate.center[:, 2] - state.position[:, 2])
-    ).clamp(-0.6, 0.9)
+    desired_velocity[:, 2] = (1.1 * (gate.center[:, 2] - state.position[:, 2])).clamp(-0.6, 0.9)
     velocity_error = desired_velocity - state.velocity
     drag_compensation = hover_config.linear_drag * state.velocity / hover_config.mass
     desired_acceleration = 2.4 * velocity_error + drag_compensation
@@ -273,9 +274,7 @@ def teacher_gate_rc_state_feedback(
         torch.cos(state.euler[:, 0]) * torch.cos(state.euler[:, 1])
     ).clamp_min(0.75)
     throttle = (
-        hover * tilt_compensation
-        + 0.08 * desired_acceleration[:, 2]
-        - 0.05 * state.velocity[:, 2]
+        hover * tilt_compensation + 0.08 * desired_acceleration[:, 2] - 0.05 * state.velocity[:, 2]
     ).clamp(0.0, 1.0)
     return torch.stack(
         (
@@ -342,3 +341,17 @@ def teacher_gate_rc(
         ),
         dim=-1,
     )
+
+
+def teacher_gate_rc_with_accelerometer(
+    state: QuadState,
+    gate: AnnularGate,
+    hover_config: HoverConfig = DEFAULT_HOVER_CONFIG,
+    feedback_gain: float = -0.16,
+) -> Tensor:
+    """Observation-compatible teacher augmented by centered body-Z specific force."""
+
+    rc = teacher_gate_rc(state, gate, hover_config)
+    centered_z = ((state.specific_force[:, 2] - 9.81) / (0.25 * 9.81)).clamp(-2.0, 2.0)
+    throttle = (rc[:, 3] - feedback_gain * centered_z).clamp(0.0, 1.0)
+    return torch.cat((rc[:, :3], throttle[:, None]), dim=1)
