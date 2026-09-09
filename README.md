@@ -16,6 +16,8 @@ can be trained for the task—not that a biological fly knows how to fly a quadc
 
 - [`docs/PLAN.md`](docs/PLAN.md): architecture, simulator decision, curriculum,
   experiments, safety, and milestones.
+- [`docs/HEADLESS_SPIKE.md`](docs/HEADLESS_SPIKE.md): reproducible WSL2/MJWarp
+  acceptance tests and initial RTX 5080 results.
 - [`data/README.md`](data/README.md): exact MaleCNS v1.0 snapshot, provenance,
   licensing, and what was intentionally not downloaded.
 - `data/raw/malecns-v1.0/`: locally downloaded Feather tables (ignored by Git because
