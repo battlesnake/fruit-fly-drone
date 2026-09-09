@@ -96,17 +96,25 @@ masses does not; this is useful recurrent feedback, not demonstrated mass identi
 or a solved gate task. See the [annular-gate milestone](docs/GATE_MILESTONE.md) for the
 controls and limitations.
 
-Two newer diagnostics sharpen the next step. Adding a four-cell throttle-stick
+Several diagnostics sharpen the next step. Adding a four-cell throttle-stick
 proprioception route improved a fresh balanced suite to 49.4%, but constant and shuffled
 position controls retained essentially all of the gain, so that checkpoint is rejected
 as evidence of position sensing. In contrast, an explicitly privileged two-parameter
 trim driven by the simulator's exact mass achieved 1024/1024, while shuffled mass labels
-achieved only 103/1024. This is an upper bound showing that mass-dependent collective
-calibration can solve the present task; it is not an onboard sensor or a valid deployed
-fly controller. The next experiment must infer the same correction recurrently from
-real actuation and inertial feedback. The full evidence is retained under
+achieved only 103/1024. Delaying that oracle until 0.5, 0.75, or 1.0 seconds still met the
+90% threshold, establishing a short but usable calibration window.
+
+The accelerometer history contains enough information: a held-out diagnostic decoded
+normalized mass from the first 0.25 seconds with R²=0.983. More importantly, an
+18-neuron native recurrent motif retained mass ordering to 1.5 seconds after all visual,
+attitude, and acceleration inputs were neutralized at 0.75 seconds (Pearson r=0.921 at
+the last training checkpoint). That is genuine internal hysteresis with no external
+history feature, clock, estimator, or actor state machine. Its offset and gain were
+wrong, however, and continuing live inputs destabilized the code, so it was not connected
+to the motor pools or promoted as a flight controller. The full evidence is retained under
 [`gate-proprio-diagnostic-v1`](artifacts/gate-proprio-diagnostic-v1/) and
-[`gate-mass-oracle-v1`](artifacts/gate-mass-oracle-v1/).
+[`gate-mass-oracle-v1`](artifacts/gate-mass-oracle-v1/), with a compact recurrence record
+under [`gate-recurrence-diagnostic-v1`](artifacts/gate-recurrence-diagnostic-v1/).
 
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover

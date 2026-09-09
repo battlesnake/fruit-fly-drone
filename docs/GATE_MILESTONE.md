@@ -172,12 +172,53 @@ not imply that the fly inferred mass.
 
 This does not establish that exact mass should be a deployed input, nor that injecting
 mass into sensory neurons would reproduce the oracle. The current plant also scales
-inertia with its mass multiplier, so that scalar identifies more than weight alone. The
-next experiment is to delay the oracle for 0.5–1.5 seconds, measure how much calibration
-time the task permits, and use its required correction as a training target for the
-recurrent stick-position/acceleration circuit. Mass remains a training label; deployment
-must infer the correction from its sensor history. Rotor-speed feedback is the next
-candidate measurement if stick position and acceleration are insufficient.
+inertia with its mass multiplier, so that scalar identifies more than weight alone.
+
+## Delayed oracle and native recurrence diagnostics
+
+The delayed-oracle audit freezes every controller parameter and starts the same exact-mass
+trim later in flight. Success on 1,024 balanced flights was 100.0% at 0 and 0.25 seconds,
+91.21% at 0.5 seconds, 90.92% at both 0.75 and 1.0 seconds, 87.70% at 1.5 seconds, 76.27%
+at 2.0 seconds, and 62.40% at 3.0 seconds. The deployed actor still never receives mass;
+this only establishes that it has roughly 0.5–1.0 seconds in which to infer a useful
+collective correction.
+
+A separate held-out ridge diagnostic used only the actual causal input traces. Body-Z
+acceleration history decoded normalized mass at 0.25 seconds with R²=0.983 and 96.9%
+mass-sign accuracy, rising to R²=0.999 at 0.5 seconds. Adding completed-step stick
+position raised the 0.25-second result to R²=0.9998. The linear decoder is an analysis
+tool, not part of the actor; these results say the sensor history is informative, not
+that the fly has learned to use it.
+
+The 1,138-node direct-accelerometer graph is strongly recurrent: 718 nodes belong to
+non-singleton strongly connected components, and the largest such component contains
+558 nodes. Every controller tick passes the previous leaky membrane state into the next
+tick; it is reset only between episodes. Training detach boundaries limit how far a
+gradient is propagated but do not erase the numerical state during a rollout.
+
+The bounded native-motif experiment selected only existing transmitter-signed anatomical
+edges: an 18-neuron, 21-edge set of sensory paths and positive-feedback cycles, with eight
+existing return edges available to the throttle motor pools. During its causal retention
+condition, the FPV image became black, roll/pitch became zero, and acceleration became a
+constant 1g after 0.75 seconds. At update 200 the motif still ordered mass at 1.0 and 1.5
+seconds with Pearson correlations 0.906 and 0.921. This is direct evidence of internal
+hysteresis; no external history tensor, estimator, clock, or state machine supplied the
+memory.
+
+It is a negative controller result. The retained code was not calibrated: at 1.5 seconds
+its signed slope was 0.447 and R² was -1.915. With continuing live inputs, the same
+checkpoint fell to r=0.151, slope=0.013, and R²=-8.504. The stability criterion selected
+an earlier checkpoint, which also failed, so the script deliberately skipped anatomical
+return fitting and flight evaluation. The conclusion is therefore **memory capacity is
+present, while robust readout and calibration remain unresolved**.
+
+The next bounded test should freeze a few later retained-code checkpoints and fit only
+their real throttle-return edges across early live prefixes and both live and neutral
+late continuations, with one shared time-independent readout. If common-mode offset makes
+that infeasible, one small existing anatomical reference branch may be enabled for
+offset cancellation. Only a readout that has near-unit slope, small offset, and bounded
+amplitude in every held-out time window should proceed to autonomous evaluation. Mass
+remains a training label only.
 
 ## Reproduction
 
@@ -221,6 +262,19 @@ scripts/run_gate_proprioception_es.sh \
 
 scripts/run_gate_mass_oracle.sh \
   --output-dir runs/gate/mass-oracle-recheck
+```
+
+Re-run the delayed-oracle, sensor-observability, and native-recurrence diagnostics with:
+
+```bash
+scripts/run_gate_mass_oracle_delay.sh \
+  --output-dir runs/gate/mass-oracle-delay-recheck
+
+scripts/run_gate_sensor_observability.sh \
+  --output-dir runs/gate/sensor-observability-recheck
+
+scripts/run_gate_native_latent_motif.sh \
+  --output-dir runs/gate/native-latent-motif-recheck
 ```
 
 Record another seeded successful flight and foreleg/stick visualization with:

@@ -1,0 +1,89 @@
+{
+  "artifact": "gate-recurrence-diagnostic-v1",
+  "claim": "The connectome can retain a launch-derived ordering in its own recurrent state, but this experiment did not produce a calibrated or flight-usable code.",
+  "runtime_contract": {
+    "external_actor_state_machine": false,
+    "external_clock": false,
+    "external_history_features": 0,
+    "external_mass_estimate": false,
+    "state": "persistent leaky connectome membrane state only"
+  },
+  "source": {
+    "checkpoint": "artifacts/gate-accel-v2/controller.pt",
+    "checkpoint_sha256": "1fbfeb15297ce57fd71b331fbe7b6d39facade7fafec266f6b678b8ddbbbb8b6",
+    "graph": "artifacts/gate-accel-v2/connectome.npz",
+    "graph_sha256": "d385bcb96f18fad904d263ab34cbead73c794f9c90961d7961671761d323f3ea",
+    "license": "CC BY 4.0 derived graph; see data/README.md"
+  },
+  "topology": {
+    "directed_edges": 4469,
+    "largest_strongly_connected_component_nodes": 558,
+    "nodes": 1138,
+    "nodes_in_nontrivial_strongly_connected_components": 718,
+    "nontrivial_strongly_connected_components": 69
+  },
+  "delayed_oracle_success_rate": {
+    "0": 1.0,
+    "0.25": 1.0,
+    "0.5": 0.912109375,
+    "0.75": 0.9091796875,
+    "1": 0.9091796875,
+    "1.5": 0.876953125,
+    "2": 0.7626953125,
+    "3": 0.6240234375
+  },
+  "sensor_history_diagnostic": {
+    "claim_scope": "held-out external decoder for observability only; not part of the actor",
+    "episodes_per_split": 4096,
+    "normalized_mass_r2": {
+      "acceleration_and_stick_0.25_seconds": 0.9997703433036804,
+      "acceleration_only_0.25_seconds": 0.9829891920089722,
+      "acceleration_only_0.5_seconds": 0.9991444945335388
+    }
+  },
+  "native_motif": {
+    "active_acceleration_channel": "body-Z above-1g push channel",
+    "motif_edges": 21,
+    "motif_nodes": 18,
+    "retention_intervention": "after 0.75 s: black FPV, zero roll/pitch, constant 1g acceleration",
+    "throttle_return_edges_available": 8,
+    "training_label_only": "exact normalized mass",
+    "update_200": {
+      "live_0.75_seconds": {
+        "pearson_r": 0.8893654346466064,
+        "r2": 0.45172572135925293,
+        "signed_slope": 0.5153513550758362
+      },
+      "live_1.5_seconds": {
+        "pearson_r": 0.15053008496761322,
+        "r2": -8.503612518310547,
+        "signed_slope": 0.013149096630513668
+      },
+      "neutral_suffix_1_seconds": {
+        "pearson_r": 0.9060186743736267,
+        "r2": -0.5914913415908813,
+        "signed_slope": 0.5889160633087158
+      },
+      "neutral_suffix_1.5_seconds": {
+        "pearson_r": 0.9214608073234558,
+        "r2": -1.9153597354888916,
+        "signed_slope": 0.4470701217651367
+      }
+    }
+  },
+  "outcome": {
+    "flight_evaluation_run": false,
+    "goal_passed": false,
+    "promoted_checkpoint": false,
+    "return_fit_run": false,
+    "selected_update": 20,
+    "stable_encoding_criterion_passed": false
+  },
+  "full_local_reports": {
+    "runs/gate/acceleration-gain-audit-return-sources/report.json": "a62824046084f4151a5374dbc86e80b50491c83c75589ae2079b27de36b8112f",
+    "runs/gate/acceleration-prefix-retention/report.json": "4439b8565ce2179fce7edbdf3896ae8c43bc6565f123eefb7ee3f0f723ba5d31",
+    "runs/gate/mass-oracle-delay/report.json": "149f1e831ddf8041326e0d6ce1428b990146ca91e4935ce439dd88fb73bd0cf3",
+    "runs/gate/native-latent-motif-v1/report.json": "cd9c7b01e4190b15af1d6b5b27cae8a9bd0944e9af940271d29e4a519ee5a800",
+    "runs/gate/sensor-observability/report.json": "0a3701de68b396a5a57e43abaed537143fe0560627f191fb509941f9c326e8f8"
+  }
+}

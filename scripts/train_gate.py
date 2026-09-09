@@ -1310,15 +1310,23 @@ def evaluate_gate(
     frozen_acceleration: bool = False,
     swapped_acceleration: bool = False,
     disabled_acceleration_channel: str | None = None,
+    acceleration_gain: float = 1.0,
     frozen_proprioception: bool = False,
     swapped_proprioception: bool = False,
     privileged_mass_trim: tuple[float, float] | None = None,
+    privileged_mass_trim_after_seconds: float = 0.0,
     shuffled_privileged_mass: bool = False,
     balanced_strata: bool = False,
     teacher_takeover_at_seconds: float | None = None,
 ) -> dict[str, Any]:
     if disabled_acceleration_channel not in (None, "above_1g", "below_1g"):
         raise ValueError("disabled acceleration channel must be above_1g or below_1g")
+    if acceleration_gain <= 0.0:
+        raise ValueError("acceleration gain must be positive")
+    if privileged_mass_trim_after_seconds < 0.0:
+        raise ValueError("privileged mass-trim delay must be nonnegative")
+    if privileged_mass_trim is None and privileged_mass_trim_after_seconds != 0.0:
+        raise ValueError("privileged mass-trim delay requires a privileged mass trim")
     seed_everything(seed)
     quad = DifferentiableQuad(hover_config).to(device)
     sticks = ForelegStickPlant(hover_config).to(device)
@@ -1421,6 +1429,9 @@ def evaluate_gate(
                     specific_force[:, 2].clamp_(max=9.81)
                 else:
                     specific_force[:, 2].clamp_(min=9.81)
+            if acceleration_gain != 1.0:
+                specific_force = specific_force.clone()
+                specific_force[:, 2] = 9.81 + acceleration_gain * (specific_force[:, 2] - 9.81)
             stick_position = stick_state.position
             if frozen_proprioception:
                 stick_position = torch.zeros_like(stick_position)
@@ -1428,7 +1439,9 @@ def evaluate_gate(
             elif swapped_proprioception:
                 stick_position = stick_position[acceleration_permutation]
             privileged_bias = None
-            if privileged_mass_trim is not None:
+            if privileged_mass_trim is not None and step >= round(
+                privileged_mass_trim_after_seconds / hover_config.dt
+            ):
                 intercept, slope = privileged_mass_trim
                 privileged_bias = intercept + slope * privileged_mass_code
             motor, neural = controller(
@@ -1528,30 +1541,35 @@ def evaluate_gate(
             torch.cat(diagnostic_target),
             torch.cat(diagnostic_negative_offset),
         )
+    if teacher:
+        label = "privileged_teacher_through_foreleg_sticks"
+    elif teacher_takeover_at_seconds is not None:
+        label = f"connectome_then_teacher_at_{teacher_takeover_at_seconds}s"
+    elif frozen_visual:
+        label = "frozen_initial_image"
+    elif frozen_acceleration:
+        label = "constant_1g_accelerometer"
+    elif swapped_acceleration:
+        label = "mass_rank_swapped_accelerometer"
+    elif disabled_acceleration_channel is not None:
+        label = f"disabled_{disabled_acceleration_channel}_accelerometer_channel"
+    elif frozen_proprioception:
+        label = "constant_initial_throttle_joint_position"
+    elif swapped_proprioception:
+        label = "mass_rank_swapped_throttle_joint_position"
+    elif privileged_mass_trim is not None and shuffled_privileged_mass:
+        label = "shuffled_privileged_mass_conditioned_throttle_trim"
+    elif privileged_mass_trim is not None and privileged_mass_trim_after_seconds > 0.0:
+        label = (
+            "privileged_mass_conditioned_throttle_trim_after_"
+            f"{privileged_mass_trim_after_seconds:g}s"
+        )
+    elif privileged_mass_trim is not None:
+        label = "privileged_mass_conditioned_throttle_trim"
+    else:
+        label = "connectome"
     return {
-        "label": (
-            "privileged_teacher_through_foreleg_sticks"
-            if teacher
-            else f"connectome_then_teacher_at_{teacher_takeover_at_seconds}s"
-            if teacher_takeover_at_seconds is not None
-            else "frozen_initial_image"
-            if frozen_visual
-            else "constant_1g_accelerometer"
-            if frozen_acceleration
-            else "mass_rank_swapped_accelerometer"
-            if swapped_acceleration
-            else f"disabled_{disabled_acceleration_channel}_accelerometer_channel"
-            if disabled_acceleration_channel is not None
-            else "constant_initial_throttle_joint_position"
-            if frozen_proprioception
-            else "mass_rank_swapped_throttle_joint_position"
-            if swapped_proprioception
-            else "shuffled_privileged_mass_conditioned_throttle_trim"
-            if privileged_mass_trim is not None and shuffled_privileged_mass
-            else "privileged_mass_conditioned_throttle_trim"
-            if privileged_mass_trim is not None
-            else "connectome"
-        ),
+        "label": label,
         "episodes": episodes,
         "seconds": seconds,
         "success_rate": success_rate,
