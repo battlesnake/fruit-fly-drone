@@ -282,8 +282,39 @@ This is a material native-controller improvement, but it did **not** learn mass 
 Replacing body acceleration with a constant 1g slightly increased success to 50.0%, with
 nearly identical mass strata. The small motor-interface search found a better static trim,
 not a history-dependent calibration policy. The next selective rollout experiment must
-target recurrent acceleration-to-throttle paths and require a live-versus-constant or
-matched-trace causal advantage before promotion. The original 90% criterion remains unmet.
+target recurrent acceleration-to-throttle paths and use live-versus-constant and
+matched-trace controls before claiming sensor-dependent adaptation. Ordinary flight
+improvement can still count without such a claim. The original 90% criterion remains unmet.
+
+## Recurrent acceleration-path evolution strategy
+
+The next rollout experiment started from the promoted motor-interface controller and
+expanded plasticity to the 282 real edges on acceleration-to-throttle paths of at most
+four hops. It froze all biases, time constants, nonselected edges, topology, and
+transmitter signs. Search cases were adjacent light/heavy pairs with identical gate
+geometry; the objective rewarded light-mass improvement while penalizing any heavy-mass
+reward loss. Thirty-two antithetic directions and 32 common-seed flights per policy were
+used for 60 generations. Normalized center updates were capped at one quarter of the
+current exploration sigma.
+
+The generation-20 continuation test passed. The selected validation candidate improved
+light success by 9.38 percentage points and reduced heavy success by 1.56 points on 256
+matched flights. Thirteen selected edges had zero magnitude at the start; their initial
+0.000777 exploration magnitude produced a measurable `1.98e-5` early throttle-stick
+change, so the search genuinely allowed those anatomical edges to activate.
+
+Fresh testing rejected the candidate. On 1,024 matched flights, light success rose from
+4.88% to 12.89% (paired gain 8.01 points, 95% CI 5.65–10.36), heavy success moved from
+91.60% to 90.62%, and overall success rose from 48.24% to 51.76%. The preregistered light
+gain was ten points. A separate balanced evaluation improved overall success from 47.95%
+to 50.88% and mean radial error from 0.674 m to 0.614 m, but frozen-first-frame vision
+still scored 18.07%. Live acceleration beat constant 1g by 1.07 points, while swapping
+the acceleration traces within each matched light/heavy pair caused exactly zero net
+success change. This does not establish mass-specific acceleration adaptation.
+
+The four-hop mask is therefore closed without promotion or automatic expansion to six
+hops. The compact audit is in
+[`gate-acceleration-path-diagnostic-v1`](../artifacts/gate-acceleration-path-diagnostic-v1/).
 
 ## Reproduction
 
@@ -315,6 +346,12 @@ Re-run the bounded 109-edge search under AIRA with:
 ```bash
 scripts/run_gate_acceleration_es.sh \
   --output-dir runs/gate/acceleration-es-recheck
+```
+
+Re-run the matched recurrent acceleration-path search with:
+
+```bash
+scripts/run_gate_acceleration_path_es.sh
 ```
 
 Re-run the negative throttle-stick proprioception search and the privileged mass oracle

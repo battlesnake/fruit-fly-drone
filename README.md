@@ -138,6 +138,16 @@ however, so this is improved static native calibration—not learned mass infere
 still falls well short of the 90% goal. See
 [`gate-motor-interface-es-v1`](artifacts/gate-motor-interface-es-v1/).
 
+A follow-up rollout search exposed all 282 signed edges on existing acceleration-to-
+throttle paths of at most four hops while keeping every bias, time constant, and other
+edge frozen. On 1,024 fresh matched flights it improved light-mass success by 8.0 points
+(paired 95% CI 5.7–10.4), kept heavy-mass performance within one point, and raised overall
+success from 48.2% to 51.8%. It missed the preregistered ten-point light-mass threshold,
+however, and swapping acceleration traces within each matched mass pair caused no net
+success change. The candidate was therefore rejected: it neither replaces the 49.5%
+promoted controller nor demonstrates mass-specific acceleration adaptation. See the
+[`recurrent acceleration-path diagnostic`](artifacts/gate-acceleration-path-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.

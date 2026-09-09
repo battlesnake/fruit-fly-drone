@@ -17,6 +17,7 @@ ACCEL_V2_ARTIFACT_DIR = REPO_ROOT / "artifacts" / "gate-accel-v2"
 PROPRIO_DIAGNOSTIC_DIR = REPO_ROOT / "artifacts" / "gate-proprio-diagnostic-v1"
 MASS_ORACLE_DIR = REPO_ROOT / "artifacts" / "gate-mass-oracle-v1"
 MOTOR_INTERFACE_ES_DIR = REPO_ROOT / "artifacts" / "gate-motor-interface-es-v1"
+ACCELERATION_PATH_DIAGNOSTIC_DIR = REPO_ROOT / "artifacts" / "gate-acceleration-path-diagnostic-v1"
 
 
 def sha256(path: Path) -> str:
@@ -248,3 +249,42 @@ def test_motor_interface_es_checkpoint_is_native_and_materially_improved() -> No
     assert report["outcome"]["promotion_passed"] is True
     assert report["outcome"]["acceleration_dependence_demonstrated"] is False
     assert report["outcome"]["goal_passed"] is False
+
+
+def test_recurrent_acceleration_path_search_is_recorded_as_rejected() -> None:
+    report = json.loads((ACCELERATION_PATH_DIAGNOSTIC_DIR / "report.json").read_text())
+    vector = json.loads((ACCELERATION_PATH_DIAGNOSTIC_DIR / "candidate-vector.json").read_text())
+
+    assert report["source"]["checkpoint_sha256"] == sha256(MOTOR_INTERFACE_ES_DIR / "controller.pt")
+    assert report["source"]["graph_sha256"] == sha256(ACCEL_V2_ARTIFACT_DIR / "connectome.npz")
+    assert report["runtime_contract"]["external_history_features"] == 0
+    assert report["parameterization"]["selected_edges"] == 282
+    assert report["parameterization"]["biases_changed"] == 0
+    assert report["parameterization"]["time_constants_changed"] == 0
+    assert report["parameterization"]["initially_zero_selected_edges"] == 13
+    assert report["search"]["checkpoint_rule_passed"] is True
+    assert report["search"]["selected_candidate_vector_file_sha256"] == sha256(
+        ACCELERATION_PATH_DIAGNOSTIC_DIR / "candidate-vector.json"
+    )
+    assert len(vector["selected_edge_indices"]) == 282
+    assert len(vector["normalized_parameter_vector"]) == 282
+    vector_bytes = (
+        torch.tensor(vector["normalized_parameter_vector"], dtype=torch.float32)
+        .numpy()
+        .astype("<f4", copy=False)
+        .tobytes()
+    )
+    assert hashlib.sha256(vector_bytes).hexdigest() == report["search"]["selected_candidate_sha256"]
+
+    matched = report["fresh_matched_1024"]
+    assert matched["candidate"]["light_success_rate"] > matched["reference"]["light_success_rate"]
+    assert matched["paired_light_success_difference"]["confidence_95"][0] > 0.0
+    assert (
+        matched["candidate"]["heavy_success_rate"]
+        >= matched["reference"]["heavy_success_rate"] - 0.02
+    )
+    assert report["causal_acceleration_controls"]["acceleration_dependence_demonstrated"] is False
+    assert report["promotion"]["light_improvement_at_least_threshold"] is False
+    assert report["promotion"]["passed"] is False
+    assert report["promotion"]["checkpoint_promoted"] is False
+    assert not (ACCELERATION_PATH_DIAGNOSTIC_DIR / "controller.pt").exists()

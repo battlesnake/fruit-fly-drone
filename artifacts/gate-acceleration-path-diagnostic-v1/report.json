@@ -1,0 +1,149 @@
+{
+  "artifact": "gate-acceleration-path-diagnostic-v1",
+  "claim": "Four-hop recurrent acceleration-to-throttle plasticity improved light and overall flight success, but missed the preregistered light-mass promotion threshold and did not demonstrate mass-specific acceleration use.",
+  "source": {
+    "checkpoint": "artifacts/gate-motor-interface-es-v1/controller.pt",
+    "checkpoint_sha256": "28e2b0f887f30fe00a40ccaa97dd393949b2ea03257ffbbd0b433c69b56cd986",
+    "graph": "artifacts/gate-accel-v2/connectome.npz",
+    "graph_sha256": "d385bcb96f18fad904d263ab34cbead73c794f9c90961d7961671761d323f3ea",
+    "license": "CC BY 4.0 derived graph; see data/README.md"
+  },
+  "runtime_contract": {
+    "external_actor_state_machine": false,
+    "external_clock": false,
+    "external_history_features": 0,
+    "external_mass_input": false,
+    "external_scaler_or_estimator": false,
+    "state": "persistent leaky connectome membrane state only"
+  },
+  "parameterization": {
+    "selected_edges": 282,
+    "maximum_acceleration_to_throttle_path_hops": 4,
+    "changed_edges_in_selected_candidate": 282,
+    "maximum_edge_magnitude_change": 0.15316247940063477,
+    "biases_changed": 0,
+    "time_constants_changed": 0,
+    "topology_changed": false,
+    "transmitter_signs_changed": false,
+    "initially_zero_selected_edges": 13,
+    "scale_floor": 0.02590295299887657,
+    "initial_zero_edge_perturbation_magnitude": 0.0007770885899662972,
+    "maximum_early_throttle_difference_from_zero_edge_probe": 0.000019848346710205078,
+    "zero_vector_controller_step_maximum_motor_difference": 0.0,
+    "zero_vector_controller_step_maximum_state_difference": 5.960464477539063e-08
+  },
+  "search": {
+    "generations": 60,
+    "antithetic_directions": 32,
+    "development_episodes_per_policy": 32,
+    "development_seconds": 8.0,
+    "validation_episodes": 256,
+    "matched_light_heavy_geometry": true,
+    "checkpoint_generation": 20,
+    "checkpoint_rule_passed": true,
+    "selected_candidate_generation": 26,
+    "selected_candidate_sha256": "071ea2e188b48e621bee72e10c95875d80b0fb7cbe892c62320964f490f6f42b",
+    "selected_candidate_vector_file": "candidate-vector.json",
+    "selected_candidate_vector_file_sha256": "57001b42a97a6c7d25cfdd597256527015c33351e6369e0b3cdeab2aa00de445",
+    "selected_validation": {
+      "reference_light_success_rate": 0.03125,
+      "candidate_light_success_rate": 0.125,
+      "light_success_difference": 0.09375,
+      "reference_heavy_success_rate": 0.9140625,
+      "candidate_heavy_success_rate": 0.8984375,
+      "heavy_success_difference": -0.015625,
+      "continuation_eligible": true
+    }
+  },
+  "fresh_matched_1024": {
+    "reference": {
+      "success_rate": 0.482421875,
+      "light_success_rate": 0.048828125,
+      "heavy_success_rate": 0.916015625,
+      "crossing_radial_mean_m": 0.6768079996109009
+    },
+    "candidate": {
+      "success_rate": 0.517578125,
+      "light_success_rate": 0.12890625,
+      "heavy_success_rate": 0.90625,
+      "crossing_radial_mean_m": 0.6163962483406067
+    },
+    "paired_overall_success_difference": {
+      "mean": 0.03515625,
+      "confidence_95": [
+        0.021680711582303048,
+        0.048631788417696956
+      ],
+      "reference_only_successes": 8,
+      "candidate_only_successes": 44,
+      "independent_geometry_clusters": 512
+    },
+    "paired_light_success_difference": {
+      "mean": 0.080078125,
+      "confidence_95": [
+        0.05654508419334889,
+        0.10361116580665111
+      ],
+      "reference_only_successes": 0,
+      "candidate_only_successes": 41
+    }
+  },
+  "fresh_standard_balanced_1024": {
+    "reference": {
+      "success_rate": 0.4794921875,
+      "lower_mass_success_rate": 0.05078125,
+      "higher_mass_success_rate": 0.908203125,
+      "negative_lateral_success_rate": 0.494140625,
+      "positive_lateral_success_rate": 0.46484375,
+      "crossing_radial_mean_m": 0.6740463972091675
+    },
+    "candidate": {
+      "success_rate": 0.5087890625,
+      "lower_mass_success_rate": 0.12109375,
+      "higher_mass_success_rate": 0.896484375,
+      "negative_lateral_success_rate": 0.51171875,
+      "positive_lateral_success_rate": 0.505859375,
+      "crossing_radial_mean_m": 0.6135933995246887
+    },
+    "candidate_constant_1g_success_rate": 0.5029296875,
+    "candidate_frozen_first_frame_success_rate": 0.1806640625
+  },
+  "causal_acceleration_controls": {
+    "live_minus_constant_1g_success": {
+      "mean": 0.0107421875,
+      "confidence_95": [
+        0.002897688448429107,
+        0.01858668655157089
+      ],
+      "independent_geometry_clusters": 512
+    },
+    "live_minus_pair_swapped_success": {
+      "mean": 0.0,
+      "confidence_95": [
+        -0.0027095406036823986,
+        0.0027095406036823986
+      ],
+      "independent_geometry_clusters": 512
+    },
+    "confidence_interval_method": "paired normal approximation clustered by matched geometry",
+    "acceleration_dependence_demonstrated": false
+  },
+  "promotion": {
+    "required_light_success_improvement": 0.1,
+    "required_heavy_noninferiority_margin": 0.02,
+    "light_improvement_at_least_threshold": false,
+    "light_paired_confidence_interval_excludes_zero": true,
+    "heavy_nondegradation_within_margin": true,
+    "overall_success_improves": true,
+    "passed": false,
+    "checkpoint_promoted": false,
+    "goal_passed": false
+  },
+  "execution": {
+    "device": "NVIDIA GeForce RTX 5080",
+    "elapsed_seconds": 366.6845105870161,
+    "peak_cuda_memory_bytes": 281374720,
+    "full_ignored_report": "runs/gate/acceleration-path-es-v1/report.json",
+    "full_ignored_report_sha256": "1e589bd683783c0b8842e5affe241265be8889fed58faa4633bb4f6467c0c732"
+  }
+}
