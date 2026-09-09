@@ -120,6 +120,14 @@ retained under
 under [`gate-recurrence-diagnostic-v1`](artifacts/gate-recurrence-diagnostic-v1/) and its
 [`native-readout follow-up`](artifacts/gate-native-readout-diagnostic-v1/).
 
+A complete eight-second differentiable unroll was also rejected before training. Its
+forward simulation and early-to-late causal path were valid, but analytic parameter
+gradients exploded to about `1e17` and disagreed with measured directional derivatives by
+roughly fifteen orders of magnitude. The result rules out naive full-flight backpropagation
+at this checkpoint, not recurrent control itself; the next optimization stage uses
+complete-flight rollout scores without differentiating through history. See the compact
+[`trajectory-gradient diagnostic`](artifacts/gate-trajectory-gradient-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.

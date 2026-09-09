@@ -1,0 +1,101 @@
+{
+  "artifact": "gate-trajectory-gradient-diagnostic-v1",
+  "claim": "Naive full-flight backpropagation is numerically unusable at the source checkpoint even though the recurrent forward trajectory and early-to-late causal path are valid.",
+  "runtime_contract": {
+    "actor_inputs": [
+      "FPV image",
+      "roll/pitch",
+      "instantaneous body specific force",
+      "measured foreleg-stick position when mapped"
+    ],
+    "external_actor_state_machine": false,
+    "external_clock": false,
+    "external_history_features": 0,
+    "state": "persistent leaky connectome membrane state only"
+  },
+  "source": {
+    "checkpoint": "artifacts/gate-accel-v2/controller.pt",
+    "checkpoint_sha256": "1fbfeb15297ce57fd71b331fbe7b6d39facade7fafec266f6b678b8ddbbbb8b6",
+    "graph": "artifacts/gate-accel-v2/connectome.npz",
+    "graph_sha256": "d385bcb96f18fad904d263ab34cbead73c794f9c90961d7961671761d323f3ea",
+    "license": "CC BY 4.0 derived graph; see data/README.md"
+  },
+  "protocol": {
+    "full_horizon_steps": 800,
+    "full_horizon_seconds": 8.0,
+    "training_cases": 8,
+    "mirrored_pairs": 4,
+    "mass_range": [
+      0.92,
+      1.08
+    ],
+    "parameter_directions": [
+      "roll motor-pool antagonist bias contrast",
+      "normalized mixture of all eligible edges, biases, and time constants"
+    ],
+    "central_difference_maximum_parameter_perturbations": [
+      0.0001,
+      0.00003,
+      0.00001
+    ],
+    "required_relative_agreement": 0.1,
+    "full_horizon_bptt": true,
+    "mid_rollout_updates": false,
+    "gradient_clipping_applied_before_audit": false
+  },
+  "structural_checks": {
+    "teacher_identity_position_loss": 0.0,
+    "teacher_identity_velocity_loss": 0.0,
+    "deployed_motor_forward_max_absolute_difference": 0.0,
+    "deployed_state_forward_max_absolute_difference": 0.0,
+    "all_parameter_gradients_finite": true,
+    "late_loss_responded_to_first_roll_command": true
+  },
+  "numerical_results": {
+    "baseline_trajectory_loss": 3.0201046466827393,
+    "baseline_late_loss": 6.330972194671631,
+    "unchanged_replay_loss_range": 0.00015306472778320312,
+    "raw_gradient_l2_norm": {
+      "edge_magnitude": 1.3676800227095347e17,
+      "bias": 6.926434917207245e16,
+      "raw_time_constant": 833338411581440.0
+    },
+    "mixed_parameter_direction": {
+      "analytic_derivative": 1.4446194440798208e16,
+      "central_differences": [
+        52.318572998046875,
+        124.45847193400064,
+        102.1742820739746
+      ]
+    },
+    "roll_motor_bias_direction": {
+      "analytic_derivative": -1.939819617006387e16,
+      "central_differences": [
+        -18.45240592956543,
+        -61.64709726969401,
+        -55.39655685424804
+      ]
+    },
+    "late_loss_to_first_roll_command": {
+      "analytic_derivative": -5795542433005568.0,
+      "central_difference": -2.741575241088867,
+      "same_sign": true
+    },
+    "saturation_fraction": {
+      "recurrent_tanh_activity": 0.08780048787593842,
+      "membrane_near_bound": 0.0,
+      "motor_sigmoid": 0.0
+    },
+    "peak_cuda_memory_bytes": 1215850496
+  },
+  "outcome": {
+    "gradient_audit_passed": false,
+    "optimizer_updates_applied": 0,
+    "candidate_checkpoint": false,
+    "goal_passed": false,
+    "conclusion": "Do not clip and use these gradients; switch to a rollout-based optimizer that does not backpropagate through flight history."
+  },
+  "full_local_reports": {
+    "runs/gate/trajectory-gradient-probe-v1/report.json": "0feb13c7ae8ed5d57062af8ed4d7f59dd49cd5e372dccca373d1d451c3c2110b"
+  }
+}

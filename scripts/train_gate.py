@@ -603,8 +603,9 @@ def trajectory_tracking_rollout(
 ) -> dict[str, float]:
     """Backpropagate once through a complete actor-and-plant trajectory.
 
-    Teacher position and velocity are loss targets only.  The actor still receives just
-    FPV pixels, roll, pitch, and its own connectome state.
+    Teacher position and velocity are loss targets only. The actor receives the deployed
+    sensor contract: FPV pixels, roll/pitch, body specific force, measured foreleg-stick
+    position when mapped by the graph, and its own connectome state.
     """
 
     quad = DifferentiableQuad(hover_config).to(device)
@@ -661,6 +662,7 @@ def trajectory_tracking_rollout(
             student_state.euler[:, :2],
             neural,
             student_state.specific_force,
+            student_sticks.position,
         )
         student_rc_command, student_sticks = sticks(motor, student_sticks)
         previous_position = student_state.position
@@ -1240,6 +1242,15 @@ def _stratum_rate(success: torch.Tensor, mask: torch.Tensor) -> float | None:
     return float(success[mask].float().mean()) if bool(mask.any()) else None
 
 
+def _stratum_mean(
+    values: torch.Tensor,
+    mask: torch.Tensor,
+    valid: torch.Tensor,
+) -> float | None:
+    selected = mask & valid
+    return float(values[selected].mean()) if bool(selected.any()) else None
+
+
 def gate_selection_score(metrics: dict[str, Any], *, balance_mass: bool = False) -> float:
     """Rank checkpoints by hard held-out flights; larger is better."""
 
@@ -1601,6 +1612,10 @@ def evaluate_gate(
             else None
         ),
         "crossing_radial_mean_m": (float(valid_radial.mean()) if valid_radial.numel() else None),
+        "crossing_radial_mean_by_lateral_side_m": {
+            "negative": _stratum_mean(crossing_radial, negative_offset, crossing_mask),
+            "positive": _stratum_mean(crossing_radial, ~negative_offset, crossing_mask),
+        },
         "lateral_aperture_exceedance_rate": (
             float(
                 (valid_lateral.abs() > gate_config.inner_radius - gate_config.drone_radius)

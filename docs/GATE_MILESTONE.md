@@ -229,6 +229,29 @@ control calibration**. It should not be broadened into another motif search; the
 experiment should optimize bounded end-to-end trajectory loss through the recurrent actor
 and plant. Mass remains a training label only.
 
+That end-to-end route was audited before any update. A fresh `gate-accel-v2` controller
+was unrolled for the complete eight-second horizon through the recurrent graph, measured
+foreleg sticks, renderer, and vehicle. Applying identical teacher commands to cloned plants
+gave exactly zero position and velocity loss, and the gradient-enabled actor call matched
+the frozen deployment call exactly. Late trajectory loss also had a measurable causal
+response to a perturbation of the first roll command.
+
+Nevertheless, the full-horizon parameter gradients were unusable. Three unchanged CUDA
+replays varied by only 0.000153 in a loss of about 3.02, but raw gradient norms reached
+`1.37e17` for edges, `6.93e16` for biases, and `8.33e14` for time constants. The analytic
+mixed-parameter directional derivative was `1.44e16`, whereas central finite differences
+at perturbations from `1e-4` to `1e-5` were only 52–124. For the roll-motor bias contrast,
+the corresponding values were `-1.94e16` versus -18 to -62. Late-loss sensitivity to the
+first roll command likewise differed by fifteen orders of magnitude (`-5.80e15` analytic,
+`-2.74` measured). The harness therefore made no optimizer update.
+
+This is not evidence against recurrence. It shows that differentiating through 800 closed-
+loop recurrent/physics steps is catastrophically ill-conditioned at this checkpoint.
+Clipping would hide the magnitude without repairing the direction. The next training path
+must use complete-flight rollout scores—such as antithetic evolution strategies or policy
+gradients—without differentiating through the flight history. The deployed actor will
+still retain only its internal connectome state.
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:
