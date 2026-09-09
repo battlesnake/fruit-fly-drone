@@ -19,6 +19,9 @@ MASS_ORACLE_DIR = REPO_ROOT / "artifacts" / "gate-mass-oracle-v1"
 MOTOR_INTERFACE_ES_DIR = REPO_ROOT / "artifacts" / "gate-motor-interface-es-v1"
 ACCELERATION_PATH_DIAGNOSTIC_DIR = REPO_ROOT / "artifacts" / "gate-acceleration-path-diagnostic-v1"
 RECURRENT_PPO_DIAGNOSTIC_DIR = REPO_ROOT / "artifacts" / "gate-recurrent-ppo-diagnostic-v1"
+FULL_NETWORK_ORACLE_DIAGNOSTIC_DIR = (
+    REPO_ROOT / "artifacts" / "gate-full-network-oracle-diagnostic-v1"
+)
 
 
 def sha256(path: Path) -> str:
@@ -306,6 +309,7 @@ def test_recurrent_ppo_is_audited_and_recorded_as_rejected() -> None:
     assert report["protocol"]["selected_exploration_sigma"] == 0.00375
     assert report["protocol"]["critic_training_only"] is True
     assert report["protocol"]["physics_renderer_outside_autograd"] is True
+    assert report["protocol"]["proprioception_input_active"] is False
     assert report["native_forward_parity"]["passed"] is True
     assert report["batched_evaluator_parity"]["passed"] is True
     assert report["likelihood_gradient_audit"]["passed"] is True
@@ -340,3 +344,62 @@ def test_recurrent_ppo_is_audited_and_recorded_as_rejected() -> None:
     assert report["promotion"]["passed"] is False
     assert report["goal_passed"] is False
     assert not (RECURRENT_PPO_DIAGNOSTIC_DIR / "controller.pt").exists()
+
+
+def test_full_network_oracle_distillation_is_audited_and_rejected() -> None:
+    report = json.loads((FULL_NETWORK_ORACLE_DIAGNOSTIC_DIR / "report.json").read_text())
+    vector = json.loads((FULL_NETWORK_ORACLE_DIAGNOSTIC_DIR / "candidate-vector.json").read_text())
+    archive = torch.load(
+        FULL_NETWORK_ORACLE_DIAGNOSTIC_DIR / "archive.pt",
+        map_location="cpu",
+        weights_only=True,
+    )
+
+    assert report["student_checkpoint_sha256"] == sha256(MOTOR_INTERFACE_ES_DIR / "controller.pt")
+    assert report["teacher_checkpoint_sha256"] == sha256(ACCEL_V2_ARTIFACT_DIR / "controller.pt")
+    assert report["graph_sha256"] == sha256(ACCEL_V2_ARTIFACT_DIR / "connectome.npz")
+    assert report["protocol"]["all_native_edge_magnitudes_trainable"] is True
+    assert report["protocol"]["all_native_biases_trainable"] is True
+    assert report["protocol"]["all_native_time_constants_trainable"] is True
+    assert report["protocol"]["engineered_history_features"] is False
+    assert report["protocol"]["proprioception_input_active"] is False
+    assert report["student_collection_causality_audit"]["passed"] is True
+    assert report["teacher_takeover_audit"]["passed"] is True
+    assert all(
+        family["passed"]
+        for window in report["gradient_audits"].values()
+        for length in window.values()
+        for family in length.values()
+    )
+
+    assert vector["parameter_vector_sha256"] == report["selected_parameter_vector_sha256"]
+    vector_values = torch.tensor(
+        vector["edge_magnitude"] + vector["bias"] + vector["raw_time_constant"],
+        dtype=torch.float32,
+    )
+    assert (
+        hashlib.sha256(vector_values.numpy().astype("<f4", copy=False).tobytes()).hexdigest()
+        == report["selected_parameter_vector_sha256"]
+    )
+    selected = archive[report["selected_candidate"]]["parameters"]
+    archived_values = torch.cat(
+        (selected["edge_magnitude"], selected["bias"], selected["raw_time_constant"])
+    )
+    assert (
+        hashlib.sha256(archived_values.numpy().astype("<f4", copy=False).tobytes()).hexdigest()
+        == report["selected_parameter_vector_sha256"]
+    )
+
+    assert report["updates_completed"] == 100
+    assert report["early_stopped_at_checkpoint"] is True
+    final = report["final"]
+    assert final["reference"]["success_rate"] == 486 / 1024
+    assert final["candidate"]["success_rate"] == 441 / 1024
+    assert final["candidate"]["light_success_rate"] > final["reference"]["light_success_rate"]
+    assert final["candidate"]["heavy_success_rate"] < final["reference"]["heavy_success_rate"]
+    assert report["fresh_action_fidelity_passed"] is False
+    assert report["acceleration_dependence_demonstrated"] is False
+    assert report["promotion"]["passed"] is False
+    assert report["candidate_checkpoint"] is None
+    assert report["goal_passed"] is False
+    assert not (FULL_NETWORK_ORACLE_DIAGNOSTIC_DIR / "candidate.pt").exists()

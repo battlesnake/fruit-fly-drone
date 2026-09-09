@@ -2059,9 +2059,10 @@ def main() -> int:
                 "detached native connectome state"
             ),
             "deployed_actor_inputs": (
-                "current FPV, roll/pitch, body-Z specific force, foreleg throttle position, "
-                "and persistent native connectome state"
+                "current FPV, roll/pitch, body-Z specific force, and persistent native "
+                "connectome state"
             ),
+            "proprioception_input_active": controller.uses_proprioception,
             "development_horizon_seconds": args.rollout_seconds,
             "final_stress_test_horizon_seconds": args.final_seconds,
             "matched_light_heavy_geometry": True,

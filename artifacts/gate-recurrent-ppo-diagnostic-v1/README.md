@@ -4,9 +4,10 @@ This directory preserves the rejected recurrent-PPO experiment run from the prom
 `gate-motor-interface-es-v1` controller. It is evidence, not a deployable checkpoint:
 no `controller.pt` is present and the promoted controller remains unchanged.
 
-The actor used only current FPV, roll/pitch, body-Z specific force, foreleg throttle
-position, and its persistent native connectome state. Mass, gate pose, physical state,
-reward bookkeeping, and the critic were available during training only.
+The actor used only current FPV, roll/pitch, body-Z specific force, and its persistent
+native connectome state. The common API supplied stick position, but this graph had no
+proprioception nodes and ignored it. Mass, gate pose, physical state, reward bookkeeping,
+and the critic were available during training only.
 
 - `report.json` records the protocol, numerical audits, per-iteration training summaries,
   validation, fresh 1,024-flight evaluation, causal controls, and failed promotion checks.

@@ -327,7 +327,8 @@ steps of burn-in. There was no observation-history stack or added recurrent modu
 The full simulator stayed outside autograd. A training-only critic could see physical
 state, mass, gate pose, foreleg state, reward bookkeeping, and a detached copy of the
 native neural state. The deployed actor still received only current FPV, roll/pitch,
-body-Z specific force, current throttle-stick position, and its native recurrent state.
+body-Z specific force, and its native recurrent state. The common controller API also
+accepted stick position, but this graph had no proprioception nodes and ignored it.
 Exploration was calibrated separately for light and heavy cases and settled at a motor
 sigma of 0.00375. Native-forward parity, the previously validated batched evaluator,
 25-step finite-difference gradients, unchanged-policy recurrent replay, and truncated
@@ -347,6 +348,33 @@ that recurrent PPO can train through the native state without numerical or exter
 shortcuts, but this last-layer plasticity trades mass strata rather than learning useful
 acceleration-dependent compensation. The complete compact record is in
 [`gate-recurrent-ppo-diagnostic-v1`](../artifacts/gate-recurrent-ppo-diagnostic-v1/).
+
+A final bounded diagnostic opened the complete 1,138-neuron model: all 4,469 fixed-sign
+edge magnitudes, 1,138 biases, and 1,138 native membrane time constants. A frozen native
+controller with a training-only privileged mass bias generated absolute four-axis action
+labels on current-student histories. It shadowed the student's actual observations with
+its own recurrent state and never drove student collection physics. Twenty-five percent
+of each batch used clean oracle-driven trajectories only as a stabilizer. Prefixes were
+reconstructed from reset under the current student without gradients; gradients flowed
+through the following 50 native recurrent steps. No mass, timer, history features, teacher
+state, or added recurrence entered the student.
+
+Teacher-label-on/off CPU trajectories were bit identical. Separate edge-, bias-, and
+time-constant-only finite differences passed at both 25 and 50 steps on early and late
+windows. The oracle also recovered 95.3% of trials after shadowing and taking control at
+two seconds, so the target remained valid on student-visited states. The run stopped at
+its predeclared update-100 checkpoint because no snapshot jointly improved action fidelity,
+light flight, and heavy non-degradation.
+
+The student reduced average oracle-action error but did so by learning a shared throttle
+offset. On fresh student histories its matched light/heavy throttle slopes at 0.75, 1.5,
+and 3 seconds were 0.024, -0.0007, and 0.008. On 1,024 new matched flights, reference
+overall/light/heavy success was 47.46%/3.91%/91.02%, versus 43.07%/50.78%/35.35% for the
+selected diagnostic candidate. Constant-1g scored 42.68%, and pair-swapped acceleration
+scored 43.26%, compared with 43.07% live. This rules out useful accelerometer-conditioned
+hysteresis in this run despite the network's structural recurrence. The candidate was
+rejected and no checkpoint was emitted. The compact record is in
+[`gate-full-network-oracle-diagnostic-v1`](../artifacts/gate-full-network-oracle-diagnostic-v1/).
 
 ## Reproduction
 
@@ -391,6 +419,13 @@ Re-run the recurrent-PPO diagnostic under AIRA with:
 ```bash
 scripts/run_gate_recurrent_ppo.sh \
   --output-dir runs/gate/recurrent-ppo-v1
+```
+
+Re-run full-network oracle-action distillation with:
+
+```bash
+scripts/run_gate_full_network_oracle.sh \
+  --output-dir runs/gate/full-network-oracle-v1
 ```
 
 Re-run the negative throttle-stick proprioception search and the privileged mass oracle

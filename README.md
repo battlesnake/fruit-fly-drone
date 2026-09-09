@@ -159,6 +159,16 @@ and pair-swapped controls again ruled out an acceleration-adaptation claim, so n
 was promoted. See the
 [`recurrent-PPO diagnostic`](artifacts/gate-recurrent-ppo-diagnostic-v1/).
 
+A full-network follow-up then distilled the verified mass-aware native oracle into all
+4,469 edge magnitudes, 1,138 neuron biases, and 1,138 native time constants. The oracle
+only labeled current-student histories; it never drove the student's plant, and no mass,
+timer, history stack, or added recurrent module entered the actor. The optimization was
+numerically sound but learned a shared throttle offset rather than accelerometer-conditioned
+state: light success rose from 3.9% to 50.8% while heavy success fell from 91.0% to 35.4%.
+Constant-1g and matched-pair acceleration controls were indistinguishable from live input,
+so the candidate was rejected. See the
+[`full-network oracle-distillation diagnostic`](artifacts/gate-full-network-oracle-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.
