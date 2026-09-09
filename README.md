@@ -88,11 +88,13 @@ zero. This is a genuine vision-dependent traversal result, but it remains below 
 goal threshold and the broader random-geometry task is harder still.
 
 A follow-up direct-sensor checkpoint adds eight identified `wind_gravity` cells carrying
-body-Z accelerometer feedback through MaleCNS paths to the throttle leg pools. It reaches
-**41.9%**, versus 40.5% when the same trained controller is held at a constant 1g, and
-reduces mean vertical crossing error. This is a small causal improvement—not a solved
-gate task; see the [annular-gate milestone](docs/GATE_MILESTONE.md) for its controls and
-limitations.
+body-Z accelerometer feedback through MaleCNS paths to the throttle leg pools. A bounded
+complete-flight search over only 109 existing pathway edges raises the best result to
+**45.6%**, versus 40.5% when the same controller is held at a constant 1g. Disabling
+either signed sensor channel hurts performance, but swapping traces between vehicle
+masses does not; this is useful recurrent feedback, not demonstrated mass identification
+or a solved gate task. See the [annular-gate milestone](docs/GATE_MILESTONE.md) for the
+controls and limitations.
 
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover

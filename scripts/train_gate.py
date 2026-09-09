@@ -32,6 +32,7 @@ from flydrone.gate import (  # noqa: E402
     sample_annular_gates,
     teacher_gate_rc,
     teacher_gate_rc_with_accelerometer,
+    wrap_angle,
 )
 from flydrone.hover import (  # noqa: E402
     PLANT_MODEL_VERSION,
@@ -1308,8 +1309,12 @@ def evaluate_gate(
     frozen_visual: bool = False,
     frozen_acceleration: bool = False,
     swapped_acceleration: bool = False,
+    disabled_acceleration_channel: str | None = None,
+    balanced_strata: bool = False,
     teacher_takeover_at_seconds: float | None = None,
 ) -> dict[str, Any]:
+    if disabled_acceleration_channel not in (None, "above_1g", "below_1g"):
+        raise ValueError("disabled acceleration channel must be above_1g or below_1g")
     seed_everything(seed)
     quad = DifferentiableQuad(hover_config).to(device)
     sticks = ForelegStickPlant(hover_config).to(device)
@@ -1320,6 +1325,20 @@ def evaluate_gate(
         gate_config=gate_config,
         strict=True,
     )
+    if balanced_strata:
+        if episodes % 8:
+            raise ValueError("balanced mass/side/obliquity evaluation requires episodes % 8 == 0")
+        codes = torch.arange(episodes, device=device) % 8
+        mass_sign = torch.where(codes.bitwise_and(1).bool(), 1.0, -1.0)
+        lateral_sign = torch.where(codes.bitwise_and(2).bool(), 1.0, -1.0)
+        obliquity_sign = torch.where(codes.bitwise_and(4).bool(), 1.0, -1.0)
+        center = gate.center.clone()
+        center[:, 1] = center[:, 1].abs() * lateral_sign
+        bearing = torch.atan2(center[:, 1], center[:, 0])
+        sampled_bearing = torch.atan2(gate.center[:, 1], gate.center[:, 0])
+        obliquity_magnitude = wrap_angle(gate.yaw - sampled_bearing).abs()
+        gate = AnnularGate(center=center, yaw=bearing + obliquity_sign * obliquity_magnitude)
+        mass_scale = 1.0 + mass_sign * (mass_scale - 1.0).abs()
     stick_state = sticks.initial_state(episodes, device=device, dtype=torch.float32)
     neural = (
         controller.initial_state(episodes, device=device, dtype=torch.float32)
@@ -1382,6 +1401,12 @@ def evaluate_gate(
                 specific_force[:, 2] = 9.81
             elif swapped_acceleration:
                 specific_force = specific_force[acceleration_permutation]
+            if disabled_acceleration_channel is not None:
+                specific_force = specific_force.clone()
+                if disabled_acceleration_channel == "above_1g":
+                    specific_force[:, 2].clamp_(max=9.81)
+                else:
+                    specific_force[:, 2].clamp_(min=9.81)
             motor, neural = controller(image, state.euler[:, :2], neural, specific_force)
             if not frozen_visual and step < round(1.0 / hover_config.dt):
                 target_motor = motor_target_for_rc(
@@ -1472,6 +1497,8 @@ def evaluate_gate(
             if frozen_acceleration
             else "mass_rank_swapped_accelerometer"
             if swapped_acceleration
+            else f"disabled_{disabled_acceleration_channel}_accelerometer_channel"
+            if disabled_acceleration_channel is not None
             else "connectome"
         ),
         "episodes": episodes,
@@ -1479,6 +1506,7 @@ def evaluate_gate(
         "success_rate": success_rate,
         "pass_rate": float(passed.float().mean()),
         "clearance_rate": float(cleared.float().mean()),
+        "plane_crossing_rate": float((~crossing_radial.isnan()).float().mean()),
         "ring_collision_rate": float(collision.float().mean()),
         "miss_rate": float(missed.float().mean()),
         "lift_off_rate": float(lifted.float().mean()),
@@ -1501,6 +1529,16 @@ def evaluate_gate(
                 for percentile in (50, 75, 90, 95, 99)
             }
             if valid_radial.numel()
+            else None
+        ),
+        "crossing_radial_mean_m": (float(valid_radial.mean()) if valid_radial.numel() else None),
+        "lateral_aperture_exceedance_rate": (
+            float(
+                (valid_lateral.abs() > gate_config.inner_radius - gate_config.drone_radius)
+                .float()
+                .mean()
+            )
+            if valid_lateral.numel()
             else None
         ),
         "crossing_error_components_m": (

@@ -1,0 +1,1098 @@
+{
+  "all_changes_folded_into_connectome_parameters": true,
+  "checkpoint": "artifacts/gate-accel-v2/bias-calibration-candidate.pt",
+  "checkpoint_sha256": "8911647643747572c85fee6e448f1a737d73616a77ef2f41d95f9f730293ef02",
+  "deployed_runtime_parameters_added": 0,
+  "development": {
+    "bias=+0,gain=0": {
+      "acceleration_boundary_gain": 0.0,
+      "bias": 0.0,
+      "metrics": {
+        "balanced_selection_score": 0.44467905536293983,
+        "higher_mass_success_rate": 0.8518518805503845,
+        "lateral_absolute_error_mean_m": 0.47571295499801636,
+        "lower_mass_success_rate": 0.054054055362939835,
+        "miss_rate": 0.5,
+        "negative_offset_success_rate": 0.38461539149284363,
+        "positive_offset_success_rate": 0.3999999761581421,
+        "radial_error_p90_m": 1.5632100105285645,
+        "ring_collision_rate": 0.109375,
+        "success_rate": 0.390625,
+        "vertical_absolute_error_mean_m": 0.7428067922592163,
+        "vertical_signed_error_mean_m": 0.5479580760002136
+      }
+    },
+    "bias=+0,gain=0.5": {
+      "acceleration_boundary_gain": 0.5,
+      "bias": 0.0,
+      "metrics": {
+        "balanced_selection_score": 0.4717060849070549,
+        "higher_mass_success_rate": 0.8148148059844971,
+        "lateral_absolute_error_mean_m": 0.4634665250778198,
+        "lower_mass_success_rate": 0.0810810849070549,
+        "miss_rate": 0.5,
+        "negative_offset_success_rate": 0.41025641560554504,
+        "positive_offset_success_rate": 0.35999998450279236,
+        "radial_error_p90_m": 1.515269160270691,
+        "ring_collision_rate": 0.109375,
+        "success_rate": 0.390625,
+        "vertical_absolute_error_mean_m": 0.714028537273407,
+        "vertical_signed_error_mean_m": 0.5081732273101807
+      }
+    },
+    "bias=+0,gain=1": {
+      "acceleration_boundary_gain": 1.0,
+      "bias": 0.0,
+      "metrics": {
+        "balanced_selection_score": 0.4404560849070549,
+        "higher_mass_success_rate": 0.7407407760620117,
+        "lateral_absolute_error_mean_m": 0.45608484745025635,
+        "lower_mass_success_rate": 0.0810810849070549,
+        "miss_rate": 0.484375,
+        "negative_offset_success_rate": 0.38461539149284363,
+        "positive_offset_success_rate": 0.3199999928474426,
+        "radial_error_p90_m": 1.469374418258667,
+        "ring_collision_rate": 0.15625,
+        "success_rate": 0.359375,
+        "vertical_absolute_error_mean_m": 0.6887086629867554,
+        "vertical_signed_error_mean_m": 0.47290992736816406
+      }
+    },
+    "bias=+0,gain=2": {
+      "acceleration_boundary_gain": 2.0,
+      "bias": 0.0,
+      "metrics": {
+        "balanced_selection_score": 0.4248310849070549,
+        "higher_mass_success_rate": 0.7037037014961243,
+        "lateral_absolute_error_mean_m": 0.4562075436115265,
+        "lower_mass_success_rate": 0.0810810849070549,
+        "miss_rate": 0.46875,
+        "negative_offset_success_rate": 0.38461539149284363,
+        "positive_offset_success_rate": 0.2800000011920929,
+        "radial_error_p90_m": 1.388924479484558,
+        "ring_collision_rate": 0.1875,
+        "success_rate": 0.34375,
+        "vertical_absolute_error_mean_m": 0.6457696557044983,
+        "vertical_signed_error_mean_m": 0.4154786169528961
+      }
+    },
+    "bias=+0,gain=4": {
+      "acceleration_boundary_gain": 4.0,
+      "bias": 0.0,
+      "metrics": {
+        "balanced_selection_score": 0.0,
+        "higher_mass_success_rate": 0.0,
+        "lateral_absolute_error_mean_m": 0.44810041785240173,
+        "lower_mass_success_rate": 0.0,
+        "miss_rate": 0.390625,
+        "negative_offset_success_rate": 0.0,
+        "positive_offset_success_rate": 0.0,
+        "radial_error_p90_m": 1.264954686164856,
+        "ring_collision_rate": 0.3125,
+        "success_rate": 0.0,
+        "vertical_absolute_error_mean_m": 0.5792471170425415,
+        "vertical_signed_error_mean_m": 0.3407207429409027
+      }
+    },
+    "bias=+0.02,gain=0": {
+      "acceleration_boundary_gain": 0.0,
+      "bias": 0.02,
+      "metrics": {
+        "balanced_selection_score": 0.296875,
+        "higher_mass_success_rate": 0.7037037014961243,
+        "lateral_absolute_error_mean_m": 0.5399954915046692,
+        "lower_mass_success_rate": 0.0,
+        "miss_rate": 0.546875,
+        "negative_offset_success_rate": 0.3589743673801422,
+        "positive_offset_success_rate": 0.19999998807907104,
+        "radial_error_p90_m": 1.7935763597488403,
+        "ring_collision_rate": 0.15625,
+        "success_rate": 0.296875,
+        "vertical_absolute_error_mean_m": 0.8442275524139404,
+        "vertical_signed_error_mean_m": 0.7537497282028198
+      }
+    },
+    "bias=+0.02,gain=0.5": {
+      "acceleration_boundary_gain": 0.5,
+      "bias": 0.02,
+      "metrics": {
+        "balanced_selection_score": 0.3125,
+        "higher_mass_success_rate": 0.7407407760620117,
+        "lateral_absolute_error_mean_m": 0.5194281339645386,
+        "lower_mass_success_rate": 0.0,
+        "miss_rate": 0.546875,
+        "negative_offset_success_rate": 0.38461539149284363,
+        "positive_offset_success_rate": 0.19999998807907104,
+        "radial_error_p90_m": 1.6585580110549927,
+        "ring_collision_rate": 0.140625,
+        "success_rate": 0.3125,
+        "vertical_absolute_error_mean_m": 0.8059538006782532,
+        "vertical_signed_error_mean_m": 0.7078455090522766
+      }
+    },
+    "bias=+0.02,gain=1": {
+      "acceleration_boundary_gain": 1.0,
+      "bias": 0.02,
+      "metrics": {
+        "balanced_selection_score": 0.34375,
+        "higher_mass_success_rate": 0.8148148059844971,
+        "lateral_absolute_error_mean_m": 0.5036239624023438,
+        "lower_mass_success_rate": 0.0,
+        "miss_rate": 0.546875,
+        "negative_offset_success_rate": 0.41025641560554504,
+        "positive_offset_success_rate": 0.23999999463558197,
+        "radial_error_p90_m": 1.6219933032989502,
+        "ring_collision_rate": 0.109375,
+        "success_rate": 0.34375,
+        "vertical_absolute_error_mean_m": 0.7719447612762451,
+        "vertical_signed_error_mean_m": 0.666850209236145
+      }
+    },
+    "bias=+0.02,gain=2": {
+      "acceleration_boundary_gain": 2.0,
+      "bias": 0.02,
+      "metrics": {
+        "balanced_selection_score": 0.328125,
+        "higher_mass_success_rate": 0.7777777910232544,
+        "lateral_absolute_error_mean_m": 0.49172618985176086,
+        "lower_mass_success_rate": 0.0,
+        "miss_rate": 0.53125,
+        "negative_offset_success_rate": 0.41025641560554504,
+        "positive_offset_success_rate": 0.19999998807907104,
+        "radial_error_p90_m": 1.5322514772415161,
+        "ring_collision_rate": 0.140625,
+        "success_rate": 0.328125,
+        "vertical_absolute_error_mean_m": 0.7209292650222778,
+        "vertical_signed_error_mean_m": 0.6023653149604797
+      }
+    },
+    "bias=+0.02,gain=4": {
+      "acceleration_boundary_gain": 4.0,
+      "bias": 0.02,
+      "metrics": {
+        "balanced_selection_score": 0.03125,
+        "higher_mass_success_rate": 0.07407407462596893,
+        "lateral_absolute_error_mean_m": 0.4904867112636566,
+        "lower_mass_success_rate": 0.0,
+        "miss_rate": 0.5,
+        "negative_offset_success_rate": 0.025641025975346565,
+        "positive_offset_success_rate": 0.03999999910593033,
+        "radial_error_p90_m": 1.407109260559082,
+        "ring_collision_rate": 0.1875,
+        "success_rate": 0.03125,
+        "vertical_absolute_error_mean_m": 0.6403958797454834,
+        "vertical_signed_error_mean_m": 0.5117470026016235
+      }
+    },
+    "bias=-0.02,gain=0": {
+      "acceleration_boundary_gain": 0.0,
+      "bias": -0.02,
+      "metrics": {
+        "balanced_selection_score": 0.42060811072587967,
+        "higher_mass_success_rate": 0.5925925970077515,
+        "lateral_absolute_error_mean_m": 0.4273263216018677,
+        "lower_mass_success_rate": 0.10810811072587967,
+        "miss_rate": 0.515625,
+        "negative_offset_success_rate": 0.28205129504203796,
+        "positive_offset_success_rate": 0.35999998450279236,
+        "radial_error_p90_m": 1.390007734298706,
+        "ring_collision_rate": 0.171875,
+        "success_rate": 0.3125,
+        "vertical_absolute_error_mean_m": 0.6668786406517029,
+        "vertical_signed_error_mean_m": 0.3339046835899353
+      }
+    },
+    "bias=-0.02,gain=0.5": {
+      "acceleration_boundary_gain": 0.5,
+      "bias": -0.02,
+      "metrics": {
+        "balanced_selection_score": 0.40498311072587967,
+        "higher_mass_success_rate": 0.5555555820465088,
+        "lateral_absolute_error_mean_m": 0.4252591133117676,
+        "lower_mass_success_rate": 0.10810811072587967,
+        "miss_rate": 0.5,
+        "negative_offset_success_rate": 0.3076923191547394,
+        "positive_offset_success_rate": 0.2800000011920929,
+        "radial_error_p90_m": 1.3562439680099487,
+        "ring_collision_rate": 0.203125,
+        "success_rate": 0.296875,
+        "vertical_absolute_error_mean_m": 0.6434605717658997,
+        "vertical_signed_error_mean_m": 0.3004530072212219
+      }
+    },
+    "bias=-0.02,gain=1": {
+      "acceleration_boundary_gain": 1.0,
+      "bias": -0.02,
+      "metrics": {
+        "balanced_selection_score": 0.43201014399528503,
+        "higher_mass_success_rate": 0.5185185074806213,
+        "lateral_absolute_error_mean_m": 0.42296919226646423,
+        "lower_mass_success_rate": 0.13513514399528503,
+        "miss_rate": 0.453125,
+        "negative_offset_success_rate": 0.28205129504203796,
+        "positive_offset_success_rate": 0.3199999928474426,
+        "radial_error_p90_m": 1.3190758228302002,
+        "ring_collision_rate": 0.25,
+        "success_rate": 0.296875,
+        "vertical_absolute_error_mean_m": 0.6219770312309265,
+        "vertical_signed_error_mean_m": 0.27064254879951477
+      }
+    },
+    "bias=-0.02,gain=2": {
+      "acceleration_boundary_gain": 2.0,
+      "bias": -0.02,
+      "metrics": {
+        "balanced_selection_score": 0.5016891956329346,
+        "higher_mass_success_rate": 0.48148149251937866,
+        "lateral_absolute_error_mean_m": 0.4128301739692688,
+        "lower_mass_success_rate": 0.18918919563293457,
+        "miss_rate": 0.40625,
+        "negative_offset_success_rate": 0.3333333432674408,
+        "positive_offset_success_rate": 0.2800000011920929,
+        "radial_error_p90_m": 1.2489213943481445,
+        "ring_collision_rate": 0.28125,
+        "success_rate": 0.3125,
+        "vertical_absolute_error_mean_m": 0.5881178975105286,
+        "vertical_signed_error_mean_m": 0.22582833468914032
+      }
+    },
+    "bias=-0.02,gain=4": {
+      "acceleration_boundary_gain": 4.0,
+      "bias": -0.02,
+      "metrics": {
+        "balanced_selection_score": 0.046875,
+        "higher_mass_success_rate": 0.1111111119389534,
+        "lateral_absolute_error_mean_m": 0.39222246408462524,
+        "lower_mass_success_rate": 0.0,
+        "miss_rate": 0.28125,
+        "negative_offset_success_rate": 0.0,
+        "positive_offset_success_rate": 0.11999999731779099,
+        "radial_error_p90_m": 1.1520718336105347,
+        "ring_collision_rate": 0.421875,
+        "success_rate": 0.046875,
+        "vertical_absolute_error_mean_m": 0.5305344462394714,
+        "vertical_signed_error_mean_m": 0.16475246846675873
+      }
+    },
+    "bias=-0.05,gain=0": {
+      "acceleration_boundary_gain": 0.0,
+      "bias": -0.05,
+      "metrics": {
+        "balanced_selection_score": 0.45059122145175934,
+        "higher_mass_success_rate": 0.25925925374031067,
+        "lateral_absolute_error_mean_m": 0.3911390006542206,
+        "lower_mass_success_rate": 0.21621622145175934,
+        "miss_rate": 0.484375,
+        "negative_offset_success_rate": 0.1794871836900711,
+        "positive_offset_success_rate": 0.3199999928474426,
+        "radial_error_p90_m": 1.1512058973312378,
+        "ring_collision_rate": 0.28125,
+        "success_rate": 0.234375,
+        "vertical_absolute_error_mean_m": 0.5996699333190918,
+        "vertical_signed_error_mean_m": 0.021714359521865845
+      }
+    },
+    "bias=-0.05,gain=0.5": {
+      "acceleration_boundary_gain": 0.5,
+      "bias": -0.05,
+      "metrics": {
+        "balanced_selection_score": 0.5873842537403107,
+        "higher_mass_success_rate": 0.25925925374031067,
+        "lateral_absolute_error_mean_m": 0.3791385889053345,
+        "lower_mass_success_rate": 0.37837839126586914,
+        "miss_rate": 0.484375,
+        "negative_offset_success_rate": 0.25641027092933655,
+        "positive_offset_success_rate": 0.4399999976158142,
+        "radial_error_p90_m": 1.1283087730407715,
+        "ring_collision_rate": 0.1875,
+        "success_rate": 0.328125,
+        "vertical_absolute_error_mean_m": 0.5848590135574341,
+        "vertical_signed_error_mean_m": -0.005554363131523132
+      }
+    },
+    "bias=-0.05,gain=1": {
+      "acceleration_boundary_gain": 1.0,
+      "bias": -0.05,
+      "metrics": {
+        "balanced_selection_score": 0.6030092537403107,
+        "higher_mass_success_rate": 0.25925925374031067,
+        "lateral_absolute_error_mean_m": 0.3687214255332947,
+        "lower_mass_success_rate": 0.4054054021835327,
+        "miss_rate": 0.4375,
+        "negative_offset_success_rate": 0.28205129504203796,
+        "positive_offset_success_rate": 0.4399999976158142,
+        "radial_error_p90_m": 1.1177704334259033,
+        "ring_collision_rate": 0.21875,
+        "success_rate": 0.34375,
+        "vertical_absolute_error_mean_m": 0.5705218315124512,
+        "vertical_signed_error_mean_m": -0.030917929485440254
+      }
+    },
+    "bias=-0.05,gain=2": {
+      "acceleration_boundary_gain": 2.0,
+      "bias": -0.05,
+      "metrics": {
+        "balanced_selection_score": 0.5972222238779068,
+        "higher_mass_success_rate": 0.2222222238779068,
+        "lateral_absolute_error_mean_m": 0.33924517035484314,
+        "lower_mass_success_rate": 0.4864864945411682,
+        "miss_rate": 0.390625,
+        "negative_offset_success_rate": 0.3589743673801422,
+        "positive_offset_success_rate": 0.3999999761581421,
+        "radial_error_p90_m": 1.1174795627593994,
+        "ring_collision_rate": 0.234375,
+        "success_rate": 0.375,
+        "vertical_absolute_error_mean_m": 0.549795925617218,
+        "vertical_signed_error_mean_m": -0.06779178977012634
+      }
+    },
+    "bias=-0.05,gain=4": {
+      "acceleration_boundary_gain": 4.0,
+      "bias": -0.05,
+      "metrics": {
+        "balanced_selection_score": 0.0,
+        "higher_mass_success_rate": 0.0,
+        "lateral_absolute_error_mean_m": 0.31956613063812256,
+        "lower_mass_success_rate": 0.0,
+        "miss_rate": 0.328125,
+        "negative_offset_success_rate": 0.0,
+        "positive_offset_success_rate": 0.0,
+        "radial_error_p90_m": 1.0773015022277832,
+        "ring_collision_rate": 0.34375,
+        "success_rate": 0.0,
+        "vertical_absolute_error_mean_m": 0.5095707774162292,
+        "vertical_signed_error_mean_m": -0.11306536197662354
+      }
+    },
+    "bias=-0.1,gain=0": {
+      "acceleration_boundary_gain": 0.0,
+      "bias": -0.1,
+      "metrics": {
+        "balanced_selection_score": 0.390625,
+        "higher_mass_success_rate": 0.0,
+        "lateral_absolute_error_mean_m": 0.3689331114292145,
+        "lower_mass_success_rate": 0.6756756901741028,
+        "miss_rate": 0.390625,
+        "negative_offset_success_rate": 0.3076923191547394,
+        "positive_offset_success_rate": 0.5199999809265137,
+        "radial_error_p90_m": 1.1224422454833984,
+        "ring_collision_rate": 0.21875,
+        "success_rate": 0.390625,
+        "vertical_absolute_error_mean_m": 0.5926122665405273,
+        "vertical_signed_error_mean_m": -0.4559420347213745
+      }
+    },
+    "bias=-0.1,gain=0.5": {
+      "acceleration_boundary_gain": 0.5,
+      "bias": -0.1,
+      "metrics": {
+        "balanced_selection_score": 0.421875,
+        "higher_mass_success_rate": 0.0,
+        "lateral_absolute_error_mean_m": 0.3548468351364136,
+        "lower_mass_success_rate": 0.7297297716140747,
+        "miss_rate": 0.390625,
+        "negative_offset_success_rate": 0.3589743673801422,
+        "positive_offset_success_rate": 0.5199999809265137,
+        "radial_error_p90_m": 1.1241875886917114,
+        "ring_collision_rate": 0.1875,
+        "success_rate": 0.421875,
+        "vertical_absolute_error_mean_m": 0.592860758304596,
+        "vertical_signed_error_mean_m": -0.47255226969718933
+      }
+    },
+    "bias=-0.1,gain=1": {
+      "acceleration_boundary_gain": 1.0,
+      "bias": -0.1,
+      "metrics": {
+        "balanced_selection_score": 0.421875,
+        "higher_mass_success_rate": 0.0,
+        "lateral_absolute_error_mean_m": 0.3504389524459839,
+        "lower_mass_success_rate": 0.7297297716140747,
+        "miss_rate": 0.375,
+        "negative_offset_success_rate": 0.38461539149284363,
+        "positive_offset_success_rate": 0.47999998927116394,
+        "radial_error_p90_m": 1.1266499757766724,
+        "ring_collision_rate": 0.203125,
+        "success_rate": 0.421875,
+        "vertical_absolute_error_mean_m": 0.5929995179176331,
+        "vertical_signed_error_mean_m": -0.4865802228450775
+      }
+    },
+    "bias=-0.1,gain=2": {
+      "acceleration_boundary_gain": 2.0,
+      "bias": -0.1,
+      "metrics": {
+        "balanced_selection_score": 0.421875,
+        "higher_mass_success_rate": 0.0,
+        "lateral_absolute_error_mean_m": 0.346113383769989,
+        "lower_mass_success_rate": 0.7297297716140747,
+        "miss_rate": 0.375,
+        "negative_offset_success_rate": 0.41025641560554504,
+        "positive_offset_success_rate": 0.4399999976158142,
+        "radial_error_p90_m": 1.1266149282455444,
+        "ring_collision_rate": 0.203125,
+        "success_rate": 0.421875,
+        "vertical_absolute_error_mean_m": 0.5935305953025818,
+        "vertical_signed_error_mean_m": -0.5071344375610352
+      }
+    },
+    "bias=-0.1,gain=4": {
+      "acceleration_boundary_gain": 4.0,
+      "bias": -0.1,
+      "metrics": {
+        "balanced_selection_score": 0.0,
+        "higher_mass_success_rate": 0.0,
+        "lateral_absolute_error_mean_m": 0.3480709493160248,
+        "lower_mass_success_rate": 0.0,
+        "miss_rate": 0.40625,
+        "negative_offset_success_rate": 0.0,
+        "positive_offset_success_rate": 0.0,
+        "radial_error_p90_m": 1.1221052408218384,
+        "ring_collision_rate": 0.25,
+        "success_rate": 0.0,
+        "vertical_absolute_error_mean_m": 0.5872466564178467,
+        "vertical_signed_error_mean_m": -0.5219402313232422
+      }
+    }
+  },
+  "development_ranking": [
+    "bias=-0.05,gain=1",
+    "bias=-0.05,gain=2",
+    "bias=-0.05,gain=0.5",
+    "bias=-0.02,gain=2",
+    "bias=+0,gain=0.5",
+    "bias=-0.05,gain=0",
+    "bias=+0,gain=0",
+    "bias=+0,gain=1",
+    "bias=-0.02,gain=1",
+    "bias=+0,gain=2",
+    "bias=-0.1,gain=0.5",
+    "bias=-0.1,gain=2",
+    "bias=-0.1,gain=1",
+    "bias=-0.02,gain=0",
+    "bias=-0.02,gain=0.5",
+    "bias=-0.1,gain=0",
+    "bias=+0.02,gain=1",
+    "bias=+0.02,gain=2",
+    "bias=+0.02,gain=0.5",
+    "bias=+0.02,gain=0",
+    "bias=-0.02,gain=4",
+    "bias=+0.02,gain=4",
+    "bias=-0.05,gain=4",
+    "bias=-0.1,gain=4",
+    "bias=+0,gain=4"
+  ],
+  "device": "cuda",
+  "elapsed_seconds": 232.48018685600255,
+  "final": {
+    "baseline": {
+      "acceleration_boundary_gain": 1.0,
+      "bias": 0.0,
+      "metrics": {
+        "clearance_rate": 0.380859375,
+        "crossing_angle_mean_degrees": 22.128437042236328,
+        "crossing_clearance_mean_m": 0.15741917490959167,
+        "crossing_error_components_m": {
+          "lateral_absolute_mean": 0.40290966629981995,
+          "lateral_absolute_p90": 0.8997191190719604,
+          "lateral_signed_mean": -0.08890628069639206,
+          "vertical_absolute_mean": 0.6352159976959229,
+          "vertical_absolute_p90": 1.3129302263259888,
+          "vertical_signed_mean": 0.41445499658584595
+        },
+        "crossing_radial_quantiles_m": {
+          "50": 0.6550981998443604,
+          "75": 1.1724927425384521,
+          "90": 1.4511276483535767,
+          "95": 1.6053805351257324,
+          "99": 1.836944818496704
+        },
+        "early_roll_action_diagnostic": {
+          "correlation": 0.1906951516866684,
+          "meaningful_sign_accuracy": 0.7336034774780273,
+          "prediction_mean": -0.00017277787264902145,
+          "prediction_mean_negative_offset": 0.0007515451870858669,
+          "prediction_mean_positive_offset": -0.0009600403718650341,
+          "prediction_std": 0.005778862163424492,
+          "regression_slope": 0.027547849342226982,
+          "samples": 102400,
+          "target_mean": -0.011582528240978718,
+          "target_mean_negative_offset": 0.03128543496131897,
+          "target_mean_positive_offset": -0.04809394106268883,
+          "target_std": 0.040003158152103424
+        },
+        "episodes": 1024,
+        "gate_obliquity_min_degrees": 20.0,
+        "goal_pass": false,
+        "ground_recontact_rate": 0.0,
+        "initial_visual_centre_offset_min_degrees": 16.525043487548828,
+        "label": "connectome",
+        "lift_off_rate": 1.0,
+        "max_tilt_mean_degrees": 18.37257957458496,
+        "miss_rate": 0.384765625,
+        "pass_rate": 0.380859375,
+        "pass_time_mean_seconds": 5.591640472412109,
+        "pass_time_p95_seconds": 5.690000057220459,
+        "ring_collision_rate": 0.234375,
+        "seconds": 12.0,
+        "success_by_stratum": {
+          "farther_gate": 0.380859375,
+          "higher_gate": 0.380859375,
+          "higher_mass": 0.709486186504364,
+          "higher_offset": 0.380859375,
+          "lower_gate": null,
+          "lower_mass": 0.05984555929899216,
+          "lower_offset": null,
+          "nearer_gate": null,
+          "negative_lateral_offset": 0.43736732006073,
+          "obliquity_10_to_20_degrees": null,
+          "obliquity_20_to_30_degrees": 0.380859375,
+          "positive_lateral_offset": 0.33273056149482727
+        },
+        "success_rate": 0.380859375,
+        "sustained_stick_saturation_rate": 0.0
+      }
+    },
+    "winner": {
+      "acceleration_boundary_gain": 0.5,
+      "bias": -0.05,
+      "metrics": {
+        "clearance_rate": 0.3525390625,
+        "crossing_angle_mean_degrees": 22.719728469848633,
+        "crossing_clearance_mean_m": 0.157077357172966,
+        "crossing_error_components_m": {
+          "lateral_absolute_mean": 0.3500053286552429,
+          "lateral_absolute_p90": 0.5975171327590942,
+          "lateral_signed_mean": -0.18368518352508545,
+          "vertical_absolute_mean": 0.5809251070022583,
+          "vertical_absolute_p90": 1.100000023841858,
+          "vertical_signed_mean": -0.08679017424583435
+        },
+        "crossing_radial_quantiles_m": {
+          "50": 0.6671549081802368,
+          "75": 0.9872668981552124,
+          "90": 1.154328465461731,
+          "95": 1.3113410472869873,
+          "99": 1.7961535453796387
+        },
+        "early_roll_action_diagnostic": {
+          "correlation": 0.19702772796154022,
+          "meaningful_sign_accuracy": 0.7514843344688416,
+          "prediction_mean": -1.4801802535657771e-05,
+          "prediction_mean_negative_offset": 0.0009701609378680587,
+          "prediction_mean_positive_offset": -0.0008537123212590814,
+          "prediction_std": 0.005756337195634842,
+          "regression_slope": 0.028364272788167,
+          "samples": 102400,
+          "target_mean": -0.011576157994568348,
+          "target_mean_negative_offset": 0.03126774728298187,
+          "target_mean_positive_offset": -0.04806707799434662,
+          "target_std": 0.03998544439673424
+        },
+        "episodes": 1024,
+        "gate_obliquity_min_degrees": 20.0,
+        "goal_pass": false,
+        "ground_recontact_rate": 0.0166015625,
+        "initial_visual_centre_offset_min_degrees": 16.525043487548828,
+        "label": "connectome",
+        "lift_off_rate": 0.87890625,
+        "max_tilt_mean_degrees": 18.20669174194336,
+        "miss_rate": 0.3544921875,
+        "pass_rate": 0.3525390625,
+        "pass_time_mean_seconds": 5.865207195281982,
+        "pass_time_p95_seconds": 5.989999771118164,
+        "ring_collision_rate": 0.29296875,
+        "seconds": 12.0,
+        "success_by_stratum": {
+          "farther_gate": 0.3525390625,
+          "higher_gate": 0.3525390625,
+          "higher_mass": 0.2648221552371979,
+          "higher_offset": 0.3525390625,
+          "lower_gate": null,
+          "lower_mass": 0.4382239282131195,
+          "lower_offset": null,
+          "nearer_gate": null,
+          "negative_lateral_offset": 0.3524416387081146,
+          "obliquity_10_to_20_degrees": null,
+          "obliquity_20_to_30_degrees": 0.3525390625,
+          "positive_lateral_offset": 0.35262206196784973
+        },
+        "success_rate": 0.3525390625,
+        "sustained_stick_saturation_rate": 0.0
+      }
+    },
+    "winner_bias_acceleration_disconnected": {
+      "acceleration_boundary_gain": 0.0,
+      "bias": -0.05,
+      "metrics": {
+        "clearance_rate": 0.345703125,
+        "crossing_angle_mean_degrees": 22.829561233520508,
+        "crossing_clearance_mean_m": 0.16040636599063873,
+        "crossing_error_components_m": {
+          "lateral_absolute_mean": 0.35668233036994934,
+          "lateral_absolute_p90": 0.8353816270828247,
+          "lateral_signed_mean": -0.16455557942390442,
+          "vertical_absolute_mean": 0.5919579267501831,
+          "vertical_absolute_p90": 1.100000023841858,
+          "vertical_signed_mean": -0.061787284910678864
+        },
+        "crossing_radial_quantiles_m": {
+          "50": 0.6877765655517578,
+          "75": 1.0151989459991455,
+          "90": 1.1777939796447754,
+          "95": 1.3629640340805054,
+          "99": 1.9427305459976196
+        },
+        "early_roll_action_diagnostic": {
+          "correlation": 0.19684085249900818,
+          "meaningful_sign_accuracy": 0.751269519329071,
+          "prediction_mean": -1.2540866009658203e-05,
+          "prediction_mean_negative_offset": 0.0009715520427562296,
+          "prediction_mean_positive_offset": -0.0008507103193551302,
+          "prediction_std": 0.005755530204623938,
+          "regression_slope": 0.028333401307463646,
+          "samples": 102400,
+          "target_mean": -0.01157599687576294,
+          "target_mean_negative_offset": 0.0312679298222065,
+          "target_mean_positive_offset": -0.04806693643331528,
+          "target_std": 0.03998544067144394
+        },
+        "episodes": 1024,
+        "gate_obliquity_min_degrees": 20.0,
+        "goal_pass": false,
+        "ground_recontact_rate": 0.0078125,
+        "initial_visual_centre_offset_min_degrees": 16.525043487548828,
+        "label": "connectome",
+        "lift_off_rate": 0.8896484375,
+        "max_tilt_mean_degrees": 17.89853286743164,
+        "miss_rate": 0.3701171875,
+        "pass_rate": 0.345703125,
+        "pass_time_mean_seconds": 5.964491367340088,
+        "pass_time_p95_seconds": 6.099999904632568,
+        "ring_collision_rate": 0.2841796875,
+        "seconds": 12.0,
+        "success_by_stratum": {
+          "farther_gate": 0.345703125,
+          "higher_gate": 0.345703125,
+          "higher_mass": 0.30039528012275696,
+          "higher_offset": 0.345703125,
+          "lower_gate": null,
+          "lower_mass": 0.3899613916873932,
+          "lower_offset": null,
+          "nearer_gate": null,
+          "negative_lateral_offset": 0.31210193037986755,
+          "obliquity_10_to_20_degrees": null,
+          "obliquity_20_to_30_degrees": 0.345703125,
+          "positive_lateral_offset": 0.3743218779563904
+        },
+        "success_rate": 0.345703125,
+        "sustained_stick_saturation_rate": 0.0
+      }
+    },
+    "winner_constant_1g": {
+      "acceleration_boundary_gain": 0.5,
+      "bias": -0.05,
+      "metrics": {
+        "clearance_rate": 0.3466796875,
+        "crossing_angle_mean_degrees": 22.82602882385254,
+        "crossing_clearance_mean_m": 0.1599518060684204,
+        "crossing_error_components_m": {
+          "lateral_absolute_mean": 0.35668596625328064,
+          "lateral_absolute_p90": 0.8353540897369385,
+          "lateral_signed_mean": -0.16455809772014618,
+          "vertical_absolute_mean": 0.5919626951217651,
+          "vertical_absolute_p90": 1.100000023841858,
+          "vertical_signed_mean": -0.061781518161296844
+        },
+        "crossing_radial_quantiles_m": {
+          "50": 0.6875262260437012,
+          "75": 1.0151948928833008,
+          "90": 1.1777937412261963,
+          "95": 1.3630170822143555,
+          "99": 1.9427345991134644
+        },
+        "early_roll_action_diagnostic": {
+          "correlation": 0.19684086740016937,
+          "meaningful_sign_accuracy": 0.751269519329071,
+          "prediction_mean": -1.2540807801997289e-05,
+          "prediction_mean_negative_offset": 0.0009715522173792124,
+          "prediction_mean_positive_offset": -0.000850710435770452,
+          "prediction_std": 0.005755530204623938,
+          "regression_slope": 0.028333403170108795,
+          "samples": 102400,
+          "target_mean": -0.01157599687576294,
+          "target_mean_negative_offset": 0.0312679298222065,
+          "target_mean_positive_offset": -0.04806693643331528,
+          "target_std": 0.03998544067144394
+        },
+        "episodes": 1024,
+        "gate_obliquity_min_degrees": 20.0,
+        "goal_pass": false,
+        "ground_recontact_rate": 0.0078125,
+        "initial_visual_centre_offset_min_degrees": 16.525043487548828,
+        "label": "constant_1g_accelerometer",
+        "lift_off_rate": 0.8896484375,
+        "max_tilt_mean_degrees": 17.89854621887207,
+        "miss_rate": 0.3701171875,
+        "pass_rate": 0.3466796875,
+        "pass_time_mean_seconds": 5.964646816253662,
+        "pass_time_p95_seconds": 6.099999904632568,
+        "ring_collision_rate": 0.283203125,
+        "seconds": 12.0,
+        "success_by_stratum": {
+          "farther_gate": 0.3466796875,
+          "higher_gate": 0.3466796875,
+          "higher_mass": 0.30039528012275696,
+          "higher_offset": 0.3466796875,
+          "lower_gate": null,
+          "lower_mass": 0.3918918967247009,
+          "lower_offset": null,
+          "nearer_gate": null,
+          "negative_lateral_offset": 0.31422507762908936,
+          "obliquity_10_to_20_degrees": null,
+          "obliquity_20_to_30_degrees": 0.3466796875,
+          "positive_lateral_offset": 0.3743218779563904
+        },
+        "success_rate": 0.3466796875,
+        "sustained_stick_saturation_rate": 0.0
+      }
+    },
+    "winner_frozen_first_frame": {
+      "acceleration_boundary_gain": 0.5,
+      "bias": -0.05,
+      "metrics": {
+        "clearance_rate": 0.0,
+        "crossing_angle_mean_degrees": null,
+        "crossing_clearance_mean_m": null,
+        "crossing_error_components_m": {
+          "lateral_absolute_mean": 1.3526074886322021,
+          "lateral_absolute_p90": 2.0300703048706055,
+          "lateral_signed_mean": -1.3526074886322021,
+          "vertical_absolute_mean": 0.7616732120513916,
+          "vertical_absolute_p90": 1.100000023841858,
+          "vertical_signed_mean": -0.6838857531547546
+        },
+        "crossing_radial_quantiles_m": {
+          "50": 1.6854398250579834,
+          "75": 2.033092737197876,
+          "90": 2.3080995082855225,
+          "95": 2.3084001541137695,
+          "99": 2.3087644577026367
+        },
+        "early_roll_action_diagnostic": null,
+        "episodes": 1024,
+        "gate_obliquity_min_degrees": 20.0,
+        "goal_pass": false,
+        "ground_recontact_rate": 0.03515625,
+        "initial_visual_centre_offset_min_degrees": 16.525043487548828,
+        "label": "frozen_initial_image",
+        "lift_off_rate": 0.533203125,
+        "max_tilt_mean_degrees": 16.855239868164062,
+        "miss_rate": 0.8935546875,
+        "pass_rate": 0.0,
+        "pass_time_mean_seconds": null,
+        "pass_time_p95_seconds": null,
+        "ring_collision_rate": 0.1064453125,
+        "seconds": 12.0,
+        "success_by_stratum": {
+          "farther_gate": 0.0,
+          "higher_gate": 0.0,
+          "higher_mass": 0.0,
+          "higher_offset": 0.0,
+          "lower_gate": null,
+          "lower_mass": 0.0,
+          "lower_offset": null,
+          "nearer_gate": null,
+          "negative_lateral_offset": 0.0,
+          "obliquity_10_to_20_degrees": null,
+          "obliquity_20_to_30_degrees": 0.0,
+          "positive_lateral_offset": 0.0
+        },
+        "success_rate": 0.0,
+        "sustained_stick_saturation_rate": 0.0
+      }
+    },
+    "winner_gain_without_bias": {
+      "acceleration_boundary_gain": 0.5,
+      "bias": 0.0,
+      "metrics": {
+        "clearance_rate": 0.380859375,
+        "crossing_angle_mean_degrees": 22.330554962158203,
+        "crossing_clearance_mean_m": 0.16150549054145813,
+        "crossing_error_components_m": {
+          "lateral_absolute_mean": 0.4084262549877167,
+          "lateral_absolute_p90": 0.98365718126297,
+          "lateral_signed_mean": -0.054115984588861465,
+          "vertical_absolute_mean": 0.6623969078063965,
+          "vertical_absolute_p90": 1.3944423198699951,
+          "vertical_signed_mean": 0.45123523473739624
+        },
+        "crossing_radial_quantiles_m": {
+          "50": 0.6509976387023926,
+          "75": 1.2090702056884766,
+          "90": 1.5420594215393066,
+          "95": 1.6401132345199585,
+          "99": 2.050403356552124
+        },
+        "early_roll_action_diagnostic": {
+          "correlation": 0.1904483139514923,
+          "meaningful_sign_accuracy": 0.7335839867591858,
+          "prediction_mean": -0.0001702189038041979,
+          "prediction_mean_negative_offset": 0.0007529060821980238,
+          "prediction_mean_positive_offset": -0.0009564610663801432,
+          "prediction_std": 0.0057780127972364426,
+          "regression_slope": 0.027508148923516273,
+          "samples": 102400,
+          "target_mean": -0.011582331731915474,
+          "target_mean_negative_offset": 0.031285665929317474,
+          "target_mean_positive_offset": -0.0480937734246254,
+          "target_std": 0.040003154426813126
+        },
+        "episodes": 1024,
+        "gate_obliquity_min_degrees": 20.0,
+        "goal_pass": false,
+        "ground_recontact_rate": 0.0,
+        "initial_visual_centre_offset_min_degrees": 16.525043487548828,
+        "label": "connectome",
+        "lift_off_rate": 1.0,
+        "max_tilt_mean_degrees": 18.01031494140625,
+        "miss_rate": 0.404296875,
+        "pass_rate": 0.380859375,
+        "pass_time_mean_seconds": 5.689486980438232,
+        "pass_time_p95_seconds": 5.809999942779541,
+        "ring_collision_rate": 0.21484375,
+        "seconds": 12.0,
+        "success_by_stratum": {
+          "farther_gate": 0.380859375,
+          "higher_gate": 0.380859375,
+          "higher_mass": 0.717391312122345,
+          "higher_offset": 0.380859375,
+          "lower_gate": null,
+          "lower_mass": 0.052123550325632095,
+          "lower_offset": null,
+          "nearer_gate": null,
+          "negative_lateral_offset": 0.41613590717315674,
+          "obliquity_10_to_20_degrees": null,
+          "obliquity_20_to_30_degrees": 0.380859375,
+          "positive_lateral_offset": 0.35081374645233154
+        },
+        "success_rate": 0.380859375,
+        "sustained_stick_saturation_rate": 0.0
+      }
+    },
+    "winner_mass_rank_swapped_trace": {
+      "acceleration_boundary_gain": 0.5,
+      "bias": -0.05,
+      "metrics": {
+        "clearance_rate": 0.353515625,
+        "crossing_angle_mean_degrees": 22.734067916870117,
+        "crossing_clearance_mean_m": 0.15723957121372223,
+        "crossing_error_components_m": {
+          "lateral_absolute_mean": 0.3495197892189026,
+          "lateral_absolute_p90": 0.5794498920440674,
+          "lateral_signed_mean": -0.18439270555973053,
+          "vertical_absolute_mean": 0.5809065699577332,
+          "vertical_absolute_p90": 1.100000023841858,
+          "vertical_signed_mean": -0.08648409694433212
+        },
+        "crossing_radial_quantiles_m": {
+          "50": 0.6668238043785095,
+          "75": 0.9875264763832092,
+          "90": 1.1569242477416992,
+          "95": 1.31294846534729,
+          "99": 1.804952621459961
+        },
+        "early_roll_action_diagnostic": {
+          "correlation": 0.19703662395477295,
+          "meaningful_sign_accuracy": 0.7513867020606995,
+          "prediction_mean": -1.455768051528139e-05,
+          "prediction_mean_negative_offset": 0.0009704857948236167,
+          "prediction_mean_positive_offset": -0.0008535369415767491,
+          "prediction_std": 0.005756324157118797,
+          "regression_slope": 0.028365492820739746,
+          "samples": 102400,
+          "target_mean": -0.011576210148632526,
+          "target_mean_negative_offset": 0.0312676765024662,
+          "target_mean_positive_offset": -0.0480671152472496,
+          "target_std": 0.03998543694615364
+        },
+        "episodes": 1024,
+        "gate_obliquity_min_degrees": 20.0,
+        "goal_pass": false,
+        "ground_recontact_rate": 0.0166015625,
+        "initial_visual_centre_offset_min_degrees": 16.525043487548828,
+        "label": "mass_rank_swapped_accelerometer",
+        "lift_off_rate": 0.87890625,
+        "max_tilt_mean_degrees": 18.205242156982422,
+        "miss_rate": 0.3544921875,
+        "pass_rate": 0.353515625,
+        "pass_time_mean_seconds": 5.866077423095703,
+        "pass_time_p95_seconds": 5.989999771118164,
+        "ring_collision_rate": 0.2919921875,
+        "seconds": 12.0,
+        "success_by_stratum": {
+          "farther_gate": 0.353515625,
+          "higher_gate": 0.353515625,
+          "higher_mass": 0.2667984366416931,
+          "higher_offset": 0.353515625,
+          "lower_gate": null,
+          "lower_mass": 0.4382239282131195,
+          "lower_offset": null,
+          "nearer_gate": null,
+          "negative_lateral_offset": 0.3524416387081146,
+          "obliquity_10_to_20_degrees": null,
+          "obliquity_20_to_30_degrees": 0.353515625,
+          "positive_lateral_offset": 0.3544303774833679
+        },
+        "success_rate": 0.353515625,
+        "sustained_stick_saturation_rate": 0.0
+      }
+    }
+  },
+  "gate_config": {
+    "drone_radius": 0.09,
+    "edge_softness": 0.018,
+    "inner_radius": 0.62,
+    "maximum_distance": 4.6,
+    "maximum_height": 1.1,
+    "maximum_lateral_offset": 0.8,
+    "maximum_obliquity_degrees": 20.0,
+    "minimum_distance": 4.6,
+    "minimum_height": 1.1,
+    "minimum_lateral_offset": 0.8,
+    "minimum_obliquity_degrees": 20.0,
+    "outer_radius": 0.76
+  },
+  "goal_passed": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "graph": "artifacts/gate-accel-v2/connectome.npz",
+  "graph_sha256": "d385bcb96f18fad904d263ab34cbead73c794f9c90961d7961671761d323f3ea",
+  "hover_config": {
+    "angular_drag": 2e-05,
+    "camera_fov_degrees": 90.0,
+    "dt": 0.01,
+    "foreleg_joint_limit": 0.65,
+    "inertia_x": 3e-05,
+    "inertia_y": 3e-05,
+    "inertia_z": 5e-05,
+    "linear_drag": 0.12,
+    "mass": 0.035,
+    "max_roll_pitch_rate": 4.1887902047863905,
+    "max_roll_pitch_torque": 0.002,
+    "max_yaw_rate": 3.141592653589793,
+    "max_yaw_torque": 0.0008,
+    "motor_time_constant": 0.045,
+    "rate_gain": 0.018,
+    "roll_stick_gain": 1.0,
+    "stick_damping": 8.0,
+    "stick_motor_strength": 100.0,
+    "stick_spring": 25.0,
+    "target_band_width": 0.18,
+    "thrust_to_weight": 1.5,
+    "wall_x": 5.0
+  },
+  "method": "complete-flight two-parameter grid search",
+  "search": {
+    "acceleration_boundary_gain_values": [
+      0.0,
+      0.5,
+      1.0,
+      2.0,
+      4.0
+    ],
+    "bias_values": [
+      -0.1,
+      -0.05,
+      -0.02,
+      0.0,
+      0.02
+    ],
+    "development_episodes": 64,
+    "development_seed": 20031,
+    "final_episodes": 1024,
+    "final_seed": 40031,
+    "negative_throttle_motor_neurons": 5,
+    "new_to_old_boundary_edges": 94,
+    "positive_throttle_motor_neurons": 2,
+    "seconds": 12.0,
+    "validation_episodes": 256,
+    "validation_seed": 30031
+  },
+  "source_checkpoint": "artifacts/gate-accel-v1/controller.pt",
+  "source_checkpoint_sha256": "d995b1d67da36ee48cff62bd0af2256e35696f1700254b39be44e93c168b2434",
+  "validation": {
+    "bias=-0.05,gain=0.5": {
+      "acceleration_boundary_gain": 0.5,
+      "bias": -0.05,
+      "metrics": {
+        "balanced_selection_score": 0.6889837682247162,
+        "higher_mass_success_rate": 0.3100775182247162,
+        "lateral_absolute_error_mean_m": 0.35263729095458984,
+        "lower_mass_success_rate": 0.4488188922405243,
+        "miss_rate": 0.3203125,
+        "negative_offset_success_rate": 0.38235294818878174,
+        "positive_offset_success_rate": 0.3750000298023224,
+        "radial_error_p90_m": 1.1475591659545898,
+        "ring_collision_rate": 0.30078125,
+        "success_rate": 0.37890625,
+        "vertical_absolute_error_mean_m": 0.5434702634811401,
+        "vertical_signed_error_mean_m": -0.09523233771324158
+      }
+    },
+    "bias=-0.05,gain=1": {
+      "acceleration_boundary_gain": 1.0,
+      "bias": -0.05,
+      "metrics": {
+        "balanced_selection_score": 0.6580971479415894,
+        "higher_mass_success_rate": 0.26356589794158936,
+        "lateral_absolute_error_mean_m": 0.34830984473228455,
+        "lower_mass_success_rate": 0.5275590419769287,
+        "miss_rate": 0.3125,
+        "negative_offset_success_rate": 0.44117647409439087,
+        "positive_offset_success_rate": 0.34166669845581055,
+        "radial_error_p90_m": 1.1309843063354492,
+        "ring_collision_rate": 0.29296875,
+        "success_rate": 0.39453125,
+        "vertical_absolute_error_mean_m": 0.5357087850570679,
+        "vertical_signed_error_mean_m": -0.11703616380691528
+      }
+    },
+    "bias=-0.05,gain=2": {
+      "acceleration_boundary_gain": 2.0,
+      "bias": -0.05,
+      "metrics": {
+        "balanced_selection_score": 0.5843628942966461,
+        "higher_mass_success_rate": 0.20155039429664612,
+        "lateral_absolute_error_mean_m": 0.3434774577617645,
+        "lower_mass_success_rate": 0.5669291019439697,
+        "miss_rate": 0.2890625,
+        "negative_offset_success_rate": 0.45588234066963196,
+        "positive_offset_success_rate": 0.30000001192092896,
+        "radial_error_p90_m": 1.1173582077026367,
+        "ring_collision_rate": 0.328125,
+        "success_rate": 0.3828125,
+        "vertical_absolute_error_mean_m": 0.520218551158905,
+        "vertical_signed_error_mean_m": -0.1511240005493164
+      }
+    }
+  },
+  "winner": {
+    "acceleration_boundary_gain": 0.5,
+    "bias": -0.05,
+    "key": "bias=-0.05,gain=0.5",
+    "metrics": {
+      "balanced_selection_score": 0.6889837682247162,
+      "higher_mass_success_rate": 0.3100775182247162,
+      "lateral_absolute_error_mean_m": 0.35263729095458984,
+      "lower_mass_success_rate": 0.4488188922405243,
+      "miss_rate": 0.3203125,
+      "negative_offset_success_rate": 0.38235294818878174,
+      "positive_offset_success_rate": 0.3750000298023224,
+      "radial_error_p90_m": 1.1475591659545898,
+      "ring_collision_rate": 0.30078125,
+      "success_rate": 0.37890625,
+      "vertical_absolute_error_mean_m": 0.5434702634811401,
+      "vertical_signed_error_mean_m": -0.09523233771324158
+    }
+  }
+}

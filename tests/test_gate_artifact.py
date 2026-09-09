@@ -13,6 +13,7 @@ from flydrone.hover import PLANT_MODEL_VERSION, ConnectomeController
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ARTIFACT_DIR = REPO_ROOT / "artifacts" / "gate-v1"
 ACCEL_ARTIFACT_DIR = REPO_ROOT / "artifacts" / "gate-accel-v1"
+ACCEL_V2_ARTIFACT_DIR = REPO_ROOT / "artifacts" / "gate-accel-v2"
 
 
 def sha256(path: Path) -> str:
@@ -73,9 +74,7 @@ def test_accelerometer_checkpoint_is_bound_and_sensor_dependent() -> None:
     graph_path = ACCEL_ARTIFACT_DIR / "connectome.npz"
     checkpoint_path = ACCEL_ARTIFACT_DIR / "controller.pt"
     report = json.loads((ACCEL_ARTIFACT_DIR / "report.json").read_text())
-    manifest = json.loads(
-        (ACCEL_ARTIFACT_DIR / "connectome-manifest.json").read_text()
-    )
+    manifest = json.loads((ACCEL_ARTIFACT_DIR / "connectome-manifest.json").read_text())
     checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
 
     assert report["graph_sha256"] == sha256(graph_path)
@@ -103,3 +102,46 @@ def test_accelerometer_checkpoint_is_bound_and_sensor_dependent() -> None:
         < constant["crossing_error_components_m"]["vertical_absolute_mean"]
     )
     assert report["frozen_visual_ablation"]["success_rate"] == 0.0
+
+
+def test_edge_searched_accelerometer_checkpoint_is_bound_and_improves_gate_success() -> None:
+    graph_path = ACCEL_V2_ARTIFACT_DIR / "connectome.npz"
+    checkpoint_path = ACCEL_V2_ARTIFACT_DIR / "controller.pt"
+    search_checkpoint_path = ACCEL_V2_ARTIFACT_DIR / "search-best.pt"
+    report = json.loads((ACCEL_V2_ARTIFACT_DIR / "report.json").read_text())
+    search = json.loads((ACCEL_V2_ARTIFACT_DIR / "search-report.json").read_text())
+    bias_search = json.loads((ACCEL_V2_ARTIFACT_DIR / "bias-calibration-report.json").read_text())
+    previous = json.loads((ACCEL_ARTIFACT_DIR / "report.json").read_text())
+    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+
+    assert report["graph_sha256"] == sha256(graph_path)
+    assert report["checkpoint_sha256"] == sha256(checkpoint_path)
+    assert report["source_checkpoint_sha256"] == sha256(search_checkpoint_path)
+    assert checkpoint["graph_sha256"] == sha256(graph_path)
+    assert search["candidate_checkpoint_sha256"] == sha256(search_checkpoint_path)
+    assert bias_search["checkpoint_sha256"] == sha256(
+        ACCEL_V2_ARTIFACT_DIR / "bias-calibration-candidate.pt"
+    )
+    assert bias_search["goal_passed"] is False
+    assert search["search"]["acceleration_path_edges"] == 109
+    assert search["biases_changed"] is False
+    assert search["time_constants_changed"] is False
+    assert search["old_anatomy_changed"] is False
+
+    assert report["evaluation"]["success_rate"] > previous["evaluation"]["success_rate"]
+    assert report["evaluation"]["success_rate"] == 467 / 1024
+    assert report["constant_1g_accelerometer_ablation"]["success_rate"] == 415 / 1024
+    assert report["mass_rank_swapped_accelerometer_ablation"]["success_rate"] == 467 / 1024
+    assert report["frozen_visual_ablation"]["success_rate"] == 0.0
+    assert search["signed_sensor_step_response"]["candidate"]["intended_signs"] == {
+        "above_1g_decreases_throttle": True,
+        "below_1g_increases_throttle": True,
+    }
+    assert (
+        search["final"]["candidate_above_1g_channel_disabled"]["success_rate"]
+        < search["final"]["candidate"]["success_rate"]
+    )
+    assert (
+        search["final"]["candidate_below_1g_channel_disabled"]["success_rate"]
+        < search["final"]["candidate"]["success_rate"]
+    )

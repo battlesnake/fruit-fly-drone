@@ -4,8 +4,8 @@
 
 The repository now contains a complete, headless takeoff-to-annular-gate flight and an
 auditable randomized evaluation.  This is a **research checkpoint, not a passed final
-milestone**: the connectome actor succeeds on 415 of 1,024 trials (40.5%), below the
-predeclared 90% goal-level threshold.
+milestone**: the best connectome actor succeeds on 467 of 1,024 trials (45.6%), below
+the predeclared 90% goal-level threshold.
 
 The result nevertheless establishes the full behavior once and measures where it fails.
 The committed [`showcase.mp4`](../artifacts/gate-v1/showcase.mp4) records a successful
@@ -82,7 +82,7 @@ important: the checkpoint succeeds on 72.8% of heavier-than-nominal vehicles but
 while a takeover after four seconds cannot improve the 40.5% outcome. The next work must
 therefore address both early visual aiming and mass-robust vertical feedback.
 
-## Direct accelerometer checkpoint
+## Direct accelerometer checkpoints
 
 [`gate-accel-v1`](../artifacts/gate-accel-v1/) tests a minimal inertial interface without
 changing the old pilot. Eight additional annotated MaleCNS `wind_gravity` Johnston's-organ
@@ -104,6 +104,33 @@ input. Swapping sensor traces by mass rank yields 41.80%, however, so this small
 looks like generic damping rather than learned vehicle-mass identification. It is useful
 causal progress, but still far below the 90% goal.
 
+[`gate-accel-v2`](../artifacts/gate-accel-v2/) keeps the same graph, restores every old
+bias and time constant, and searches only those 109 acceleration-path edge magnitudes.
+The bounded derivative-free search used eight generations of 16 antithetic candidates.
+Every candidate was judged by complete flights on common samples exactly balanced across
+mass range, gate side, and obliquity sign. The deployed checkpoint adds no parameter or
+state outside the connectome.
+
+On the original locked 1,024-flight protocol, v2 succeeds on **467 flights (45.61%)**.
+The same weights score 40.53% with their accelerometer held at 1g and 0% with the first
+FPV frame frozen. Compared with v1, mean absolute lateral crossing error falls from 0.397
+m to 0.329 m, ring collisions fall from 23.24% to 19.82%, light-mass success rises from
+7.35% to 8.57%, and heavy-mass success rises from 73.60% to 79.59%. Vertical error rises
+slightly from 0.601 m to 0.623 m, so the gain is not an across-the-board improvement.
+
+A separate exactly balanced 1,024-flight audit measured 43.85% live success. Disabling
+the above-1g channel reduced that to 41.70%; disabling the below-1g channel reduced it to
+40.92%; constant 1g produced 38.96%. A 200 ms intervention from matched recurrent and
+leg state also gives the intended signed response: above 1g lowers throttle and below 1g
+raises it. However, mass-rank-swapped sensor traces still score essentially the same as
+live traces (45.61% on the locked suite). The circuit has learned useful bidirectional
+feedback, but the evidence still does not support mass identification.
+
+A two-parameter bias/gain calibration was also rejected. It could balance light and
+heavy outcomes, but reduced fresh 1,024-flight completion from 38.09% to 35.25%, and its
+constant-1g control retained nearly all of the effect. This is why v2 changes pathway
+edges only and keeps the original throttle biases.
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:
@@ -117,16 +144,23 @@ scripts/run_gate_training.sh \
   --evaluation-seconds 12 --teacher-takeover-audit-seconds 3 4
 ```
 
-Re-run the direct-accelerometer checkpoint and its constant-1g and mass-rank-swapped-trace
+Re-run the best direct-accelerometer checkpoint and its constant-1g and mass-rank-swapped-trace
 controls with:
 
 ```bash
 scripts/run_gate_training.sh \
-  --graph artifacts/gate-accel-v1/connectome.npz \
-  --checkpoint artifacts/gate-accel-v1/controller.pt \
+  --graph artifacts/gate-accel-v2/connectome.npz \
+  --checkpoint artifacts/gate-accel-v2/controller.pt \
   --output-dir runs/gate/accel-recheck --evaluate-only \
   --evaluation-stage paired --evaluation-episodes 1024 \
   --evaluation-seconds 12
+```
+
+Re-run the bounded 109-edge search under AIRA with:
+
+```bash
+scripts/run_gate_acceleration_es.sh \
+  --output-dir runs/gate/acceleration-es-recheck
 ```
 
 Record another seeded successful flight and foreleg/stick visualization with:
