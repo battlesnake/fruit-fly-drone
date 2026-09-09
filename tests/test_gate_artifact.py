@@ -16,6 +16,7 @@ ACCEL_ARTIFACT_DIR = REPO_ROOT / "artifacts" / "gate-accel-v1"
 ACCEL_V2_ARTIFACT_DIR = REPO_ROOT / "artifacts" / "gate-accel-v2"
 PROPRIO_DIAGNOSTIC_DIR = REPO_ROOT / "artifacts" / "gate-proprio-diagnostic-v1"
 MASS_ORACLE_DIR = REPO_ROOT / "artifacts" / "gate-mass-oracle-v1"
+MOTOR_INTERFACE_ES_DIR = REPO_ROOT / "artifacts" / "gate-motor-interface-es-v1"
 
 
 def sha256(path: Path) -> str:
@@ -219,3 +220,31 @@ def test_privileged_mass_oracle_is_effective_but_excluded_from_sensor_goal() -> 
     assert final["validation_selected_constant_trim"]["success_rate"] == 416 / 1024
     assert final["mass_labels_shuffled_within_geometry"]["success_rate"] == 103 / 1024
     assert all(report["causal_checks"].values())
+
+
+def test_motor_interface_es_checkpoint_is_native_and_materially_improved() -> None:
+    report = json.loads((MOTOR_INTERFACE_ES_DIR / "report.json").read_text())
+    checkpoint_path = MOTOR_INTERFACE_ES_DIR / "controller.pt"
+    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+
+    assert report["candidate"]["checkpoint_sha256"] == sha256(checkpoint_path)
+    assert checkpoint["graph_sha256"] == sha256(ACCEL_V2_ARTIFACT_DIR / "connectome.npz")
+    assert checkpoint["source_checkpoint_sha256"] == sha256(ACCEL_V2_ARTIFACT_DIR / "controller.pt")
+    assert checkpoint["motor_interface_es"]["compiled_into_native_parameters"] is True
+    assert report["candidate"]["parameter_count"] == 24
+    assert report["candidate"]["compiled_edge_magnitudes_changed"] == 196
+    assert report["candidate"]["compiled_motor_biases_changed"] == 26
+    assert report["candidate"]["time_constants_changed"] == 0
+
+    baseline = report["final"]["baseline"]
+    candidate = report["final"]["candidate"]
+    paired = report["final"]["paired_success_difference"]
+    assert candidate["success_rate"] >= baseline["success_rate"] + 0.05
+    assert candidate["negative_lateral_success_rate"] > baseline["negative_lateral_success_rate"]
+    assert candidate["positive_lateral_success_rate"] > baseline["positive_lateral_success_rate"]
+    assert candidate["crossing_radial_mean_m"] < baseline["crossing_radial_mean_m"]
+    assert paired["confidence_95"][0] > 0.0
+    assert report["final"]["frozen_first_frame_success_rate"] <= 0.05
+    assert report["outcome"]["promotion_passed"] is True
+    assert report["outcome"]["acceleration_dependence_demonstrated"] is False
+    assert report["outcome"]["goal_passed"] is False

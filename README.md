@@ -128,6 +128,16 @@ at this checkpoint, not recurrent control itself; the next optimization stage us
 complete-flight rollout scores without differentiating through history. See the compact
 [`trajectory-gradient diagnostic`](artifacts/gate-trajectory-gradient-diagnostic-v1/).
 
+That rollout route has now produced the best native checkpoint. A 24-parameter mirrored
+evolution strategy adjusted only shared biases and signed incoming-edge gains at the eight
+existing motor pools, then folded those values into the graph. On 1,024 fresh paired
+flights it raised success from 43.0% to **49.5%** (paired 95% CI for the gain: 4.9–8.2
+percentage points), improved both lateral sides, and reduced mean gate-plane radial error
+from 0.748 m to 0.663 m. Frozen vision scored 4.9%. Constant-1g acceleration scored 50.0%,
+however, so this is improved static native calibration—not learned mass inference—and it
+still falls well short of the 90% goal. See
+[`gate-motor-interface-es-v1`](artifacts/gate-motor-interface-es-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.

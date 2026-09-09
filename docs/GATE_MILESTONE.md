@@ -252,6 +252,39 @@ must use complete-flight rollout scores—such as antithetic evolution strategie
 gradients—without differentiating through the flight history. The deployed actor will
 still retain only its internal connectome state.
 
+## Native motor-interface evolution strategy
+
+The first rollout optimizer used a deliberately small 24-dimensional parameterization.
+Each of the eight existing antagonist motor pools received one shared internal bias delta,
+one gain on all transmitter-positive incoming edges, and one gain on all transmitter-
+negative incoming edges. The gains were compiled into the 196 existing edge magnitudes and
+the biases into 26 motor neurons; topology, transmitter signs, zero edges, time constants,
+retinal mapping, leg mechanics, and quad dynamics stayed fixed. No search coordinate or
+scaler remains outside the connectome at runtime.
+
+Sixteen antithetic directions were evaluated as one 34-policy CUDA batch for 60 generations.
+Each policy saw the same 32 cases in a generation, balanced across the eight intersections
+of mass, lateral side, and obliquity sign. The eight-second reward prioritized complete
+success and clean crossing, with smaller progress, approach, hazard, and stick-saturation
+terms. Fitness mixed mean reward with the worst intersection stratum. Independent
+256-flight validation ran every ten generations; every archived vector was retained, and
+the selected vector had to avoid a mass-half collapse before the fresh final audit.
+
+The promoted checkpoint improved 1,024-flight success from 42.97% to 49.51%. There were 74
+baseline failures repaired by the candidate and seven baseline successes lost, giving a
+paired gain of 6.54 percentage points with a 95% normal-approximation interval of 4.87–8.22
+points. Negative-side success rose from 47.27% to 52.15%, positive-side success from 38.67%
+to 46.88%, and mean crossing radial error fell from 0.748 m to 0.663 m. Lower-mass success
+moved only from 6.64% to 5.86%, within the declared five-point loss bound, while higher-mass
+success rose from 79.30% to 93.16%. Frozen-first-frame success was 4.88%.
+
+This is a material native-controller improvement, but it did **not** learn mass adaptation.
+Replacing body acceleration with a constant 1g slightly increased success to 50.0%, with
+nearly identical mass strata. The small motor-interface search found a better static trim,
+not a history-dependent calibration policy. The next selective rollout experiment must
+target recurrent acceleration-to-throttle paths and require a live-versus-constant or
+matched-trace causal advantage before promotion. The original 90% criterion remains unmet.
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:

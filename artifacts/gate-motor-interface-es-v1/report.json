@@ -1,0 +1,131 @@
+{
+  "artifact": "gate-motor-interface-es-v1",
+  "claim": "A small native motor-interface evolution strategy materially improves gate flight, but the improvement is static and does not demonstrate accelerometer-dependent mass adaptation.",
+  "runtime_contract": {
+    "actor_inputs": [
+      "FPV image",
+      "roll/pitch",
+      "instantaneous body specific force"
+    ],
+    "external_actor_state_machine": false,
+    "external_clock": false,
+    "external_history_features": 0,
+    "external_mass_estimate": false,
+    "search_vector_present_at_runtime": false,
+    "state": "persistent leaky connectome membrane state only"
+  },
+  "source": {
+    "checkpoint": "artifacts/gate-accel-v2/controller.pt",
+    "checkpoint_sha256": "1fbfeb15297ce57fd71b331fbe7b6d39facade7fafec266f6b678b8ddbbbb8b6",
+    "graph": "artifacts/gate-accel-v2/connectome.npz",
+    "graph_sha256": "d385bcb96f18fad904d263ab34cbead73c794f9c90961d7961671761d323f3ea",
+    "license": "CC BY 4.0 derived graph; see data/README.md"
+  },
+  "candidate": {
+    "checkpoint": "artifacts/gate-motor-interface-es-v1/controller.pt",
+    "checkpoint_sha256": "28e2b0f887f30fe00a40ccaa97dd393949b2ea03257ffbbd0b433c69b56cd986",
+    "parameter_vector_sha256": "9b397c3dc80bbd556f5c20d61e8d67c95ca099c151f938a6f57dfccabe84973a",
+    "parameter_count": 24,
+    "compiled_edge_magnitudes_changed": 196,
+    "compiled_motor_biases_changed": 26,
+    "time_constants_changed": 0,
+    "maximum_absolute_edge_change": 0.03427433967590332,
+    "maximum_absolute_bias_change": 0.003644011914730072,
+    "parameter_vector": [
+      0.0016288661863654852,
+      -0.0004977966891601682,
+      0.002721508964896202,
+      -0.0004408748063724488,
+      -0.0005140872672200203,
+      -0.0022609583102166653,
+      -0.0008727329550310969,
+      0.0017438429640606046,
+      -0.002894944278523326,
+      -0.0011925393482670188,
+      0.004917668178677559,
+      -0.007226409390568733,
+      0.00013393527478910983,
+      0.007406449876725674,
+      0.01230217982083559,
+      -0.003644010052084923,
+      0.0006849837955087423,
+      0.0045972783118486404,
+      -0.0009388313628733158,
+      0.0015826011076569557,
+      0.011407161131501198,
+      -0.0024806209839880466,
+      0.0074582467786967754,
+      0.00007238701800815761
+    ]
+  },
+  "protocol": {
+    "method": "ranked mirrored antithetic evolution strategy on complete flights",
+    "generations": 60,
+    "antithetic_directions_per_generation": 16,
+    "development_episodes_per_policy": 32,
+    "development_seconds": 8.0,
+    "validation_episodes": 256,
+    "validation_interval_generations": 10,
+    "final_episodes": 1024,
+    "final_seconds": 12.0,
+    "balanced_mass_side_obliquity_intersections": true,
+    "common_random_numbers_within_generation": true,
+    "full_flight_backpropagation": false,
+    "fitness": "0.75*mean_reward + 0.25*worst_intersection_stratum_reward",
+    "fixed_topology": true,
+    "fixed_transmitter_signs": true,
+    "zero_edges_preserved": true,
+    "time_constants_frozen": true,
+    "batched_evaluator_discrete_parity_exact": true,
+    "batched_evaluator_crossing_radial_difference_m": 0.00004559755325317383,
+    "peak_cuda_memory_bytes": 272216064
+  },
+  "validation": {
+    "baseline_success_rate": 0.42578125,
+    "selected_success_rate": 0.4921875,
+    "success_rate_difference": 0.06640625,
+    "selected_lower_mass_success_rate": 0.0703125,
+    "selected_higher_mass_success_rate": 0.9140625,
+    "mass_balance_selection_eligible": true
+  },
+  "final": {
+    "baseline": {
+      "success_rate": 0.4296875,
+      "negative_lateral_success_rate": 0.47265625,
+      "positive_lateral_success_rate": 0.38671875,
+      "lower_mass_success_rate": 0.06640625,
+      "higher_mass_success_rate": 0.79296875,
+      "crossing_radial_mean_m": 0.747562825679779
+    },
+    "candidate": {
+      "success_rate": 0.4951171875,
+      "negative_lateral_success_rate": 0.521484375,
+      "positive_lateral_success_rate": 0.46875,
+      "lower_mass_success_rate": 0.05859375,
+      "higher_mass_success_rate": 0.931640625,
+      "crossing_radial_mean_m": 0.6630865931510925
+    },
+    "frozen_first_frame_success_rate": 0.048828125,
+    "constant_1g_acceleration_success_rate": 0.5,
+    "paired_success_difference": {
+      "candidate_only_successes": 74,
+      "baseline_only_successes": 7,
+      "mean": 0.0654296875,
+      "standard_error": 0.008552095852792263,
+      "confidence_95": [
+        0.04866757962852716,
+        0.08219179537147284
+      ]
+    }
+  },
+  "outcome": {
+    "promotion_passed": true,
+    "visual_dependence_retained": true,
+    "acceleration_dependence_demonstrated": false,
+    "goal_passed": false,
+    "conclusion": "Promote as a material static native-controller improvement; do not claim mass inference or completion of the annular-gate goal."
+  },
+  "full_local_reports": {
+    "runs/gate/motor-interface-es-v2/report.json": "5004a505649465c32a0154db8eecb9d72c45e86cb384983ac6f71e90a1c9d892"
+  }
+}
