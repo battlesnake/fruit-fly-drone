@@ -148,6 +148,17 @@ success change. The candidate was therefore rejected: it neither replaces the 49
 promoted controller nor demonstrates mass-specific acceleration adaptation. See the
 [`recurrent acceleration-path diagnostic`](artifacts/gate-acceleration-path-diagnostic-v1/).
 
+A recurrent-PPO follow-up then trained the 198 existing inputs and 26 biases at the native
+front-leg motor interface while carrying the connectome's own state through every flight.
+The simulator and privileged critic were training-only; the actor gained no history buffer
+or extra recurrent network. Numerical replay and gradient audits passed, but the run
+stopped at iteration 10: its best light-mass gains traded away heavy-mass performance. On
+1,024 new matched flights, the selected safe snapshot was essentially flat overall
+(47.7% to 47.6%), with light success up 1.6 points and heavy success down 1.8. Constant-1g
+and pair-swapped controls again ruled out an acceleration-adaptation claim, so no checkpoint
+was promoted. See the
+[`recurrent-PPO diagnostic`](artifacts/gate-recurrent-ppo-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.

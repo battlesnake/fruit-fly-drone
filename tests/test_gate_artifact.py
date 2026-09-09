@@ -18,6 +18,7 @@ PROPRIO_DIAGNOSTIC_DIR = REPO_ROOT / "artifacts" / "gate-proprio-diagnostic-v1"
 MASS_ORACLE_DIR = REPO_ROOT / "artifacts" / "gate-mass-oracle-v1"
 MOTOR_INTERFACE_ES_DIR = REPO_ROOT / "artifacts" / "gate-motor-interface-es-v1"
 ACCELERATION_PATH_DIAGNOSTIC_DIR = REPO_ROOT / "artifacts" / "gate-acceleration-path-diagnostic-v1"
+RECURRENT_PPO_DIAGNOSTIC_DIR = REPO_ROOT / "artifacts" / "gate-recurrent-ppo-diagnostic-v1"
 
 
 def sha256(path: Path) -> str:
@@ -288,3 +289,54 @@ def test_recurrent_acceleration_path_search_is_recorded_as_rejected() -> None:
     assert report["promotion"]["passed"] is False
     assert report["promotion"]["checkpoint_promoted"] is False
     assert not (ACCELERATION_PATH_DIAGNOSTIC_DIR / "controller.pt").exists()
+
+
+def test_recurrent_ppo_is_audited_and_recorded_as_rejected() -> None:
+    report = json.loads((RECURRENT_PPO_DIAGNOSTIC_DIR / "report.json").read_text())
+    vector = json.loads((RECURRENT_PPO_DIAGNOSTIC_DIR / "candidate-vector.json").read_text())
+    archive = torch.load(
+        RECURRENT_PPO_DIAGNOSTIC_DIR / "archive.pt", map_location="cpu", weights_only=True
+    )
+
+    assert report["source_checkpoint_sha256"] == sha256(MOTOR_INTERFACE_ES_DIR / "controller.pt")
+    assert report["graph_sha256"] == sha256(ACCEL_V2_ARTIFACT_DIR / "connectome.npz")
+    assert report["parameterization"]["independent_motor_input_edge_magnitudes"] == 198
+    assert report["parameterization"]["independent_motor_neuron_biases"] == 26
+    assert report["parameterization"]["count"] == 224
+    assert report["protocol"]["selected_exploration_sigma"] == 0.00375
+    assert report["protocol"]["critic_training_only"] is True
+    assert report["protocol"]["physics_renderer_outside_autograd"] is True
+    assert report["native_forward_parity"]["passed"] is True
+    assert report["batched_evaluator_parity"]["passed"] is True
+    assert report["likelihood_gradient_audit"]["passed"] is True
+    assert report["unchanged_policy_replay_audit"]["passed"] is True
+    assert all(item["burn_in_approximation_audit"]["passed"] for item in report["iterations"])
+
+    assert report["selected_candidate_vector_file_sha256"] == sha256(
+        RECURRENT_PPO_DIAGNOSTIC_DIR / "candidate-vector.json"
+    )
+    assert vector["parameter_vector_sha256"] == report["selected_parameter_vector_sha256"]
+    vector_values = torch.tensor(vector["edge_magnitudes"] + vector["biases"], dtype=torch.float32)
+    assert (
+        hashlib.sha256(vector_values.numpy().astype("<f4", copy=False).tobytes()).hexdigest()
+        == report["selected_parameter_vector_sha256"]
+    )
+    selected = archive[report["selected_candidate"]]
+    archived_values = torch.cat((selected["edge_magnitudes"], selected["biases"]))
+    assert (
+        hashlib.sha256(archived_values.numpy().astype("<f4", copy=False).tobytes()).hexdigest()
+        == report["selected_parameter_vector_sha256"]
+    )
+
+    assert report["iterations_completed"] == 10
+    assert report["early_stopped_at_checkpoint"] is True
+    final = report["final"]
+    assert final["reference"]["success_rate"] == 488 / 1024
+    assert final["candidate"]["success_rate"] == 487 / 1024
+    assert final["candidate"]["light_success_rate"] > final["reference"]["light_success_rate"]
+    assert final["candidate"]["heavy_success_rate"] < final["reference"]["heavy_success_rate"]
+    assert report["paired_final"]["light_success_difference"]["confidence_95"][0] > 0.0
+    assert report["acceleration_dependence_demonstrated"] is False
+    assert report["promotion"]["passed"] is False
+    assert report["goal_passed"] is False
+    assert not (RECURRENT_PPO_DIAGNOSTIC_DIR / "controller.pt").exists()

@@ -316,6 +316,38 @@ The four-hop mask is therefore closed without promotion or automatic expansion t
 hops. The compact audit is in
 [`gate-acceleration-path-diagnostic-v1`](../artifacts/gate-acceleration-path-diagnostic-v1/).
 
+## Recurrent PPO at the native motor interface
+
+A recurrent-PPO follow-up independently exposed all 198 existing edges entering the 26
+front-leg motor neurons plus their 26 intrinsic biases. The remaining connectome edges,
+all time constants, topology, and transmitter signs stayed frozen. Each rollout carried
+the native 1,138-neuron state continuously; 32-step training chunks used eight preceding
+steps of burn-in. There was no observation-history stack or added recurrent module.
+
+The full simulator stayed outside autograd. A training-only critic could see physical
+state, mass, gate pose, foreleg state, reward bookkeeping, and a detached copy of the
+native neural state. The deployed actor still received only current FPV, roll/pitch,
+body-Z specific force, current throttle-stick position, and its native recurrent state.
+Exploration was calibrated separately for light and heavy cases and settled at a motor
+sigma of 0.00375. Native-forward parity, the previously validated batched evaluator,
+25-step finite-difference gradients, unchanged-policy recurrent replay, and truncated
+burn-in all passed their numerical audits.
+
+The run stopped at its iteration-10 checkpoint. Validation light success had gained 10.16
+points, but heavy success lost 7.03 points, so no archived point met the continuation
+rule. The selected noninferior validation snapshot was then tested on 1,024 new matched
+flights: reference overall/light/heavy success was 47.66%/3.71%/91.60%, versus
+47.56%/5.27%/89.84% for the candidate. The paired light gain was significant but only
+1.56 points; overall performance was flat and the heavy paired noninferiority interval
+failed. Frozen-first-frame vision scored 2.64%. Constant-1g acceleration slightly beat
+live acceleration, while matched-pair acceleration swapping changed no successes.
+
+The candidate was rejected and no controller checkpoint was emitted. This demonstrates
+that recurrent PPO can train through the native state without numerical or external-memory
+shortcuts, but this last-layer plasticity trades mass strata rather than learning useful
+acceleration-dependent compensation. The complete compact record is in
+[`gate-recurrent-ppo-diagnostic-v1`](../artifacts/gate-recurrent-ppo-diagnostic-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:
@@ -352,6 +384,13 @@ Re-run the matched recurrent acceleration-path search with:
 
 ```bash
 scripts/run_gate_acceleration_path_es.sh
+```
+
+Re-run the recurrent-PPO diagnostic under AIRA with:
+
+```bash
+scripts/run_gate_recurrent_ppo.sh \
+  --output-dir runs/gate/recurrent-ppo-v1
 ```
 
 Re-run the negative throttle-stick proprioception search and the privileged mass oracle
