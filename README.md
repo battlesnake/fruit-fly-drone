@@ -18,6 +18,8 @@ can be trained for the task—not that a biological fly knows how to fly a quadc
   experiments, safety, and milestones.
 - [`docs/HEADLESS_SPIKE.md`](docs/HEADLESS_SPIKE.md): reproducible WSL2/MJWarp
   acceptance tests and initial RTX 5080 results.
+- [`docs/HOVER_MILESTONE.md`](docs/HOVER_MILESTONE.md): the first passing
+  connectome-to-forelegs-to-sticks takeoff and visual-height hover result.
 - [`data/README.md`](data/README.md): exact MaleCNS v1.0 snapshot, provenance,
   licensing, and what was intentionally not downloaded.
 - `data/raw/malecns-v1.0/`: locally downloaded Feather tables (ignored by Git because
@@ -28,6 +30,21 @@ can be trained for the task—not that a biological fly knows how to fly a quadc
   checksum-verifying reproduction of the download.
 
 Run `scripts/fetch-malecns-v1.0.sh` to restore or verify the official source files.
+
+## Current milestone
+
+The first differentiable surrogate experiment now passes its goal-level acceptance test:
+40 randomized 20-second episodes produced 100% lift-off, 92.5% successful visual-height
+hold, 0.188 m final-ten-second altitude RMSE, 3.66 degree roll/pitch RMS, and no ground
+recontacts.  A paired mid-flight test compared a changed world-space height band with an
+unchanged continuation from identical physical and recurrent state; the band-induced
+height difference had the correct direction in 100% of trials.  Freezing the initial FPV
+image reduced goal success to zero.
+
+This result uses a compact, auditable 498-neuron MaleCNS subgraph and abstract bilateral
+two-axis foreleg/stick kinematics.  It is not an articulated fly-leg, FlyGym, or independent
+MuJoCo transfer result.  See the milestone document and committed machine-readable report
+for the exact boundary and remaining limitations.
 
 ## Proposed first implementation slice
 

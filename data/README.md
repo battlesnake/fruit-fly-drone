@@ -22,6 +22,11 @@ paper's neuron count.
 Files live under `raw/malecns-v1.0/` and are ignored by Git. Restore or verify them with
 `../scripts/fetch-malecns-v1.0.sh` from the repository root.
 
+The first hover graph is deterministically derived with
+`scripts/build_hover_connectome.py`.  Working outputs under `derived/` are ignored; the
+small exact graph used for the passing result, plus its raw-file hashes and selection
+manifest, are committed under `artifacts/hover-v1/`.
+
 These bulk tables intentionally include far more than the 166,691 curated neurons (for
 example, unproofread or non-neuronal segments). Building the simulated neuron graph must
 therefore be an explicit, audited join/filter—not an assumption that every table row is a

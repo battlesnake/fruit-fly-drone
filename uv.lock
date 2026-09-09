@@ -217,6 +217,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "numpy" },
     { name = "pyarrow" },
+    { name = "scipy" },
 ]
 
 [package.optional-dependencies]
@@ -238,6 +239,7 @@ requires-dist = [
     { name = "flygym", extras = ["warp"], marker = "extra == 'sim'", specifier = "==2.1.0" },
     { name = "numpy", specifier = ">=2.0,<3.0" },
     { name = "pyarrow", specifier = ">=19,<24" },
+    { name = "scipy", specifier = ">=1.15,<2" },
     { name = "torch", marker = "extra == 'train'", specifier = ">=2.8" },
 ]
 provides-extras = ["sim", "train"]
