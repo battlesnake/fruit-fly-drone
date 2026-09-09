@@ -1,0 +1,349 @@
+# Plan: a connectome-constrained acro pilot
+
+## 1. Research claim
+
+The target is a **connectome-constrained artificial pilot**. MaleCNS determines the
+allowed recurrent edges and supplies count-derived initial connection magnitudes. We
+learn the missing dynamics and interfaces from tasks.
+
+We should not call the result a whole-brain emulation or say that a fruit fly was trained.
+MaleCNS v1.0 provides anatomy, segment-to-segment synapse counts, annotations, and
+predicted neurotransmitter identity. It does not provide physiological synaptic strength,
+receptor expression for every connection, neuron dynamics, axonal delays, internal state,
+plasticity rules, or activity from the imaged animal.
+
+Two useful precedents define the reasonable envelope:
+
+- [Flyvis / Lappalainen et al.](https://www.nature.com/articles/s41586-024-07939-3)
+  uses a recurrent, connectome-constrained visual network. Synapse counts set relative
+  magnitudes and cell-type-shared parameters are task-optimized for optic flow. Its
+  [official PyTorch implementation](https://github.com/TuragaLab/flyvis) is the starting
+  architectural reference.
+- [Shiu et al.](https://www.nature.com/articles/s41586-024-07763-9) demonstrates a
+  whole-central-brain leaky integrate-and-fire model built from connectivity and predicted
+  transmitter identity. Its [official code](https://github.com/philshiu/Drosophila_brain_model)
+  is a useful second reference, but the new MaleCNS graph is larger and includes the VNC.
+
+## 2. System boundary
+
+```text
+rendered FPV frames                         roll/pitch + accelerometer
+         |                                             |
+fixed hexagonal resampling and                 fixed normalization and
+R1-R8-like channel response                    push-pull population coding
+         |                                             |
+         +----------- identified MaleCNS sensory neurons -----------+
+                                     |
+          fixed MaleCNS directed edge mask + count-derived magnitudes
+               learned type-shared dynamics and synaptic gains
+                                     |
+                 descending / flight-motor neuron populations
+                                     |
+                  identified left/right foreleg motor neurons
+                                     |
+              fixed motor-to-joint/muscle transduction
+                                     |
+                simulated forelegs physically move two sticks
+                                     |
+          measured Mode-2 stick positions: yaw/throttle + roll/pitch
+                                     |
+           pinned rate/expo mapping -> body-rate controller -> motors
+```
+
+The interfaces perform only fixed, stateless transduction: image resampling, channel
+response, normalization, push-pull coding, population aggregation, and unit calibration.
+There is no external CNN, recurrent module, gate detector, planner, state machine,
+action-history buffer, learned input adapter, or learned output head. Every trainable
+temporal computation and all task memory live in the simulated MaleCNS neurons and
+synapses. A privileged teacher and critic may see simulator state during training, but
+they are absent from the deployed controller.
+
+### Action contract
+
+The flight model receives four normalized RC-like values measured from the sticks:
+
+- roll, pitch, yaw in `[-1, 1]`, mapped through one pinned Betaflight rate/expo profile;
+- throttle in `[0, 1]`, mapped through one pinned thrust curve and idle policy.
+
+Acro mode commands body angular rates; neutral roll/pitch does not command level
+attitude. The normal inner rate loop remains flight-control machinery, much as muscles
+and local reflexes are not the brain's high-level task.
+
+The motor interface uses the fly's two front legs as the physical control outputs. Mount
+the virtual fly by its thorax above a Mode-2 transmitter and place its fore-tarsi on the
+sticks:
+
+- left foreleg lateral/medial motion -> yaw;
+- left foreleg fore/aft motion -> throttle;
+- right foreleg lateral/medial motion -> roll;
+- right foreleg fore/aft motion -> pitch.
+
+Exact coordinate signs are frozen and unit-tested. Identified front-leg motor-neuron
+activity drives joint torques or target positions through a fixed, predeclared
+motor-to-joint synergy matrix. The simulated leg then moves; the measured stick
+deflection at the tarsus is the actual flight-controller input. There is no parallel
+four-axis neural decoder.
+
+For the first implementation, use a stable kinematic constraint (the tarsus remains
+coupled to the stick cap) and ordinary bilateral joint actuators. Later replace it with
+contact mechanics, tendons, and muscles if they improve the scientific question. The
+current FlyGym experimental muscle model covers only the left front leg, so mirroring it
+to the right before the basic demo would add risk without validating the connectome.
+
+The mapping from fly motor neurons to leg actuators is necessarily engineered because
+MaleCNS does not provide a complete calibrated neuron-to-muscle dynamical model. It may
+contain scaling and mechanics, but no learned policy or task memory. Leg proprioception
+(joint position, force, and contact) should return through fixed mappings to appropriate
+sensory/ascending populations; that is biological peripheral feedback, not an external
+controller state machine.
+
+Arm/disarm belongs to an independent episode and safety supervisor. A later policy may
+emit an **arm request**, but it should never own the sole authority to arm or disarm.
+
+### Observations and timing
+
+Start with a forward FPV camera at about 60 Hz and neural/motor updates at a fixed rate
+around 100 Hz, then benchmark. Feed roll and pitch using fixed sine/cosine or push-pull
+coding and optionally feed the three-axis accelerometer through fixed sensory
+populations. Preserve every neuron's membrane/rate state between ticks; that state must
+infer motion and remember prior outputs. A gyro would be the most useful later sensor
+ablation for acro control, but is not required for the first specified observation set.
+Model timestamping, exposure, transport delay, dropped frames, noise, and actuator lag
+before hardware transfer. World pose, velocity, and gate coordinates are
+teacher/critic/evaluation information only.
+
+## 3. Connectome model
+
+Keep the raw Feather files immutable. Build a versioned derived graph with every filter,
+join, threshold, and transformation recorded.
+
+For an edge from neuron `j` to neuron `i`, begin with a differentiable rate model:
+
+```text
+tau[type(i)] * dv_i/dt = -v_i + bias[type(i)]
+    + sum_j sign(j,i) * gain[type(j),type(i)] * f(count(j,i)) * activation(v_j)
+    + sensory_input_i
+```
+
+Initial modelling choices:
+
+- The adjacency mask is fixed to MaleCNS edges.
+- Preserve raw counts, while testing `count`, `log1p(count)`, and normalized count as
+  derived magnitudes. Normalize recurrent operators to prevent exploding dynamics.
+- Learn positive, cell-type-pair-shared unitary gains, cell-type time constants, biases,
+  and thresholds. This is much more identifiable than one free parameter per synapse.
+- Treat transmitter-derived signs as hypotheses. Acetylcholine is usually excitatory and
+  GABA usually inhibitory, but transmitter identity alone does not determine every
+  postsynaptic effect; glutamate and modulators need explicit uncertainty/ablation.
+- Train an ensemble of seeds. Similar task scores need not imply the same biological
+  dynamics.
+
+Profile the full graph first. If full-graph backpropagation is prohibitive, start with a
+documented sensorimotor subgraph selected by annotation and connectivity: forward paths
+from visual and mechanosensory inputs, backward paths from descending/flight motor
+outputs, strong-edge retention, and explicit cell-type coverage. Record exact body IDs
+and selection rules. Expand only after a reduced graph beats its controls.
+
+## 4. Gate language
+
+The proposed role-changing gates are a good way to externalize course order through
+vision rather than give the actor a waypoint vector.
+
+The initial world is deliberately austere: grey floor, black background, and fixed gate
+geometry. At any instant:
+
+- gate `0` in the visible task horizon has fixed role color `C0` and is always current;
+- gates `1..N-1` have fixed role colors `C1..C(N-1)`;
+- passed gates and gates beyond the next `N` are black;
+- after a valid pass, remaining colored gates shift down one role and the newly exposed
+  gate receives `C(N-1)`.
+
+Begin with `N=1`, then increase to two or three when single-gate flight works. Choose
+strongly separated role colors and map RGB through a fixed approximation of R1-R8
+photoreceptor channels. An ordinary RGB camera cannot reproduce the fly's UV channels,
+so this is an engineered retinal interface rather than a claim of biological spectral
+vision. Visual randomization is a later robustness phase, not part of the first proof.
+
+A valid pass is a directed crossing of the current gate plane with the whole quad inside
+an aperture reduced by collision clearance. Sweep the trajectory between physics steps,
+award each gate once, and reject reverse crossings. Merely touching a trigger volume,
+skimming the frame, or oscillating across the plane must not score.
+
+## 5. Simulator decision
+
+The first proof should run fully headlessly in one Linux process. Use two synchronized
+MuJoCo model instances with a deterministic multi-rate scheduler:
+
+1. a FlyGym model in its native millimetre/gram convention, stepped at the rate needed
+   for stable foreleg and stick mechanics;
+2. a simple SI-unit quadcopter model, stepped at its own physics rate, with the FPV camera,
+   gates, rotor thrust and motor lag.
+
+The two models share simulated time but not state. Their only forward coupling is the four
+measured stick positions; roll, pitch and acceleration return through the declared sensory
+interface. This does not add a controller or task memory outside the connectome. Keeping
+the models separate avoids forcing FlyGym's 0.1 ms, millimetre-scale body and a
+metre-scale racecourse into one poorly scaled physics scene.
+
+Begin with ordinary headless MuJoCo for correctness. Then batch both plants with
+[MuJoCo Warp](https://mujoco.readthedocs.io/en/stable/mjwarp/) and use its GPU batch
+renderer for low-resolution FPV. [FlyGym 2.x](https://neuromechfly.org/) exposes
+GPU-parallel simulation and GPU batch rendering directly. Warp arrays can be shared with
+PyTorch without copying, so pixels, sensors, neural state, actions and simulator state can
+stay on the RTX 5080. Rendering is still sampled at the FPV rate; neither the camera nor
+the connectome needs to run at the fly mechanics timestep.
+
+| Component | Decision | Purpose |
+| --- | --- | --- |
+| [FlyGym 2.x](https://neuromechfly.org/) + MuJoCo/MJWarp | Primary stack | Tethered fly, bilateral forelegs, stick mechanics, quad plant, batched headless physics and low-resolution FPV without an RPC boundary. |
+| [PyFlyt](https://github.com/jjshoots/PyFlyt) | Immediate drone fallback and oracle | Ready-made QuadX dynamics, Gymnasium tasks and angular-rate-plus-thrust control if implementing the small MuJoCo quad delays the first closed loop. Expect CPU/PyBullet camera transfer to limit large batches. |
+| [Betaflight SITL](https://betaflight.com/docs/development/SITL) | Required fidelity gate | Exercise the intended rate mapping, PID/filter configuration, arming behavior, and firmware timing before hardware. |
+| [gym-pybullet-drones](https://github.com/learnsyslab/gym-pybullet-drones) | SITL bridge reference | Reuse its Betaflight protocol work, but do not assume its demo bridge is a production training environment. |
+| [AirSim](https://microsoft.github.io/AirSim/) | Evaluation and presentation adapter | Familiar, visually capable FPV target. Its `NoDisplay` mode keeps API camera rendering active, but the Unreal process and RPC boundary make it less attractive for high-throughput training. |
+| [Godot](https://docs.godotengine.org/en/stable/tutorials/physics/rigid_body.html) | Optional course/presentation tool | Add only if the MuJoCo and AirSim visuals are insufficient; never let it become a second authoritative drone plant. |
+| Isaac Lab / Aerial Gym | Defer | Powerful GPU robotics stacks, but large installation/VRAM cost and WSL graphics/version risk do not buy us a shorter first path. |
+
+The quad model need not be photorealistic: the specified black world, grey floor and
+colored primitive gates are an excellent match for MJWarp's batched ray renderer. Use
+primitive geometry, no shadows and the smallest retinally useful image. An observer
+camera for presentation is recorded only in evaluation runs.
+
+PyFlyt's thrust command is not automatically Betaflight throttle. Whichever fast plant is
+used, implement and test the RC-rate and throttle mapping as its own fixed module. Compare
+step responses, maximum rates, motor saturation, propwash approximation, battery sag and
+latency across it, Betaflight SITL, AirSim and eventually the real craft.
+
+AirSim remains useful, especially because it is already familiar. On this machine the
+most robust arrangement is a Windows-hosted AirSim process with the WSL2 actor as an RPC
+client. `ViewMode: NoDisplay` disables the main view, not camera-image rendering. Both
+processes share the same physical GPU, so it is an evaluation target rather than a
+parallel rollout engine.
+
+### Headless acceptance spike
+
+Before building the environment, benchmark four minimal paths and record complete
+observation/action steps per second, VRAM, latency and determinism:
+
+1. FlyGym CPU with both front legs actuated and two constrained sticks;
+2. FlyGym `GPUSimulation` under WSL2;
+3. MJWarp RGB batch rendering of primitive gates at candidate FPV resolutions and batch
+   sizes;
+4. zero-copy Warp-to-PyTorch pixel/state views on one CUDA stream.
+
+The third test is decisive. NVIDIA currently documents CUDA in WSL2 but not OpenGL-CUDA
+interoperability; MJWarp's BVH batch ray tracer is not the ordinary OpenGL renderer, so
+test its returned RGB buffers directly. If the FlyGym/MJWarp path fails or is slower than
+the target after profiling, use PyFlyt for the first flying demo and retain FlyGym solely
+for the synchronized leg/stick plant. Do not reach for Isaac Lab or a custom renderer
+before this fallback is measured.
+
+### Available compute
+
+The development machine exposes an RTX 5080 with 16,303 MiB VRAM to WSL2 and PyTorch
+CUDA 12.8. That is a good target for a neuron-level sensorimotor subgraph and batched
+truncated recurrent training. It is not enough to treat all 151.9 million raw segment
+edges as a convenient first differentiable model. Use GPU CSR/segment-reduction kernels;
+use Warp/MJWarp for GPU environment kernels and reserve Numba for a demonstrated CPU
+preprocessing bottleneck. Numba will not accelerate AirSim RPC, MuJoCo's compiled solver,
+MJWarp or PyTorch CUDA kernels.
+
+## 6. Training curriculum
+
+### Phase 0 — measurement harness
+
+- Inspect graph schema, row counts, join coverage, duplicate edges, self-edges, strongly
+  connected components, neuron/type distributions, and transmitter confidence.
+- Lock coordinate frames and signs with deterministic roll/pitch/yaw/throttle tests.
+- Unit-test gate crossing, role transitions, resets, seeding, action holding, and latency.
+- Train a conventional privileged-state pilot to prove the plant and reward are solvable.
+
+### Phase 1 — sensory pretraining
+
+- Train the visual portion on synthetic optic flow, ego-rotation, contrast transitions,
+  gate segmentation, gate-role classification, and time-to-contact.
+- Compare training from MaleCNS-derived visual circuitry with importing or adapting the
+  Flyvis approach. Do not silently mix its female/consensus visual graph with MaleCNS.
+- Verify motion and role information is present in connectome activations before adding
+  the flight objective.
+
+### Phase 2 — teacher and imitation
+
+- Teacher sees pose, velocity, angular rates, and gate geometry and generates acro stick
+  demonstrations.
+- Convert each teacher stick command into training-only foreleg pose/motor targets. At
+  deployment, no inverse-kinematics teacher remains: the connectome drives the legs and
+  measured stick motion drives the quad.
+- Begin airborne: recovery from small attitude/rate perturbations, hover, then translation.
+- Add takeoff only after airborne stabilization works.
+- Train only parameters inside the connectome while keeping both stateless interfaces
+  frozen. Use behavior cloning followed by DAgger-style recovery data.
+
+### Phase 3 — recurrent reinforcement learning
+
+- Use recurrent PPO with truncated backpropagation and a privileged critic as the first
+  robust baseline; keep the actor observation-constrained.
+- Curriculum: one large gate -> one angled gate -> two role-changing gates -> short
+  randomized courses -> tight turns, speed, occlusion, and distractor gates.
+- Reward completion and valid gate crossings; penalize collision and elapsed time. Use a
+  modest course-consistent potential for progress and a small action-rate penalty. Avoid
+  a persistent survival reward that makes hovering optimal.
+
+### Phase 4 — robustness and fidelity
+
+- Randomize mass/inertia, motor constants, battery voltage, drag, camera intrinsics and
+  mounting, textures, lighting, latency, and sensor noise.
+- Add wind and model mismatch after nominal behavior is stable.
+- Freeze evaluation course families and never train on them.
+- Run the frozen actor through a validated Betaflight SITL bridge with the intended rates,
+  filters, mixer, motor protocol, and firmware revision.
+
+### Phase 5 — cautious hardware transfer
+
+Begin only after simulation acceptance tests pass. Use a low-mass ducted tiny-whoop in a
+netted cage, soft props, hard geofence, independent watchdog, remote kill/disarm, action
+and rate limits, and a human safety pilot. The supervisor, not the neural policy, owns arm
+authority. Log every frame, sensor packet, action, firmware state, and intervention.
+
+## 7. Baselines and falsification
+
+To show that the connectome contributes rather than merely supplying a large recurrent
+network, compare under matched observations, fixed motor interfaces, parameter budget, environment
+steps, seeds, and tuning effort:
+
+1. compact CNN + GRU engineering baseline (not a valid fly controller);
+2. random sparse recurrent graph with matched degree distribution;
+3. degree-preserving rewired MaleCNS graph;
+4. MaleCNS with shuffled or uniform edge counts;
+5. MaleCNS without transmitter signs, and with uncertain signs varied;
+6. feed-forward/no-recurrence ablation;
+7. input/output-interface-only control, which must fail because the interfaces are fixed
+   and stateless;
+8. selected subgraph versus progressively expanded and full graph.
+
+Report success rate, gates per episode, course completion time, collision and intervention
+rates, wrong-gate passes, control saturation, inference latency, sample efficiency, and
+performance under delay/dynamics shifts. Use multiple seeds and held-out course families.
+Inspect pathway and cell-type ablations, but do not infer biological causality from a
+drone-trained model without experimental validation.
+
+## 8. Milestones and stop/go tests
+
+1. **Data integrity:** every downloaded file matches the official size/hash; derived graph
+   construction is deterministic and reports annotation/transmitter join coverage.
+2. **Environment integrity:** deterministic replay; validated gate geometry; a conventional
+   teacher reliably completes one- and multi-gate tasks.
+3. **Embodiment:** commanded front-leg motor populations visibly move the correct sticks;
+   measured stick deflection is the only four-axis command received by the flight model.
+4. **Minimal experiment:** a selected connectome sensorimotor graph stabilizes from an
+   airborne start and passes one gate better than chance, with no privileged actor input.
+5. **Scientific signal:** connectome model improves at least one predeclared metric over
+   matched rewired/random controls across seeds. If not, report the negative result before
+   scaling up.
+6. **Course task:** held-out multi-gate completion with delayed role changes, distractors,
+   and randomized visuals/dynamics.
+7. **Firmware fidelity:** frozen policy retains acceptable performance through Betaflight
+   SITL under the target RC-rate profile and measured delays.
+8. **Hardware readiness:** only after an explicit safety review and intervention-rate test.
+
+The first decisive deliverable should be milestone 4 plus honest baselines—not a costly
+full-graph racing run.

@@ -1,0 +1,12 @@
+# Reproducible upstream data (about 1.9 GB for the selected core)
+/data/raw/**/*.feather
+*.part
+
+# Generated datasets and experiments
+/data/derived/
+/checkpoints/
+/runs/
+/wandb/
+__pycache__/
+.pytest_cache/
+.venv/
