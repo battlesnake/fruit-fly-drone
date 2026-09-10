@@ -556,6 +556,25 @@ family. It does not test adapted upstream recurrence or closed-loop flight. No p
 was compiled or promoted; see
 [`gate-throttle-readout-bias-diagnostic-v1`](../artifacts/gate-throttle-readout-bias-diagnostic-v1/).
 
+A one-layer anatomical experiment then replaced isolated-state fitting with genuine
+recurrent replay from zero. Its hashed mask contained 88 existing four-hop-path edges
+entering the 19 throttle-return sources from outside that set and all 37 edges entering
+the seven throttle motor neurons. The 19 return-to-return edges, every other magnitude,
+all biases, and all time constants stayed frozen. The absolute reserve throttle target
+was trained on a balanced 48-pair split, while a normalized first-0.2-second four-axis
+anchor protected the source motor response.
+
+The source replay parity error was `1.79e-7` and an analytic directional derivative of
+0.764231 agreed with finite difference at 0.764191. Minibatch normalized throttle MSE fell
+from 0.944 to 0.101 by update 80. At the update-100 reserved-development gate, however,
+worst-group NRMSE was 0.608 against the 0.50 continuation limit and aggregate improvement
+was only 20.5%; prefix motor RMSE remained safe at 0.000604. The run stopped before fresh
+held-out replay or assisted flight. The selected magnitudes were not ceiling-limited,
+with a maximum of 3.03 under the bound of 8. This identifies a generalization failure in
+the one-layer optimizer/data protocol, not missing native recurrence or a closed-loop
+flight result. No magnitude was compiled or promoted; see
+[`gate-recurrent-routing-diagnostic-v1`](../artifacts/gate-recurrent-routing-diagnostic-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:
@@ -622,6 +641,12 @@ Re-run the native throttle-motor bias diagnostic with:
 
 ```bash
 scripts/run_gate_throttle_readout_bias.sh
+```
+
+Re-run the one-layer native recurrent-routing diagnostic with:
+
+```bash
+scripts/run_gate_recurrent_routing.sh
 ```
 
 Re-run the recurrent-PPO diagnostic under AIRA with:

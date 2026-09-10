@@ -915,7 +915,7 @@ def main() -> int:
     report = {
         "method": "one-layer native anatomical routing with full recurrent replay",
         "claim_scope": (
-            "This diagnostic trains magnitudes on 103 existing fixed-sign edges while replaying "
+            "This diagnostic trains magnitudes on 125 existing fixed-sign edges while replaying "
             "the complete native recurrent state from initialization. Saved sensory histories "
             "are training data only. No fitted parameter is merged or promoted."
         ),

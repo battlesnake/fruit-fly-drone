@@ -293,6 +293,16 @@ a bound. The replay gate failed, so no flight was run, and this static output fa
 now closed. Upstream recurrent anatomical routing remains available to train. See the
 [`native-bias diagnostic`](artifacts/gate-throttle-readout-bias-diagnostic-v1/).
 
+The next experiment trained a genuine native recurrent prefix rather than injecting saved
+neural states. It replayed complete sensory histories from zero while varying 88 existing
+path edges into the throttle-return layer and its 37 motor-readout edges, with fixed signs.
+The gradient audit and source parity passed, and training error fell sharply, but the
+reserved development partition reached only 0.608 worst-group NRMSE and 20.5% aggregate
+improvement at the update-100 stop gate. It stopped before fresh replay or flight. This
+exposes a train/validation generalization problem, not a lack of recurrence or an output
+ceiling. See the
+[`recurrent-routing diagnostic`](artifacts/gate-recurrent-routing-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.

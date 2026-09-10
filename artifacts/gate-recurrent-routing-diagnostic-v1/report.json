@@ -1,0 +1,480 @@
+{
+  "assisted_flight": null,
+  "assisted_flight_passed": false,
+  "bias_report": "artifacts/gate-throttle-readout-bias-diagnostic-v1/report.json",
+  "bias_report_sha256": "897716b7969e817770d995c983438c92f72f68ac56d0d1a33ab5e0d25cd93bd9",
+  "candidate_checkpoint": null,
+  "checkpoint": "artifacts/gate-motor-interface-es-v1/controller.pt",
+  "checkpoint_sha256": "28e2b0f887f30fe00a40ccaa97dd393949b2ea03257ffbbd0b433c69b56cd986",
+  "claim_scope": "This diagnostic trains magnitudes on 125 existing fixed-sign edges while replaying the complete native recurrent state from initialization. Saved sensory histories are training data only. No fitted parameter is merged or promoted.",
+  "classification": {
+    "interpretation": "recurrent_routing_failed_midpoint_gate",
+    "next_step": "stop the one-layer recurrent-routing experiment"
+  },
+  "compiled_or_promoted": false,
+  "development_target_scales": {
+    "0": 0.05682043788159184,
+    "1": 0.037974262734007,
+    "2": 0.09145282181394912,
+    "3": 0.0811645729608984,
+    "4": 0.07413437738692799,
+    "5": 0.0730878781399838
+  },
+  "device": "cuda",
+  "directional_gradient_audit": {
+    "absolute_error": 4.023313522338867e-05,
+    "absolute_tolerance": 0.0001,
+    "analytic_directional_derivative": 0.7642313838005066,
+    "epsilon": 0.001,
+    "finite_difference_directional_derivative": 0.7641911506652832,
+    "passed": true,
+    "relative_tolerance": 0.02,
+    "seed": 1047132,
+    "tolerance": 0.015384627676010131
+  },
+  "elapsed_seconds": 35.05407872700016,
+  "final_fresh_replay": null,
+  "fresh_replay_passed": false,
+  "gate_config": {
+    "drone_radius": 0.09,
+    "edge_softness": 0.018,
+    "inner_radius": 0.62,
+    "maximum_distance": 4.6,
+    "maximum_height": 1.1,
+    "maximum_lateral_offset": 0.8,
+    "maximum_obliquity_degrees": 20.0,
+    "minimum_distance": 4.6,
+    "minimum_height": 1.1,
+    "minimum_lateral_offset": 0.8,
+    "minimum_obliquity_degrees": 20.0,
+    "outer_radius": 0.76
+  },
+  "goal_passed": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "graph": "artifacts/gate-accel-v2/connectome.npz",
+  "graph_sha256": "d385bcb96f18fad904d263ab34cbead73c794f9c90961d7961671761d323f3ea",
+  "held_out_source_replay_parity": null,
+  "hover_config": {
+    "angular_drag": 2e-05,
+    "camera_fov_degrees": 90.0,
+    "dt": 0.01,
+    "foreleg_joint_limit": 0.65,
+    "inertia_x": 3e-05,
+    "inertia_y": 3e-05,
+    "inertia_z": 5e-05,
+    "linear_drag": 0.12,
+    "mass": 0.035,
+    "max_roll_pitch_rate": 4.1887902047863905,
+    "max_roll_pitch_torque": 0.002,
+    "max_yaw_rate": 3.141592653589793,
+    "max_yaw_torque": 0.0008,
+    "motor_time_constant": 0.045,
+    "rate_gain": 0.018,
+    "roll_stick_gain": 1.0,
+    "stick_damping": 8.0,
+    "stick_motor_strength": 100.0,
+    "stick_spring": 25.0,
+    "target_band_width": 0.18,
+    "thrust_to_weight": 1.5,
+    "wall_x": 5.0
+  },
+  "method": "one-layer native anatomical routing with full recurrent replay",
+  "midpoint_stopped": true,
+  "peak_cuda_memory_bytes": 237383680,
+  "preregistered_mask": "runs/gate/recurrent-routing-v1/preregistered-mask.json",
+  "preregistered_mask_sha256": "86ddd517c372f06ab6623b1f37893de08e1228cd30580837f2d2b39f87f7d7c4",
+  "prerequisite_checks": {
+    "bias_family_closed": true,
+    "bias_flight_not_run": true,
+    "checkpoint_hash_matches": true,
+    "graph_hash_matches": true,
+    "history_hash_matches": true,
+    "routing_readout_hash_matches": true,
+    "source_was_preserved": true
+  },
+  "protocol": {
+    "added_recurrent_module": false,
+    "all_biases_and_time_constants_frozen": true,
+    "all_other_edge_magnitudes_frozen": true,
+    "anchor_loss_coefficient": 1.0,
+    "anchor_scale": 0.01,
+    "anchor_seconds": 0.2,
+    "assisted_flight_runs_only_after_replay_pass": true,
+    "balanced_fit_validation_split": [
+      48,
+      16
+    ],
+    "clock_actor_input": false,
+    "development_pairs": 64,
+    "device": "cuda",
+    "directional_absolute_tolerance": 0.0001,
+    "directional_epsilon": 0.001,
+    "directional_relative_tolerance": 0.02,
+    "edge_signs_fixed": true,
+    "engineered_history_features": false,
+    "fit_pairs": 48,
+    "flight_episodes": 256,
+    "flight_seconds": 12.0,
+    "flight_seed": 1048031,
+    "fresh_replay_histories": "source throttle plus reserve steering after 0.5 seconds",
+    "gradient_clip_norm": 1.0,
+    "held_out_pairs": 128,
+    "held_out_seed": 1047031,
+    "learning_rate": 0.003,
+    "mass_actor_input": false,
+    "maximum_edge_magnitude": 8.0,
+    "maximum_group_nrmse": 0.25,
+    "maximum_prefix_rmse": 0.01,
+    "maximum_stratum_drop": 0.05,
+    "midpoint_maximum_group_nrmse": 0.5,
+    "midpoint_update": 100,
+    "minibatch_pairs": 8,
+    "minimum_constant_improvement": 0.5,
+    "minimum_floor_gain": 0.1,
+    "minimum_light_gain": 0.1,
+    "normalization_floor": 0.01,
+    "optimizer_seed": 1047131,
+    "prefix_anchor": "all four candidate motor drives versus source for t<0.2 seconds",
+    "recurrent_state": "entire native controller replayed from zero for every prefix",
+    "seconds": 1.5,
+    "selection": "prefix-safe, both-gates-pass first; then minimum validation worst-group NRMSE and aggregate NRMSE",
+    "takeover_seconds": 0.5,
+    "trainable_parameters": "magnitudes on 88 boundary-to-return and 37 return-to-motor edges",
+    "training_throttle_target": "saved absolute reserve motor drive, aligned at each step",
+    "updates": 300,
+    "validation_interval": 100,
+    "validation_pairs": 16,
+    "validation_updates": [
+      100,
+      200,
+      300
+    ]
+  },
+  "replay_histories": "runs/gate/throttle-routing-audit-v1/replay-histories.pt",
+  "replay_histories_sha256": "b7ce415cca62bc8f348118c396e8515f28a73340b31b114e7c2fed6994ddbf1a",
+  "routing_report": "artifacts/gate-throttle-routing-diagnostic-v1/report.json",
+  "routing_report_sha256": "6489415268b1753673118b604bfa2e0324906b1a6be7b8f7c97d2bd83f33e572",
+  "selected_magnitudes": "runs/gate/recurrent-routing-v1/selected-magnitudes.json",
+  "selected_magnitudes_sha256": "c232dac6dca7b6db88af26c99e4f3ec5d46edbb6dbfdc66d33a27cf344284609",
+  "selected_update": 100,
+  "selected_validation": {
+    "constant_baseline": {
+      "aggregate_equal_group_nrmse": 0.5738111475182724,
+      "aggregate_equal_group_rmse": 0.028619080107828886,
+      "maximum_group_nrmse": 1.1390344780829298,
+      "per_window_and_mass": {
+        "0.50:0.75/heavy": {
+          "bias": 0.036379299884041184,
+          "normalization_scale": 0.037974262734007,
+          "nrmse": 1.1390344780829298,
+          "rmse": 0.04325399453381372,
+          "samples": 400,
+          "target_rms": 0.037225985274192325
+        },
+        "0.50:0.75/light": {
+          "bias": 0.019366721858580946,
+          "normalization_scale": 0.05682043788159184,
+          "nrmse": 0.656944390078695,
+          "rmse": 0.03732786790812673,
+          "samples": 400,
+          "target_rms": 0.055957150876054434
+        },
+        "0.75:1.00/heavy": {
+          "bias": -0.015069830964008936,
+          "normalization_scale": 0.0811645729608984,
+          "nrmse": 0.20918851117785411,
+          "rmse": 0.016978696178076652,
+          "samples": 400,
+          "target_rms": 0.08078241698453589
+        },
+        "0.75:1.00/light": {
+          "bias": -0.02507203790048755,
+          "normalization_scale": 0.09145282181394912,
+          "nrmse": 0.29705854311875574,
+          "rmse": 0.027166842012150888,
+          "samples": 400,
+          "target_rms": 0.09100829281201331
+        },
+        "1.00:1.50/heavy": {
+          "bias": -0.006307040962080131,
+          "normalization_scale": 0.0730878781399838,
+          "nrmse": 0.19703506014750774,
+          "rmse": 0.014400874465365424,
+          "samples": 800,
+          "target_rms": 0.07280047002649394
+        },
+        "1.00:1.50/light": {
+          "bias": -0.005955770636598238,
+          "normalization_scale": 0.07413437738692799,
+          "nrmse": 0.27523353357453095,
+          "rmse": 0.020404266647551992,
+          "samples": 800,
+          "target_rms": 0.07391182738698025
+        }
+      }
+    },
+    "metrics": {
+      "aggregate_equal_group_nrmse": 0.3819018721272717,
+      "aggregate_equal_group_rmse": 0.022749540041257812,
+      "maximum_group_nrmse": 0.608166157865469,
+      "per_window_and_mass": {
+        "0.50:0.75/heavy": {
+          "bias": 0.01169729694724083,
+          "normalization_scale": 0.037974262734007,
+          "nrmse": 0.608166157865469,
+          "rmse": 0.0230946614647149,
+          "samples": 400,
+          "target_rms": 0.037225985274192325
+        },
+        "0.50:0.75/light": {
+          "bias": -0.003984359428286553,
+          "normalization_scale": 0.05682043788159184,
+          "nrmse": 0.47932383325283995,
+          "rmse": 0.027235390092509477,
+          "samples": 400,
+          "target_rms": 0.055957150876054434
+        },
+        "0.75:1.00/heavy": {
+          "bias": -0.01724030338227749,
+          "normalization_scale": 0.0811645729608984,
+          "nrmse": 0.24463587133387282,
+          "rmse": 0.019855766027731075,
+          "samples": 400,
+          "target_rms": 0.08078241698453589
+        },
+        "0.75:1.00/light": {
+          "bias": -0.02530970171093941,
+          "normalization_scale": 0.09145282181394912,
+          "nrmse": 0.299553656302375,
+          "rmse": 0.02739502715353806,
+          "samples": 400,
+          "target_rms": 0.09100829281201331
+        },
+        "1.00:1.50/heavy": {
+          "bias": 0.004973503053188324,
+          "normalization_scale": 0.0730878781399838,
+          "nrmse": 0.20605363662342083,
+          "rmse": 0.015060023083833083,
+          "samples": 800,
+          "target_rms": 0.07280047002649394
+        },
+        "1.00:1.50/light": {
+          "bias": 0.005350324437022209,
+          "normalization_scale": 0.07413437738692799,
+          "nrmse": 0.2888591753704661,
+          "rmse": 0.02141439511859095,
+          "samples": 800,
+          "target_rms": 0.07391182738698025
+        }
+      },
+      "rmse_improvement_over_constant": 0.20509184936959013
+    },
+    "pass_gate": {
+      "checks": {
+        "aggregate_rmse_improves_at_least_fifty_percent_over_constant": false,
+        "every_window_and_mass_nrmse_at_most_threshold": false
+      },
+      "passed": false
+    },
+    "prefix_motor_rmse": 0.0006042068707756698,
+    "update": 100
+  },
+  "selection_rule": "prefix-safe snapshots; minimum worst-group then aggregate NRMSE",
+  "source_preserved": true,
+  "source_replay_parity": {
+    "maximum_throttle_absolute_difference": 1.7881393432617188e-07,
+    "passed": true,
+    "threshold": 1e-06
+  },
+  "topology": {
+    "boundary_edge_count": 88,
+    "incoming_path_edges_to_return_sources": 107,
+    "internal_return_edge_count_frozen": 19,
+    "path_edge_count": 282,
+    "path_node_count": 93,
+    "readout_edge_count": 37,
+    "selected_edge_count": 125,
+    "selected_negative_sign_count": 50,
+    "selected_positive_sign_count": 75
+  },
+  "training_history": [
+    {
+      "gradient_norm_before_clip": 12.614593505859375,
+      "loss": 0.9443532228469849,
+      "magnitude_maximum": 3.1485042572021484,
+      "magnitude_minimum": 0.0,
+      "prefix_motor_rmse": 2.0724804983274225e-08,
+      "throttle_normalized_equal_group_mse": 0.9443532228469849,
+      "update": 1
+    },
+    {
+      "gradient_norm_before_clip": 1.6383799314498901,
+      "loss": 0.34889206290245056,
+      "magnitude_maximum": 3.1150670051574707,
+      "magnitude_minimum": 0.0,
+      "prefix_motor_rmse": 0.002784639596939087,
+      "throttle_normalized_equal_group_mse": 0.27134987711906433,
+      "update": 20
+    },
+    {
+      "gradient_norm_before_clip": 2.6125106811523438,
+      "loss": 0.19918586313724518,
+      "magnitude_maximum": 3.0923967361450195,
+      "magnitude_minimum": 0.0,
+      "prefix_motor_rmse": 0.0013622164260596037,
+      "throttle_normalized_equal_group_mse": 0.18062952160835266,
+      "update": 40
+    },
+    {
+      "gradient_norm_before_clip": 2.8501617908477783,
+      "loss": 0.14922328293323517,
+      "magnitude_maximum": 3.0764195919036865,
+      "magnitude_minimum": 0.0,
+      "prefix_motor_rmse": 0.001197765814140439,
+      "throttle_normalized_equal_group_mse": 0.13487684726715088,
+      "update": 60
+    },
+    {
+      "gradient_norm_before_clip": 0.8339521288871765,
+      "loss": 0.10658321529626846,
+      "magnitude_maximum": 3.051774024963379,
+      "magnitude_minimum": 0.0,
+      "prefix_motor_rmse": 0.0007719778805039823,
+      "throttle_normalized_equal_group_mse": 0.100623719394207,
+      "update": 80
+    },
+    {
+      "gradient_norm_before_clip": 0.7639711499214172,
+      "loss": 0.1595507562160492,
+      "magnitude_maximum": 3.0278961658477783,
+      "magnitude_minimum": 0.0,
+      "prefix_motor_rmse": 0.0006355538498610258,
+      "throttle_normalized_equal_group_mse": 0.15551146864891052,
+      "update": 100
+    }
+  ],
+  "validations": [
+    {
+      "constant_baseline": {
+        "aggregate_equal_group_nrmse": 0.5738111475182724,
+        "aggregate_equal_group_rmse": 0.028619080107828886,
+        "maximum_group_nrmse": 1.1390344780829298,
+        "per_window_and_mass": {
+          "0.50:0.75/heavy": {
+            "bias": 0.036379299884041184,
+            "normalization_scale": 0.037974262734007,
+            "nrmse": 1.1390344780829298,
+            "rmse": 0.04325399453381372,
+            "samples": 400,
+            "target_rms": 0.037225985274192325
+          },
+          "0.50:0.75/light": {
+            "bias": 0.019366721858580946,
+            "normalization_scale": 0.05682043788159184,
+            "nrmse": 0.656944390078695,
+            "rmse": 0.03732786790812673,
+            "samples": 400,
+            "target_rms": 0.055957150876054434
+          },
+          "0.75:1.00/heavy": {
+            "bias": -0.015069830964008936,
+            "normalization_scale": 0.0811645729608984,
+            "nrmse": 0.20918851117785411,
+            "rmse": 0.016978696178076652,
+            "samples": 400,
+            "target_rms": 0.08078241698453589
+          },
+          "0.75:1.00/light": {
+            "bias": -0.02507203790048755,
+            "normalization_scale": 0.09145282181394912,
+            "nrmse": 0.29705854311875574,
+            "rmse": 0.027166842012150888,
+            "samples": 400,
+            "target_rms": 0.09100829281201331
+          },
+          "1.00:1.50/heavy": {
+            "bias": -0.006307040962080131,
+            "normalization_scale": 0.0730878781399838,
+            "nrmse": 0.19703506014750774,
+            "rmse": 0.014400874465365424,
+            "samples": 800,
+            "target_rms": 0.07280047002649394
+          },
+          "1.00:1.50/light": {
+            "bias": -0.005955770636598238,
+            "normalization_scale": 0.07413437738692799,
+            "nrmse": 0.27523353357453095,
+            "rmse": 0.020404266647551992,
+            "samples": 800,
+            "target_rms": 0.07391182738698025
+          }
+        }
+      },
+      "metrics": {
+        "aggregate_equal_group_nrmse": 0.3819018721272717,
+        "aggregate_equal_group_rmse": 0.022749540041257812,
+        "maximum_group_nrmse": 0.608166157865469,
+        "per_window_and_mass": {
+          "0.50:0.75/heavy": {
+            "bias": 0.01169729694724083,
+            "normalization_scale": 0.037974262734007,
+            "nrmse": 0.608166157865469,
+            "rmse": 0.0230946614647149,
+            "samples": 400,
+            "target_rms": 0.037225985274192325
+          },
+          "0.50:0.75/light": {
+            "bias": -0.003984359428286553,
+            "normalization_scale": 0.05682043788159184,
+            "nrmse": 0.47932383325283995,
+            "rmse": 0.027235390092509477,
+            "samples": 400,
+            "target_rms": 0.055957150876054434
+          },
+          "0.75:1.00/heavy": {
+            "bias": -0.01724030338227749,
+            "normalization_scale": 0.0811645729608984,
+            "nrmse": 0.24463587133387282,
+            "rmse": 0.019855766027731075,
+            "samples": 400,
+            "target_rms": 0.08078241698453589
+          },
+          "0.75:1.00/light": {
+            "bias": -0.02530970171093941,
+            "normalization_scale": 0.09145282181394912,
+            "nrmse": 0.299553656302375,
+            "rmse": 0.02739502715353806,
+            "samples": 400,
+            "target_rms": 0.09100829281201331
+          },
+          "1.00:1.50/heavy": {
+            "bias": 0.004973503053188324,
+            "normalization_scale": 0.0730878781399838,
+            "nrmse": 0.20605363662342083,
+            "rmse": 0.015060023083833083,
+            "samples": 800,
+            "target_rms": 0.07280047002649394
+          },
+          "1.00:1.50/light": {
+            "bias": 0.005350324437022209,
+            "normalization_scale": 0.07413437738692799,
+            "nrmse": 0.2888591753704661,
+            "rmse": 0.02141439511859095,
+            "samples": 800,
+            "target_rms": 0.07391182738698025
+          }
+        },
+        "rmse_improvement_over_constant": 0.20509184936959013
+      },
+      "pass_gate": {
+        "checks": {
+          "aggregate_rmse_improves_at_least_fifty_percent_over_constant": false,
+          "every_window_and_mass_nrmse_at_most_threshold": false
+        },
+        "passed": false
+      },
+      "prefix_motor_rmse": 0.0006042068707756698,
+      "update": 100
+    }
+  ]
+}
