@@ -471,6 +471,16 @@ the source was restored and no parameters were promoted. This rejects loss resca
 sufficient fix, not dense imitation or native recurrent capacity in general. See
 [`gate-dense-dagger-diagnostic-v2`](../artifacts/gate-dense-dagger-diagnostic-v2/).
 
+A preregistered frozen-policy factorial audit next replaced motor-command axes after the
+same 0.5-second native prefix. Across 512 fresh matched cases, source success was 19.9%,
+reserve throttle alone reached 56.6%, reserve roll/pitch/yaw alone reached 36.9%, and the
+full reserve teacher reached 100% in every declared stratum. Steering-only takeover left
+light-mass success at zero, while throttle-only takeover remained strongly asymmetric by
+lateral side. The rejected v2 update-200 controller also recovered from zero to 100% under
+full takeover, ruling out irrecoverable damage during its native prefix. This localizes the
+task to coupled post-takeover steering and throttle control; see
+[`gate-axis-takeover-factorial-v1`](../artifacts/gate-axis-takeover-factorial-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:

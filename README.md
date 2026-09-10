@@ -239,6 +239,14 @@ imitation improve closed-loop flight. Neither run was promoted. See the
 [`dense DAgger v1`](artifacts/gate-dense-dagger-diagnostic-v1/) and
 [`corrected-weight v2`](artifacts/gate-dense-dagger-diagnostic-v2/) diagnostics.
 
+A frozen 2×4 axis-takeover audit then separated the causal roles. On 512 new cases,
+replacing only throttle after 0.5 seconds raised the source from 19.9% to 56.6%; replacing
+only roll/pitch/yaw reached 36.9% and still failed every light-mass case. Full mass-free
+reserve takeover achieved 100% in every stratum. The rejected v2 update-200 prefix was
+also fully recoverable by the complete takeover. Thus the remaining failure requires
+coupled steering and throttle learning, while the first half-second is not the obstacle.
+See the [`axis-takeover factorial diagnostic`](artifacts/gate-axis-takeover-factorial-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.

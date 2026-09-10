@@ -1,0 +1,789 @@
+{
+  "checkpoint": "artifacts/gate-motor-interface-es-v1/controller.pt",
+  "checkpoint_sha256": "28e2b0f887f30fe00a40ccaa97dd393949b2ea03257ffbbd0b433c69b56cd986",
+  "claim_scope": "Training-only causal intervention. The analytical reserve commands and failed snapshot are never eligible for promotion.",
+  "classification": {
+    "failed_prefix_damage_detected": false,
+    "failed_update_full_reserve_control_passed": true,
+    "interpretation": "coupled_throttle_and_steering_takeover_required",
+    "minimum_success_per_declared_stratum": 0.9,
+    "passed": true,
+    "source_full_reserve_control_passed": true,
+    "source_steering_only_rescue_passed": false,
+    "source_throttle_only_rescue_passed": false
+  },
+  "device": "cuda",
+  "elapsed_seconds": 46.45336567300001,
+  "experiment": "frozen-policy axis-takeover factorial diagnostic",
+  "failed_archive": "artifacts/gate-dense-dagger-diagnostic-v2/archive.pt",
+  "failed_archive_sha256": "803ab632f986b4415b39ec301155a3626c00e63bd37e739087a57fbfd65d45c1",
+  "failed_parameter_sha256": "3adc1f2b409bb171513db0a519cc088b824ee83bfa5d781db432103d257fd616",
+  "failed_report": "artifacts/gate-dense-dagger-diagnostic-v2/report.json",
+  "failed_report_sha256": "1bce0fd8ec022d6552656102f65a3f8cf69c50bce42ccca251bb61f7c35c332d",
+  "failed_update": 200,
+  "gate_config": {
+    "drone_radius": 0.09,
+    "edge_softness": 0.018,
+    "inner_radius": 0.62,
+    "maximum_distance": 4.6,
+    "maximum_height": 1.1,
+    "maximum_lateral_offset": 0.8,
+    "maximum_obliquity_degrees": 20.0,
+    "minimum_distance": 4.6,
+    "minimum_height": 1.1,
+    "minimum_lateral_offset": 0.8,
+    "minimum_obliquity_degrees": 20.0,
+    "outer_radius": 0.76
+  },
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "graph": "artifacts/gate-accel-v2/connectome.npz",
+  "graph_sha256": "d385bcb96f18fad904d263ab34cbead73c794f9c90961d7961671761d323f3ea",
+  "hover_config": {
+    "angular_drag": 2e-05,
+    "camera_fov_degrees": 90.0,
+    "dt": 0.01,
+    "foreleg_joint_limit": 0.65,
+    "inertia_x": 3e-05,
+    "inertia_y": 3e-05,
+    "inertia_z": 5e-05,
+    "linear_drag": 0.12,
+    "mass": 0.035,
+    "max_roll_pitch_rate": 4.1887902047863905,
+    "max_roll_pitch_torque": 0.002,
+    "max_yaw_rate": 3.141592653589793,
+    "max_yaw_torque": 0.0008,
+    "motor_time_constant": 0.045,
+    "rate_gain": 0.018,
+    "roll_stick_gain": 1.0,
+    "stick_damping": 8.0,
+    "stick_motor_strength": 100.0,
+    "stick_spring": 25.0,
+    "target_band_width": 0.18,
+    "thrust_to_weight": 1.5,
+    "wall_x": 5.0
+  },
+  "interventions": [
+    "native",
+    "reserve_throttle",
+    "reserve_steering",
+    "full_reserve"
+  ],
+  "paired_success_effects_vs_native": {
+    "failed_update": {
+      "full_reserve": {
+        "heavy": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 256,
+          "confidence_95": [
+            1.0,
+            1.0
+          ],
+          "mean_success_difference": 1.0,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.0
+        },
+        "light": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 256,
+          "confidence_95": [
+            1.0,
+            1.0
+          ],
+          "mean_success_difference": 1.0,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.0
+        },
+        "negative_lateral": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 256,
+          "confidence_95": [
+            1.0,
+            1.0
+          ],
+          "mean_success_difference": 1.0,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.0
+        },
+        "negative_obliquity": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 256,
+          "confidence_95": [
+            1.0,
+            1.0
+          ],
+          "mean_success_difference": 1.0,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.0
+        },
+        "overall": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 512,
+          "confidence_95": [
+            1.0,
+            1.0
+          ],
+          "episodes_per_cluster": 2,
+          "independent_geometry_clusters": 256,
+          "mean_success_difference": 1.0,
+          "method": "paired normal approximation clustered by matched geometry",
+          "paired_episodes": 512,
+          "standard_error": 0.0
+        },
+        "positive_lateral": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 256,
+          "confidence_95": [
+            1.0,
+            1.0
+          ],
+          "mean_success_difference": 1.0,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.0
+        },
+        "positive_obliquity": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 256,
+          "confidence_95": [
+            1.0,
+            1.0
+          ],
+          "mean_success_difference": 1.0,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.0
+        }
+      },
+      "reserve_steering": {
+        "heavy": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 17,
+          "confidence_95": [
+            0.03584511864930391,
+            0.09696738135069609
+          ],
+          "mean_success_difference": 0.06640625,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.015592413954436779
+        },
+        "light": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 0,
+          "confidence_95": [
+            0.0,
+            0.0
+          ],
+          "mean_success_difference": 0.0,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.0
+        },
+        "negative_lateral": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 16,
+          "confidence_95": [
+            0.032789386436343194,
+            0.09221061356365681
+          ],
+          "mean_success_difference": 0.0625,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.015158476307988167
+        },
+        "negative_obliquity": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 10,
+          "confidence_95": [
+            0.015282405130565165,
+            0.06284259486943483
+          ],
+          "mean_success_difference": 0.0390625,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.012132701463997364
+        },
+        "overall": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 17,
+          "confidence_95": [
+            0.017922559324651956,
+            0.048483690675348044
+          ],
+          "episodes_per_cluster": 2,
+          "independent_geometry_clusters": 256,
+          "mean_success_difference": 0.033203125,
+          "method": "paired normal approximation clustered by matched geometry",
+          "paired_episodes": 512,
+          "standard_error": 0.0077962069772183895
+        },
+        "positive_lateral": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 1,
+          "confidence_95": [
+            -0.00375,
+            0.0115625
+          ],
+          "mean_success_difference": 0.00390625,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.00390625
+        },
+        "positive_obliquity": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 7,
+          "confidence_95": [
+            0.007326947674155235,
+            0.04736055232584477
+          ],
+          "mean_success_difference": 0.02734375,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.010212654247879982
+        }
+      },
+      "reserve_throttle": {
+        "heavy": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 3,
+          "confidence_95": [
+            -0.0014901579357683662,
+            0.024927657935768364
+          ],
+          "mean_success_difference": 0.01171875,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.006739238742738962
+        },
+        "light": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 0,
+          "confidence_95": [
+            0.0,
+            0.0
+          ],
+          "mean_success_difference": 0.0,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.0
+        },
+        "negative_lateral": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 0,
+          "confidence_95": [
+            0.0,
+            0.0
+          ],
+          "mean_success_difference": 0.0,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.0
+        },
+        "negative_obliquity": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 1,
+          "confidence_95": [
+            -0.00375,
+            0.0115625
+          ],
+          "mean_success_difference": 0.00390625,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.00390625
+        },
+        "overall": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 3,
+          "confidence_95": [
+            -0.0007450789678841831,
+            0.012463828967884182
+          ],
+          "episodes_per_cluster": 2,
+          "independent_geometry_clusters": 256,
+          "mean_success_difference": 0.005859375,
+          "method": "paired normal approximation clustered by matched geometry",
+          "paired_episodes": 512,
+          "standard_error": 0.003369619371369481
+        },
+        "positive_lateral": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 3,
+          "confidence_95": [
+            -0.0014901579357683662,
+            0.024927657935768364
+          ],
+          "mean_success_difference": 0.01171875,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.006739238742738962
+        },
+        "positive_obliquity": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 2,
+          "confidence_95": [
+            -0.0029938211850821968,
+            0.018618821185082197
+          ],
+          "mean_success_difference": 0.0078125,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.0055134291760623455
+        }
+      }
+    },
+    "source": {
+      "full_reserve": {
+        "heavy": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 163,
+          "confidence_95": [
+            0.5776875945925712,
+            0.6957499054074288
+          ],
+          "mean_success_difference": 0.63671875,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.030117936432361603
+        },
+        "light": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 247,
+          "confidence_95": [
+            0.9422381654381752,
+            0.9874493345618248
+          ],
+          "mean_success_difference": 0.96484375,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.011533461511135101
+        },
+        "negative_lateral": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 183,
+          "confidence_95": [
+            0.6594280285388231,
+            0.7702594714611769
+          ],
+          "mean_success_difference": 0.71484375,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.02827332727611065
+        },
+        "negative_obliquity": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 206,
+          "confidence_95": [
+            0.7560283365100622,
+            0.8533466634899378
+          ],
+          "mean_success_difference": 0.8046875,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.024826103821396828
+        },
+        "overall": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 410,
+          "confidence_95": [
+            0.7666120246052742,
+            0.8349504753947258
+          ],
+          "episodes_per_cluster": 2,
+          "independent_geometry_clusters": 256,
+          "mean_success_difference": 0.80078125,
+          "method": "paired normal approximation clustered by matched geometry",
+          "paired_episodes": 512,
+          "standard_error": 0.017433278262615204
+        },
+        "positive_lateral": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 227,
+          "confidence_95": [
+            0.8478180020302534,
+            0.9256194979697466
+          ],
+          "mean_success_difference": 0.88671875,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.019847320392727852
+        },
+        "positive_obliquity": {
+          "baseline_only_successes": 0,
+          "candidate_only_successes": 204,
+          "confidence_95": [
+            0.7474936711788177,
+            0.8462563288211823
+          ],
+          "mean_success_difference": 0.796875,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.025194555521011353
+        }
+      },
+      "reserve_steering": {
+        "heavy": {
+          "baseline_only_successes": 42,
+          "candidate_only_successes": 138,
+          "confidence_95": [
+            0.2829450309276581,
+            0.4670549690723419
+          ],
+          "mean_success_difference": 0.375,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.04696682095527649
+        },
+        "light": {
+          "baseline_only_successes": 9,
+          "candidate_only_successes": 0,
+          "confidence_95": [
+            -0.05776183456182479,
+            -0.012550665438175203
+          ],
+          "mean_success_difference": -0.03515625,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.011533461511135101
+        },
+        "negative_lateral": {
+          "baseline_only_successes": 32,
+          "candidate_only_successes": 57,
+          "confidence_95": [
+            0.02628536269068718,
+            0.16902713730931282
+          ],
+          "mean_success_difference": 0.09765625,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.03641371801495552
+        },
+        "negative_obliquity": {
+          "baseline_only_successes": 25,
+          "candidate_only_successes": 68,
+          "confidence_95": [
+            0.09692067965865135,
+            0.23901682034134863
+          ],
+          "mean_success_difference": 0.16796875,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.03624901548027992
+        },
+        "overall": {
+          "baseline_only_successes": 51,
+          "candidate_only_successes": 138,
+          "confidence_95": [
+            0.11911852180957794,
+            0.22072522819042206
+          ],
+          "episodes_per_cluster": 2,
+          "independent_geometry_clusters": 256,
+          "mean_success_difference": 0.169921875,
+          "method": "paired normal approximation clustered by matched geometry",
+          "paired_episodes": 512,
+          "standard_error": 0.0259200781583786
+        },
+        "positive_lateral": {
+          "baseline_only_successes": 19,
+          "candidate_only_successes": 81,
+          "confidence_95": [
+            0.17146859169006348,
+            0.31290640830993655
+          ],
+          "mean_success_difference": 0.2421875,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.03608107566833496
+        },
+        "positive_obliquity": {
+          "baseline_only_successes": 26,
+          "candidate_only_successes": 70,
+          "confidence_95": [
+            0.09973365843296052,
+            0.2440163415670395
+          ],
+          "mean_success_difference": 0.171875,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.03680680692195892
+        }
+      },
+      "reserve_throttle": {
+        "heavy": {
+          "baseline_only_successes": 14,
+          "candidate_only_successes": 79,
+          "confidence_95": [
+            0.18681195005774498,
+            0.321000549942255
+          ],
+          "mean_success_difference": 0.25390625,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.03423178568482399
+        },
+        "light": {
+          "baseline_only_successes": 1,
+          "candidate_only_successes": 124,
+          "confidence_95": [
+            0.4181933614611626,
+            0.5427441385388374
+          ],
+          "mean_success_difference": 0.48046875,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.0317731574177742
+        },
+        "negative_lateral": {
+          "baseline_only_successes": 1,
+          "candidate_only_successes": 180,
+          "confidence_95": [
+            0.6418945371359587,
+            0.7565429628640413
+          ],
+          "mean_success_difference": 0.69921875,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.029247047379612923
+        },
+        "negative_obliquity": {
+          "baseline_only_successes": 8,
+          "candidate_only_successes": 94,
+          "confidence_95": [
+            0.2703452496230602,
+            0.4015297503769398
+          ],
+          "mean_success_difference": 0.3359375,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.0334654338657856
+        },
+        "overall": {
+          "baseline_only_successes": 15,
+          "candidate_only_successes": 203,
+          "confidence_95": [
+            0.31241222836077215,
+            0.42196277163922785
+          ],
+          "episodes_per_cluster": 2,
+          "independent_geometry_clusters": 256,
+          "mean_success_difference": 0.3671875,
+          "method": "paired normal approximation clustered by matched geometry",
+          "paired_episodes": 512,
+          "standard_error": 0.02794656716287136
+        },
+        "positive_lateral": {
+          "baseline_only_successes": 14,
+          "candidate_only_successes": 23,
+          "confidence_95": [
+            -0.011306181699037549,
+            0.08161868169903755
+          ],
+          "mean_success_difference": 0.03515625,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.023705322295427322
+        },
+        "positive_obliquity": {
+          "baseline_only_successes": 7,
+          "candidate_only_successes": 109,
+          "confidence_95": [
+            0.33184356927871705,
+            0.46503143072128295
+          ],
+          "mean_success_difference": 0.3984375,
+          "method": "paired normal approximation",
+          "paired_episodes": 256,
+          "standard_error": 0.03397649526596069
+        }
+      }
+    }
+  },
+  "peak_cuda_memory_bytes": 93975040,
+  "protocol": {
+    "common_cases_across_all_cells": true,
+    "controller_owns_first_half_second": true,
+    "device": "cuda",
+    "diagnostic_only_no_promotion": true,
+    "episodes": 512,
+    "failed_update": 200,
+    "intervention_applied_before_physical_stick_plant": true,
+    "minimum_control_success": 0.9,
+    "native_state_continues_without_reset": true,
+    "seconds": 12.0,
+    "seed": 1026031,
+    "takeover_seconds": 0.5,
+    "teacher_mode": "visual_accelerometer_reserve",
+    "uses_exact_simulator_mass": false
+  },
+  "results": {
+    "failed_update": {
+      "full_reserve": {
+        "approach_score_mean": 0.9827604293823242,
+        "clean_pass_rate": 1.0,
+        "crossing_radial_mean_m": 0.07964017987251282,
+        "episode_reward_mean": 0.0,
+        "heavy_success_rate": 1.0,
+        "intervention": "full_reserve",
+        "light_success_rate": 1.0,
+        "miss_rate": 0.0,
+        "negative_lateral_success_rate": 1.0,
+        "negative_obliquity_success_rate": 1.0,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 1.0,
+        "positive_obliquity_success_rate": 1.0,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0,
+        "stick_saturation_fraction": 0.012187501415610313,
+        "success_rate": 1.0,
+        "takeover_seconds": 0.5
+      },
+      "native": {
+        "approach_score_mean": 0.31646984815597534,
+        "clean_pass_rate": 0.0,
+        "crossing_radial_mean_m": 4.470440864562988,
+        "episode_reward_mean": 0.0,
+        "heavy_success_rate": 0.0,
+        "intervention": "native",
+        "light_success_rate": 0.0,
+        "miss_rate": 0.9765625,
+        "negative_lateral_success_rate": 0.0,
+        "negative_obliquity_success_rate": 0.0,
+        "plane_crossing_rate": 0.9765625,
+        "positive_lateral_success_rate": 0.0,
+        "positive_obliquity_success_rate": 0.0,
+        "progress_mean": 0.9953339099884033,
+        "ring_collision_rate": 0.0,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.0,
+        "takeover_seconds": 0.5
+      },
+      "reserve_steering": {
+        "approach_score_mean": 0.4509487748146057,
+        "clean_pass_rate": 0.033203125,
+        "crossing_radial_mean_m": 1.8481581211090088,
+        "episode_reward_mean": 0.0,
+        "heavy_success_rate": 0.06640625,
+        "intervention": "reserve_steering",
+        "light_success_rate": 0.0,
+        "miss_rate": 0.693359375,
+        "negative_lateral_success_rate": 0.0625,
+        "negative_obliquity_success_rate": 0.0390625,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.00390625,
+        "positive_obliquity_success_rate": 0.02734375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.2734375,
+        "stick_saturation_fraction": 0.006702474318444729,
+        "success_rate": 0.033203125,
+        "takeover_seconds": 0.5
+      },
+      "reserve_throttle": {
+        "approach_score_mean": 0.3839547038078308,
+        "clean_pass_rate": 0.005859375,
+        "crossing_radial_mean_m": 2.089526891708374,
+        "episode_reward_mean": 0.0,
+        "heavy_success_rate": 0.01171875,
+        "intervention": "reserve_throttle",
+        "light_success_rate": 0.0,
+        "miss_rate": 0.861328125,
+        "negative_lateral_success_rate": 0.0,
+        "negative_obliquity_success_rate": 0.00390625,
+        "plane_crossing_rate": 0.8984375,
+        "positive_lateral_success_rate": 0.01171875,
+        "positive_obliquity_success_rate": 0.0078125,
+        "progress_mean": 0.9788021445274353,
+        "ring_collision_rate": 0.03125,
+        "stick_saturation_fraction": 0.007578125223517418,
+        "success_rate": 0.005859375,
+        "takeover_seconds": 0.5
+      }
+    },
+    "source": {
+      "full_reserve": {
+        "approach_score_mean": 0.9828276634216309,
+        "clean_pass_rate": 1.0,
+        "crossing_radial_mean_m": 0.07951226085424423,
+        "episode_reward_mean": 0.0,
+        "heavy_success_rate": 1.0,
+        "intervention": "full_reserve",
+        "light_success_rate": 1.0,
+        "miss_rate": 0.0,
+        "negative_lateral_success_rate": 1.0,
+        "negative_obliquity_success_rate": 1.0,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 1.0,
+        "positive_obliquity_success_rate": 1.0,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0,
+        "stick_saturation_fraction": 0.011469727382063866,
+        "success_rate": 1.0,
+        "takeover_seconds": 0.5
+      },
+      "native": {
+        "approach_score_mean": 0.4896291494369507,
+        "clean_pass_rate": 0.19921875,
+        "crossing_radial_mean_m": 1.0857632160186768,
+        "episode_reward_mean": 0.0,
+        "heavy_success_rate": 0.36328125,
+        "intervention": "native",
+        "light_success_rate": 0.03515625,
+        "miss_rate": 0.529296875,
+        "negative_lateral_success_rate": 0.28515625,
+        "negative_obliquity_success_rate": 0.1953125,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.11328125,
+        "positive_obliquity_success_rate": 0.203125,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.271484375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.19921875,
+        "takeover_seconds": 0.5
+      },
+      "reserve_steering": {
+        "approach_score_mean": 0.6062921285629272,
+        "clean_pass_rate": 0.369140625,
+        "crossing_radial_mean_m": 1.2058095932006836,
+        "episode_reward_mean": 0.0,
+        "heavy_success_rate": 0.73828125,
+        "intervention": "reserve_steering",
+        "light_success_rate": 0.0,
+        "miss_rate": 0.5546875,
+        "negative_lateral_success_rate": 0.3828125,
+        "negative_obliquity_success_rate": 0.36328125,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.35546875,
+        "positive_obliquity_success_rate": 0.375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.076171875,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.369140625,
+        "takeover_seconds": 0.5
+      },
+      "reserve_throttle": {
+        "approach_score_mean": 0.6627967357635498,
+        "clean_pass_rate": 0.56640625,
+        "crossing_radial_mean_m": 0.6297662258148193,
+        "episode_reward_mean": 0.0,
+        "heavy_success_rate": 0.6171875,
+        "intervention": "reserve_throttle",
+        "light_success_rate": 0.515625,
+        "miss_rate": 0.330078125,
+        "negative_lateral_success_rate": 0.984375,
+        "negative_obliquity_success_rate": 0.53125,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.1484375,
+        "positive_obliquity_success_rate": 0.6015625,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.103515625,
+        "stick_saturation_fraction": 0.007446289528161287,
+        "success_rate": 0.56640625,
+        "takeover_seconds": 0.5
+      }
+    }
+  },
+  "source_parameter_sha256": "a300beecb9d5cf41ba8964e775529d54bbe14d1866a21aa63675715fe3ef5316"
+}
