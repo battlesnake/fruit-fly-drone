@@ -561,8 +561,9 @@ source-metric protections pass. Common throttle and the interaction component re
 diagnostic only. Five consecutive rejections stop the run; its complete protocol and
 resume state are atomic.
 
-At attempt 25, the independent development cohort beginning at seed `370949` must reduce
-factorial `D` NRMSE by at least 25% from source while retaining every protection. Only
-then may the fresh cohort beginning at `380949` be exposed; it requires at least 90%
-correct damping sign and teacher-aligned gain 0.5-1.5. Even a fresh replay pass authorizes
-only a small nominal-mass closed-loop hover test and does not itself promote a controller.
+At attempt 25, the independent 64-scene/256-history development cohort beginning at seed
+`370949` must reduce factorial `D` NRMSE by at least 25% from source while retaining every
+protection. Only then may the equally sized fresh cohort beginning at `380949` be exposed;
+it requires at least 90% correct damping sign and teacher-aligned gain 0.5-1.5. Even a
+fresh replay pass authorizes only a small nominal-mass closed-loop hover test and does not
+itself promote a controller.

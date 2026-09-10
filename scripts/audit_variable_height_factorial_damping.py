@@ -250,7 +250,11 @@ def factorial_terms(
     )
     damping_error = forward.prediction["damping"] - forward.target["damping"]
     loss = (damping_error / DAMPING_MOTOR_SCALE).square().mean()
-    return loss, {
+    return loss, factorial_forward_report(forward)
+
+
+def factorial_forward_report(forward: FactorialForward) -> dict[str, Any]:
+    return {
         "damping": _component_report(forward.prediction["damping"], forward.target["damping"]),
         "height": _component_report(forward.prediction["height"], forward.target["height"]),
         "common": _component_report(forward.prediction["common"], forward.target["common"]),
