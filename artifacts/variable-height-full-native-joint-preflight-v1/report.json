@@ -1,0 +1,117 @@
+{
+  "actor_contract_unchanged": true,
+  "actual_displacement_family_rms": {
+    "bias": 0.0000961691,
+    "edge_magnitude": 0.0000970928,
+    "raw_time_constant": 0.0000008837
+  },
+  "cache": {
+    "development_attitude_sha256": "ba6e59873bd4ede816b7cf478a6921eca8f83149c382cec07731df87aabe5115",
+    "development_factorial_sha256": "6a390429a054f60f83b36adf394adcf3a237f1c1275a0d57b0fb9d59a7f6d8ff",
+    "endpoint_opposite_motion_image_max_absolute_difference": 0.0,
+    "registered_seed_numbers_previously_exposed_by_smoke": true,
+    "training_attitude_sha256": "8c90e4e200d36968f21011c061323480a90b78203e9b95de365897c321608cbd",
+    "training_factorial_sha256": "36cfc6b263d2603d7db71e419a565a8332dfac562f276f2eab0fed98fcdd4d62"
+  },
+  "candidate_development": {
+    "component_nrmse": {
+      "common": 1.1452991,
+      "damping": 1.0863698,
+      "height": 0.5547787,
+      "interaction": 0.1340365
+    },
+    "endpoint_damping_correct_sign_fraction": 0.0,
+    "endpoint_damping_teacher_aligned_gain": -0.3137847,
+    "joint_normalized_mse": 0.4040063,
+    "rpy_source_nrmse": {
+      "pitch": 0.0859103,
+      "roll": 0.0540120,
+      "yaw": 0.0096030
+    }
+  },
+  "candidate_training": {
+    "component_nrmse": {
+      "common": 0.9368215,
+      "damping": 1.1096884,
+      "height": 0.5891847,
+      "interaction": 0.0602721
+    },
+    "endpoint_damping_correct_sign_fraction": 0.0,
+    "endpoint_damping_teacher_aligned_gain": -0.4302897,
+    "joint_normalized_mse": 0.3528713,
+    "rpy_source_nrmse": {
+      "pitch": 0.0865798,
+      "roll": 0.0519018,
+      "yaw": 0.0097431
+    }
+  },
+  "closed_loop_hover_run": false,
+  "decision": {
+    "all_metrics_finite": true,
+    "development_joint_mse_improvement": 0.8518530,
+    "pass": false,
+    "reasons": [
+      "training dynamic RPY source NRMSE exceeded 0.05",
+      "development dynamic RPY source NRMSE exceeded 0.05"
+    ],
+    "training_joint_mse_improvement": 0.6877411
+  },
+  "deterministic_source_replay_max_absolute_difference": 0.0000000596,
+  "directional_derivative": {
+    "autograd_directional_derivative": -1.1403942,
+    "forward_finite_difference": -1.1131477,
+    "pass": true,
+    "relative_error": 0.0238922,
+    "scale": 0.0625
+  },
+  "experiment": "variable-height-full-native-joint-preflight-v1",
+  "full_report_sha256": "e35a6ad20497ee3f1f14202a199257a138a92dde56973f509ec8dd92ad3fd4a9",
+  "gradient_norm_before_clipping": 31.8335533,
+  "parameter_counts": {
+    "biases": 165122,
+    "edge_magnitudes": 2749407,
+    "raw_time_constants": 165122
+  },
+  "parameters_restored_exactly": true,
+  "pass": false,
+  "promoted": false,
+  "protocol": {
+    "development_attitude_seed": 330954,
+    "development_seed": 330953,
+    "edge_and_bias_learning_rate": 0.0001,
+    "global_gradient_norm_cap": 1.0,
+    "prefix_steps": 5,
+    "response_steps": 25,
+    "scenes_per_bank": 8,
+    "supervision_steps_one_indexed": [15, 20, 25],
+    "time_constant_learning_rate": 0.000001,
+    "train_attitude_seed": 320954,
+    "train_seed": 320953
+  },
+  "protocol_commit": "63f46143f0375cf4de1af61c7a7b8e69b335dc3f",
+  "source": {
+    "checkpoint": "runs/visual-hover/paired-dynamic-001/controller.pt",
+    "checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+    "graph": "data/derived/full-visual-connectome-v1.npz",
+    "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665"
+  },
+  "status": "rejected_at_rpy_safety_gate",
+  "teacher_component_scales_motor_units": {
+    "common": 0.05,
+    "damping": 0.0311920,
+    "height": 0.0170205,
+    "interaction": 0.01
+  },
+  "teacher_factorial_identity": {
+    "branch_reconstruction_max_absolute_error": 0.0000000596,
+    "component_nrmse_maximum": 0.0000009251,
+    "pass": true
+  },
+  "teacher_foreleg_stick_positive_control": {
+    "endpoint_correct_sign_fraction_minimum": 1.0,
+    "measured_stick_position_max_absolute": 0.6909512,
+    "pass": true,
+    "scope": "steady-state reachability only",
+    "teacher_rc_max_absolute_error_after_settling": 0.0089008
+  }
+}

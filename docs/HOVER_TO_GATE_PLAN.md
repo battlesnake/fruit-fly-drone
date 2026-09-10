@@ -664,3 +664,48 @@ joint MSE on both reduced banks, but failed the 0.05 RPY source-replay gate (pit
 prejudging the committed full run. It rejects neither full-native learnability nor a
 different optimizer. No parameters were retained. See
 [`artifacts/variable-height-full-native-joint-preflight-smoke-v1/`](../artifacts/variable-height-full-native-joint-preflight-smoke-v1/).
+
+Result: the formal eight-scene preflight reproduced that failure. The actual displacement
+was a valid descent direction (2.39% finite-difference error), and joint normalized MSE
+fell 66.1% on training and 67.8% on the disjoint development bank. Most of the gain was
+absolute collective calibration: `C` NRMSE fell from 2.383 to 0.937 and 2.696 to 1.145.
+`P` improved slightly, while endpoint `D` remained wrong-signed in all eight scenes and
+barely changed. The update failed only the RPY safety gate: training roll/pitch source
+NRMSE reached 0.0519/0.0866 and development reached 0.0540/0.0859, versus 0.05. This
+rejects the exact unprotected full-native Adam step, not joint learnability: the source-
+replay loss is zero at the source and cannot shape the first displacement at first order.
+All identity, teacher/foreleg, determinism, bound and exact-restoration checks passed.
+No parameters were retained and no closed-loop test ran. See
+[`artifacts/variable-height-full-native-joint-preflight-v1/`](../artifacts/variable-height-full-native-joint-preflight-v1/).
+
+The next bounded learning-dynamics audit does not revise or rerun that failed preflight.
+It restarts from the same source and deliberately reuses its exposed training and
+development caches, teacher scales and regenerated Adam displacement. Before any new
+claim, cache hashes, source replay, the full-scale displacement, objective and derivative
+audit must reproduce the frozen result within reported numerical tolerance.
+
+On the training bank, replay the **complete** displacement at the fixed scales 1, 1/2,
+1/4 and 1/8, plus the unchanged source. Separately replay the edge-only, bias-only and
+raw-time-constant-only portions at scale 1 with both other families restored. Those
+single-family probes are diagnostic only and cannot become candidates or be combined
+post hoc; their effects are not assumed to add linearly. Every replay reports C/P/D/I,
+each RPY axis, endpoint damping sign/gain, motor bounds and actual family displacement.
+
+A complete-displacement scale is training-feasible only if it retains the failed
+preflight's exact gates: joint normalized MSE improves by at least `1e-4`; C, P and D
+NRMSE are each no more than source plus 0.02; each RPY source NRMSE is at most 0.05; all
+cached states and outputs are finite and valid; and motor outputs stay within [-1, 1].
+The full direction must again be negative and pass the scale-0.0625 finite-difference
+agreement limit of 20%. Select the largest training-feasible full scale, with no look at
+development while choosing it, then evaluate that one scale only on development under
+the same gates except that any positive joint-objective improvement suffices. A reported
+D improvement is measurable only if its fixed-scale NRMSE reduction is at least `1e-4`,
+above the replay floor.
+
+If the selected scale passes both banks, the result establishes step-size overshoot for
+this one update; it does not establish absence of longer-term task conflict. It authorizes
+only a separately preregistered joint-fitting run using that step-control rule and the
+mandatory update-50 endpoint-D improvement gate. If no scale passes, family probes guide
+a later individual-output RPY-Jacobian projection protocol. If a scale passes without
+measurable D improvement, report collective calibration only. No audit endpoint is
+retained or promoted and no closed-loop test follows directly.
