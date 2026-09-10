@@ -297,6 +297,14 @@ def _teacher_pair_loss(
         + ((student_b[:, :, :3] - source_b[:, :, :3]) / 0.05).square().mean(dim=2)
     ) * 0.5
     axis_loss = hover.masked_mean(axis_error, valid_steps)
+    absolute_teacher_throttle_loss = hover.masked_mean(
+        0.5
+        * (
+            ((student_a[:, :, 3] - target_a[None, :, 3]) / 0.05).square()
+            + ((student_b[:, :, 3] - target_b[None, :, 3]) / 0.05).square()
+        ),
+        valid_steps,
+    )
     component_losses = {
         "contrast": contrast_loss,
         "common_throttle": common_loss,
@@ -310,9 +318,7 @@ def _teacher_pair_loss(
     return loss, {
         "contrast_nrmse": float(torch.sqrt(contrast_loss.detach())),
         "common_nrmse": float(torch.sqrt(common_loss.detach())),
-        "common_error_mean": float(
-            hover.masked_mean(common_error.detach(), valid_steps).detach()
-        ),
+        "common_error_mean": float(hover.masked_mean(common_error.detach(), valid_steps).detach()),
         "common_error_rms": float(
             torch.sqrt(hover.masked_mean(common_error.detach().square(), valid_steps))
         ),
@@ -320,6 +326,12 @@ def _teacher_pair_loss(
             common_error.detach()[:, valid].abs().max() if bool(valid.any()) else 0.0
         ),
         "axis_nrmse": float(torch.sqrt(axis_loss.detach())),
+        "absolute_teacher_throttle_nrmse": float(
+            torch.sqrt(absolute_teacher_throttle_loss.detach())
+        ),
+        "student_motor_max_absolute": float(
+            torch.cat((student_a, student_b), dim=1).detach().abs().max()
+        ),
         "valid_fraction": float(valid.float().mean()),
     }
 
@@ -376,15 +388,41 @@ def _source_cross_band_loss(
             response_steps=unroll,
             loss_start=loss_start,
         )
+        target_a = hover.teacher_motor(state, pairs.marker_a, config)
+        target_b = hover.teacher_motor(state, pairs.marker_b, config)
     scales = student_a.new_tensor(hover.MOTOR_CORRECTION_SCALES)
     valid_steps = valid[None].expand(student_a.shape[0], -1)
-    error = 0.5 * (
-        ((student_a - source_a) / scales).square().mean(dim=2)
-        + ((student_b - source_b) / scales).square().mean(dim=2)
+    per_axis_error = 0.5 * (
+        ((student_a - source_a) / scales).square() + ((student_b - source_b) / scales).square()
     )
+    error = per_axis_error.mean(dim=2)
     loss = hover.masked_mean(error, valid_steps)
+    axis_nrmse = torch.stack(
+        [
+            torch.sqrt(hover.masked_mean(per_axis_error[:, :, axis], valid_steps))
+            for axis in range(4)
+        ]
+    )
+    absolute_teacher_throttle_loss = hover.masked_mean(
+        0.5
+        * (
+            ((student_a[:, :, 3] - target_a[None, :, 3]) / 0.05).square()
+            + ((student_b[:, :, 3] - target_b[None, :, 3]) / 0.05).square()
+        ),
+        valid_steps,
+    )
     return loss, {
         "source_motor_nrmse": float(torch.sqrt(loss.detach())),
+        "roll_source_nrmse": float(axis_nrmse[0].detach()),
+        "pitch_source_nrmse": float(axis_nrmse[1].detach()),
+        "yaw_source_nrmse": float(axis_nrmse[2].detach()),
+        "throttle_source_nrmse": float(axis_nrmse[3].detach()),
+        "absolute_teacher_throttle_nrmse": float(
+            torch.sqrt(absolute_teacher_throttle_loss.detach())
+        ),
+        "student_motor_max_absolute": float(
+            torch.cat((student_a, student_b), dim=1).detach().abs().max()
+        ),
         "valid_fraction": float(valid.float().mean()),
     }
 
@@ -435,6 +473,8 @@ def _dynamic_source_replay_loss(
     losses = []
     per_axis_losses = []
     valid_fractions = []
+    absolute_teacher_throttle_losses = []
+    student_motor_max_absolute = state.position.new_zeros(())
     for _ in range(unroll):
         image = render_visual_hover_scene(
             state, conditions.marker_height, config=config, scene=scene
@@ -442,6 +482,10 @@ def _dynamic_source_replay_loss(
         student_motor, student_neural = student(image, state.euler[:, :2], student_neural)
         with torch.no_grad():
             source_motor, source_neural = source(image, state.euler[:, :2], source_neural)
+            teacher_motor = hover.teacher_motor(state, conditions.marker_height, config)
+        student_motor_max_absolute = torch.maximum(
+            student_motor_max_absolute, student_motor.detach().abs().max()
+        )
         per_axis_error = ((student_motor - source_motor) / scales).square()
         if axis_weights is None:
             error = per_axis_error.mean(dim=1)
@@ -453,8 +497,7 @@ def _dynamic_source_replay_loss(
             torch.stack(
                 [
                     hover.masked_mean(
-                        ((student_motor[:, axis] - source_motor[:, axis]) / scales[axis])
-                        .square(),
+                        ((student_motor[:, axis] - source_motor[:, axis]) / scales[axis]).square(),
                         valid,
                     )
                     for axis in range(4)
@@ -462,6 +505,9 @@ def _dynamic_source_replay_loss(
             )
         )
         valid_fractions.append(valid.float().mean())
+        absolute_teacher_throttle_losses.append(
+            hover.masked_mean(((student_motor[:, 3] - teacher_motor[:, 3]) / 0.05).square(), valid)
+        )
         state, stick_state, _ = hover.advance_physics(
             quad,
             sticks,
@@ -481,6 +527,10 @@ def _dynamic_source_replay_loss(
         "pitch_source_nrmse": float(axis_nrmse[1].detach()),
         "yaw_source_nrmse": float(axis_nrmse[2].detach()),
         "throttle_source_nrmse": float(axis_nrmse[3].detach()),
+        "absolute_teacher_throttle_nrmse": float(
+            torch.sqrt(torch.stack(absolute_teacher_throttle_losses).mean()).detach()
+        ),
+        "student_motor_max_absolute": float(student_motor_max_absolute),
         "valid_fraction": float(torch.stack(valid_fractions).mean()),
     }
 
@@ -562,9 +612,7 @@ def accumulated_update(
     }
 
 
-def _bridge_guards(
-    evaluation: dict[str, Any], baseline: dict[str, Any]
-) -> tuple[bool, list[str]]:
+def _bridge_guards(evaluation: dict[str, Any], baseline: dict[str, Any]) -> tuple[bool, list[str]]:
     reasons = []
     marker = evaluation["marker_steps"]
     baseline_marker = baseline["marker_steps"]
@@ -635,9 +683,7 @@ def evaluate_pair_matrix(
     return {
         "marker_split": "held_out" if held_out_markers else "training_support",
         "pairs_per_stratum": pairs_per_stratum,
-        "mean_contrast_nrmse": sum(
-            result["contrast_nrmse"] for result in strata.values()
-        )
+        "mean_contrast_nrmse": sum(result["contrast_nrmse"] for result in strata.values())
         / len(strata),
         "every_stratum_pass": all(result["pass"] for result in strata.values()),
         "mean_contrast_nrmse_by_style": by_style,
@@ -689,19 +735,17 @@ def evaluate_bridge(
     return suite
 
 
-def _decision(
-    evaluation: dict[str, Any], baseline: dict[str, Any]
-) -> dict[str, Any]:
+def _decision(evaluation: dict[str, Any], baseline: dict[str, Any]) -> dict[str, Any]:
     guards_pass, guard_reasons = _bridge_guards(evaluation, baseline)
     genuine = evaluation["genuine_held_out_pair"]
-    improvement_fraction = 1.0 - genuine["contrast_nrmse"] / baseline[
-        "genuine_held_out_pair"
-    ]["contrast_nrmse"]
+    improvement_fraction = (
+        1.0 - genuine["contrast_nrmse"] / baseline["genuine_held_out_pair"]["contrast_nrmse"]
+    )
     training_matrix = evaluation["training_support_pair_matrix"]
     baseline_training = baseline["training_support_pair_matrix"]
-    training_improvement = 1.0 - training_matrix["mean_contrast_nrmse"] / baseline_training[
-        "mean_contrast_nrmse"
-    ]
+    training_improvement = (
+        1.0 - training_matrix["mean_contrast_nrmse"] / baseline_training["mean_contrast_nrmse"]
+    )
     style_improvements = {
         style: 1.0 - value / baseline_training["mean_contrast_nrmse_by_style"][style]
         for style, value in training_matrix["mean_contrast_nrmse_by_style"].items()
@@ -809,9 +853,7 @@ def main() -> int:
         physics_steps=physics_steps,
         seed=evaluation_seed,
     )
-    evaluations = [
-        {"update": 0, "decision": _decision(baseline, baseline), "evaluation": baseline}
-    ]
+    evaluations = [{"update": 0, "decision": _decision(baseline, baseline), "evaluation": baseline}]
     print(json.dumps(evaluations[0]), flush=True)
     history = []
     accepted_snapshots: list[tuple[float, int, dict[str, torch.Tensor]]] = []

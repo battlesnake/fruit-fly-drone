@@ -456,3 +456,30 @@ collective control under source preservation. No checkpoint was promoted and no
 closed-loop test ran. Further anatomical expansion under this constraint is paused; the
 next test must change the control decomposition. See
 [`artifacts/variable-height-native-upstream-damping-route-training-v1/`](../artifacts/variable-height-native-upstream-damping-route-training-v1/).
+
+Before changing the target or adding another anatomical region, common-anchor ablation
+v1 tests the inferred bottleneck directly. It restarts from the original preserved
+source and keeps the exact 80,454-edge/883-bias expanded mask, fixed 12,314/303 metric,
+raw native-recurrence gradient banks, step/source radii, edge bounds and frozen parameter
+families. The sole intervention is removal of every absolute-throttle-to-source
+constraint: there is no common-output projection or screening, no common RMS/maximum
+gate, and throttle is excluded from dynamic and legacy source preservation. Absolute
+source-common drift and analytical-teacher throttle error are still recorded throughout
+but are neither optimized nor gated.
+
+Height contrast must remain within 10% of source. Dynamic roll, pitch and yaw must each
+remain within the existing 0.05 normalized error. Legacy preservation drops throttle
+from its old numerator without tightening the denominator:
+`sqrt((roll² + pitch² + yaw²) / 4) <= 0.05`. Paired R/P/Y stays diagnostic-only, matching
+the completed anchored runs. All measurements must be finite, every replay valid, motor
+outputs within [-1, 1], each of the two fixed eight-pair guard banks improved by at least
+`1e-4`, and the fixed parameter caps satisfied.
+
+For a controlled paired comparison, the ablation reuses base seed `290941`, the same
+gradient and guard cases, and the anchored run's terminal cohort (`360941` onward),
+explicitly labelled a reused benchmark. It stops after at most 25 attempts or five
+consecutive rejections and requires at least 25% benchmark motion-NRMSE improvement for
+useful progress. Only if that gate passes is a previously unconsumed 64-pair cohort
+(`370941` onward) evaluated for at least 90% correct damping sign and aligned gain
+0.5-1.5. This is diagnostic only: no endpoint is promoted and no closed-loop handoff is
+automatic.
