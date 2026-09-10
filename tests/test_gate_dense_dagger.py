@@ -55,9 +55,23 @@ def test_dense_expert_labels_executed_actions_and_window_rebuilds_state() -> Non
     assert parity["within_tolerance"]
     assert parity["maximum_absolute_error"] == 0.0
     assert parity["stored_image_dtype"] == "torch.float32"
-    scales = fixed_axis_scales(trajectories, floor=0.01)
+    scales = fixed_axis_scales(
+        trajectories,
+        floor=0.01,
+        throttle_correction_start=2,
+    )
     assert scales.shape == (4,)
     assert bool((scales >= 0.01).all())
+    expected_throttle_scale = (
+        (trajectories.targets[2:, :, 3] - trajectories.source_shadow_motor[2:, :, 3])[
+            trajectories.valid[2:]
+        ]
+        .square()
+        .mean()
+        .sqrt()
+        .clamp_min(0.01)
+    )
+    assert torch.equal(scales[3], expected_throttle_scale)
 
     student = copy.deepcopy(source)
     for parameter in student.parameters():
@@ -85,9 +99,11 @@ def test_dense_expert_labels_executed_actions_and_window_rebuilds_state() -> Non
 
 def test_midpoint_gate_requires_gain_without_mass_regression() -> None:
     baseline = {"success_rate": 0.20, "light_success_rate": 0.10, "heavy_success_rate": 0.30}
-    passing = {"success_rate": 0.26, "light_success_rate": 0.08, "heavy_success_rate": 0.32}
+    passing = {"success_rate": 0.26, "light_success_rate": 0.16, "heavy_success_rate": 0.32}
+    light_flat = {"success_rate": 0.28, "light_success_rate": 0.10, "heavy_success_rate": 0.46}
     regressed = {"success_rate": 0.30, "light_success_rate": 0.02, "heavy_success_rate": 0.58}
     assert validation_safe_and_improved(baseline, passing, improvement=0.05, mass_drop=0.05)
+    assert not validation_safe_and_improved(baseline, light_flat, improvement=0.05, mass_drop=0.05)
     assert not validation_safe_and_improved(baseline, regressed, improvement=0.05, mass_drop=0.05)
 
 
@@ -101,6 +117,7 @@ def test_dense_batch_selection_checks_selected_pairs_and_falls_back() -> None:
         roll_pitch=torch.empty(steps, episodes, 2),
         specific_force=torch.empty(steps, episodes, 3),
         targets=torch.empty(steps, episodes, 4),
+        source_shadow_motor=torch.empty(steps, episodes, 4),
         executed_motor=torch.empty(steps, episodes, 4),
         valid=valid,
         mass_scale=torch.tensor([0.8, 1.2] * (episodes // 2)),

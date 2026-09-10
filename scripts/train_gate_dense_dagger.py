@@ -62,6 +62,7 @@ class DenseTrajectories:
     roll_pitch: Tensor
     specific_force: Tensor
     targets: Tensor
+    source_shadow_motor: Tensor
     executed_motor: Tensor
     valid: Tensor
     mass_scale: Tensor
@@ -91,7 +92,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=REPO_ROOT / "runs" / "gate" / "dense-dagger-v1",
+        default=REPO_ROOT / "runs" / "gate" / "dense-dagger-v2",
     )
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--updates", type=int, default=400)
@@ -203,6 +204,7 @@ def collect_dense_trajectories(
     roll_pitch = []
     specific_force = []
     targets = []
+    source_shadow_motor = []
     executed_motor = []
     valid = []
     for step in range(steps):
@@ -246,6 +248,7 @@ def collect_dense_trajectories(
         roll_pitch.append(state.euler[:, :2])
         specific_force.append(state.specific_force)
         targets.append(target)
+        source_shadow_motor.append(source_motor)
         executed_motor.append(motor)
         valid.append(active.clone())
         rc, stick_state = sticks(motor, stick_state)
@@ -278,6 +281,7 @@ def collect_dense_trajectories(
         roll_pitch=torch.stack(roll_pitch),
         specific_force=torch.stack(specific_force),
         targets=torch.stack(targets),
+        source_shadow_motor=torch.stack(source_shadow_motor),
         executed_motor=torch.stack(executed_motor),
         valid=torch.stack(valid),
         mass_scale=cases.mass_scale,
@@ -288,14 +292,77 @@ def collect_dense_trajectories(
     )
 
 
-def fixed_axis_scales(expert: DenseTrajectories, *, floor: float) -> Tensor:
+def fixed_axis_scales(
+    expert: DenseTrajectories,
+    *,
+    floor: float,
+    throttle_correction_start: int,
+) -> Tensor:
     values = expert.targets[expert.valid]
     if not values.numel():
         raise RuntimeError("expert collection has no valid target")
     scales = values.square().mean(dim=0).sqrt().clamp_min(floor)
+    correction = (
+        expert.targets[throttle_correction_start:]
+        - expert.source_shadow_motor[throttle_correction_start:]
+    )
+    correction_valid = expert.valid[throttle_correction_start:]
+    if not bool(correction_valid.any()):
+        raise RuntimeError("expert collection has no valid throttle-correction target")
+    scales[3] = correction[correction_valid, 3].square().mean().sqrt().clamp_min(floor)
     if not bool(torch.isfinite(scales).all()):
         raise RuntimeError("nonfinite dense-action scale")
     return scales
+
+
+@torch.no_grad()
+def fixed_throttle_diagnostics(
+    controller: ConnectomeController,
+    trajectories: DenseTrajectories,
+    axis_scales: Tensor,
+    *,
+    windows: dict[str, tuple[int, int]],
+) -> dict[str, Any]:
+    """Measure signed and absolute throttle replay errors by fixed time and mass."""
+
+    last_step = max(end for _, end in windows.values())
+    if last_step > trajectories.images.shape[0]:
+        raise ValueError("fixed diagnostic window exceeds the collected trajectory")
+    episodes = trajectories.images.shape[1]
+    neural = controller.initial_state(
+        episodes, device=trajectories.images.device, dtype=torch.float32
+    )
+    zero_sticks = torch.zeros(episodes, 4, device=neural.device)
+    predictions = []
+    for step in range(last_step):
+        motor, neural = controller_step(
+            controller,
+            trajectories.images[step],
+            trajectories.roll_pitch[step],
+            neural,
+            trajectories.specific_force[step],
+            zero_sticks,
+        )
+        predictions.append(motor)
+    throttle_error = torch.stack(predictions)[:, :, 3] - trajectories.targets[:last_step, :, 3]
+    light = trajectories.mass_scale < 1.0
+    result: dict[str, Any] = {}
+    for window_name, (start, end) in windows.items():
+        result[window_name] = {}
+        for mass_name, selected_episodes in (("light", light), ("heavy", ~light)):
+            valid = trajectories.valid[start:end, selected_episodes]
+            error = throttle_error[start:end, selected_episodes][valid]
+            if not error.numel():
+                raise RuntimeError(
+                    f"fixed {window_name}/{mass_name} diagnostic contains no valid samples"
+                )
+            result[window_name][mass_name] = {
+                "samples": int(error.numel()),
+                "signed_error_mean": float(error.mean()),
+                "absolute_error_mean": float(error.abs().mean()),
+                "normalized_absolute_error_mean": float(error.abs().mean() / axis_scales[3]),
+            }
+    return result
 
 
 def choose_pair_episodes(
@@ -637,7 +704,7 @@ def validation_safe_and_improved(
 ) -> bool:
     return bool(
         candidate["success_rate"] >= baseline["success_rate"] + improvement
-        and candidate["light_success_rate"] >= baseline["light_success_rate"] - mass_drop
+        and candidate["light_success_rate"] >= baseline["light_success_rate"] + improvement
         and candidate["heavy_success_rate"] >= baseline["heavy_success_rate"] - mass_drop
     )
 
@@ -779,7 +846,17 @@ def main() -> int:
     )
     if not expert_replay_parity["within_tolerance"]:
         raise RuntimeError(f"expert source-prefix replay mismatch: {expert_replay_parity}")
-    axis_scales = fixed_axis_scales(expert, floor=args.action_scale_floor)
+    axis_scales = fixed_axis_scales(
+        expert,
+        floor=args.action_scale_floor,
+        throttle_correction_start=takeover_step,
+    )
+    diagnostic_windows = {
+        "takeover_0.5_to_1.5_seconds": (50, 150),
+        "approach_2.5_to_3.5_seconds": (250, 350),
+        "crossing_4.0_to_5.0_seconds": (400, 500),
+        "late_5.0_to_6.0_seconds": (500, 600),
+    }
 
     validation_cases = diverse_matched_cases(
         args.validation_episodes,
@@ -800,6 +877,12 @@ def main() -> int:
     print(
         json.dumps({"phase": "validation", "update": 0, **compact_flight(baseline_validation)}),
         flush=True,
+    )
+    baseline_throttle_diagnostics = fixed_throttle_diagnostics(
+        source,
+        expert,
+        axis_scales,
+        windows=diagnostic_windows,
     )
 
     generator = torch.Generator(device="cpu").manual_seed(args.optimization_seed)
@@ -840,6 +923,7 @@ def main() -> int:
             "tensors": baseline_validation_tensors,
             "safe": True,
             "midpoint_qualified": False,
+            "throttle_diagnostics": baseline_throttle_diagnostics,
         }
     }
     stopped_at_midpoint = False
@@ -951,6 +1035,12 @@ def main() -> int:
                 hover_config=hover_config,
                 gate_config=gate_config,
             )
+            throttle_diagnostics = fixed_throttle_diagnostics(
+                student,
+                expert,
+                axis_scales,
+                windows=diagnostic_windows,
+            )
             safe = bool(
                 summary["light_success_rate"]
                 >= baseline_validation["light_success_rate"] - args.midpoint_maximum_mass_drop
@@ -969,6 +1059,7 @@ def main() -> int:
                 "tensors": tensors,
                 "safe": safe,
                 "midpoint_qualified": qualified,
+                "throttle_diagnostics": throttle_diagnostics,
             }
             print(
                 json.dumps(
@@ -1162,6 +1253,7 @@ def main() -> int:
                 "summary": item["summary"],
                 "safe": item["safe"],
                 "midpoint_qualified": item["midpoint_qualified"],
+                "throttle_diagnostics": item["throttle_diagnostics"],
             }
             for update, item in archive.items()
         },
@@ -1200,6 +1292,11 @@ def main() -> int:
             "replay_parity_absolute_tolerance": REPLAY_PARITY_ABSOLUTE_TOLERANCE,
             "gradient_window_seconds": args.window_steps * hover_config.dt,
             "imitation_objective": "equal-weight per-axis RMS-normalized MAE/L1",
+            "imitation_objective_version": 2,
+            "throttle_scale_definition": (
+                "RMS valid teacher-minus-immutable-source-shadow correction after takeover, "
+                "floored at the fixed action scale"
+            ),
             "teacher_drives_deployed_actor": False,
             "mass_actor_input": False,
             "clock_actor_input": False,
@@ -1210,6 +1307,8 @@ def main() -> int:
             "selection_uses_flight_not_action_fidelity": True,
         },
         "axis_action_rms_scales": axis_scales.detach().cpu().tolist(),
+        "fixed_throttle_diagnostic_windows": diagnostic_windows,
+        "baseline_throttle_diagnostics": baseline_throttle_diagnostics,
         "expert_collection": expert.summary,
         "expert_preflight_rates": expert_rates,
         "expert_preflight_passed": expert_preflight_passed,
@@ -1223,6 +1322,7 @@ def main() -> int:
                 "summary": item["summary"],
                 "safe": item["safe"],
                 "midpoint_qualified": item["midpoint_qualified"],
+                "throttle_diagnostics": item["throttle_diagnostics"],
             }
             for update, item in archive.items()
         },
