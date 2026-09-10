@@ -345,3 +345,13 @@ no new parameters: the route hashes, frozen time constants and motor biases are
 unchanged. A pass authorizes the already documented bounded training run; it does not
 show that one step reversed damping or promote a controller. Failure closes this shallow
 route/constraint family rather than triggering further post-hoc relaxation.
+
+V2 passed. The best admissible direction was the raw selected-metric descent at the full
+`2e-5` edge-RMS cap. Its predicted loss change was -0.006913 and finite replay measured
+-0.006901. Motion NRMSE improved 0.002382, from 1.449651 to 1.447269. Full-replay
+common-throttle RMS was 0.000426, maximum drift 0.000546, and both height contrasts
+retained 0.9957 of source; all legacy and dynamic checks passed. The equality-rescaled
+sanity direction passed separately. Parameters were restored exactly, and damping was
+still wrong-signed after this single step, so this is authorization for the bounded run,
+not a controller result. See
+[`artifacts/variable-height-native-damping-route-bounded-preflight-v1/`](../artifacts/variable-height-native-damping-route-bounded-preflight-v1/).

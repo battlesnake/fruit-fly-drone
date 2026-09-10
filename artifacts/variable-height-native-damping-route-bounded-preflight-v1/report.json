@@ -1,0 +1,54 @@
+{
+  "accepted_scale": 1.0,
+  "actor_contract_unchanged": true,
+  "baseline_motion": {
+    "correct_sign_fraction": 0.0,
+    "fixed_scale_nrmse": 1.4496514797,
+    "teacher_aligned_gain": -0.6389386058
+  },
+  "equality_rescaled_sanity": {
+    "motion_nrmse_improvement": 0.000328064,
+    "pass": true,
+    "rescale_to_final_cap": 7.8327424604
+  },
+  "experiment": "variable-height-native-damping-route-bounded-preflight-v1",
+  "full_report_sha256": "f4c79d1d561e2d63d1d02c40c4afc77300818fa3ada2451309308cf74379fc01",
+  "mask": {
+    "bias_node_indices_sha256": "0b518b0411d8e39b9f4c56cfc8b68e057814a561ca4268ae16cf67cea777b593",
+    "edge_indices_sha256": "cd0a11e986d30701cb3b08d4b404f253476ce8044cc250e0b01a10dff1c449a7",
+    "selected_edge_magnitudes": 12314,
+    "selected_intermediate_biases": 303
+  },
+  "parameters_restored_max_absolute_error": 0.0,
+  "pass": true,
+  "selected_candidate": "equality_to_raw_1.00",
+  "selected_candidate_linearized": {
+    "common_max_absolute_native_units": 0.0004703363,
+    "common_rms_native_units": 0.0004000312,
+    "edges_clipped_at_zero": 41,
+    "first_order_loss_derivative": -0.0069127502,
+    "selected_edge_family_rms": 0.0000199994
+  },
+  "source": {
+    "checkpoint": "runs/visual-hover/paired-dynamic-001/controller.pt",
+    "checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+    "graph": "data/derived/full-visual-connectome-v1.npz",
+    "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665"
+  },
+  "status": "passed_no_retained_parameter_changes",
+  "trial": {
+    "actual_loss_change": -0.0069005489,
+    "complete_zero_state_correct_sign_fraction": 0.0,
+    "complete_zero_state_teacher_aligned_gain": -0.5473016500,
+    "height_response_student_to_source_ratio": {
+      "medium": 0.9957228303,
+      "small": 0.9957358241
+    },
+    "motion_fixed_scale_nrmse": 1.4472694397,
+    "motion_nrmse_improvement": 0.00238204,
+    "per_update_common_throttle_rms": 0.0004260194,
+    "predicted_first_order_loss_change": -0.0069127502,
+    "source_common_throttle_max_absolute": 0.0005459189,
+    "source_common_throttle_rms": 0.0004260292
+  }
+}
