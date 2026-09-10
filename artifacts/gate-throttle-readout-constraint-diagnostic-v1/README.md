@@ -22,10 +22,14 @@ relaxed optimizer exhausted its budget rather than converging, but this does not
 the discriminator: it had already crossed both held-out sufficiency thresholds, whereas
 the legal arm had fully converged and failed.
 
-This is evidence that the fixed signs of this final 37-edge readout obstruct the required
-throttle correction. It is not a licence to flip MaleCNS transmitter signs. The useful
-next search must find a different path through existing anatomically signed circuitry.
-Neither fitted arm was compiled or promoted, and the source controller is unchanged.
+The paired result shows that the bounded legal readout family is more restrictive than
+the diagnostic sign-relaxed family, but it does not isolate transmitter signs: ten legal
+weights also hit the magnitude ceiling and the relaxed arm did not converge. A follow-up
+one-time ceiling increase to 32 improved the legal fit substantially but still missed its
+fresh held-out worst-group threshold, with four weights at the new ceiling. These results
+do not license sign changes or prove that native recurrence is insufficient. See the
+[`ceiling follow-up`](../gate-throttle-readout-ceiling-diagnostic-v1/). Neither fitted arm
+was compiled or promoted, and the source controller is unchanged.
 
 The full protocol and metrics are in [`report.json`](report.json); the two diagnostic
 weight vectors are in [`selected-weights.json`](selected-weights.json). Re-run the exact

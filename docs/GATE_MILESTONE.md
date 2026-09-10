@@ -527,12 +527,23 @@ NRMSE was 0.366 and aggregate improvement over the constant baseline was 46.8%. 
 of 37 magnitudes were pinned to a bound.
 
 A diagnostic-only `[-8,8]` effective-weight relaxation passed the held-out screen at 0.235
-worst-group NRMSE and 57.4% improvement, reversing 15 original signs. This implicates the
-fixed-sign restriction of the final 37-edge mapping rather than the earlier Adam budget.
-It does not justify changing MaleCNS transmitter signs; the next candidate must find a
-different route through existing legal circuitry. No fitted weight was compiled or
-promoted; see
+worst-group NRMSE and 57.4% improvement, reversing 15 original signs. This establishes a
+restriction in the bounded legal readout family rather than the earlier Adam budget, but
+does not isolate transmitter signs: ten legal weights also hit the magnitude ceiling and
+the relaxed optimizer did not converge. It does not justify changing MaleCNS transmitter
+signs. No fitted weight was compiled or promoted; see
 [`gate-throttle-readout-constraint-diagnostic-v1`](../artifacts/gate-throttle-readout-constraint-diagnostic-v1/).
+
+A preregistered follow-up raised that ceiling once, from 8 to 32, while retaining the same
+37 fixed-sign magnitudes, frozen histories, targets, biases, and exact nonlinear mapping.
+Both legal starts converged. On 128 new held-out pairs, the selected fit passed aggregate
+improvement at 52.1% but failed the every-group criterion: worst NRMSE was 0.303 against
+the 0.25 limit, and four weights remained at the new ceiling. The replay gate stopped the
+experiment before any assisted flight. Thus the one-time increase did not make this
+fixed-bias readout sufficient, while the active bound, nonconvex fit, and frozen recurrence
+still preclude a transmitter-sign or whole-controller impossibility claim. No fitted
+weight was compiled or promoted; see
+[`gate-throttle-readout-ceiling-diagnostic-v1`](../artifacts/gate-throttle-readout-ceiling-diagnostic-v1/).
 
 ## Reproduction
 
@@ -588,6 +599,12 @@ Re-run the paired fixed-sign/readout-constraint diagnostic with:
 
 ```bash
 scripts/run_gate_throttle_readout_constraint.sh
+```
+
+Re-run the one-time legal readout-ceiling diagnostic with:
+
+```bash
+scripts/run_gate_throttle_readout_ceiling.sh
 ```
 
 Re-run the recurrent-PPO diagnostic under AIRA with:
