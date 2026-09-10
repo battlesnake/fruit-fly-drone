@@ -296,7 +296,7 @@ def evaluate_assisted_policy_batch(
 ) -> dict[str, Any]:
     """Evaluate complete flights, optionally substituting the complementary teacher axes."""
 
-    if intervention not in {"native", "reserve_throttle", "reserve_steering"}:
+    if intervention not in {"native", "reserve_throttle", "reserve_steering", "reserve_all"}:
         raise ValueError(f"unsupported assisted-ES intervention: {intervention}")
     policies = len(vectors)
     episodes = len(cases.mass_scale)
@@ -360,7 +360,11 @@ def evaluate_assisted_policy_batch(
                 hover_config,
             )
             reserve_motor = motor_target_for_rc(reserve_rc, hover_config)
-            motor = compose_axis_takeover_motor(native_motor, reserve_motor, intervention)
+            motor = (
+                reserve_motor
+                if intervention == "reserve_all"
+                else compose_axis_takeover_motor(native_motor, reserve_motor, intervention)
+            )
         rc, stick_state = sticks(motor, stick_state)
         previous_position = state.position
         state = quad(rc, state, expanded.mass_scale)

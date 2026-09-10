@@ -437,6 +437,11 @@ def summarize_policy_batch(
                     "positive_obliquity": _mean(success[policy].float(), ~negative_obliquity),
                 },
                 "crossing_radial_mean_m": _mean(crossing_radial[policy], crossed),
+                "crossing_radial_p90_m": (
+                    float(torch.quantile(crossing_radial[policy][crossed], 0.9))
+                    if bool(crossed.any())
+                    else None
+                ),
                 "crossing_radial_mean_by_lateral_side_m": {
                     "negative": _mean(crossing_radial[policy], crossed & negative_side),
                     "positive": _mean(crossing_radial[policy], crossed & ~negative_side),
