@@ -1,0 +1,116 @@
+{
+  "actor_contract_unchanged": true,
+  "actual_displacement_family_rms": {
+    "bias": 0.0000961741,
+    "edge_magnitude": 0.0000970924,
+    "raw_time_constant": 0.0000008827
+  },
+  "cache": {
+    "development_attitude_sha256": "fe250eef0ac716f3523c5455de18d97e4f9ef0940bd498580fc0886431d684eb",
+    "development_factorial_sha256": "cb51dfad13045a91a3383f111edf3f42c1424aa8042efff8a459ff84335588dd",
+    "endpoint_opposite_motion_image_max_absolute_difference": 0.0,
+    "registered_seed_numbers_exposed_by_reduced_banks": true,
+    "training_attitude_sha256": "7b2dc0a4be1427d7b1214903558ceebee0dd7568f8bba0b7b1b35c8006efe36f",
+    "training_factorial_sha256": "d19b338b766f1cd267b50226d9e75cf063f31e6e35489782e23438927b54dbd1"
+  },
+  "candidate_development": {
+    "component_nrmse": {
+      "common": 1.2768656,
+      "damping": 1.1009417,
+      "height": 0.5715736,
+      "interaction": 0.1487981
+    },
+    "endpoint_damping_correct_sign_fraction": 0.0,
+    "endpoint_damping_teacher_aligned_gain": -0.3820634,
+    "joint_normalized_mse": 0.4574731,
+    "rpy_source_nrmse": {
+      "pitch": 0.0871616,
+      "roll": 0.0574834,
+      "yaw": 0.0107057
+    }
+  },
+  "candidate_training": {
+    "component_nrmse": {
+      "common": 1.0104253,
+      "damping": 1.0841596,
+      "height": 0.5839575,
+      "interaction": 0.1138881
+    },
+    "endpoint_damping_correct_sign_fraction": 0.0,
+    "endpoint_damping_teacher_aligned_gain": -0.3403774,
+    "joint_normalized_mse": 0.3658559,
+    "rpy_source_nrmse": {
+      "pitch": 0.0879760,
+      "roll": 0.0524205,
+      "yaw": 0.0128596
+    }
+  },
+  "closed_loop_hover_run": false,
+  "decision": {
+    "all_metrics_finite": true,
+    "development_joint_mse_improvement": 0.9968499,
+    "pass": false,
+    "reasons": [
+      "training dynamic RPY source NRMSE exceeded 0.05",
+      "development dynamic RPY source NRMSE exceeded 0.05"
+    ],
+    "training_joint_mse_improvement": 0.7696667
+  },
+  "deterministic_source_replay_max_absolute_difference": 0.0000000596,
+  "directional_derivative": {
+    "autograd_directional_derivative": -1.2206104,
+    "forward_finite_difference": -1.1937733,
+    "pass": true,
+    "relative_error": 0.0219866,
+    "scale": 0.0625
+  },
+  "experiment": "variable-height-full-native-joint-preflight-v1",
+  "full_report_sha256": "fc55bc178ffc47d54612f1c476ec911128896bd2bcec76badd00d3022eb38833",
+  "gradient_norm_before_clipping": 34.3495369,
+  "parameter_counts": {
+    "biases": 165122,
+    "edge_magnitudes": 2749407,
+    "raw_time_constants": 165122
+  },
+  "parameters_restored_exactly": true,
+  "pass": false,
+  "promoted": false,
+  "protocol": {
+    "development_seed": 330953,
+    "edge_and_bias_learning_rate": 0.0001,
+    "global_gradient_norm_cap": 1.0,
+    "prefix_steps": 5,
+    "response_steps": 25,
+    "scenes_per_bank": 4,
+    "smoke_test": true,
+    "supervision_steps_one_indexed": [15, 20, 25],
+    "time_constant_learning_rate": 0.000001,
+    "train_seed": 320953
+  },
+  "protocol_commit": "63f46143f0375cf4de1af61c7a7b8e69b335dc3f",
+  "source": {
+    "checkpoint": "runs/visual-hover/paired-dynamic-001/controller.pt",
+    "checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+    "graph": "data/derived/full-visual-connectome-v1.npz",
+    "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665"
+  },
+  "status": "rejected_smoke_rpy_safety_gate",
+  "teacher_component_scales_motor_units": {
+    "common": 0.05,
+    "damping": 0.0313163,
+    "height": 0.0169967,
+    "interaction": 0.01
+  },
+  "teacher_factorial_identity": {
+    "branch_reconstruction_max_absolute_error": 0.0000000596,
+    "component_nrmse_maximum": 0.0000008330,
+    "pass": true
+  },
+  "teacher_foreleg_stick_positive_control": {
+    "endpoint_correct_sign_fraction_minimum": 1.0,
+    "measured_stick_position_max_absolute": 0.6487026,
+    "pass": true,
+    "scope": "steady-state reachability only",
+    "teacher_rc_max_absolute_error_after_settling": 0.0087765
+  }
+}

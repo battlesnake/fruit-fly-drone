@@ -653,3 +653,14 @@ will require disjoint-development damping sign, gain and component-error gates b
 small closed-loop teacher-handoff test. All fitting checkpoints remain nonpromotional.
 Failure of this preflight sends work to the learning dynamics/parameterization audit,
 not to more sensors, RL, a looser threshold or a post-hoc narrower claim.
+
+Implementation smoke: after the complete protocol and code were frozen in commit
+`63f4614`, a reduced four-scene run used the registered seed numbers and therefore
+exposed them; the eventual eight-scene banks must not be described as unseen. No
+threshold or optimizer setting changed afterward. The smoke passed cache identity,
+determinism, finite-difference, teacher/foreleg and exact-restoration checks and reduced
+joint MSE on both reduced banks, but failed the 0.05 RPY source-replay gate (pitch about
+0.088 on both). This predicts a likely rejection of the exact first step without
+prejudging the committed full run. It rejects neither full-native learnability nor a
+different optimizer. No parameters were retained. See
+[`artifacts/variable-height-full-native-joint-preflight-smoke-v1/`](../artifacts/variable-height-full-native-joint-preflight-smoke-v1/).
