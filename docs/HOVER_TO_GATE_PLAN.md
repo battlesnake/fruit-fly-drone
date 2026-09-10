@@ -483,3 +483,54 @@ useful progress. Only if that gate passes is a previously unconsumed 64-pair coh
 (`370941` onward) evaluated for at least 90% correct damping sign and aligned gain
 0.5-1.5. This is diagnostic only: no endpoint is promoted and no closed-loop handoff is
 automatic.
+
+Result: the ablation accepted 24 of 25 updates and allowed source-pair common-throttle
+RMS to reach 0.011228, 4.49 times the removed 0.0025 limit. Motion NRMSE on the reused
+benchmark still improved only 3.552% (1.380882 to 1.331832), damping sign remained 0/64,
+and aligned gain remained negative at -0.5133. The run stopped at its attempt limit;
+every attempt-25 scale violated the 0.9 minimum height-response ratio. The retained
+small/medium ratios were only 0.90202/0.90013, and the source-relative parameter metric
+reached 0.000437 of its 0.0005 radius. Thus the common anchor was operationally binding,
+but removing it was insufficient by a wide margin: it is not the sole cause of the
+wrong-sign damping failure. The useful-progress gate failed, so the fresh cohort was not
+exposed, no checkpoint was promoted, and no closed-loop test ran. See
+[`artifacts/variable-height-common-anchor-ablation-v1/`](../artifacts/variable-height-common-anchor-ablation-v1/).
+
+The similar terminal attenuation of motion gain (to about 90.5% of source magnitude)
+and visual-height response (to 90.0-90.2% of source) suggests a more specific failure:
+the optimizer may merely weaken the existing position-feedback response and its delayed,
+wrong-signed echo rather than learn an independent damping term. Because those numbers
+come from different banks, this is a hypothesis to test, not a result to assume.
+
+The next bounded test keeps the source initialization, expanded mask, fixed metric and
+frozen parameter families, but replaces the paired-motion lesson with a matched 2x2
+height-by-velocity assay. For each independently randomized scene and each balanced
+amplitude pair (`|e|` in 0.05/0.10 m and `|v|` in 0.15/0.30 m/s), four smooth native
+histories cross signed endpoint visual height error and endpoint vertical velocity.
+Opposite-velocity histories within a height condition end at exactly the same pose and
+image. Training, guard and evaluation cohorts use disjoint scene/trajectory combinations
+and varied approach durations.
+
+The four endpoint throttle outputs are decomposed into matched height `P`, velocity `D`,
+common `C`, and height-by-velocity interaction components; the existing analytical
+teacher supplies the corresponding training-only targets. Optimization descends only
+the normalized `D` error after projecting against the matched `P` Jacobian in the fixed
+source metric. `C` remains unanchored and diagnostic, while the interaction is reported
+so cancellation cannot masquerade as separation. Every candidate is checked by complete
+zero-state replay, not accepted from the linear projection alone. The actor still sees
+only RGB and roll/pitch and uses only native recurrence.
+
+First run a restored one-step preflight. It must have a finite negative derivative,
+finite-difference agreement within 20%, at least `1e-4` actual full-replay `D`-NRMSE
+improvement, matched `P` response within 10% of source, and all existing visual-height,
+RPY, validity, motor-bound and `5e-4` source-metric checks. A pass authorizes at most 25
+attempts with two independent gradient banks and two fixed guard banks; each guard bank
+must improve `D` NRMSE by at least `1e-4`, and five consecutive rejections stop. At the
+attempt limit, useful progress requires at least 25% `D`-error reduction on an independent
+development cohort while retaining `P` within 10% of source and all other protections.
+Only then is a fresh cohort exposed for at least 90% correct damping sign and aligned
+gain 0.5-1.5. Replay alone cannot promote a checkpoint. If the height-null preflight has
+no usable damping descent, or bounded training again misses useful progress, close this
+local mask/metric family rather than interpreting reduced wrong-sign amplitude as learned
+damping. Joint absolute height-and-damping teaching would then be a separately declared
+broader redesign, not a post-hoc continuation.
