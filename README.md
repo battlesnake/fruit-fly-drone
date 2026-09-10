@@ -285,6 +285,14 @@ for the recurrent fly controller. See the
 [`readout-constraint diagnostic`](artifacts/gate-throttle-readout-constraint-diagnostic-v1/)
 and [`ceiling diagnostic`](artifacts/gate-throttle-readout-ceiling-diagnostic-v1/).
 
+A final audit of that frozen-history family added bounded deltas for the seven existing
+throttle-motor biases to the 37 legal magnitudes. Its selected FP64 fit converged and
+improved aggregate RMSE by 54.0%, but the earliest light-mass group remained above the
+held-out limit (0.274 versus 0.25). Five edge magnitudes and five bias deltas were still at
+a bound. The replay gate failed, so no flight was run, and this static output family is
+now closed. Upstream recurrent anatomical routing remains available to train. See the
+[`native-bias diagnostic`](artifacts/gate-throttle-readout-bias-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.

@@ -545,6 +545,17 @@ still preclude a transmitter-sign or whole-controller impossibility claim. No fi
 weight was compiled or promoted; see
 [`gate-throttle-readout-ceiling-diagnostic-v1`](../artifacts/gate-throttle-readout-ceiling-diagnostic-v1/).
 
+The final frozen-history readout test opened bias deltas in `[-2,+2]` for the seven
+existing throttle motor neurons alongside the same legal `[0,32]` magnitudes. The selected
+source-start FP64 fit converged with projected gradient below `1.5e-9`. On 128 new held-out
+pairs it passed aggregate improvement at 54.0%, but its earliest light-mass NRMSE was
+0.274 against the 0.25 limit; all other groups were at most 0.243. Five edge magnitudes
+and five bias deltas were bound-active. The replay gate stopped the experiment before
+assisted flight and, as preregistered, closes this 37-edge/seven-bias frozen-history
+family. It does not test adapted upstream recurrence or closed-loop flight. No parameter
+was compiled or promoted; see
+[`gate-throttle-readout-bias-diagnostic-v1`](../artifacts/gate-throttle-readout-bias-diagnostic-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:
@@ -605,6 +616,12 @@ Re-run the one-time legal readout-ceiling diagnostic with:
 
 ```bash
 scripts/run_gate_throttle_readout_ceiling.sh
+```
+
+Re-run the native throttle-motor bias diagnostic with:
+
+```bash
+scripts/run_gate_throttle_readout_bias.sh
 ```
 
 Re-run the recurrent-PPO diagnostic under AIRA with:
