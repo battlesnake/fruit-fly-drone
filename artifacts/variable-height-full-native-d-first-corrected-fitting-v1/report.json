@@ -1,0 +1,80 @@
+{
+  "accepted_updates": 20,
+  "actor_contract_unchanged": true,
+  "classification": "projection_control_failure_at_update_21",
+  "closed_loop_hover_authorized": false,
+  "corrected_run_updates": {
+    "accepted": 12,
+    "all_adam_one_step_controls_pass": true,
+    "ordinary": 8,
+    "repaired": 4,
+    "repaired_correction_scales": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "repaired_proposal_scales": [
+      0.0625,
+      0.0625,
+      0.0625,
+      0.0625
+    ],
+    "repaired_updates": [
+      9,
+      12,
+      14,
+      18
+    ]
+  },
+  "development": {
+    "all_scheduled_preservation_gates_pass": true,
+    "endpoint_damping_nrmse_source": 1.39894068,
+    "endpoint_damping_nrmse_update_10": 1.33429182,
+    "endpoint_damping_nrmse_update_20": 1.32103133,
+    "fractional_improvement_at_update_20": 0.05569168
+  },
+  "experiment": "variable-height-full-native-d-first-corrected-fitting-v1",
+  "full_report_sha256": "9b236fc6a6744b1b06984958ebc2c3ff3681cc45fc1fa6da73d1f96ae56b458b",
+  "implementation_commit": "a352dc3",
+  "pass": false,
+  "promoted": false,
+  "protocol_commit": "4e9f646",
+  "restoration": {
+    "final_metrics_equal_accepted_update_20_metrics": true,
+    "optimizer_preproposal_sha256": "ff5e686148163a7f51b237b542d5f03ae74f63dcb7ef256dc1a82d99ad32f577",
+    "resume_controller_parameter_tensor_sha256": "783e39231e800a79f7fb9669eb9fa8c148d614c47885a58848f1881bbaeba327",
+    "resume_file_sha256": "61d32fab3995599286f6eee3b30f24b3bea48042d2528392fdd1ca68e9bf60c4",
+    "resume_optimizer_sha256": "ff5e686148163a7f51b237b542d5f03ae74f63dcb7ef256dc1a82d99ad32f577",
+    "resume_run_state": "stopped",
+    "source_update_8_resume_unchanged": true
+  },
+  "source_cache_manifest_sha256": "a3aa57d103158adc571734a49182df2fbf04852089532bf9f88631c9bac92060",
+  "source_resume_sha256": "eb30a7c1d6f75ee65a6588dbe09475b66c172227170300248625baea1b15b148",
+  "stop_reason": "constraint projection failed",
+  "training": {
+    "endpoint_damping_correct_sign_fraction_update_20": 0.0,
+    "endpoint_damping_nrmse_source": 1.45840085,
+    "endpoint_damping_nrmse_update_8": 1.37624633,
+    "endpoint_damping_nrmse_update_20": 1.35590315,
+    "endpoint_damping_teacher_aligned_gain_update_20": -0.34039575,
+    "fractional_improvement_from_source_at_update_20": 0.07028088
+  },
+  "update_21_failure": {
+    "active_rpy_constraints": [
+      "roll",
+      "pitch"
+    ],
+    "adam_counter_control_pass": true,
+    "bounded_damping_directional_derivative": -0.09797648,
+    "canonical_idempotence_pass": true,
+    "fixed_edges_before_failed_round": 5508,
+    "maximum_continuous_linearized_violation": 2.1613949e-7,
+    "maximum_post_materialization_linearized_violation": 3.8700664e-6,
+    "newly_crossing_edges_in_failed_round": 16,
+    "projection_attempted_rounds": 2,
+    "solver_message": "ABNORMAL: ",
+    "solver_success": false,
+    "trials_run": 0
+  }
+}

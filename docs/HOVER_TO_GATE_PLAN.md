@@ -1111,3 +1111,74 @@ improvement, and parameter/optimizer transaction checks. Resume artifacts remain
 and nonpromotional. Qualification remains first-terminal-checkpoint-only with no candidate
 fallback. A fresh pass authorizes the already specified nominal-mass native closed-loop
 hover comparison; fitting alone still cannot establish stable hover or flight.
+
+Result: the corrected fitter accepted 12 additional updates, reaching total update 20.
+Eight were ordinary updates; updates 9, 12, 14 and 18 used the fixed scale-1/16 proposal
+and scale-1 guard-band correction. All corrected-run one-step Adam controls passed, as did
+the pending-optimizer checks on every repaired update. Training endpoint-D NRMSE improved
+from 1.458401 at the original source and 1.376246 at update 8 to 1.355903 at update 20.
+Development endpoint-D NRMSE reached 1.334292 at update 10 and 1.321031 at update 20,
+with every scheduled preservation gate passing. Sign fraction nevertheless remained zero
+and gain remained negative, so this is not useful damping and authorizes no flight test.
+
+Update 21 stopped before trial replay. The active-set projection's second round returned
+an abnormal L-BFGS-B termination after round one had fixed 5,508 crossing edges. Its
+continuous maximum linearized violation was `2.16e-7`, inside the `1e-6` residual limit,
+but solver success was false and authoritative materialization left `3.87e-6` violation,
+outside the limit. The frozen protocol requires both controls and forbids nonlinear repair
+of a projection failure, so the proposal was rejected without retry. The stopped resume
+retains update 20, restores the optimizer to its recorded pre-proposal hash, and cannot
+silently continue. No terminal checkpoint, fresh qualification, closed-loop hover run or
+promotion resulted. See
+[`artifacts/variable-height-full-native-d-first-corrected-fitting-v1/`](../artifacts/variable-height-full-native-d-first-corrected-fitting-v1/).
+
+Do not treat the update-21 stop as evidence that the actor, objective or constrained
+route is exhausted, and do not resume the stopped run. Run one restored **FP64 projection
+replay audit** from its exact update-20 controller and Adam state. Hash-lock the stopped
+resume (SHA-256 `61d32fab3995599286f6eee3b30f24b3bea48042d2528392fdd1ca68e9bf60c4`)
+and full report (SHA-256
+`9b236fc6a6744b1b06984958ebc2c3ff3681cc45fc1fa6da73d1f96ae56b458b`).
+First reproduce the registered update-20 metrics, rejected update-21 Adam proposal,
+constraint specifications, two active-set rounds and failure measurements within the
+existing reproduction tolerances. Persist hashes of the reconstructed raw displacement,
+Jacobian rows, limits and failed round-two fixed set before comparing solvers. Generate
+these tensors once only; every numerical variant must consume clones of the same frozen
+tensors rather than regenerating gradients.
+
+Replay the production projector unchanged as a control. Then change only the projection's
+linear algebra to genuine float64: convert rows, raw displacement and current edge values
+once before any product; perform Gram products, reductions, fixed-coordinate residual
+contributions, displacement accumulation and final residuals in float64. Keep the same
+learning-rate-scaled metric, inequalities, L-BFGS-B dual formulation and tolerances,
+monotonic edge active set, actual boundary displacements and maximum eight rounds. Do not
+override an unsuccessful solver result. Record the normalized Gram eigenvalues and rank
+using relative eigenvalue cutoff `1e-12`, because the aggregate C/P rows are algebraically
+dependent or nearly dependent on their three supervised-horizon rows.
+
+At every active-set solve, report primal violation in original squared-error units, the
+normalized dual projected-gradient residual and complementarity. Normalize the KKT
+residual by `max(1, ||normalized_violation||_inf)`; for a lower-bounded dual coordinate use
+the absolute gradient when its multiplier is positive and `max(-gradient, 0)` at zero.
+The FP64 route requires L-BFGS-B success, original-unit primal violation at most `1e-6`
+and normalized projected-gradient residual at most `1e-8`. Also run one fixed independent
+SLSQP solve of each small frozen FP64 dual QP from zero, with analytic gradient,
+nonnegative bounds, `ftol=1e-12` and at most 10,000 iterations. It is diagnostic only and
+cannot supply or select a flight candidate.
+
+Only if the primary FP64 active set passes those controls, canonicalize its final proposed
+parameters once and apply the unchanged edge bounds, `1e-7` idempotence, post-materialized
+`1e-6` linear limit and negative endpoint-D derivative gates. Replay the fixed scale-1/16
+directional finite difference, requiring finite measurable D squared-error change and at
+most 20% relative disagreement. Finally try the unchanged ordinary scales 1, 1/2, 1/4,
+1/8, 1/16 and 1/32 in order and report whether the first candidate passes every original
+nonlinear source-relative C/P/RPY, validity, motor-output and current-relative D-improvement
+gate. Do not invoke the nonlinear repair path in this audit.
+
+Restore update-20 parameters and complete Adam state exactly and leave the stopped resume
+and report byte-for-byte unchanged. Run no optimizer update beyond the transactionally
+reconstructed proposal, no development or fresh data, no closed-loop simulation and no
+promotion. A pass authorizes only a separately registered genuine-FP64 projection
+implementation; it does not retroactively accept update 21. A failure characterizes this
+numerical route only, especially because zero displacement remains feasible for the
+original preservation-plus-box constraints and the monotonic active-set heuristic may add
+restrictions of its own.
