@@ -205,10 +205,10 @@ hover controller or consume the final held-out evidence.
 
 That projected-Adam test is complete and rejected. Its preflight confirmed that the
 Jacobian projection works: ordinary capped Adam broke five functional guards, whereas a
-projected half step passed complete replay. During the registered run, 13 of 24 proposals
-were accepted before five consecutive rejections stopped it. The fixed-bank contrast
-NRMSE improved only 0.110%, from 0.738584 to 0.737772, while the source-family radius
-reached `9.987e-5` of `1e-4`. No controller was promoted. See
+projected half step passed complete replay. In the endpoint-retaining replay, 12 of 22
+proposals were accepted before five consecutive rejections stopped it. The fixed-bank
+contrast NRMSE improved only 0.129%, from 0.738583 to 0.737629, while the source-family
+radius reached `9.999e-5` of `1e-4`. No controller was promoted. See
 [`artifacts/variable-height-projected-trust-region-v1/`](../artifacts/variable-height-projected-trust-region-v1/).
 
 The next and final local-optimization diagnostic replaces minibatch Adam proposals with
@@ -221,3 +221,19 @@ preflight at the source and v3 boundary must show a measurable feasible contrast
 before training. Failure ends this local constrained family and triggers the already
 documented responsibility-based native-anatomy/teacher-handoff tracks; it is not evidence
 against visual information or native recurrence.
+
+That final local preflight also stopped correctly. Fixed-bank constrained descent at the
+untouched source retained 45.5% of the contrast descent and produced a safe 0.004073
+NRMSE improvement in one quarter step. At the actual v3 boundary, every scale still
+improved contrast, but none passed a new complete-replay bank: small-pair maximum common
+drift remained 0.00578–0.00808 motor units against the 0.005 limit. Training did not
+start and no parameters changed. See
+[`artifacts/variable-height-constraint-aware-descent-v1/`](../artifacts/variable-height-constraint-aware-descent-v1/).
+
+The global local-optimization family is now closed. The next bounded milestone returns to
+the two control-theory-derived tracks in [`CONTROL_ARCHITECTURE.md`](CONTROL_ARCHITECTURE.md):
+first audit where the native state represents visual height error, visual vertical motion
+and tonic collective across independent trajectory banks; then train only supported
+native routes under randomized progressive teacher handoff. Teacher control, decoded
+probe values and phase remain training-only. The deployed actor still receives only RGB
+and estimated roll/pitch and still drives all four axes through the two front legs.

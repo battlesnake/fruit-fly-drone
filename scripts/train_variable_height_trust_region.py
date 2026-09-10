@@ -539,6 +539,7 @@ def find_safe_trial(
     physics_steps: int,
     device: torch.device,
     config: HoverConfig,
+    minimum_contrast_improvement: float = 1.0e-6,
 ) -> tuple[float | None, list[dict[str, Any]]]:
     trials = []
     for scale in BACKTRACK_SCALES:
@@ -552,8 +553,8 @@ def find_safe_trial(
             config=config,
         )
         contrast_improved = (
-            fixed["mean_contrast_nrmse"]
-            < baseline_fixed["mean_contrast_nrmse"] - 1.0e-6
+            baseline_fixed["mean_contrast_nrmse"] - fixed["mean_contrast_nrmse"]
+            >= minimum_contrast_improvement
         )
         trust = functional_trust_checks(
             student,
@@ -998,6 +999,20 @@ def main() -> int:
     candidate = None
     decision = None
     reached_limit = attempted == 25
+    endpoint_path = None
+    if baseline is not None:
+        endpoint_path = args.output_dir / "nonpromotional-endpoint.pt"
+        torch.save(
+            checkpoint_payload(
+                student,
+                args,
+                config,
+                source_sha256=hover.file_sha256(args.checkpoint),
+                attempts=attempted,
+                accepted_updates=accepted,
+            ),
+            endpoint_path,
+        )
     if baseline is not None and reached_limit:
         student.eval()
         candidate = bridge.evaluate_bridge(
@@ -1010,17 +1025,6 @@ def main() -> int:
             seed=args.seed + 40_000,
         )
         decision = final_decision(candidate, baseline, reached_limit=True)
-        torch.save(
-            checkpoint_payload(
-                student,
-                args,
-                config,
-                source_sha256=hover.file_sha256(args.checkpoint),
-                attempts=attempted,
-                accepted_updates=accepted,
-            ),
-            args.output_dir / "nonpromotional-candidate.pt",
-        )
         if not decision["pass"] and stop_reason is None:
             stop_reason = "; ".join(decision["reasons"])
 
@@ -1045,6 +1049,7 @@ def main() -> int:
         "attempts_completed": attempted,
         "accepted_updates": accepted,
         "stop_reason": stop_reason,
+        "nonpromotional_endpoint": str(endpoint_path) if endpoint_path is not None else None,
         "thresholds": {
             "step_family_rms_cap": STEP_FAMILY_RMS_CAP,
             "source_family_metric_radius": SOURCE_METRIC_RADIUS,

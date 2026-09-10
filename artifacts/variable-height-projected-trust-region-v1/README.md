@@ -13,13 +13,14 @@ legacy and dynamic-replay guards. Projection changed the fixed-bank first-order 
 derivative from `+4.42e-4` to `-6.14e-5`, reduced the linearized common residual below
 `2.97e-7`, and produced a safe half-scale step.
 
-It did not produce enough learning. Thirteen of 24 attempted updates were accepted. The
-fixed-bank contrast NRMSE changed from 0.738584 to 0.737772, only a 0.110% improvement
-against the preregistered 10% requirement. The last accepted point used 99.87% of the
+It did not produce enough learning. A replay retaining the boundary endpoint accepted 12
+of 22 attempted updates. The fixed-bank contrast NRMSE changed from 0.738583 to 0.737629,
+only a 0.129% improvement against the preregistered 10% requirement. The last accepted
+point used 99.99% of the
 `1e-4` source-radius budget; small-pair common NRMSE, maximum common drift and dynamic
 throttle error were also close to their limits. Five consecutive later proposals failed
-even at `1/32`, so the run stopped one attempt early. No final selection suite was run,
-and no candidate was saved or promoted.
+even at `1/32`, so the run stopped early. No final selection suite was run. The endpoint
+was retained only in ignored run storage for the next diagnostic; it was not promoted.
 
 This establishes that Jacobian projection can protect the native controller locally. It
 does not show that the connectome lacks visual information or recurrence, and it does not

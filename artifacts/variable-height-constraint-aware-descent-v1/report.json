@@ -1,0 +1,38 @@
+{
+  "actor_parameters_changed": false,
+  "boundary_checkpoint_sha256": "a2c6ac9ae606bf00384568ee9ffdf8c159fc0d34738412b85993deb35b0b3a62",
+  "classification": "source_direction_feasible_but_v3_boundary_fails_new_common_output_bank",
+  "device": "cuda",
+  "elapsed_seconds": 66.71861533400079,
+  "experiment": "variable-height-constraint-aware-descent-v1",
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665",
+  "minimum_contrast_improvement": 0.00001,
+  "preflight_passed": false,
+  "promoted": false,
+  "source": {
+    "accepted_contrast_improvement": 0.004072666168212891,
+    "accepted_scale": 0.25,
+    "baseline_contrast_nrmse": 0.8056868612766266,
+    "constrained_first_order_contrast_derivative": -0.02748226746916771,
+    "retained_descent_fraction": 0.4553510646985194,
+    "source_family_metric_after_step": 0.000003297965288557413,
+    "trust_passed": true
+  },
+  "stop_reason": "source/boundary feasible-direction preflight failed",
+  "training_started": false,
+  "v3_boundary": {
+    "baseline_contrast_nrmse": 0.8026315569877625,
+    "constrained_first_order_contrast_derivative": -0.0241888165473938,
+    "radial_constraint_active": true,
+    "retained_descent_fraction": 0.39420328709965347,
+    "source_family_metric_at_base": 0.00009998731927371579,
+    "trial_contrast_improved_count": 6,
+    "trial_count": 6,
+    "trial_small_pair_common_max_absolute_motor_range": [
+      0.005782783031463623,
+      0.008079200983047485
+    ],
+    "trust_passing_trials": 0
+  }
+}
