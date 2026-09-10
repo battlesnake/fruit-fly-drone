@@ -75,6 +75,11 @@ def parse_args() -> argparse.Namespace:
         default=REPO_ROOT / "runs" / "gate" / "joint-multitime-overfit-v1",
     )
     parser.add_argument("--device", default="cuda")
+    parser.add_argument(
+        "--initialization",
+        choices=("conditional-vector", "source"),
+        default="conditional-vector",
+    )
     parser.add_argument("--pairs", type=int, default=8)
     parser.add_argument("--candidate-pairs", type=int, default=32)
     parser.add_argument("--updates", type=int, default=150)
@@ -282,13 +287,23 @@ def main() -> int:
         "takeover_seconds"
     ) != min(args.horizon_seconds):
         raise SystemExit("unexpected teacher mode or validated takeover time")
-    student = copy.deepcopy(source).to(device)
+    regularization_reference = copy.deepcopy(source).to(device)
     warm_start = load_warm_start(
-        student, args.warm_start_vector, source_checkpoint=args.student_checkpoint
+        regularization_reference,
+        args.warm_start_vector,
+        source_checkpoint=args.student_checkpoint,
     )
+    student = copy.deepcopy(
+        regularization_reference if args.initialization == "conditional-vector" else source
+    ).to(device)
     for parameter in student.parameters():
         parameter.requires_grad_(True)
-    initial_parameters = parameter_snapshot(student)
+    initialization_parameters = parameter_snapshot(student)
+    regularization_parameters = parameter_snapshot(regularization_reference)
+    initialization_parameter_sha256 = controller_parameter_sha256(student)
+    regularization_parameter_sha256 = controller_parameter_sha256(regularization_reference)
+    if regularization_parameter_sha256 != warm_start["parameter_vector_sha256"]:
+        raise RuntimeError("regularization reference does not match the frozen warm-start vector")
     args.output_dir.mkdir(parents=True, exist_ok=True)
     vector_path = args.output_dir / "selected-vector.json"
     if vector_path.exists():
@@ -340,7 +355,7 @@ def main() -> int:
                 student,
                 training,
                 scales,
-                initial_parameters,
+                regularization_parameters,
                 horizon_steps=horizon_steps,
                 horizon_weights=weights,
                 anchor_step=anchor_step,
@@ -352,13 +367,16 @@ def main() -> int:
     initial_holdout_margin = fidelity_margin_score(
         initial_holdout_metrics, threshold=args.action_fidelity_threshold
     )
+    initial_training_margin = fidelity_margin_score(
+        initial_training_metrics, threshold=args.action_fidelity_threshold
+    )
 
     student.zero_grad(set_to_none=True)
     audit_loss, _ = joint_multitime_loss(
         student,
         training,
         scales,
-        initial_parameters,
+        regularization_parameters,
         horizon_steps=horizon_steps,
         horizon_weights=weights,
         anchor_step=anchor_step,
@@ -400,7 +418,7 @@ def main() -> int:
             student,
             training,
             scales,
-            initial_parameters,
+            regularization_parameters,
             horizon_steps=horizon_steps,
             horizon_weights=weights,
             anchor_step=anchor_step,
@@ -491,6 +509,9 @@ def main() -> int:
     vector = {
         "source_checkpoint_sha256": file_sha256(args.student_checkpoint),
         "warm_start_parameter_sha256": warm_start["parameter_vector_sha256"],
+        "initialization": args.initialization,
+        "initialization_parameter_sha256": initialization_parameter_sha256,
+        "regularization_reference_parameter_sha256": regularization_parameter_sha256,
         "parameter_vector_sha256": controller_parameter_sha256(student),
         "selected_update": best["update"],
         "edge_magnitude": student.edge_magnitude.detach().cpu().tolist(),
@@ -513,6 +534,9 @@ def main() -> int:
         "teacher_mode": teacher_mode,
         "warm_start_vector": stable_path(args.warm_start_vector),
         "warm_start_vector_sha256": file_sha256(args.warm_start_vector),
+        "initialization": args.initialization,
+        "initialization_parameter_sha256": initialization_parameter_sha256,
+        "regularization_reference_parameter_sha256": regularization_parameter_sha256,
         "device": str(device),
         "gpu": torch.cuda.get_device_name(device) if device.type == "cuda" else None,
         "hover_config": asdict(hover_config),
@@ -541,6 +565,7 @@ def main() -> int:
         },
         "initial_training_loss": initial_training_loss,
         "initial_training_metrics": initial_training_metrics,
+        "initial_training_margin_score": initial_training_margin,
         "initial_holdout_metrics": initial_holdout_metrics,
         "initial_holdout_margin_score": initial_holdout_margin,
         "gradient_audit": {
@@ -555,8 +580,11 @@ def main() -> int:
         "selected_holdout_metrics": selected_holdout_metrics,
         "selected_training_margin_score": best["training_margin_score"],
         "selected_holdout_margin_score": selected_holdout_margin,
-        "selected_parameter_change_from_warm_start": parameter_change_summary(
-            student, initial_parameters
+        "selected_parameter_change_from_initialization": parameter_change_summary(
+            student, initialization_parameters
+        ),
+        "selected_parameter_change_from_regularization_reference": parameter_change_summary(
+            student, regularization_parameters
         ),
         "selected_vector": stable_path(vector_path),
         "selected_vector_sha256": file_sha256(vector_path),
