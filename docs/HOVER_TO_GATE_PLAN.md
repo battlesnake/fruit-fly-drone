@@ -386,3 +386,27 @@ closed as insufficient: it weakens the wrong-signed response slightly but cannot
 it without consuming the tonic/height-control budget. No closed-loop test ran and no
 checkpoint was promoted. See
 [`artifacts/variable-height-native-damping-route-training-v1/`](../artifacts/variable-height-native-damping-route-training-v1/).
+
+The next preregistered test restarts from the unchanged source and expands credit
+assignment one targeted stage upstream. Let `I` be the 303 shallow-route intermediates
+and `T` the seven throttle motors. The mask selects the 612 `descending_neuron` cells
+with an existing output to `I` or `T`, then adds every existing synaptic edge ending at
+those cells and their native biases. Deduplication produces 80,454 edge magnitudes and
+883 biases: edge-index SHA-256
+`a8d6118684cf64850b9e2d08f5f200c4501198fef6d4f5c52ec3aa349afa5aa3` and bias-index
+SHA-256 `f2cedb5b38e80beb9c29bba190ac9881c4cc473ea2849329b1f449c80402bd9b`.
+All presynaptic superclasses are admitted on those native afferents, so existing
+optic/visual-projection-to-descending magnitudes may change; retinal mapping/input gains,
+optic-neuron biases, all time constants, motor biases, signs and topology remain frozen.
+
+To prevent the larger mask from silently receiving a larger trust region, edge and bias
+RMS retain the shallow denominators 12,314 and 303. The one-step preflight otherwise
+keeps the same damping bank, bounded common/height/attitude constraints, `2e-5` step cap,
+`5e-4` later-training radius and backtracking sequence. Before a pass it additionally
+requires a forward finite-difference directional derivative at scale 0.0625 to be finite,
+negative and within 20% of autograd. Both the differentiated fixed-source-prefix bank and
+a separately seeded complete zero-state native-recurrence bank must improve motion NRMSE
+by at least `1e-4`, with every preservation gate passing. Improvement per common-output
+drift is reported beside the same-seed shallow preflight. This tests selective
+descending-signal recoding, not a claimed biological damping module; optimization beyond
+one restored preflight step is not authorized until it passes.
