@@ -9,5 +9,5 @@ export TORCHINDUCTOR_CACHE_DIR="$audit_cache_dir/torchinductor"
 export TRITON_CACHE_DIR="$audit_cache_dir/triton"
 
 cd "$repo_root"
-exec aira confine --memory-reserve 8G --memory-max 32G -- \
+exec aira confine --memory-reserve 4G --memory-max 16G -- \
     .venv/bin/python scripts/audit_gate_throttle_exploration_timescale.py "$@"
