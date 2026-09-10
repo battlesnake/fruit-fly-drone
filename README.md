@@ -224,6 +224,21 @@ including the regularization reference, fixed—improved the initial margin from
 therefore not being extended post hoc; the controlled record is in the
 [`source-initialized joint diagnostic`](artifacts/gate-joint-multitime-source-init-diagnostic-v1/).
 
+Dense successful-trajectory imitation removed the sparse-endpoint objective. Every native
+parameter received 1-second truncated recurrent gradients from 64 perfect mass-free
+teacher flights, followed by current-student DAgger histories. FP32 collection replay and
+directional finite differences passed, but the first run improved fixed-suite success only
+from 19.9% to 21.1% and lost all light-mass successes. It stopped at update 200.
+
+A controlled repeat corrected throttle's loss scale from the full hover-command RMS
+(`0.388`) to the teacher-minus-source correction RMS (`0.0787`) and added fixed signed
+throttle diagnostics by mass and time. The best eligible result was then the unchanged
+source: update 50 reached 19.5%, update 100 fell to 11.3%, and mixed replay later produced
+only misses. Correcting action weighting alone therefore did not make offline teacher
+imitation improve closed-loop flight. Neither run was promoted. See the
+[`dense DAgger v1`](artifacts/gate-dense-dagger-diagnostic-v1/) and
+[`corrected-weight v2`](artifacts/gate-dense-dagger-diagnostic-v2/) diagnostics.
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.

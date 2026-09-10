@@ -1,0 +1,6490 @@
+{
+  "archive": "runs/gate/dense-dagger-v2/archive.pt",
+  "archive_sha256": "803ab632f986b4415b39ec301155a3626c00e63bd37e739087a57fbfd65d45c1",
+  "axis_action_rms_scales": [
+    0.015279768034815788,
+    0.009999999776482582,
+    0.009999999776482582,
+    0.07874651253223419
+  ],
+  "baseline_throttle_diagnostics": {
+    "approach_2.5_to_3.5_seconds": {
+      "heavy": {
+        "absolute_error_mean": 0.009222128428518772,
+        "normalized_absolute_error_mean": 0.11711157858371735,
+        "samples": 3200,
+        "signed_error_mean": -0.0013702146243304014
+      },
+      "light": {
+        "absolute_error_mean": 0.03075672872364521,
+        "normalized_absolute_error_mean": 0.3905789256095886,
+        "samples": 3200,
+        "signed_error_mean": 0.03075672872364521
+      }
+    },
+    "crossing_4.0_to_5.0_seconds": {
+      "heavy": {
+        "absolute_error_mean": 0.03266524523496628,
+        "normalized_absolute_error_mean": 0.41481512784957886,
+        "samples": 3200,
+        "signed_error_mean": 0.03266304358839989
+      },
+      "light": {
+        "absolute_error_mean": 0.08603540062904358,
+        "normalized_absolute_error_mean": 1.0925613641738892,
+        "samples": 3200,
+        "signed_error_mean": 0.08603540062904358
+      }
+    },
+    "late_5.0_to_6.0_seconds": {
+      "heavy": {
+        "absolute_error_mean": 0.06312370300292969,
+        "normalized_absolute_error_mean": 0.8016063570976257,
+        "samples": 3200,
+        "signed_error_mean": 0.06312370300292969
+      },
+      "light": {
+        "absolute_error_mean": 0.10682189464569092,
+        "normalized_absolute_error_mean": 1.3565285205841064,
+        "samples": 3200,
+        "signed_error_mean": 0.10682189464569092
+      }
+    },
+    "takeover_0.5_to_1.5_seconds": {
+      "heavy": {
+        "absolute_error_mean": 0.08305986225605011,
+        "normalized_absolute_error_mean": 1.0547751188278198,
+        "samples": 3200,
+        "signed_error_mean": -0.0828881710767746
+      },
+      "light": {
+        "absolute_error_mean": 0.0909539982676506,
+        "normalized_absolute_error_mean": 1.1550225019454956,
+        "samples": 3200,
+        "signed_error_mean": -0.0908006802201271
+      }
+    }
+  },
+  "baseline_validation": {
+    "approach_score_mean": 0.4950632154941559,
+    "clean_pass_rate": 0.19921875,
+    "crossing_radial_mean_m": 1.1032590866088867,
+    "episode_reward_mean": 0.0,
+    "heavy_success_rate": 0.375,
+    "light_success_rate": 0.0234375,
+    "miss_rate": 0.546875,
+    "negative_lateral_success_rate": 0.2578125,
+    "negative_obliquity_success_rate": 0.1796875,
+    "plane_crossing_rate": 1.0,
+    "positive_lateral_success_rate": 0.140625,
+    "positive_obliquity_success_rate": 0.21875,
+    "progress_mean": 1.0,
+    "ring_collision_rate": 0.25390625,
+    "stick_saturation_fraction": 0.006666666828095913,
+    "success_rate": 0.19921875
+  },
+  "candidate_checkpoint": null,
+  "candidate_checkpoint_sha256": null,
+  "checkpoint": "artifacts/gate-motor-interface-es-v1/controller.pt",
+  "checkpoint_sha256": "28e2b0f887f30fe00a40ccaa97dd393949b2ea03257ffbbd0b433c69b56cd986",
+  "claim_scope": "Training uses teacher labels, a fixed takeover schedule, replay timestamps, and privileged relative gate geometry. Deployment uses only current FPV, roll/pitch, body-Z specific force, and native connectome state.",
+  "collections": [
+    {
+      "block": 0,
+      "kind": "expert",
+      "source_prefix_replay_parity": {
+        "absolute_tolerance": 1e-06,
+        "episodes": 64,
+        "exact": false,
+        "last_step_maximum_absolute_error": 1.1920928955078125e-07,
+        "maximum_absolute_error": 1.4901161193847656e-07,
+        "steps": 50,
+        "stored_image_dtype": "torch.float32",
+        "within_tolerance": true
+      },
+      "summary": {
+        "approach_score_mean": 0.9829683303833008,
+        "clean_pass_rate": 1.0,
+        "crossing_radial_mean_m": 0.07964036613702774,
+        "episode_reward_mean": 0.0,
+        "heavy_success_rate": 1.0,
+        "light_success_rate": 1.0,
+        "miss_rate": 0.0,
+        "negative_lateral_success_rate": 1.0,
+        "negative_obliquity_success_rate": 1.0,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 1.0,
+        "positive_obliquity_success_rate": 1.0,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0,
+        "stick_saturation_fraction": 0.011236979626119137,
+        "success_rate": 1.0,
+        "teacher_driven": true,
+        "teacher_takeover_seconds": 0.5
+      }
+    },
+    {
+      "behavior_replay_parity": {
+        "absolute_tolerance": 1e-06,
+        "episodes": 64,
+        "exact": false,
+        "last_step_maximum_absolute_error": 1.1920928955078125e-07,
+        "maximum_absolute_error": 2.384185791015625e-07,
+        "steps": 1200,
+        "stored_image_dtype": "torch.float32",
+        "within_tolerance": true
+      },
+      "block": 1,
+      "kind": "student",
+      "summary": {
+        "approach_score_mean": 0.5010454058647156,
+        "clean_pass_rate": 0.203125,
+        "crossing_radial_mean_m": 1.1087356805801392,
+        "episode_reward_mean": 0.0,
+        "heavy_success_rate": 0.375,
+        "light_success_rate": 0.03125,
+        "miss_rate": 0.546875,
+        "negative_lateral_success_rate": 0.28125,
+        "negative_obliquity_success_rate": 0.21875,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.125,
+        "positive_obliquity_success_rate": 0.1875,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.25,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.203125,
+        "teacher_driven": false,
+        "teacher_takeover_seconds": 0.5
+      }
+    }
+  ],
+  "device": "cuda",
+  "elapsed_seconds": 170.32569879599941,
+  "expert_collection": {
+    "approach_score_mean": 0.9829683303833008,
+    "clean_pass_rate": 1.0,
+    "crossing_radial_mean_m": 0.07964036613702774,
+    "episode_reward_mean": 0.0,
+    "heavy_success_rate": 1.0,
+    "light_success_rate": 1.0,
+    "miss_rate": 0.0,
+    "negative_lateral_success_rate": 1.0,
+    "negative_obliquity_success_rate": 1.0,
+    "plane_crossing_rate": 1.0,
+    "positive_lateral_success_rate": 1.0,
+    "positive_obliquity_success_rate": 1.0,
+    "progress_mean": 1.0,
+    "ring_collision_rate": 0.0,
+    "stick_saturation_fraction": 0.011236979626119137,
+    "success_rate": 1.0,
+    "teacher_driven": true,
+    "teacher_takeover_seconds": 0.5
+  },
+  "expert_preflight_passed": true,
+  "expert_preflight_rates": {
+    "heavy_success_rate": 1.0,
+    "light_success_rate": 1.0,
+    "negative_lateral_success_rate": 1.0,
+    "negative_obliquity_success_rate": 1.0,
+    "positive_lateral_success_rate": 1.0,
+    "positive_obliquity_success_rate": 1.0,
+    "success_rate": 1.0
+  },
+  "expert_source_prefix_replay_parity": {
+    "absolute_tolerance": 1e-06,
+    "episodes": 64,
+    "exact": false,
+    "last_step_maximum_absolute_error": 1.1920928955078125e-07,
+    "maximum_absolute_error": 1.4901161193847656e-07,
+    "steps": 50,
+    "stored_image_dtype": "torch.float32",
+    "within_tolerance": true
+  },
+  "final": null,
+  "fixed_throttle_diagnostic_windows": {
+    "approach_2.5_to_3.5_seconds": [
+      250,
+      350
+    ],
+    "crossing_4.0_to_5.0_seconds": [
+      400,
+      500
+    ],
+    "late_5.0_to_6.0_seconds": [
+      500,
+      600
+    ],
+    "takeover_0.5_to_1.5_seconds": [
+      50,
+      150
+    ]
+  },
+  "gate_config": {
+    "drone_radius": 0.09,
+    "edge_softness": 0.018,
+    "inner_radius": 0.62,
+    "maximum_distance": 4.6,
+    "maximum_height": 1.1,
+    "maximum_lateral_offset": 0.8,
+    "maximum_obliquity_degrees": 20.0,
+    "minimum_distance": 4.6,
+    "minimum_height": 1.1,
+    "minimum_lateral_offset": 0.8,
+    "minimum_obliquity_degrees": 20.0,
+    "outer_radius": 0.76
+  },
+  "goal_passed": false,
+  "goal_threshold_checks": null,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "gradient_audit": {
+    "burn_in_held_fixed_across_perturbations": true,
+    "burn_in_recomputed_under_current_parameters": true,
+    "complete_window_in_autograd": true,
+    "families": {
+      "bias": {
+        "analytic_directional_derivative": 47.91241455078125,
+        "checks": [
+          {
+            "central_difference": 46.17631435394287,
+            "epsilon": 0.001,
+            "matching_sign": true,
+            "measurable_above_repeat_noise": true,
+            "minus_loss": 0.8041435480117798,
+            "plus_loss": 0.8964961767196655,
+            "relative_error": 0.036234871757471684
+          },
+          {
+            "central_difference": 47.72563775380453,
+            "epsilon": 0.0003,
+            "matching_sign": true,
+            "measurable_above_repeat_noise": true,
+            "minus_loss": 0.8329812288284302,
+            "plus_loss": 0.8616166114807129,
+            "relative_error": 0.0038982964796892574
+          },
+          {
+            "central_difference": 47.963857650756836,
+            "epsilon": 0.0001,
+            "matching_sign": true,
+            "measurable_above_repeat_noise": true,
+            "minus_loss": 0.8422375917434692,
+            "plus_loss": 0.8518303632736206,
+            "relative_error": 0.0010725388343482043
+          }
+        ],
+        "gradient_l2_norm": 6.367173194885254,
+        "passed": true
+      },
+      "edge_magnitude": {
+        "analytic_directional_derivative": 248.78140258789062,
+        "checks": [
+          {
+            "central_difference": 165.57317972183228,
+            "epsilon": 0.001,
+            "matching_sign": true,
+            "measurable_above_repeat_noise": true,
+            "minus_loss": 0.8058366775512695,
+            "plus_loss": 1.136983036994934,
+            "relative_error": 0.3344631954016827
+          },
+          {
+            "central_difference": 228.03733746210736,
+            "epsilon": 0.0003,
+            "matching_sign": true,
+            "measurable_above_repeat_noise": true,
+            "minus_loss": 0.7892875671386719,
+            "plus_loss": 0.9261099696159363,
+            "relative_error": 0.08338270027420842
+          },
+          {
+            "central_difference": 243.8277006149292,
+            "epsilon": 0.0001,
+            "matching_sign": true,
+            "measurable_above_repeat_noise": true,
+            "minus_loss": 0.8238439559936523,
+            "plus_loss": 0.8726094961166382,
+            "relative_error": 0.01991186608577528
+          }
+        ],
+        "gradient_l2_norm": 14.692431449890137,
+        "passed": true
+      },
+      "raw_time_constant": {
+        "analytic_directional_derivative": 0.37840014696121216,
+        "checks": [
+          {
+            "central_difference": 0.3781914710998535,
+            "epsilon": 0.001,
+            "matching_sign": true,
+            "measurable_above_repeat_noise": true,
+            "minus_loss": 0.8466173410415649,
+            "plus_loss": 0.8473737239837646,
+            "relative_error": 0.0005514687640436695
+          },
+          {
+            "central_difference": 0.3782908121744792,
+            "epsilon": 0.0003,
+            "matching_sign": true,
+            "measurable_above_repeat_noise": true,
+            "minus_loss": 0.8468800783157349,
+            "plus_loss": 0.8471070528030396,
+            "relative_error": 0.0002889395990223555
+          },
+          {
+            "central_difference": 0.37789344787597656,
+            "epsilon": 0.0001,
+            "matching_sign": true,
+            "measurable_above_repeat_noise": true,
+            "minus_loss": 0.8469556570053101,
+            "plus_loss": 0.8470312356948853,
+            "relative_error": 0.0013390562591074648
+          }
+        ],
+        "gradient_l2_norm": 0.05691592022776604,
+        "passed": true
+      }
+    },
+    "passed": true,
+    "unchanged_loss_range": 1.1920928955078125e-07,
+    "unchanged_loss_repeats": [
+      0.8469934463500977,
+      0.8469933271408081,
+      0.8469933271408081
+    ],
+    "window_start": 50,
+    "window_steps": 100
+  },
+  "graph": "artifacts/gate-accel-v2/connectome.npz",
+  "graph_sha256": "d385bcb96f18fad904d263ab34cbead73c794f9c90961d7961671761d323f3ea",
+  "history": [
+    {
+      "axis_mae": [
+        0.012194081209599972,
+        0.004867727868258953,
+        0.002107353415340185,
+        0.0484226755797863
+      ],
+      "axis_normalized_mae": [
+        0.7980540990829468,
+        0.4867727756500244,
+        0.21073533594608307,
+        0.6149182915687561
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.5276200771331787,
+      "raw_gradient_norm": 9.191458702087402,
+      "regularization": 0.0,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5276200771331787,
+      "update": 1,
+      "valid_fraction": 1.0,
+      "window_end": 111,
+      "window_region_fallback": false,
+      "window_start": 11
+    },
+    {
+      "axis_mae": [
+        0.0076890005730092525,
+        0.00518013397231698,
+        0.0028290865011513233,
+        0.053561534732580185
+      ],
+      "axis_normalized_mae": [
+        0.5032144784927368,
+        0.5180134773254395,
+        0.28290867805480957,
+        0.6801765561103821
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.4960782825946808,
+      "raw_gradient_norm": 12.515321731567383,
+      "regularization": 1.0260409908369184e-06,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.4960782825946808,
+      "update": 2,
+      "valid_fraction": 1.0,
+      "window_end": 213,
+      "window_region_fallback": false,
+      "window_start": 113
+    },
+    {
+      "axis_mae": [
+        0.011594614945352077,
+        0.0007554334006272256,
+        0.0026985076256096363,
+        0.05028602108359337
+      ],
+      "axis_normalized_mae": [
+        0.758821427822113,
+        0.0755433440208435,
+        0.26985079050064087,
+        0.6385809183120728
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.43569910526275635,
+      "raw_gradient_norm": 15.9088716506958,
+      "regularization": 3.1556519388686866e-06,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.43569910526275635,
+      "update": 3,
+      "valid_fraction": 0.1981249898672104,
+      "window_end": 875,
+      "window_region_fallback": false,
+      "window_start": 775
+    },
+    {
+      "axis_mae": [
+        0.010949446819722652,
+        0.004352191463112831,
+        0.002323400927707553,
+        0.04177207127213478
+      ],
+      "axis_normalized_mae": [
+        0.7165977358818054,
+        0.4352191984653473,
+        0.23234011232852936,
+        0.5304624438285828
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.4786548614501953,
+      "raw_gradient_norm": 9.89659595489502,
+      "regularization": 6.34391290077474e-06,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.4786548614501953,
+      "update": 4,
+      "valid_fraction": 1.0,
+      "window_end": 106,
+      "window_region_fallback": false,
+      "window_start": 6
+    },
+    {
+      "axis_mae": [
+        0.006085933651775122,
+        0.002604307606816292,
+        0.0007976198103278875,
+        0.02993832528591156
+      ],
+      "axis_normalized_mae": [
+        0.39830008149147034,
+        0.2604307532310486,
+        0.07976198196411133,
+        0.3801860809326172
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.27966973185539246,
+      "raw_gradient_norm": 6.867935657501221,
+      "regularization": 9.144859177467879e-06,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.27966973185539246,
+      "update": 5,
+      "valid_fraction": 1.0,
+      "window_end": 294,
+      "window_region_fallback": false,
+      "window_start": 194
+    },
+    {
+      "axis_mae": [
+        0.00965216662734747,
+        0.0007576412754133344,
+        0.0007799119921401143,
+        0.03963889926671982
+      ],
+      "axis_normalized_mae": [
+        0.6316959261894226,
+        0.07576412707567215,
+        0.07799120247364044,
+        0.5033733248710632
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.32220613956451416,
+      "raw_gradient_norm": 10.955422401428223,
+      "regularization": 1.2048344615323003e-05,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.32220613956451416,
+      "update": 6,
+      "valid_fraction": 0.1512499898672104,
+      "window_end": 890,
+      "window_region_fallback": false,
+      "window_start": 790
+    },
+    {
+      "axis_mae": [
+        0.017565200105309486,
+        0.007128421682864428,
+        0.0028063133358955383,
+        0.07511495798826218
+      ],
+      "axis_normalized_mae": [
+        1.149572491645813,
+        0.7128421664237976,
+        0.28063133358955383,
+        0.9538829326629639
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.7742322683334351,
+      "raw_gradient_norm": 9.766091346740723,
+      "regularization": 1.4435281627811491e-05,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.7742322683334351,
+      "update": 7,
+      "valid_fraction": 1.0,
+      "window_end": 138,
+      "window_region_fallback": false,
+      "window_start": 38
+    },
+    {
+      "axis_mae": [
+        0.002097151940688491,
+        0.000891457253601402,
+        0.0006716873613186181,
+        0.06124523654580116
+      ],
+      "axis_normalized_mae": [
+        0.13725024461746216,
+        0.089145727455616,
+        0.06716873496770859,
+        0.7777516841888428
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.2678290903568268,
+      "raw_gradient_norm": 12.979126930236816,
+      "regularization": 1.664563751546666e-05,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.2678290903568268,
+      "update": 8,
+      "valid_fraction": 1.0,
+      "window_end": 487,
+      "window_region_fallback": false,
+      "window_start": 387
+    },
+    {
+      "axis_mae": [
+        0.0017174258828163147,
+        0.001048118225298822,
+        0.0009168440010398626,
+        0.08735139667987823
+      ],
+      "axis_normalized_mae": [
+        0.11239868402481079,
+        0.10481181740760803,
+        0.09168440103530884,
+        1.1092731952667236
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.3545420169830322,
+      "raw_gradient_norm": 8.30843734741211,
+      "regularization": 1.7874441255116835e-05,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.3545420169830322,
+      "update": 9,
+      "valid_fraction": 1.0,
+      "window_end": 586,
+      "window_region_fallback": false,
+      "window_start": 486
+    },
+    {
+      "axis_mae": [
+        0.01566935144364834,
+        0.005263254512101412,
+        0.003039783798158169,
+        0.05504501238465309
+      ],
+      "axis_normalized_mae": [
+        1.0254966020584106,
+        0.5263254642486572,
+        0.3039783537387848,
+        0.699015200138092
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6387038826942444,
+      "raw_gradient_norm": 11.892705917358398,
+      "regularization": 1.8370743418927304e-05,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6387038826942444,
+      "update": 10,
+      "valid_fraction": 1.0,
+      "window_end": 116,
+      "window_region_fallback": false,
+      "window_start": 16
+    },
+    {
+      "axis_mae": [
+        0.009211179800331593,
+        0.005561621859669685,
+        0.002477760426700115,
+        0.057066526263952255
+      ],
+      "axis_normalized_mae": [
+        0.6028350591659546,
+        0.5561621785163879,
+        0.24777603149414062,
+        0.7246864438056946
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.5328649282455444,
+      "raw_gradient_norm": 6.207773208618164,
+      "regularization": 1.884512857941445e-05,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5328649282455444,
+      "update": 11,
+      "valid_fraction": 1.0,
+      "window_end": 206,
+      "window_region_fallback": false,
+      "window_start": 106
+    },
+    {
+      "axis_mae": [
+        0.02037215046584606,
+        0.001137354876846075,
+        0.0014476000797003508,
+        0.0667777955532074
+      ],
+      "axis_normalized_mae": [
+        1.3332761526107788,
+        0.11373549699783325,
+        0.14475999772548676,
+        0.8480095863342285
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.6099452972412109,
+      "raw_gradient_norm": 11.276556015014648,
+      "regularization": 1.9140719814458862e-05,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6099452972412109,
+      "update": 12,
+      "valid_fraction": 0.1287499964237213,
+      "window_end": 910,
+      "window_region_fallback": false,
+      "window_start": 810
+    },
+    {
+      "axis_mae": [
+        0.019645195454359055,
+        0.005366378463804722,
+        0.002411865396425128,
+        0.05889623612165451
+      ],
+      "axis_normalized_mae": [
+        1.2856999635696411,
+        0.5366379022598267,
+        0.24118652939796448,
+        0.7479217648506165
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.7028615474700928,
+      "raw_gradient_norm": 9.033653259277344,
+      "regularization": 1.915022403409239e-05,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.7028615474700928,
+      "update": 13,
+      "valid_fraction": 1.0,
+      "window_end": 119,
+      "window_region_fallback": false,
+      "window_start": 19
+    },
+    {
+      "axis_mae": [
+        0.007707356009632349,
+        0.002931971801444888,
+        0.000967387983109802,
+        0.03382624313235283
+      ],
+      "axis_normalized_mae": [
+        0.50441575050354,
+        0.2931971848011017,
+        0.09673880785703659,
+        0.42955857515335083
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.33097758889198303,
+      "raw_gradient_norm": 8.327197074890137,
+      "regularization": 1.9565533875720575e-05,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.33097758889198303,
+      "update": 14,
+      "valid_fraction": 1.0,
+      "window_end": 281,
+      "window_region_fallback": false,
+      "window_start": 181
+    },
+    {
+      "axis_mae": [
+        0.0016842203913256526,
+        0.0006999126635491848,
+        0.0018123703775927424,
+        0.0662517249584198
+      ],
+      "axis_normalized_mae": [
+        0.11022552847862244,
+        0.06999126076698303,
+        0.18123702704906464,
+        0.841329038143158
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.3006957173347473,
+      "raw_gradient_norm": 15.021761894226074,
+      "regularization": 2.0319717805250548e-05,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.3006957173347473,
+      "update": 15,
+      "valid_fraction": 1.0,
+      "window_end": 509,
+      "window_region_fallback": false,
+      "window_start": 409
+    },
+    {
+      "axis_mae": [
+        0.015922846272587776,
+        0.005974956322461367,
+        0.0019419718300923705,
+        0.0648861676454544
+      ],
+      "axis_normalized_mae": [
+        1.0420869588851929,
+        0.5974956750869751,
+        0.1941971629858017,
+        0.8239877820014954
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6644419431686401,
+      "raw_gradient_norm": 4.471628665924072,
+      "regularization": 2.1464402379933745e-05,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6644419431686401,
+      "update": 16,
+      "valid_fraction": 1.0,
+      "window_end": 125,
+      "window_region_fallback": false,
+      "window_start": 25
+    },
+    {
+      "axis_mae": [
+        0.002434252528473735,
+        0.0006101538892835379,
+        0.0015918047865852714,
+        0.0629330426454544
+      ],
+      "axis_normalized_mae": [
+        0.15931212902069092,
+        0.06101538613438606,
+        0.15918047726154327,
+        0.7991850972175598
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.29467326402664185,
+      "raw_gradient_norm": 14.925644874572754,
+      "regularization": 2.3716967916698195e-05,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.29467326402664185,
+      "update": 17,
+      "valid_fraction": 1.0,
+      "window_end": 492,
+      "window_region_fallback": false,
+      "window_start": 392
+    },
+    {
+      "axis_mae": [
+        0.015547952614724636,
+        0.0010263769654557109,
+        0.0014979084953665733,
+        0.05412709340453148
+      ],
+      "axis_normalized_mae": [
+        1.0175516605377197,
+        0.10263768583536148,
+        0.14979085326194763,
+        0.6873586177825928
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.48933470249176025,
+      "raw_gradient_norm": 16.71198081970215,
+      "regularization": 2.6314604838262312e-05,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.48933470249176025,
+      "update": 18,
+      "valid_fraction": 0.22312499582767487,
+      "window_end": 908,
+      "window_region_fallback": false,
+      "window_start": 808
+    },
+    {
+      "axis_mae": [
+        0.01772678829729557,
+        0.006699132267385721,
+        0.0020140390843153,
+        0.07650133222341537
+      ],
+      "axis_normalized_mae": [
+        1.160147786140442,
+        0.6699133515357971,
+        0.2014039009809494,
+        0.9714884757995605
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.7507383823394775,
+      "raw_gradient_norm": 4.980251789093018,
+      "regularization": 2.9053369871689938e-05,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.7507383823394775,
+      "update": 19,
+      "valid_fraction": 1.0,
+      "window_end": 137,
+      "window_region_fallback": false,
+      "window_start": 37
+    },
+    {
+      "axis_mae": [
+        0.0024364013224840164,
+        0.0007386065553873777,
+        0.001122107612900436,
+        0.04826092720031738
+      ],
+      "axis_normalized_mae": [
+        0.15945275127887726,
+        0.07386065274477005,
+        0.11221077293157578,
+        0.6128643155097961
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.2395971119403839,
+      "raw_gradient_norm": 10.205141067504883,
+      "regularization": 3.2803305657580495e-05,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.2395971119403839,
+      "update": 20,
+      "valid_fraction": 1.0,
+      "window_end": 452,
+      "window_region_fallback": false,
+      "window_start": 352
+    },
+    {
+      "axis_mae": [
+        0.010756372474133968,
+        0.0008213207474909723,
+        0.001083177630789578,
+        0.038802120834589005
+      ],
+      "axis_normalized_mae": [
+        0.7039617896080017,
+        0.08213207870721817,
+        0.10831776261329651,
+        0.49274715781211853
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.34678971767425537,
+      "raw_gradient_norm": 10.511083602905273,
+      "regularization": 3.676947017083876e-05,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.34678971767425537,
+      "update": 21,
+      "valid_fraction": 0.19062499701976776,
+      "window_end": 868,
+      "window_region_fallback": false,
+      "window_start": 768
+    },
+    {
+      "axis_mae": [
+        0.012121357023715973,
+        0.004073810763657093,
+        0.0021325661800801754,
+        0.043372176587581635
+      ],
+      "axis_normalized_mae": [
+        0.7932945489883423,
+        0.407381147146225,
+        0.2132566273212433,
+        0.5507822036743164
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.49117863178253174,
+      "raw_gradient_norm": 10.082768440246582,
+      "regularization": 4.098203862668015e-05,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.49117863178253174,
+      "update": 22,
+      "valid_fraction": 1.0,
+      "window_end": 107,
+      "window_region_fallback": false,
+      "window_start": 7
+    },
+    {
+      "axis_mae": [
+        0.006155242212116718,
+        0.0016729747876524925,
+        0.000568898394703865,
+        0.03107505291700363
+      ],
+      "axis_normalized_mae": [
+        0.4028361439704895,
+        0.16729748249053955,
+        0.056889839470386505,
+        0.3946212828159332
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.25541117787361145,
+      "raw_gradient_norm": 6.417051792144775,
+      "regularization": 4.4868294935440645e-05,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.25541117787361145,
+      "update": 23,
+      "valid_fraction": 1.0,
+      "window_end": 311,
+      "window_region_fallback": false,
+      "window_start": 211
+    },
+    {
+      "axis_mae": [
+        0.0025657648220658302,
+        0.0008141426951624453,
+        0.0009672364685684443,
+        0.07652585208415985
+      ],
+      "axis_normalized_mae": [
+        0.1679190844297409,
+        0.08141426742076874,
+        0.09672365337610245,
+        0.971799910068512
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.32946422696113586,
+      "raw_gradient_norm": 11.099837303161621,
+      "regularization": 4.863629874307662e-05,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.32946422696113586,
+      "update": 24,
+      "valid_fraction": 1.0,
+      "window_end": 551,
+      "window_region_fallback": false,
+      "window_start": 451
+    },
+    {
+      "axis_mae": [
+        0.013103191740810871,
+        0.004509977530688047,
+        0.002319066785275936,
+        0.050089750438928604
+      ],
+      "axis_normalized_mae": [
+        0.8575518131256104,
+        0.4509977698326111,
+        0.2319066971540451,
+        0.636088490486145
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.5441361665725708,
+      "raw_gradient_norm": 10.997149467468262,
+      "regularization": 5.233516276348382e-05,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5441361665725708,
+      "update": 25,
+      "valid_fraction": 1.0,
+      "window_end": 113,
+      "window_region_fallback": false,
+      "window_start": 13
+    },
+    {
+      "axis_mae": [
+        0.005754359997808933,
+        0.002814121777191758,
+        0.0007875870796851814,
+        0.032510507851839066
+      ],
+      "axis_normalized_mae": [
+        0.3765999674797058,
+        0.28141218423843384,
+        0.07875870913267136,
+        0.41285011172294617
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.28740525245666504,
+      "raw_gradient_norm": 9.280313491821289,
+      "regularization": 5.5834952945588157e-05,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.28740525245666504,
+      "update": 26,
+      "valid_fraction": 1.0,
+      "window_end": 286,
+      "window_region_fallback": false,
+      "window_start": 186
+    },
+    {
+      "axis_mae": [
+        0.018500978127121925,
+        0.0011896557407453656,
+        0.001382331014610827,
+        0.08713170140981674
+      ],
+      "axis_normalized_mae": [
+        1.2108153104782104,
+        0.11896558105945587,
+        0.13823309540748596,
+        1.1064832210540771
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.6436243057250977,
+      "raw_gradient_norm": 9.42605972290039,
+      "regularization": 5.841878737555817e-05,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6436243057250977,
+      "update": 27,
+      "valid_fraction": 0.9856249690055847,
+      "window_end": 730,
+      "window_region_fallback": false,
+      "window_start": 630
+    },
+    {
+      "axis_mae": [
+        0.01514375489205122,
+        0.005776436533778906,
+        0.001947940792888403,
+        0.06693689525127411
+      ],
+      "axis_normalized_mae": [
+        0.9910984635353088,
+        0.5776435732841492,
+        0.19479408860206604,
+        0.8500298857688904
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6533914804458618,
+      "raw_gradient_norm": 8.282618522644043,
+      "regularization": 6.037118873791769e-05,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6533914804458618,
+      "update": 28,
+      "valid_fraction": 1.0,
+      "window_end": 128,
+      "window_region_fallback": false,
+      "window_start": 28
+    },
+    {
+      "axis_mae": [
+        0.001759450533427298,
+        0.0012488600332289934,
+        0.0006457593408413231,
+        0.036107953637838364
+      ],
+      "axis_normalized_mae": [
+        0.11514904350042343,
+        0.12488601356744766,
+        0.0645759329199791,
+        0.45853400230407715
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.19078625738620758,
+      "raw_gradient_norm": 11.030871391296387,
+      "regularization": 6.268540164455771e-05,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.19078625738620758,
+      "update": 29,
+      "valid_fraction": 1.0,
+      "window_end": 435,
+      "window_region_fallback": false,
+      "window_start": 335
+    },
+    {
+      "axis_mae": [
+        0.005929933860898018,
+        0.0009404614684171975,
+        0.0016047450480982661,
+        0.09903781861066818
+      ],
+      "axis_normalized_mae": [
+        0.3880905508995056,
+        0.09404614567756653,
+        0.1604745090007782,
+        1.2576788663864136
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.4750725030899048,
+      "raw_gradient_norm": 7.376596927642822,
+      "regularization": 6.479147123172879e-05,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.4750725030899048,
+      "update": 30,
+      "valid_fraction": 1.0,
+      "window_end": 630,
+      "window_region_fallback": false,
+      "window_start": 530
+    },
+    {
+      "axis_mae": [
+        0.016682641580700874,
+        0.00607077544555068,
+        0.0017126366728916764,
+        0.06996265053749084
+      ],
+      "axis_normalized_mae": [
+        1.0918124914169312,
+        0.6070775985717773,
+        0.1712636500597,
+        0.8884539604187012
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6896519660949707,
+      "raw_gradient_norm": 8.505343437194824,
+      "regularization": 6.708902947138995e-05,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6896519660949707,
+      "update": 31,
+      "valid_fraction": 1.0,
+      "window_end": 130,
+      "window_region_fallback": false,
+      "window_start": 30
+    },
+    {
+      "axis_mae": [
+        0.0029016372282058,
+        0.0013127613347023726,
+        0.0007068465929478407,
+        0.022496948018670082
+      ],
+      "axis_normalized_mae": [
+        0.18990060687065125,
+        0.13127614557743073,
+        0.07068464905023575,
+        0.2856881618499756
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.16938738524913788,
+      "raw_gradient_norm": 10.424147605895996,
+      "regularization": 6.978816236369312e-05,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.16938738524913788,
+      "update": 32,
+      "valid_fraction": 1.0,
+      "window_end": 394,
+      "window_region_fallback": false,
+      "window_start": 294
+    },
+    {
+      "axis_mae": [
+        0.01309475488960743,
+        0.0009084516786970198,
+        0.0010866309748962522,
+        0.050977181643247604
+      ],
+      "axis_normalized_mae": [
+        0.8569995760917664,
+        0.09084516763687134,
+        0.10866309702396393,
+        0.6473579406738281
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.42596644163131714,
+      "raw_gradient_norm": 12.854133605957031,
+      "regularization": 7.240403647301719e-05,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.42596644163131714,
+      "update": 33,
+      "valid_fraction": 0.4243749976158142,
+      "window_end": 850,
+      "window_region_fallback": false,
+      "window_start": 750
+    },
+    {
+      "axis_mae": [
+        0.018442576751112938,
+        0.006497425027191639,
+        0.0018124536145478487,
+        0.07801967114210129
+      ],
+      "axis_normalized_mae": [
+        1.2069933414459229,
+        0.6497424244880676,
+        0.1812453716993332,
+        0.9907698631286621
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.7571877241134644,
+      "raw_gradient_norm": 7.549538612365723,
+      "regularization": 7.528912101406604e-05,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.7571877241134644,
+      "update": 34,
+      "valid_fraction": 1.0,
+      "window_end": 137,
+      "window_region_fallback": false,
+      "window_start": 37
+    },
+    {
+      "axis_mae": [
+        0.006183304823935032,
+        0.0017231273232027888,
+        0.0008518855320289731,
+        0.028770871460437775
+      ],
+      "axis_normalized_mae": [
+        0.4046727120876312,
+        0.17231273651123047,
+        0.08518855273723602,
+        0.3653605580329895
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.2568836212158203,
+      "raw_gradient_norm": 9.190936088562012,
+      "regularization": 7.871709385653958e-05,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.2568836212158203,
+      "update": 35,
+      "valid_fraction": 1.0,
+      "window_end": 310,
+      "window_region_fallback": false,
+      "window_start": 210
+    },
+    {
+      "axis_mae": [
+        0.011462590657174587,
+        0.0008531994535587728,
+        0.0011461070971563458,
+        0.06066085770726204
+      ],
+      "axis_normalized_mae": [
+        0.7501810193061829,
+        0.08531995117664337,
+        0.1146107092499733,
+        0.7703307867050171
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.4301106333732605,
+      "raw_gradient_norm": 10.240655899047852,
+      "regularization": 8.260209142463282e-05,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.4301106333732605,
+      "update": 36,
+      "valid_fraction": 0.24687498807907104,
+      "window_end": 874,
+      "window_region_fallback": false,
+      "window_start": 774
+    },
+    {
+      "axis_mae": [
+        0.012463643215596676,
+        0.005020986311137676,
+        0.001505455351434648,
+        0.052734650671482086
+      ],
+      "axis_normalized_mae": [
+        0.8156959414482117,
+        0.5020986199378967,
+        0.15054553747177124,
+        0.6696760058403015
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.5345040559768677,
+      "raw_gradient_norm": 9.817005157470703,
+      "regularization": 8.63659952301532e-05,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5345040559768677,
+      "update": 37,
+      "valid_fraction": 1.0,
+      "window_end": 115,
+      "window_region_fallback": false,
+      "window_start": 15
+    },
+    {
+      "axis_mae": [
+        0.005899855867028236,
+        0.0034049195237457752,
+        0.0012385380687192082,
+        0.03479725867509842
+      ],
+      "axis_normalized_mae": [
+        0.3861221373081207,
+        0.3404919505119324,
+        0.12385381013154984,
+        0.4418894946575165
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.3230893611907959,
+      "raw_gradient_norm": 8.819723129272461,
+      "regularization": 9.004337334772572e-05,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.3230893611907959,
+      "update": 38,
+      "valid_fraction": 1.0,
+      "window_end": 241,
+      "window_region_fallback": false,
+      "window_start": 141
+    },
+    {
+      "axis_mae": [
+        0.001607647049240768,
+        0.0006983458297327161,
+        0.001651996048167348,
+        0.07667937874794006
+      ],
+      "axis_normalized_mae": [
+        0.10521409660577774,
+        0.06983458250761032,
+        0.16519960761070251,
+        0.9737495183944702
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.328499436378479,
+      "raw_gradient_norm": 11.738157272338867,
+      "regularization": 9.315097122453153e-05,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.328499436378479,
+      "update": 39,
+      "valid_fraction": 1.0,
+      "window_end": 552,
+      "window_region_fallback": false,
+      "window_start": 452
+    },
+    {
+      "axis_mae": [
+        0.012834454886615276,
+        0.0037382820155471563,
+        0.0015802461421117187,
+        0.03707556426525116
+      ],
+      "axis_normalized_mae": [
+        0.839963972568512,
+        0.3738282024860382,
+        0.1580246090888977,
+        0.47082167863845825
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.46065962314605713,
+      "raw_gradient_norm": 11.368973731994629,
+      "regularization": 9.663768287282437e-05,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.46065962314605713,
+      "update": 40,
+      "valid_fraction": 1.0,
+      "window_end": 101,
+      "window_region_fallback": false,
+      "window_start": 1
+    },
+    {
+      "axis_mae": [
+        0.005653670057654381,
+        0.003026540856808424,
+        0.0012148686219006777,
+        0.02962198480963707
+      ],
+      "axis_normalized_mae": [
+        0.37001022696495056,
+        0.30265408754348755,
+        0.12148686498403549,
+        0.376168817281723
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.2925800085067749,
+      "raw_gradient_norm": 8.94876480102539,
+      "regularization": 9.996158041758463e-05,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.2925800085067749,
+      "update": 41,
+      "valid_fraction": 1.0,
+      "window_end": 253,
+      "window_region_fallback": false,
+      "window_start": 153
+    },
+    {
+      "axis_mae": [
+        0.013589020818471909,
+        0.0008481557597406209,
+        0.0011758541222661734,
+        0.06416493654251099
+      ],
+      "axis_normalized_mae": [
+        0.8893473744392395,
+        0.08481556922197342,
+        0.1175854280591011,
+        0.8148289322853088
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.4766443371772766,
+      "raw_gradient_norm": 1.5598729848861694,
+      "regularization": 0.00010261673742206767,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.4766443371772766,
+      "update": 42,
+      "valid_fraction": 0.7649999856948853,
+      "window_end": 799,
+      "window_region_fallback": false,
+      "window_start": 699
+    },
+    {
+      "axis_mae": [
+        0.016675472259521484,
+        0.006724337115883827,
+        0.0017191191436722875,
+        0.07666710019111633
+      ],
+      "axis_normalized_mae": [
+        1.0913432836532593,
+        0.6724336743354797,
+        0.17191191017627716,
+        0.9735936522483826
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.727320671081543,
+      "raw_gradient_norm": 9.010348320007324,
+      "regularization": 0.00010594876221148297,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.727320671081543,
+      "update": 43,
+      "valid_fraction": 1.0,
+      "window_end": 135,
+      "window_region_fallback": false,
+      "window_start": 35
+    },
+    {
+      "axis_mae": [
+        0.0058791618794202805,
+        0.0028477513696998358,
+        0.0008495557121932507,
+        0.02753569185733795
+      ],
+      "axis_normalized_mae": [
+        0.3847677707672119,
+        0.28477513790130615,
+        0.08495558053255081,
+        0.3496750295162201
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.2760433852672577,
+      "raw_gradient_norm": 2.7718865871429443,
+      "regularization": 0.00010948395356535912,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.2760433852672577,
+      "update": 44,
+      "valid_fraction": 1.0,
+      "window_end": 277,
+      "window_region_fallback": false,
+      "window_start": 177
+    },
+    {
+      "axis_mae": [
+        0.00942427571862936,
+        0.0006620955537073314,
+        0.001286212238483131,
+        0.06580307334661484
+      ],
+      "axis_normalized_mae": [
+        0.6167813539505005,
+        0.06620955467224121,
+        0.12862122058868408,
+        0.8356316089630127
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.4118109345436096,
+      "raw_gradient_norm": 4.442490100860596,
+      "regularization": 0.00011258954327786341,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.4118109345436096,
+      "update": 45,
+      "valid_fraction": 0.4806250035762787,
+      "window_end": 846,
+      "window_region_fallback": false,
+      "window_start": 746
+    },
+    {
+      "axis_mae": [
+        0.017754295840859413,
+        0.007158900611102581,
+        0.0017566586611792445,
+        0.0807863399386406
+      ],
+      "axis_normalized_mae": [
+        1.1619479656219482,
+        0.7158900499343872,
+        0.17566587030887604,
+        1.025903582572937
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.7698518633842468,
+      "raw_gradient_norm": 8.042254447937012,
+      "regularization": 0.0001164296263596043,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.7698518633842468,
+      "update": 46,
+      "valid_fraction": 1.0,
+      "window_end": 140,
+      "window_region_fallback": false,
+      "window_start": 40
+    },
+    {
+      "axis_mae": [
+        0.008077507838606834,
+        0.006113659590482712,
+        0.0017131171189248562,
+        0.07587656378746033
+      ],
+      "axis_normalized_mae": [
+        0.5286407470703125,
+        0.6113660335540771,
+        0.17131167650222778,
+        0.9635545611381531
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.5687182545661926,
+      "raw_gradient_norm": 6.06959867477417,
+      "regularization": 0.00012064262409694493,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5687182545661926,
+      "update": 47,
+      "valid_fraction": 1.0,
+      "window_end": 192,
+      "window_region_fallback": false,
+      "window_start": 92
+    },
+    {
+      "axis_mae": [
+        0.003224082523956895,
+        0.000989590771496296,
+        0.0014474635245278478,
+        0.08877578377723694
+      ],
+      "axis_normalized_mae": [
+        0.211003378033638,
+        0.09895908087491989,
+        0.1447463482618332,
+        1.127361536026001
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.39551758766174316,
+      "raw_gradient_norm": 9.925799369812012,
+      "regularization": 0.0001247734180651605,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.39551758766174316,
+      "update": 48,
+      "valid_fraction": 1.0,
+      "window_end": 617,
+      "window_region_fallback": false,
+      "window_start": 517
+    },
+    {
+      "axis_mae": [
+        0.012316725216805935,
+        0.005788031965494156,
+        0.0012483220780268312,
+        0.06429129093885422
+      ],
+      "axis_normalized_mae": [
+        0.8060806393623352,
+        0.5788031220436096,
+        0.12483221292495728,
+        0.8164335489273071
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.5815373659133911,
+      "raw_gradient_norm": 8.155631065368652,
+      "regularization": 0.00012907353811897337,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5815373659133911,
+      "update": 49,
+      "valid_fraction": 1.0,
+      "window_end": 123,
+      "window_region_fallback": false,
+      "window_start": 23
+    },
+    {
+      "axis_mae": [
+        0.005478569772094488,
+        0.0013260560808703303,
+        0.0006894548423588276,
+        0.019991455599665642
+      ],
+      "axis_normalized_mae": [
+        0.3585505783557892,
+        0.13260561227798462,
+        0.06894548237323761,
+        0.25387099385261536
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.2034931778907776,
+      "raw_gradient_norm": 4.737270355224609,
+      "regularization": 0.00013347725325729698,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.2034931778907776,
+      "update": 50,
+      "valid_fraction": 1.0,
+      "window_end": 357,
+      "window_region_fallback": false,
+      "window_start": 257
+    },
+    {
+      "axis_mae": [
+        0.010019298642873764,
+        0.0009688616264611483,
+        0.0014967289753258228,
+        0.0735286995768547
+      ],
+      "axis_normalized_mae": [
+        0.6557232141494751,
+        0.09688616544008255,
+        0.14967289566993713,
+        0.9337391257286072
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.45900535583496094,
+      "raw_gradient_norm": 10.328234672546387,
+      "regularization": 0.00013805762864649296,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.45900535583496094,
+      "update": 51,
+      "valid_fraction": 0.8768749833106995,
+      "window_end": 796,
+      "window_region_fallback": false,
+      "window_start": 696
+    },
+    {
+      "axis_mae": [
+        0.010943583212792873,
+        0.005193181801587343,
+        0.0011155668180435896,
+        0.05977114289999008
+      ],
+      "axis_normalized_mae": [
+        0.7162140011787415,
+        0.519318163394928,
+        0.11155667901039124,
+        0.7590323090553284
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.5265302658081055,
+      "raw_gradient_norm": 8.021892547607422,
+      "regularization": 0.00014271395048126578,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5265302658081055,
+      "update": 52,
+      "valid_fraction": 1.0,
+      "window_end": 119,
+      "window_region_fallback": false,
+      "window_start": 19
+    },
+    {
+      "axis_mae": [
+        0.001950033474713564,
+        0.0009102406911551952,
+        0.0009335814393125474,
+        0.03986261039972305
+      ],
+      "axis_normalized_mae": [
+        0.12762193381786346,
+        0.09102407097816467,
+        0.09335814416408539,
+        0.5062142610549927
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.20455458760261536,
+      "raw_gradient_norm": 11.900848388671875,
+      "regularization": 0.00014747827663086355,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.20455458760261536,
+      "update": 53,
+      "valid_fraction": 1.0,
+      "window_end": 465,
+      "window_region_fallback": false,
+      "window_start": 365
+    },
+    {
+      "axis_mae": [
+        0.0020525027066469193,
+        0.0008673442644067109,
+        0.0012074902188032866,
+        0.06264419853687286
+      ],
+      "axis_normalized_mae": [
+        0.13432814180850983,
+        0.08673442900180817,
+        0.12074903398752213,
+        0.7955171465873718
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.28433218598365784,
+      "raw_gradient_norm": 10.26015567779541,
+      "regularization": 0.0001522700913483277,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.28433218598365784,
+      "update": 54,
+      "valid_fraction": 1.0,
+      "window_end": 519,
+      "window_region_fallback": false,
+      "window_start": 419
+    },
+    {
+      "axis_mae": [
+        0.015042616985738277,
+        0.006072567775845528,
+        0.0013730839127674699,
+        0.07663886994123459
+      ],
+      "axis_normalized_mae": [
+        0.9844793677330017,
+        0.6072567105293274,
+        0.13730838894844055,
+        0.9732350707054138
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6755698919296265,
+      "raw_gradient_norm": 8.034957885742188,
+      "regularization": 0.00015732589235994965,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6755698919296265,
+      "update": 55,
+      "valid_fraction": 1.0,
+      "window_end": 133,
+      "window_region_fallback": false,
+      "window_start": 33
+    },
+    {
+      "axis_mae": [
+        0.009314941242337227,
+        0.004832763224840164,
+        0.0018810839392244816,
+        0.0504351407289505
+      ],
+      "axis_normalized_mae": [
+        0.6096257567405701,
+        0.4832763373851776,
+        0.1881083995103836,
+        0.6404746174812317
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.48037126660346985,
+      "raw_gradient_norm": 6.508893966674805,
+      "regularization": 0.0001627124147489667,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.48037126660346985,
+      "update": 56,
+      "valid_fraction": 1.0,
+      "window_end": 220,
+      "window_region_fallback": false,
+      "window_start": 120
+    },
+    {
+      "axis_mae": [
+        0.005367910955101252,
+        0.0011722282506525517,
+        0.0014135376550257206,
+        0.090525321662426
+      ],
+      "axis_normalized_mae": [
+        0.3513083755970001,
+        0.11722282320261002,
+        0.1413537710905075,
+        1.1495789289474487
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.43986594676971436,
+      "raw_gradient_norm": 10.922415733337402,
+      "regularization": 0.0001671215723035857,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.43986594676971436,
+      "update": 57,
+      "valid_fraction": 1.0,
+      "window_end": 662,
+      "window_region_fallback": false,
+      "window_start": 562
+    },
+    {
+      "axis_mae": [
+        0.015280060470104218,
+        0.005668891593813896,
+        0.0014235700946301222,
+        0.07279586791992188
+      ],
+      "axis_normalized_mae": [
+        1.0000190734863281,
+        0.5668891668319702,
+        0.1423570066690445,
+        0.9244328141212463
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6584244966506958,
+      "raw_gradient_norm": 8.449182510375977,
+      "regularization": 0.00017161855066660792,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6584244966506958,
+      "update": 58,
+      "valid_fraction": 1.0,
+      "window_end": 129,
+      "window_region_fallback": false,
+      "window_start": 29
+    },
+    {
+      "axis_mae": [
+        0.004888464696705341,
+        0.0014100787229835987,
+        0.0007301385630853474,
+        0.023549310863018036
+      ],
+      "axis_normalized_mae": [
+        0.3199305236339569,
+        0.14100787043571472,
+        0.07301384955644608,
+        0.2990521192550659
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.20825108885765076,
+      "raw_gradient_norm": 4.48620080947876,
+      "regularization": 0.00017627199122216552,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.20825108885765076,
+      "update": 59,
+      "valid_fraction": 1.0,
+      "window_end": 310,
+      "window_region_fallback": false,
+      "window_start": 210
+    },
+    {
+      "axis_mae": [
+        0.009538560174405575,
+        0.0013565666740760207,
+        0.0010031155543401837,
+        0.05497901141643524
+      ],
+      "axis_normalized_mae": [
+        0.6242607235908508,
+        0.1356566846370697,
+        0.10031155496835709,
+        0.6981770396232605
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.3896014988422394,
+      "raw_gradient_norm": 13.076872825622559,
+      "regularization": 0.00018157108570449054,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.3896014988422394,
+      "update": 60,
+      "valid_fraction": 0.34375,
+      "window_end": 861,
+      "window_region_fallback": false,
+      "window_start": 761
+    },
+    {
+      "axis_mae": [
+        0.018563179299235344,
+        0.006628541741520166,
+        0.0016549973515793681,
+        0.08543510735034943
+      ],
+      "axis_normalized_mae": [
+        1.21488618850708,
+        0.6628542542457581,
+        0.1654997318983078,
+        1.0849382877349854
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.7820445895195007,
+      "raw_gradient_norm": 6.45025634765625,
+      "regularization": 0.00018668884877115488,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.7820445895195007,
+      "update": 61,
+      "valid_fraction": 1.0,
+      "window_end": 144,
+      "window_region_fallback": false,
+      "window_start": 44
+    },
+    {
+      "axis_mae": [
+        0.004121001809835434,
+        0.0014493518974632025,
+        0.0008251320105046034,
+        0.020814012736082077
+      ],
+      "axis_normalized_mae": [
+        0.2697031795978546,
+        0.14493519067764282,
+        0.08251319825649261,
+        0.2643166482448578
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.19036704301834106,
+      "raw_gradient_norm": 10.011408805847168,
+      "regularization": 0.00019259090186096728,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.19036704301834106,
+      "update": 62,
+      "valid_fraction": 1.0,
+      "window_end": 376,
+      "window_region_fallback": false,
+      "window_start": 276
+    },
+    {
+      "axis_mae": [
+        0.016430607065558434,
+        0.0016299034468829632,
+        0.000985152437351644,
+        0.0653332769870758
+      ],
+      "axis_normalized_mae": [
+        1.0753178596496582,
+        0.16299034655094147,
+        0.09851523488759995,
+        0.8296656608581543
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.5416222810745239,
+      "raw_gradient_norm": 11.631845474243164,
+      "regularization": 0.00019719154806807637,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5416222810745239,
+      "update": 63,
+      "valid_fraction": 0.14624999463558197,
+      "window_end": 910,
+      "window_region_fallback": false,
+      "window_start": 810
+    },
+    {
+      "axis_mae": [
+        0.013072147034108639,
+        0.003723320085555315,
+        0.001178232254460454,
+        0.043394364416599274
+      ],
+      "axis_normalized_mae": [
+        0.8555199503898621,
+        0.37233203649520874,
+        0.11782322824001312,
+        0.5510638952255249
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.4741847813129425,
+      "raw_gradient_norm": 10.353782653808594,
+      "regularization": 0.00020153606601525098,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.4741847813129425,
+      "update": 64,
+      "valid_fraction": 1.0,
+      "window_end": 105,
+      "window_region_fallback": false,
+      "window_start": 5
+    },
+    {
+      "axis_mae": [
+        0.004618507809937,
+        0.001173151656985283,
+        0.0006913292454555631,
+        0.01781192608177662
+      ],
+      "axis_normalized_mae": [
+        0.30226293206214905,
+        0.11731516569852829,
+        0.06913292407989502,
+        0.22619321942329407
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.17872606217861176,
+      "raw_gradient_norm": 7.065996170043945,
+      "regularization": 0.0002059219841612503,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.17872606217861176,
+      "update": 65,
+      "valid_fraction": 1.0,
+      "window_end": 350,
+      "window_region_fallback": false,
+      "window_start": 250
+    },
+    {
+      "axis_mae": [
+        0.004981211386620998,
+        0.0009876972762867808,
+        0.0015709525905549526,
+        0.0916881337761879
+      ],
+      "axis_normalized_mae": [
+        0.326000452041626,
+        0.09876972436904907,
+        0.15709525346755981,
+        1.164345383644104
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.4365527033805847,
+      "raw_gradient_norm": 6.28737735748291,
+      "regularization": 0.00020941105321981013,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.4365527033805847,
+      "update": 66,
+      "valid_fraction": 1.0,
+      "window_end": 657,
+      "window_region_fallback": false,
+      "window_start": 557
+    },
+    {
+      "axis_mae": [
+        0.015141317620873451,
+        0.0059232222847640514,
+        0.00122055783867836,
+        0.07284878939390182
+      ],
+      "axis_normalized_mae": [
+        0.9909389615058899,
+        0.5923222303390503,
+        0.1220557764172554,
+        0.9251049757003784
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6576055288314819,
+      "raw_gradient_norm": 8.047304153442383,
+      "regularization": 0.0002133557281922549,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6576055288314819,
+      "update": 67,
+      "valid_fraction": 1.0,
+      "window_end": 131,
+      "window_region_fallback": false,
+      "window_start": 31
+    },
+    {
+      "axis_mae": [
+        0.003558763302862644,
+        0.0009734408813528717,
+        0.0007538391510024667,
+        0.018961384892463684
+      ],
+      "axis_normalized_mae": [
+        0.23290689289569855,
+        0.09734408557415009,
+        0.07538391649723053,
+        0.24079017341136932
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.16160626709461212,
+      "raw_gradient_norm": 7.0651774406433105,
+      "regularization": 0.00021797332738060504,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.16160626709461212,
+      "update": 68,
+      "valid_fraction": 1.0,
+      "window_end": 332,
+      "window_region_fallback": false,
+      "window_start": 232
+    },
+    {
+      "axis_mae": [
+        0.002224288647994399,
+        0.0009956478606909513,
+        0.0017567835748195648,
+        0.08466573804616928
+      ],
+      "axis_normalized_mae": [
+        0.14557084441184998,
+        0.0995647981762886,
+        0.17567837238311768,
+        1.0751681327819824
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.3739955425262451,
+      "raw_gradient_norm": 7.8751325607299805,
+      "regularization": 0.00022319925483316183,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.3739955425262451,
+      "update": 69,
+      "valid_fraction": 1.0,
+      "window_end": 588,
+      "window_region_fallback": false,
+      "window_start": 488
+    },
+    {
+      "axis_mae": [
+        0.012416725978255272,
+        0.005387607030570507,
+        0.0009522844920866191,
+        0.06307875365018845
+      ],
+      "axis_normalized_mae": [
+        0.8126252889633179,
+        0.538760781288147,
+        0.09522846341133118,
+        0.801035463809967
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.5619125366210938,
+      "raw_gradient_norm": 7.8406572341918945,
+      "regularization": 0.0002289916155859828,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5619125366210938,
+      "update": 70,
+      "valid_fraction": 1.0,
+      "window_end": 123,
+      "window_region_fallback": false,
+      "window_start": 23
+    },
+    {
+      "axis_mae": [
+        0.011573436670005322,
+        0.005382907576858997,
+        0.001566668157465756,
+        0.0944322869181633
+      ],
+      "axis_normalized_mae": [
+        0.7574353218078613,
+        0.5382907390594482,
+        0.1566668003797531,
+        1.1991932392120361
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.6628965139389038,
+      "raw_gradient_norm": 8.131183624267578,
+      "regularization": 0.00023517050431109965,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6628965139389038,
+      "update": 71,
+      "valid_fraction": 1.0,
+      "window_end": 164,
+      "window_region_fallback": false,
+      "window_start": 64
+    },
+    {
+      "axis_mae": [
+        0.0015797305386513472,
+        0.0010460279881954193,
+        0.0014089220203459263,
+        0.07341377437114716
+      ],
+      "axis_normalized_mae": [
+        0.10338707268238068,
+        0.10460280627012253,
+        0.14089220762252808,
+        0.932279646396637
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.3202904164791107,
+      "raw_gradient_norm": 13.607593536376953,
+      "regularization": 0.00024159892927855253,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.3202904164791107,
+      "update": 72,
+      "valid_fraction": 1.0,
+      "window_end": 602,
+      "window_region_fallback": false,
+      "window_start": 502
+    },
+    {
+      "axis_mae": [
+        0.015498440712690353,
+        0.00635982770472765,
+        0.0014203105820342898,
+        0.08919466286897659
+      ],
+      "axis_normalized_mae": [
+        1.0143111944198608,
+        0.6359827518463135,
+        0.14203105866909027,
+        1.1326806545257568
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.7312514185905457,
+      "raw_gradient_norm": 7.735233783721924,
+      "regularization": 0.0002482224954292178,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.7312514185905457,
+      "update": 73,
+      "valid_fraction": 1.0,
+      "window_end": 150,
+      "window_region_fallback": false,
+      "window_start": 50
+    },
+    {
+      "axis_mae": [
+        0.006843790877610445,
+        0.0033442717976868153,
+        0.000838186067994684,
+        0.02450832910835743
+      ],
+      "axis_normalized_mae": [
+        0.44789883494377136,
+        0.3344271779060364,
+        0.08381860703229904,
+        0.3112306594848633
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.29434382915496826,
+      "raw_gradient_norm": 7.501628875732422,
+      "regularization": 0.00025512531283311546,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.29434382915496826,
+      "update": 74,
+      "valid_fraction": 1.0,
+      "window_end": 276,
+      "window_region_fallback": false,
+      "window_start": 176
+    },
+    {
+      "axis_mae": [
+        0.011177272535860538,
+        0.0018225681269541383,
+        0.0008766321698203683,
+        0.05489625409245491
+      ],
+      "axis_normalized_mae": [
+        0.7315079569816589,
+        0.18225683271884918,
+        0.0876632109284401,
+        0.6971262097358704
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.424638569355011,
+      "raw_gradient_norm": 14.948336601257324,
+      "regularization": 0.00026202943990938365,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.424638569355011,
+      "update": 75,
+      "valid_fraction": 0.25312498211860657,
+      "window_end": 883,
+      "window_region_fallback": false,
+      "window_start": 783
+    },
+    {
+      "axis_mae": [
+        0.011758718639612198,
+        0.004829828627407551,
+        0.0010953751625493169,
+        0.05898578464984894
+      ],
+      "axis_normalized_mae": [
+        0.7695612907409668,
+        0.482982873916626,
+        0.1095375046133995,
+        0.7490591406822205
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.5277851819992065,
+      "raw_gradient_norm": 9.660460472106934,
+      "regularization": 0.000268252391833812,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5277851819992065,
+      "update": 76,
+      "valid_fraction": 1.0,
+      "window_end": 120,
+      "window_region_fallback": false,
+      "window_start": 20
+    },
+    {
+      "axis_mae": [
+        0.005006321705877781,
+        0.0034628030844032764,
+        0.0008048076997511089,
+        0.024278851225972176
+      ],
+      "axis_normalized_mae": [
+        0.32764384150505066,
+        0.3462802767753601,
+        0.08048076927661896,
+        0.30831652879714966
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.26568037271499634,
+      "raw_gradient_norm": 7.475655555725098,
+      "regularization": 0.00027427769964560866,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.26568037271499634,
+      "update": 77,
+      "valid_fraction": 1.0,
+      "window_end": 277,
+      "window_region_fallback": false,
+      "window_start": 177
+    },
+    {
+      "axis_mae": [
+        0.004731321707367897,
+        0.00125559838488698,
+        0.001672264188528061,
+        0.09138358384370804
+      ],
+      "axis_normalized_mae": [
+        0.3096461594104767,
+        0.12555985152721405,
+        0.1672264039516449,
+        1.160477876663208
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.440727561712265,
+      "raw_gradient_norm": 8.14713191986084,
+      "regularization": 0.0002790203143376857,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.440727561712265,
+      "update": 78,
+      "valid_fraction": 1.0,
+      "window_end": 653,
+      "window_region_fallback": false,
+      "window_start": 553
+    },
+    {
+      "axis_mae": [
+        0.013901982456445694,
+        0.0056773340329527855,
+        0.0014482565457001328,
+        0.07619432359933853
+      ],
+      "axis_normalized_mae": [
+        0.9098294973373413,
+        0.5677334666252136,
+        0.14482566714286804,
+        0.967589795589447
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6474946141242981,
+      "raw_gradient_norm": 9.365400314331055,
+      "regularization": 0.00028366531478241086,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6474946141242981,
+      "update": 79,
+      "valid_fraction": 1.0,
+      "window_end": 133,
+      "window_region_fallback": false,
+      "window_start": 33
+    },
+    {
+      "axis_mae": [
+        0.001608551712706685,
+        0.0012952137039974332,
+        0.0008482098346576095,
+        0.05031166225671768
+      ],
+      "axis_normalized_mae": [
+        0.10527331382036209,
+        0.12952135503292084,
+        0.08482098579406738,
+        0.6389064788818359
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.2396305352449417,
+      "raw_gradient_norm": 11.955873489379883,
+      "regularization": 0.0002885091525968164,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.2396305352449417,
+      "update": 80,
+      "valid_fraction": 1.0,
+      "window_end": 490,
+      "window_region_fallback": false,
+      "window_start": 390
+    },
+    {
+      "axis_mae": [
+        0.006654881406575441,
+        0.001129306387156248,
+        0.0016743786400184035,
+        0.08933163434267044
+      ],
+      "axis_normalized_mae": [
+        0.4355354607105255,
+        0.11293064057826996,
+        0.1674378514289856,
+        1.1344201564788818
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.4625810384750366,
+      "raw_gradient_norm": 8.790058135986328,
+      "regularization": 0.00029280217131599784,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.4625810384750366,
+      "update": 81,
+      "valid_fraction": 1.0,
+      "window_end": 640,
+      "window_region_fallback": false,
+      "window_start": 540
+    },
+    {
+      "axis_mae": [
+        0.01248139888048172,
+        0.004493906162679195,
+        0.0009254866745322943,
+        0.05107525736093521
+      ],
+      "axis_normalized_mae": [
+        0.8168579339981079,
+        0.4493906497955322,
+        0.0925486758351326,
+        0.6486033797264099
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.5018501877784729,
+      "raw_gradient_norm": 8.5354585647583,
+      "regularization": 0.00029716745484620333,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5018501877784729,
+      "update": 82,
+      "valid_fraction": 1.0,
+      "window_end": 112,
+      "window_region_fallback": false,
+      "window_start": 12
+    },
+    {
+      "axis_mae": [
+        0.0015112400287762284,
+        0.0012439399724826217,
+        0.0008124496089294553,
+        0.03670055419206619
+      ],
+      "axis_normalized_mae": [
+        0.09890463203191757,
+        0.1243939995765686,
+        0.08124495297670364,
+        0.4660594165325165
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.19265073537826538,
+      "raw_gradient_norm": 12.54387092590332,
+      "regularization": 0.0003017976996488869,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.19265073537826538,
+      "update": 83,
+      "valid_fraction": 1.0,
+      "window_end": 451,
+      "window_region_fallback": false,
+      "window_start": 351
+    },
+    {
+      "axis_mae": [
+        0.014185234904289246,
+        0.0012036978732794523,
+        0.0011610272340476513,
+        0.08184797316789627
+      ],
+      "axis_normalized_mae": [
+        0.928367018699646,
+        0.1203697994351387,
+        0.11610271781682968,
+        1.039385437965393
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.5510562658309937,
+      "raw_gradient_norm": 7.99077033996582,
+      "regularization": 0.00030616633011959493,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5510562658309937,
+      "update": 84,
+      "valid_fraction": 0.9612500071525574,
+      "window_end": 743,
+      "window_region_fallback": false,
+      "window_start": 643
+    },
+    {
+      "axis_mae": [
+        0.014383416622877121,
+        0.005748460069298744,
+        0.0010304015595465899,
+        0.06773077696561813
+      ],
+      "axis_normalized_mae": [
+        0.9413372874259949,
+        0.5748460292816162,
+        0.10304014384746552,
+        0.8601114749908447
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6198337078094482,
+      "raw_gradient_norm": 7.531227111816406,
+      "regularization": 0.00031075815786607563,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6198337078094482,
+      "update": 85,
+      "valid_fraction": 1.0,
+      "window_end": 125,
+      "window_region_fallback": false,
+      "window_start": 25
+    },
+    {
+      "axis_mae": [
+        0.007779291830956936,
+        0.003353438340127468,
+        0.0012919777072966099,
+        0.02644440345466137
+      ],
+      "axis_normalized_mae": [
+        0.509123682975769,
+        0.3353438675403595,
+        0.12919779121875763,
+        0.3358168303966522
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.3273705244064331,
+      "raw_gradient_norm": 9.59212589263916,
+      "regularization": 0.00031641341047361493,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.3273705244064331,
+      "update": 86,
+      "valid_fraction": 1.0,
+      "window_end": 256,
+      "window_region_fallback": false,
+      "window_start": 156
+    },
+    {
+      "axis_mae": [
+        0.011574254371225834,
+        0.0008475464419461787,
+        0.0012245610123500228,
+        0.08001448959112167
+      ],
+      "axis_normalized_mae": [
+        0.7574888467788696,
+        0.08475465327501297,
+        0.12245609611272812,
+        1.0161020755767822
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.49520042538642883,
+      "raw_gradient_norm": 6.719254493713379,
+      "regularization": 0.0003216489276383072,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.49520042538642883,
+      "update": 87,
+      "valid_fraction": 0.9787499904632568,
+      "window_end": 731,
+      "window_region_fallback": false,
+      "window_start": 631
+    },
+    {
+      "axis_mae": [
+        0.011332509107887745,
+        0.004457945004105568,
+        0.0008774171583354473,
+        0.04437359422445297
+      ],
+      "axis_normalized_mae": [
+        0.741667628288269,
+        0.4457945227622986,
+        0.08774171769618988,
+        0.5634992122650146
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.45967578887939453,
+      "raw_gradient_norm": 8.674790382385254,
+      "regularization": 0.0003274912596680224,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.45967578887939453,
+      "update": 88,
+      "valid_fraction": 1.0,
+      "window_end": 108,
+      "window_region_fallback": false,
+      "window_start": 8
+    },
+    {
+      "axis_mae": [
+        0.0020855620969086885,
+        0.0008467427105642855,
+        0.0007382974727079272,
+        0.021463759243488312
+      ],
+      "axis_normalized_mae": [
+        0.13649173080921173,
+        0.08467426151037216,
+        0.07382974773645401,
+        0.2725677490234375
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.14189088344573975,
+      "raw_gradient_norm": 7.208550930023193,
+      "regularization": 0.0003334084467496723,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.14189088344573975,
+      "update": 89,
+      "valid_fraction": 1.0,
+      "window_end": 398,
+      "window_region_fallback": false,
+      "window_start": 298
+    },
+    {
+      "axis_mae": [
+        0.017335781827569008,
+        0.0007765890914015472,
+        0.0011334578739479184,
+        0.07100734859704971
+      ],
+      "axis_normalized_mae": [
+        1.134557843208313,
+        0.07765891402959824,
+        0.11334578692913055,
+        0.9017205238342285
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.5568207502365112,
+      "raw_gradient_norm": 4.071239471435547,
+      "regularization": 0.0003382683207746595,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5568207502365112,
+      "update": 90,
+      "valid_fraction": 0.9306249618530273,
+      "window_end": 764,
+      "window_region_fallback": false,
+      "window_start": 664
+    },
+    {
+      "axis_mae": [
+        0.016038037836551666,
+        0.006364711094647646,
+        0.0011689389357343316,
+        0.07161246240139008
+      ],
+      "axis_normalized_mae": [
+        1.0496258735656738,
+        0.6364710927009583,
+        0.11689389497041702,
+        0.9094048142433167
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6780989170074463,
+      "raw_gradient_norm": 8.727602005004883,
+      "regularization": 0.00034278110251761973,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6780989170074463,
+      "update": 91,
+      "valid_fraction": 1.0,
+      "window_end": 127,
+      "window_region_fallback": false,
+      "window_start": 27
+    },
+    {
+      "axis_mae": [
+        0.001418761326931417,
+        0.0008852147147990763,
+        0.0009282769169658422,
+        0.04968256875872612
+      ],
+      "axis_normalized_mae": [
+        0.09285227954387665,
+        0.08852148056030273,
+        0.0928276926279068,
+        0.6309177279472351
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.22627979516983032,
+      "raw_gradient_norm": 11.004570960998535,
+      "regularization": 0.00034802863956429064,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.22627979516983032,
+      "update": 92,
+      "valid_fraction": 1.0,
+      "window_end": 487,
+      "window_region_fallback": false,
+      "window_start": 387
+    },
+    {
+      "axis_mae": [
+        0.0069288527593016624,
+        0.0010515045141801238,
+        0.001566492603160441,
+        0.09690237790346146
+      ],
+      "axis_normalized_mae": [
+        0.45346587896347046,
+        0.10515045374631882,
+        0.15664926171302795,
+        1.2305607795715332
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.48645660281181335,
+      "raw_gradient_norm": 9.930444717407227,
+      "regularization": 0.0003536985313985497,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.48645660281181335,
+      "update": 93,
+      "valid_fraction": 1.0,
+      "window_end": 675,
+      "window_region_fallback": false,
+      "window_start": 575
+    },
+    {
+      "axis_mae": [
+        0.01871126890182495,
+        0.007281279657036066,
+        0.0016073972219601274,
+        0.09050046652555466
+      ],
+      "axis_normalized_mae": [
+        1.2245779037475586,
+        0.7281278967857361,
+        0.1607397496700287,
+        1.1492631435394287
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.8156771659851074,
+      "raw_gradient_norm": 8.343914985656738,
+      "regularization": 0.0003599134797696024,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.8156771659851074,
+      "update": 94,
+      "valid_fraction": 1.0,
+      "window_end": 149,
+      "window_region_fallback": false,
+      "window_start": 49
+    },
+    {
+      "axis_mae": [
+        0.008121203631162643,
+        0.002738482318818569,
+        0.0011221760651096702,
+        0.025548381730914116
+      ],
+      "axis_normalized_mae": [
+        0.5315004587173462,
+        0.2738482356071472,
+        0.11221759766340256,
+        0.32443827390670776
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.3105011582374573,
+      "raw_gradient_norm": 7.022979736328125,
+      "regularization": 0.00036696495953947306,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.3105011582374573,
+      "update": 95,
+      "valid_fraction": 1.0,
+      "window_end": 258,
+      "window_region_fallback": false,
+      "window_start": 158
+    },
+    {
+      "axis_mae": [
+        0.017437422648072243,
+        0.0009223057422786951,
+        0.001217766897752881,
+        0.08726061135530472
+      ],
+      "axis_normalized_mae": [
+        1.1412098407745361,
+        0.09223056584596634,
+        0.12177669256925583,
+        1.108120322227478
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.6158343553543091,
+      "raw_gradient_norm": 4.622442722320557,
+      "regularization": 0.00037339836126193404,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6158343553543091,
+      "update": 96,
+      "valid_fraction": 1.0,
+      "window_end": 705,
+      "window_region_fallback": false,
+      "window_start": 605
+    },
+    {
+      "axis_mae": [
+        0.016086215153336525,
+        0.005570535082370043,
+        0.0009853258961811662,
+        0.06304410099983215
+      ],
+      "axis_normalized_mae": [
+        1.052778720855713,
+        0.5570535063743591,
+        0.09853257983922958,
+        0.8005955219268799
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6272400617599487,
+      "raw_gradient_norm": 8.323177337646484,
+      "regularization": 0.00038072458119131625,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6272400617599487,
+      "update": 97,
+      "valid_fraction": 1.0,
+      "window_end": 118,
+      "window_region_fallback": false,
+      "window_start": 18
+    },
+    {
+      "axis_mae": [
+        0.003251780290156603,
+        0.0012893795501440763,
+        0.0006368733011186123,
+        0.017824983224272728
+      ],
+      "axis_normalized_mae": [
+        0.212816059589386,
+        0.1289379745721817,
+        0.06368733197450638,
+        0.226359024643898
+      ],
+      "block": 0,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.15795010328292847,
+      "raw_gradient_norm": 6.027767658233643,
+      "regularization": 0.0003883866884279996,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.15795010328292847,
+      "update": 98,
+      "valid_fraction": 1.0,
+      "window_end": 345,
+      "window_region_fallback": false,
+      "window_start": 245
+    },
+    {
+      "axis_mae": [
+        0.0018140968168154359,
+        0.0008066690061241388,
+        0.0010899245971813798,
+        0.06526663154363632
+      ],
+      "axis_normalized_mae": [
+        0.11872543394565582,
+        0.0806669071316719,
+        0.10899244993925095,
+        0.8288192749023438
+      ],
+      "block": 0,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.2843010127544403,
+      "raw_gradient_norm": 11.907337188720703,
+      "regularization": 0.00039543965249322355,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.2843010127544403,
+      "update": 99,
+      "valid_fraction": 1.0,
+      "window_end": 557,
+      "window_region_fallback": false,
+      "window_start": 457
+    },
+    {
+      "axis_mae": [
+        0.018491214141249657,
+        0.006625950336456299,
+        0.0017354884184896946,
+        0.09427400678396225
+      ],
+      "axis_normalized_mae": [
+        1.2101763486862183,
+        0.6625950336456299,
+        0.1735488474369049,
+        1.1971832513809204
+      ],
+      "block": 0,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.8108758926391602,
+      "raw_gradient_norm": 7.599130630493164,
+      "regularization": 0.0004030938434880227,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.8108758926391602,
+      "update": 100,
+      "valid_fraction": 1.0,
+      "window_end": 149,
+      "window_region_fallback": false,
+      "window_start": 49
+    },
+    {
+      "axis_mae": [
+        0.016125455498695374,
+        0.00843169167637825,
+        0.0037483558990061283,
+        0.08738537132740021
+      ],
+      "axis_normalized_mae": [
+        1.055346965789795,
+        0.843169093132019,
+        0.3748355805873871,
+        1.109704613685608
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.8457640409469604,
+      "raw_gradient_norm": 17.255199432373047,
+      "regularization": 0.0,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.8457640409469604,
+      "update": 101,
+      "valid_fraction": 1.0,
+      "window_end": 149,
+      "window_region_fallback": false,
+      "window_start": 49
+    },
+    {
+      "axis_mae": [
+        0.0434098020195961,
+        0.008297511376440525,
+        0.004074358381330967,
+        0.04503871873021126
+      ],
+      "axis_normalized_mae": [
+        2.840998888015747,
+        0.8297511339187622,
+        0.4074358344078064,
+        0.5719456672668457
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 1.162532925605774,
+      "raw_gradient_norm": 22.21715545654297,
+      "regularization": 1.0014624649556936e-06,
+      "requested_window_region": "approach",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 1.162532925605774,
+      "update": 102,
+      "valid_fraction": 1.0,
+      "window_end": 359,
+      "window_region_fallback": false,
+      "window_start": 259
+    },
+    {
+      "axis_mae": [
+        0.01339919026941061,
+        0.0008700649486854672,
+        0.0027780907694250345,
+        0.05878789722919464
+      ],
+      "axis_normalized_mae": [
+        0.876923680305481,
+        0.08700650185346603,
+        0.2778090536594391,
+        0.7465459704399109
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.4970712959766388,
+      "raw_gradient_norm": 13.652120590209961,
+      "regularization": 3.4538479667389765e-06,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.4970712959766388,
+      "update": 103,
+      "valid_fraction": 0.46875,
+      "window_end": 833,
+      "window_region_fallback": false,
+      "window_start": 733
+    },
+    {
+      "axis_mae": [
+        0.023327481001615524,
+        0.0041773333214223385,
+        0.0023263946641236544,
+        0.03509458899497986
+      ],
+      "axis_normalized_mae": [
+        1.5266907215118408,
+        0.4177333116531372,
+        0.23263946175575256,
+        0.44566527009010315
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6556822061538696,
+      "raw_gradient_norm": 8.604249954223633,
+      "regularization": 6.488231065304717e-06,
+      "requested_window_region": "launch",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.6556822061538696,
+      "update": 104,
+      "valid_fraction": 1.0,
+      "window_end": 109,
+      "window_region_fallback": false,
+      "window_start": 9
+    },
+    {
+      "axis_mae": [
+        0.002850813791155815,
+        0.0007238331600092351,
+        0.0010432838462293148,
+        0.047814466059207916
+      ],
+      "axis_normalized_mae": [
+        0.18657439947128296,
+        0.07238331437110901,
+        0.10432837158441544,
+        0.6071946620941162
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.24262017011642456,
+      "raw_gradient_norm": 12.46600341796875,
+      "regularization": 9.20541788218543e-06,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.24262017011642456,
+      "update": 105,
+      "valid_fraction": 1.0,
+      "window_end": 459,
+      "window_region_fallback": false,
+      "window_start": 359
+    },
+    {
+      "axis_mae": [
+        0.0535183809697628,
+        0.007543738931417465,
+        0.0015425831079483032,
+        0.08710967004299164
+      ],
+      "axis_normalized_mae": [
+        3.5025651454925537,
+        0.7543738484382629,
+        0.15425831079483032,
+        1.106203556060791
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 1.379350185394287,
+      "raw_gradient_norm": 12.815895080566406,
+      "regularization": 1.2165134648967069e-05,
+      "requested_window_region": "crossing_post",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 1.379350185394287,
+      "update": 106,
+      "valid_fraction": 0.8774999976158142,
+      "window_end": 598,
+      "window_region_fallback": false,
+      "window_start": 498
+    },
+    {
+      "axis_mae": [
+        0.01136828400194645,
+        0.0052686952985823154,
+        0.0030775321647524834,
+        0.05185280740261078
+      ],
+      "axis_normalized_mae": [
+        0.7440089583396912,
+        0.526869535446167,
+        0.30775320529937744,
+        0.6584774851799011
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.5592772960662842,
+      "raw_gradient_norm": 12.948299407958984,
+      "regularization": 1.4975942576711532e-05,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5592772960662842,
+      "update": 107,
+      "valid_fraction": 1.0,
+      "window_end": 114,
+      "window_region_fallback": false,
+      "window_start": 14
+    },
+    {
+      "axis_mae": [
+        0.03558345139026642,
+        0.009971446357667446,
+        0.0014922725968062878,
+        0.05190885066986084
+      ],
+      "axis_normalized_mae": [
+        2.3287954330444336,
+        0.9971446394920349,
+        0.14922726154327393,
+        0.6591892242431641
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 1.0335891246795654,
+      "raw_gradient_norm": 17.935043334960938,
+      "regularization": 1.74249416886596e-05,
+      "requested_window_region": "approach",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 1.0335891246795654,
+      "update": 108,
+      "valid_fraction": 1.0,
+      "window_end": 216,
+      "window_region_fallback": false,
+      "window_start": 116
+    },
+    {
+      "axis_mae": [
+        0.006346753798425198,
+        0.0009759487002156675,
+        0.0016277810791507363,
+        0.10175828635692596
+      ],
+      "axis_normalized_mae": [
+        0.41536980867385864,
+        0.09759487211704254,
+        0.1627781093120575,
+        1.292225956916809
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.49199217557907104,
+      "raw_gradient_norm": 9.573488235473633,
+      "regularization": 1.954966865014285e-05,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.49199217557907104,
+      "update": 109,
+      "valid_fraction": 1.0,
+      "window_end": 646,
+      "window_region_fallback": false,
+      "window_start": 546
+    },
+    {
+      "axis_mae": [
+        0.03480875492095947,
+        0.005858976393938065,
+        0.0024504989851266146,
+        0.04987813159823418
+      ],
+      "axis_normalized_mae": [
+        2.278094530105591,
+        0.5858976244926453,
+        0.24504989385604858,
+        0.633401095867157
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.9356107711791992,
+      "raw_gradient_norm": 11.737467765808105,
+      "regularization": 2.0680523448390886e-05,
+      "requested_window_region": "launch",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.9356107711791992,
+      "update": 110,
+      "valid_fraction": 1.0,
+      "window_end": 131,
+      "window_region_fallback": false,
+      "window_start": 31
+    },
+    {
+      "axis_mae": [
+        0.016104325652122498,
+        0.006965760141611099,
+        0.002260859590023756,
+        0.08221381157636642
+      ],
+      "axis_normalized_mae": [
+        1.0539638996124268,
+        0.6965759992599487,
+        0.22608596086502075,
+        1.0440312623977661
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.7551642656326294,
+      "raw_gradient_norm": 9.643157958984375,
+      "regularization": 2.177010173909366e-05,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.7551642656326294,
+      "update": 111,
+      "valid_fraction": 1.0,
+      "window_end": 150,
+      "window_region_fallback": false,
+      "window_start": 50
+    },
+    {
+      "axis_mae": [
+        0.01503753662109375,
+        0.0035139783285558224,
+        0.0011438304791226983,
+        0.024461716413497925
+      ],
+      "axis_normalized_mae": [
+        0.9841470122337341,
+        0.351397842168808,
+        0.1143830418586731,
+        0.31063875555992126
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.4401416778564453,
+      "raw_gradient_norm": 16.977367401123047,
+      "regularization": 2.319642408110667e-05,
+      "requested_window_region": "crossing_post",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.4401416778564453,
+      "update": 112,
+      "valid_fraction": 0.10749999433755875,
+      "window_end": 761,
+      "window_region_fallback": false,
+      "window_start": 661
+    },
+    {
+      "axis_mae": [
+        0.011980232782661915,
+        0.005943287629634142,
+        0.0022006570361554623,
+        0.061114873737096786
+      ],
+      "axis_normalized_mae": [
+        0.7840585112571716,
+        0.594328761100769,
+        0.22006571292877197,
+        0.7760961651802063
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.5936372876167297,
+      "raw_gradient_norm": 8.143495559692383,
+      "regularization": 2.537745240260847e-05,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5936372876167297,
+      "update": 113,
+      "valid_fraction": 1.0,
+      "window_end": 124,
+      "window_region_fallback": false,
+      "window_start": 24
+    },
+    {
+      "axis_mae": [
+        0.035723164677619934,
+        0.004706322681158781,
+        0.0012727457797154784,
+        0.04034632816910744
+      ],
+      "axis_normalized_mae": [
+        2.3379392623901367,
+        0.47063225507736206,
+        0.12727457284927368,
+        0.5123569965362549
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.8620507717132568,
+      "raw_gradient_norm": 15.413399696350098,
+      "regularization": 2.7845482691191137e-05,
+      "requested_window_region": "approach",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.8620507717132568,
+      "update": 114,
+      "valid_fraction": 1.0,
+      "window_end": 390,
+      "window_region_fallback": false,
+      "window_start": 290
+    },
+    {
+      "axis_mae": [
+        0.015374460257589817,
+        0.002009174320846796,
+        0.0016835661372169852,
+        0.0873381495475769
+      ],
+      "axis_normalized_mae": [
+        1.006197214126587,
+        0.20091743767261505,
+        0.16835662722587585,
+        1.1091049909591675
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.6211440563201904,
+      "raw_gradient_norm": 10.309101104736328,
+      "regularization": 3.121033660136163e-05,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6211440563201904,
+      "update": 115,
+      "valid_fraction": 0.9724999666213989,
+      "window_end": 736,
+      "window_region_fallback": false,
+      "window_start": 636
+    },
+    {
+      "axis_mae": [
+        0.020514320582151413,
+        0.004239554982632399,
+        0.002031913725659251,
+        0.031063608825206757
+      ],
+      "axis_normalized_mae": [
+        1.3425806760787964,
+        0.4239555299282074,
+        0.2031913697719574,
+        0.3944760262966156
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.591050922870636,
+      "raw_gradient_norm": 10.618882179260254,
+      "regularization": 3.406528048799373e-05,
+      "requested_window_region": "launch",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.591050922870636,
+      "update": 116,
+      "valid_fraction": 1.0,
+      "window_end": 103,
+      "window_region_fallback": false,
+      "window_start": 3
+    },
+    {
+      "axis_mae": [
+        0.007027177605777979,
+        0.0033142215106636286,
+        0.0009046481573022902,
+        0.029831385239958763
+      ],
+      "axis_normalized_mae": [
+        0.459900826215744,
+        0.3314221203327179,
+        0.09046482294797897,
+        0.3788280189037323
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.31515395641326904,
+      "raw_gradient_norm": 12.4047212600708,
+      "regularization": 3.692663085530512e-05,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.31515395641326904,
+      "update": 117,
+      "valid_fraction": 1.0,
+      "window_end": 289,
+      "window_region_fallback": false,
+      "window_start": 189
+    },
+    {
+      "axis_mae": [
+        0.04892636463046074,
+        0.004211596678942442,
+        0.0017389256972819567,
+        0.11122390627861023
+      ],
+      "axis_normalized_mae": [
+        3.202035665512085,
+        0.42115965485572815,
+        0.1738925725221634,
+        1.412429690361023
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 1.3023793697357178,
+      "raw_gradient_norm": 16.520456314086914,
+      "regularization": 3.9330068830167875e-05,
+      "requested_window_region": "crossing_post",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 1.3023793697357178,
+      "update": 118,
+      "valid_fraction": 0.4468749761581421,
+      "window_end": 675,
+      "window_region_fallback": false,
+      "window_start": 575
+    },
+    {
+      "axis_mae": [
+        0.017283570021390915,
+        0.006501483730971813,
+        0.002029560739174485,
+        0.08369728177785873
+      ],
+      "axis_normalized_mae": [
+        1.131140947341919,
+        0.6501484513282776,
+        0.20295608043670654,
+        1.0628695487976074
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.761778712272644,
+      "raw_gradient_norm": 6.930070877075195,
+      "regularization": 4.236834138282575e-05,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.761778712272644,
+      "update": 119,
+      "valid_fraction": 1.0,
+      "window_end": 148,
+      "window_region_fallback": false,
+      "window_start": 48
+    },
+    {
+      "axis_mae": [
+        0.044099874794483185,
+        0.0038316405843943357,
+        0.0014300969196483493,
+        0.04739074781537056
+      ],
+      "axis_normalized_mae": [
+        2.8861615657806396,
+        0.38316404819488525,
+        0.14300969243049622,
+        0.6018139123916626
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 1.0035372972488403,
+      "raw_gradient_norm": 11.092734336853027,
+      "regularization": 4.6617205953225493e-05,
+      "requested_window_region": "approach",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 1.0035372972488403,
+      "update": 120,
+      "valid_fraction": 1.0,
+      "window_end": 447,
+      "window_region_fallback": false,
+      "window_start": 347
+    },
+    {
+      "axis_mae": [
+        0.009307618252933025,
+        0.00242856377735734,
+        0.0015717233764007688,
+        0.10243147611618042
+      ],
+      "axis_normalized_mae": [
+        0.6091464757919312,
+        0.24285641312599182,
+        0.1571723371744156,
+        1.3007748126983643
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.5774874687194824,
+      "raw_gradient_norm": 12.06890869140625,
+      "regularization": 5.1520848501240835e-05,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5774874687194824,
+      "update": 121,
+      "valid_fraction": 1.0,
+      "window_end": 670,
+      "window_region_fallback": false,
+      "window_start": 570
+    },
+    {
+      "axis_mae": [
+        0.03291858360171318,
+        0.005977898836135864,
+        0.0014725199434906244,
+        0.055697452276945114
+      ],
+      "axis_normalized_mae": [
+        2.154390335083008,
+        0.5977898240089417,
+        0.14725199341773987,
+        0.7073005437850952
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.9016832113265991,
+      "raw_gradient_norm": 6.962121486663818,
+      "regularization": 5.568766573560424e-05,
+      "requested_window_region": "launch",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.9016832113265991,
+      "update": 122,
+      "valid_fraction": 1.0,
+      "window_end": 138,
+      "window_region_fallback": false,
+      "window_start": 38
+    },
+    {
+      "axis_mae": [
+        0.002328108064830303,
+        0.0029308979865163565,
+        0.0007312219822779298,
+        0.059310153126716614
+      ],
+      "axis_normalized_mae": [
+        0.15236540138721466,
+        0.2930898368358612,
+        0.07312219589948654,
+        0.7531782388687134
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.3179389238357544,
+      "raw_gradient_norm": 12.373856544494629,
+      "regularization": 6.0689199017360806e-05,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.3179389238357544,
+      "update": 123,
+      "valid_fraction": 1.0,
+      "window_end": 492,
+      "window_region_fallback": false,
+      "window_start": 392
+    },
+    {
+      "axis_mae": [
+        0.04283233359456062,
+        0.004168958868831396,
+        0.0012504075421020389,
+        0.07608933001756668
+      ],
+      "axis_normalized_mae": [
+        2.803205728530884,
+        0.41689589619636536,
+        0.12504075467586517,
+        0.9662564992904663
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 1.0778497457504272,
+      "raw_gradient_norm": 10.776224136352539,
+      "regularization": 6.469358777394518e-05,
+      "requested_window_region": "crossing_post",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 1.0778497457504272,
+      "update": 124,
+      "valid_fraction": 0.9618749618530273,
+      "window_end": 569,
+      "window_region_fallback": false,
+      "window_start": 469
+    },
+    {
+      "axis_mae": [
+        0.01579218916594982,
+        0.005771541502326727,
+        0.0024016050156205893,
+        0.0685591772198677
+      ],
+      "axis_normalized_mae": [
+        1.0335359573364258,
+        0.5771541595458984,
+        0.2401605099439621,
+        0.8706313967704773
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6803705096244812,
+      "raw_gradient_norm": 9.183594703674316,
+      "regularization": 6.903532630531117e-05,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6803705096244812,
+      "update": 125,
+      "valid_fraction": 1.0,
+      "window_end": 128,
+      "window_region_fallback": false,
+      "window_start": 28
+    },
+    {
+      "axis_mae": [
+        0.03707439824938774,
+        0.005566177889704704,
+        0.0011891514295712113,
+        0.06538623571395874
+      ],
+      "axis_normalized_mae": [
+        2.4263715744018555,
+        0.556617796421051,
+        0.1189151480793953,
+        0.8303381204605103
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.9830606579780579,
+      "raw_gradient_norm": 13.270078659057617,
+      "regularization": 7.355911657214165e-05,
+      "requested_window_region": "approach",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.9830606579780579,
+      "update": 126,
+      "valid_fraction": 1.0,
+      "window_end": 176,
+      "window_region_fallback": false,
+      "window_start": 76
+    },
+    {
+      "axis_mae": [
+        0.01654144376516342,
+        0.003501222701743245,
+        0.001520078512839973,
+        0.08750948309898376
+      ],
+      "axis_normalized_mae": [
+        1.0825716257095337,
+        0.35012227296829224,
+        0.1520078480243683,
+        1.1112807989120483
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.6739956140518188,
+      "raw_gradient_norm": 14.868700981140137,
+      "regularization": 7.803670450812206e-05,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6739956140518188,
+      "update": 127,
+      "valid_fraction": 0.9668749570846558,
+      "window_end": 738,
+      "window_region_fallback": false,
+      "window_start": 638
+    },
+    {
+      "axis_mae": [
+        0.02033526822924614,
+        0.005096049513667822,
+        0.002392175840213895,
+        0.034216780215501785
+      ],
+      "axis_normalized_mae": [
+        1.3308624029159546,
+        0.5096048712730408,
+        0.2392175793647766,
+        0.434518039226532
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6285507678985596,
+      "raw_gradient_norm": 17.162906646728516,
+      "regularization": 8.116723620332778e-05,
+      "requested_window_region": "launch",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.6285507678985596,
+      "update": 128,
+      "valid_fraction": 1.0,
+      "window_end": 110,
+      "window_region_fallback": false,
+      "window_start": 10
+    },
+    {
+      "axis_mae": [
+        0.011573848314583302,
+        0.00415761535987258,
+        0.001904014963656664,
+        0.09052221477031708
+      ],
+      "axis_normalized_mae": [
+        0.7574622631072998,
+        0.4157615602016449,
+        0.19040149450302124,
+        1.1495393514633179
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.6282911896705627,
+      "raw_gradient_norm": 6.484073638916016,
+      "regularization": 8.423670078627765e-05,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6282911896705627,
+      "update": 129,
+      "valid_fraction": 1.0,
+      "window_end": 166,
+      "window_region_fallback": false,
+      "window_start": 66
+    },
+    {
+      "axis_mae": [
+        0.05978813022375107,
+        0.003727046540006995,
+        0.0014301404589787126,
+        0.10065590590238571
+      ],
+      "axis_normalized_mae": [
+        3.912895679473877,
+        0.3727046847343445,
+        0.14301404356956482,
+        1.2782269716262817
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 1.4267103672027588,
+      "raw_gradient_norm": 9.780216217041016,
+      "regularization": 8.755844464758411e-05,
+      "requested_window_region": "crossing_post",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 1.4267103672027588,
+      "update": 130,
+      "valid_fraction": 0.859375,
+      "window_end": 606,
+      "window_region_fallback": false,
+      "window_start": 506
+    },
+    {
+      "axis_mae": [
+        0.015506096184253693,
+        0.005315779242664576,
+        0.001808658940717578,
+        0.05950159579515457
+      ],
+      "axis_normalized_mae": [
+        1.0148123502731323,
+        0.531578004360199,
+        0.18086589872837067,
+        0.7556092739105225
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.620716392993927,
+      "raw_gradient_norm": 7.288829803466797,
+      "regularization": 9.105964272748679e-05,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.620716392993927,
+      "update": 131,
+      "valid_fraction": 1.0,
+      "window_end": 119,
+      "window_region_fallback": false,
+      "window_start": 19
+    },
+    {
+      "axis_mae": [
+        0.0503847561776638,
+        0.00317420088686049,
+        0.0013226643204689026,
+        0.043807368725538254
+      ],
+      "axis_normalized_mae": [
+        3.2974817752838135,
+        0.317420095205307,
+        0.13226643204689026,
+        0.5563086867332458
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 1.0758693218231201,
+      "raw_gradient_norm": 7.663527011871338,
+      "regularization": 9.540275641484186e-05,
+      "requested_window_region": "approach",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 1.0758693218231201,
+      "update": 132,
+      "valid_fraction": 1.0,
+      "window_end": 457,
+      "window_region_fallback": false,
+      "window_start": 357
+    },
+    {
+      "axis_mae": [
+        0.006555005442351103,
+        0.003599398070946336,
+        0.0016511871945112944,
+        0.09647165238857269
+      ],
+      "axis_normalized_mae": [
+        0.42899906635284424,
+        0.359939843416214,
+        0.1651187390089035,
+        1.2250910997390747
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.5447871685028076,
+      "raw_gradient_norm": 15.98401927947998,
+      "regularization": 0.00010047469550045207,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5447871685028076,
+      "update": 133,
+      "valid_fraction": 1.0,
+      "window_end": 627,
+      "window_region_fallback": false,
+      "window_start": 527
+    },
+    {
+      "axis_mae": [
+        0.03035697154700756,
+        0.005722141359001398,
+        0.00130276323761791,
+        0.0582321397960186
+      ],
+      "axis_normalized_mae": [
+        1.9867432117462158,
+        0.5722141265869141,
+        0.13027633726596832,
+        0.7394885420799255
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.8571805953979492,
+      "raw_gradient_norm": 8.615621566772461,
+      "regularization": 0.0001049186394084245,
+      "requested_window_region": "launch",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.8571805953979492,
+      "update": 134,
+      "valid_fraction": 1.0,
+      "window_end": 144,
+      "window_region_fallback": false,
+      "window_start": 44
+    },
+    {
+      "axis_mae": [
+        0.0024966963101178408,
+        0.004722297191619873,
+        0.0012096324935555458,
+        0.03502647578716278
+      ],
+      "axis_normalized_mae": [
+        0.1633988320827484,
+        0.4722296893596649,
+        0.12096324563026428,
+        0.44480034708976746
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.30034804344177246,
+      "raw_gradient_norm": 18.718400955200195,
+      "regularization": 0.00011039424134651199,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.30034804344177246,
+      "update": 135,
+      "valid_fraction": 1.0,
+      "window_end": 431,
+      "window_region_fallback": false,
+      "window_start": 331
+    },
+    {
+      "axis_mae": [
+        0.04097350686788559,
+        0.0008068505558185279,
+        0.002213592641055584,
+        0.06550199538469315
+      ],
+      "axis_normalized_mae": [
+        2.6815528869628906,
+        0.08068505674600601,
+        0.2213592529296875,
+        0.8318082690238953
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.9538513422012329,
+      "raw_gradient_norm": 17.459333419799805,
+      "regularization": 0.00011539745173649862,
+      "requested_window_region": "crossing_post",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.9538513422012329,
+      "update": 136,
+      "valid_fraction": 0.2199999988079071,
+      "window_end": 736,
+      "window_region_fallback": false,
+      "window_start": 636
+    },
+    {
+      "axis_mae": [
+        0.016949079930782318,
+        0.0052467407658696175,
+        0.0015937021235004067,
+        0.07745516300201416
+      ],
+      "axis_normalized_mae": [
+        1.1092497110366821,
+        0.5246739983558655,
+        0.15937021374702454,
+        0.9836012125015259
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6942237615585327,
+      "raw_gradient_norm": 3.4013829231262207,
+      "regularization": 0.00012036394036840647,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6942237615585327,
+      "update": 137,
+      "valid_fraction": 1.0,
+      "window_end": 138,
+      "window_region_fallback": false,
+      "window_start": 38
+    },
+    {
+      "axis_mae": [
+        0.03689705953001976,
+        0.0022698938846588135,
+        0.001374981366097927,
+        0.05454446002840996
+      ],
+      "axis_normalized_mae": [
+        2.4147655963897705,
+        0.22698940336704254,
+        0.13749812543392181,
+        0.6926586627960205
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.8679779767990112,
+      "raw_gradient_norm": 10.898415565490723,
+      "regularization": 0.00012777264055330306,
+      "requested_window_region": "approach",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.8679779767990112,
+      "update": 138,
+      "valid_fraction": 1.0,
+      "window_end": 454,
+      "window_region_fallback": false,
+      "window_start": 354
+    },
+    {
+      "axis_mae": [
+        0.012892594560980797,
+        0.0039872825145721436,
+        0.001506494707427919,
+        0.10478319227695465
+      ],
+      "axis_normalized_mae": [
+        0.8437690734863281,
+        0.39872825145721436,
+        0.15064947307109833,
+        1.3306392431259155
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.6809465289115906,
+      "raw_gradient_norm": 13.575739860534668,
+      "regularization": 0.00013587006833404303,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6809465289115906,
+      "update": 139,
+      "valid_fraction": 1.0,
+      "window_end": 693,
+      "window_region_fallback": false,
+      "window_start": 593
+    },
+    {
+      "axis_mae": [
+        0.03773675858974457,
+        0.005879385396838188,
+        0.0012523408513516188,
+        0.06044807285070419
+      ],
+      "axis_normalized_mae": [
+        2.4697208404541016,
+        0.5879385471343994,
+        0.12523408234119415,
+        0.7676286101341248
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.9876305460929871,
+      "raw_gradient_norm": 10.716073989868164,
+      "regularization": 0.00014290085528045893,
+      "requested_window_region": "launch",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.9876305460929871,
+      "update": 140,
+      "valid_fraction": 1.0,
+      "window_end": 148,
+      "window_region_fallback": false,
+      "window_start": 48
+    },
+    {
+      "axis_mae": [
+        0.004948845598846674,
+        0.005243586376309395,
+        0.0006552788545377553,
+        0.03129396587610245
+      ],
+      "axis_normalized_mae": [
+        0.3238822817802429,
+        0.5243586897850037,
+        0.06552788615226746,
+        0.39740127325057983
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.32779252529144287,
+      "raw_gradient_norm": 12.240338325500488,
+      "regularization": 0.00015086185885593295,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.32779252529144287,
+      "update": 141,
+      "valid_fraction": 1.0,
+      "window_end": 288,
+      "window_region_fallback": false,
+      "window_start": 188
+    },
+    {
+      "axis_mae": [
+        0.04072294384241104,
+        0.0016954897437244654,
+        0.0011030148016288877,
+        0.07345757633447647
+      ],
+      "axis_normalized_mae": [
+        2.665154457092285,
+        0.16954898834228516,
+        0.11030147969722748,
+        0.9328359365463257
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.9694602489471436,
+      "raw_gradient_norm": 7.865839958190918,
+      "regularization": 0.00015730751329101622,
+      "requested_window_region": "crossing_post",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.9694602489471436,
+      "update": 142,
+      "valid_fraction": 0.3018749952316284,
+      "window_end": 709,
+      "window_region_fallback": false,
+      "window_start": 609
+    },
+    {
+      "axis_mae": [
+        0.0147032979875803,
+        0.005013438407331705,
+        0.0020909407176077366,
+        0.06558798998594284
+      ],
+      "axis_normalized_mae": [
+        0.9622723460197449,
+        0.5013439059257507,
+        0.2090940922498703,
+        0.8329002261161804
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6264026165008545,
+      "raw_gradient_norm": 9.311148643493652,
+      "regularization": 0.0001635903026908636,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6264026165008545,
+      "update": 143,
+      "valid_fraction": 1.0,
+      "window_end": 126,
+      "window_region_fallback": false,
+      "window_start": 26
+    },
+    {
+      "axis_mae": [
+        0.043967172503471375,
+        0.0023131459020078182,
+        0.0014097514795139432,
+        0.03732617199420929
+      ],
+      "axis_normalized_mae": [
+        2.877476215362549,
+        0.23131459951400757,
+        0.14097514748573303,
+        0.4740041494369507
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.9309425354003906,
+      "raw_gradient_norm": 10.597704887390137,
+      "regularization": 0.00017020061204675585,
+      "requested_window_region": "approach",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.9309425354003906,
+      "update": 144,
+      "valid_fraction": 1.0,
+      "window_end": 384,
+      "window_region_fallback": false,
+      "window_start": 284
+    },
+    {
+      "axis_mae": [
+        0.003069857368245721,
+        0.003804837353527546,
+        0.0010636762017384171,
+        0.06799901276826859
+      ],
+      "axis_normalized_mae": [
+        0.20090995728969574,
+        0.3804837465286255,
+        0.10636762529611588,
+        0.8635177612304688
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.387819766998291,
+      "raw_gradient_norm": 17.53971290588379,
+      "regularization": 0.00017581893189344555,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.387819766998291,
+      "update": 145,
+      "valid_fraction": 1.0,
+      "window_end": 501,
+      "window_region_fallback": false,
+      "window_start": 401
+    },
+    {
+      "axis_mae": [
+        0.023022331297397614,
+        0.003972164820879698,
+        0.0020725070498883724,
+        0.036113545298576355
+      ],
+      "axis_normalized_mae": [
+        1.506719946861267,
+        0.39721640944480896,
+        0.2072506844997406,
+        0.45860496163368225
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6424480080604553,
+      "raw_gradient_norm": 14.55199146270752,
+      "regularization": 0.00017973188369069248,
+      "requested_window_region": "launch",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.6424480080604553,
+      "update": 146,
+      "valid_fraction": 1.0,
+      "window_end": 109,
+      "window_region_fallback": false,
+      "window_start": 9
+    },
+    {
+      "axis_mae": [
+        0.005239261779934168,
+        0.003407067619264126,
+        0.0012478342978283763,
+        0.031028486788272858
+      ],
+      "axis_normalized_mae": [
+        0.34288886189460754,
+        0.34070679545402527,
+        0.12478344142436981,
+        0.39403000473976135
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.3006022572517395,
+      "raw_gradient_norm": 19.288352966308594,
+      "regularization": 0.00018369070312473923,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.3006022572517395,
+      "update": 147,
+      "valid_fraction": 1.0,
+      "window_end": 312,
+      "window_region_fallback": false,
+      "window_start": 212
+    },
+    {
+      "axis_mae": [
+        0.017517169937491417,
+        0.0006886384217068553,
+        0.00044274365063756704,
+        0.03175050765275955
+      ],
+      "axis_normalized_mae": [
+        1.1464290618896484,
+        0.06886384636163712,
+        0.04427436366677284,
+        0.40319889783859253
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.4156915247440338,
+      "raw_gradient_norm": 8.55690860748291,
+      "regularization": 0.00018598073802422732,
+      "requested_window_region": "crossing_post",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.4156915247440338,
+      "update": 148,
+      "valid_fraction": 0.10749999433755875,
+      "window_end": 761,
+      "window_region_fallback": false,
+      "window_start": 661
+    },
+    {
+      "axis_mae": [
+        0.015384368598461151,
+        0.004198778420686722,
+        0.0018401575507596135,
+        0.05343630909919739
+      ],
+      "axis_normalized_mae": [
+        1.0068457126617432,
+        0.4198778569698334,
+        0.18401575088500977,
+        0.6785863637924194
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.572331428527832,
+      "raw_gradient_norm": 10.80001163482666,
+      "regularization": 0.0001887426187749952,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.572331428527832,
+      "update": 149,
+      "valid_fraction": 1.0,
+      "window_end": 115,
+      "window_region_fallback": false,
+      "window_start": 15
+    },
+    {
+      "axis_mae": [
+        0.04674830287694931,
+        0.0031777822878211737,
+        0.001361339120194316,
+        0.04288455471396446
+      ],
+      "axis_normalized_mae": [
+        3.059490442276001,
+        0.31777819991111755,
+        0.13613389432430267,
+        0.5445898175239563
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 1.0144981145858765,
+      "raw_gradient_norm": 10.608475685119629,
+      "regularization": 0.00019204631098546088,
+      "requested_window_region": "approach",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 1.0144981145858765,
+      "update": 150,
+      "valid_fraction": 1.0,
+      "window_end": 411,
+      "window_region_fallback": false,
+      "window_start": 311
+    },
+    {
+      "axis_mae": [
+        0.009718723595142365,
+        0.0032195334788411856,
+        0.0014610477956011891,
+        0.10970153659582138
+      ],
+      "axis_normalized_mae": [
+        0.6360517740249634,
+        0.32195335626602173,
+        0.14610478281974792,
+        1.3930972814559937
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.6243017911911011,
+      "raw_gradient_norm": 12.868141174316406,
+      "regularization": 0.00019562520901672542,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6243017911911011,
+      "update": 151,
+      "valid_fraction": 1.0,
+      "window_end": 701,
+      "window_region_fallback": false,
+      "window_start": 601
+    },
+    {
+      "axis_mae": [
+        0.038069531321525574,
+        0.005371368024498224,
+        0.0012075005797669291,
+        0.058590084314346313
+      ],
+      "axis_normalized_mae": [
+        2.491499423980713,
+        0.5371367931365967,
+        0.1207500621676445,
+        0.7440339922904968
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.9733550548553467,
+      "raw_gradient_norm": 5.257801532745361,
+      "regularization": 0.0001982960820896551,
+      "requested_window_region": "launch",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.9733550548553467,
+      "update": 152,
+      "valid_fraction": 1.0,
+      "window_end": 146,
+      "window_region_fallback": false,
+      "window_start": 46
+    },
+    {
+      "axis_mae": [
+        0.007596838288009167,
+        0.0056291613727808,
+        0.0016042286297306418,
+        0.04908435046672821
+      ],
+      "axis_normalized_mae": [
+        0.49718284606933594,
+        0.5629162192344666,
+        0.16042286157608032,
+        0.6233209371566772
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.4609606862068176,
+      "raw_gradient_norm": 7.105639457702637,
+      "regularization": 0.0002024735149461776,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.4609606862068176,
+      "update": 153,
+      "valid_fraction": 1.0,
+      "window_end": 221,
+      "window_region_fallback": false,
+      "window_start": 121
+    },
+    {
+      "axis_mae": [
+        0.06735875457525253,
+        0.002837875857949257,
+        0.0018139390740543604,
+        0.07015003263950348
+      ],
+      "axis_normalized_mae": [
+        4.40836238861084,
+        0.2837875485420227,
+        0.18139390647411346,
+        0.8908336162567139
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 1.4410943984985352,
+      "raw_gradient_norm": 12.687517166137695,
+      "regularization": 0.00020585802849382162,
+      "requested_window_region": "crossing_post",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 1.4410943984985352,
+      "update": 154,
+      "valid_fraction": 0.9918749928474426,
+      "window_end": 539,
+      "window_region_fallback": false,
+      "window_start": 439
+    },
+    {
+      "axis_mae": [
+        0.015567419119179249,
+        0.004100242629647255,
+        0.0012795862276107073,
+        0.05795148015022278
+      ],
+      "axis_normalized_mae": [
+        1.018825650215149,
+        0.41002434492111206,
+        0.12795862555503845,
+        0.7359243631362915
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.5731832385063171,
+      "raw_gradient_norm": 7.017852783203125,
+      "regularization": 0.0002102496800944209,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5731832385063171,
+      "update": 155,
+      "valid_fraction": 1.0,
+      "window_end": 118,
+      "window_region_fallback": false,
+      "window_start": 18
+    },
+    {
+      "axis_mae": [
+        0.03775472939014435,
+        0.004371571820229292,
+        0.0010598888620734215,
+        0.04728586971759796
+      ],
+      "axis_normalized_mae": [
+        2.4708969593048096,
+        0.43715721368789673,
+        0.10598888248205185,
+        0.6004821062088013
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.903631329536438,
+      "raw_gradient_norm": 13.428183555603027,
+      "regularization": 0.00021584787464234978,
+      "requested_window_region": "approach",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.903631329536438,
+      "update": 156,
+      "valid_fraction": 1.0,
+      "window_end": 299,
+      "window_region_fallback": false,
+      "window_start": 199
+    },
+    {
+      "axis_mae": [
+        0.012716280296444893,
+        0.0031353794038295746,
+        0.0014289773534983397,
+        0.05258741229772568
+      ],
+      "axis_normalized_mae": [
+        0.8322299122810364,
+        0.31353792548179626,
+        0.14289772510528564,
+        0.6678062677383423
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.48911798000335693,
+      "raw_gradient_norm": 16.57668113708496,
+      "regularization": 0.0002223999035777524,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.48911798000335693,
+      "update": 157,
+      "valid_fraction": 0.7024999856948853,
+      "window_end": 802,
+      "window_region_fallback": false,
+      "window_start": 702
+    },
+    {
+      "axis_mae": [
+        0.024008050560951233,
+        0.004687535110861063,
+        0.001069652265869081,
+        0.05172780156135559
+      ],
+      "axis_normalized_mae": [
+        1.5712313652038574,
+        0.46875351667404175,
+        0.10696521401405334,
+        0.6568900346755981
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.7009600400924683,
+      "raw_gradient_norm": 6.821108341217041,
+      "regularization": 0.00022844038903713226,
+      "requested_window_region": "launch",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.7009600400924683,
+      "update": 158,
+      "valid_fraction": 1.0,
+      "window_end": 137,
+      "window_region_fallback": false,
+      "window_start": 37
+    },
+    {
+      "axis_mae": [
+        0.007056014612317085,
+        0.004367646761238575,
+        0.0011052030604332685,
+        0.03404655307531357
+      ],
+      "axis_normalized_mae": [
+        0.46178802847862244,
+        0.4367646276950836,
+        0.11052029579877853,
+        0.4323563277721405
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.3603573143482208,
+      "raw_gradient_norm": 13.721251487731934,
+      "regularization": 0.00023634909302927554,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.3603573143482208,
+      "update": 159,
+      "valid_fraction": 1.0,
+      "window_end": 278,
+      "window_region_fallback": false,
+      "window_start": 178
+    },
+    {
+      "axis_mae": [
+        0.0496782585978508,
+        0.00418233685195446,
+        0.0014330819249153137,
+        0.05257376655936241
+      ],
+      "axis_normalized_mae": [
+        3.251244306564331,
+        0.41823363304138184,
+        0.14330819249153137,
+        0.667633056640625
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 1.1201047897338867,
+      "raw_gradient_norm": 11.683963775634766,
+      "regularization": 0.00024329508596565574,
+      "requested_window_region": "crossing_post",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 1.1201047897338867,
+      "update": 160,
+      "valid_fraction": 1.0,
+      "window_end": 523,
+      "window_region_fallback": false,
+      "window_start": 423
+    },
+    {
+      "axis_mae": [
+        0.014857248403131962,
+        0.005243407562375069,
+        0.0013888919493183494,
+        0.07791487872600555
+      ],
+      "axis_normalized_mae": [
+        0.9723477959632874,
+        0.5243407487869263,
+        0.13888917863368988,
+        0.9894391894340515
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6562541723251343,
+      "raw_gradient_norm": 6.000961780548096,
+      "regularization": 0.00025096835452131927,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6562541723251343,
+      "update": 161,
+      "valid_fraction": 1.0,
+      "window_end": 144,
+      "window_region_fallback": false,
+      "window_start": 44
+    },
+    {
+      "axis_mae": [
+        0.0369044654071331,
+        0.005060477647930384,
+        0.0011935587972402573,
+        0.062196921557188034
+      ],
+      "axis_normalized_mae": [
+        2.415250301361084,
+        0.506047785282135,
+        0.11935587227344513,
+        0.7898371815681458
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.957622766494751,
+      "raw_gradient_norm": 8.430900573730469,
+      "regularization": 0.00026049037114717066,
+      "requested_window_region": "approach",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.957622766494751,
+      "update": 162,
+      "valid_fraction": 1.0,
+      "window_end": 166,
+      "window_region_fallback": false,
+      "window_start": 66
+    },
+    {
+      "axis_mae": [
+        0.013550679199397564,
+        0.0029032439924776554,
+        0.0012846182798966765,
+        0.10018867999315262
+      ],
+      "axis_normalized_mae": [
+        0.8868379592895508,
+        0.2903243601322174,
+        0.1284618079662323,
+        1.2722934484481812
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.6444793939590454,
+      "raw_gradient_norm": 13.099889755249023,
+      "regularization": 0.00027042979490943253,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6444793939590454,
+      "update": 163,
+      "valid_fraction": 0.9918749928474426,
+      "window_end": 730,
+      "window_region_fallback": false,
+      "window_start": 630
+    },
+    {
+      "axis_mae": [
+        0.02192739024758339,
+        0.0043327342718839645,
+        0.001375439576804638,
+        0.04756097495555878
+      ],
+      "axis_normalized_mae": [
+        1.4350603818893433,
+        0.43327346444129944,
+        0.1375439614057541,
+        0.6039755940437317
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6524633169174194,
+      "raw_gradient_norm": 11.171991348266602,
+      "regularization": 0.0002787065168377012,
+      "requested_window_region": "launch",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.6524633169174194,
+      "update": 164,
+      "valid_fraction": 1.0,
+      "window_end": 133,
+      "window_region_fallback": false,
+      "window_start": 33
+    },
+    {
+      "axis_mae": [
+        0.00820773933082819,
+        0.005720219574868679,
+        0.0016996911726891994,
+        0.054974790662527084
+      ],
+      "axis_normalized_mae": [
+        0.5371638536453247,
+        0.5720219612121582,
+        0.1699691265821457,
+        0.6981234550476074
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.4943196177482605,
+      "raw_gradient_norm": 7.953099250793457,
+      "regularization": 0.00028685707366093993,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.4943196177482605,
+      "update": 165,
+      "valid_fraction": 1.0,
+      "window_end": 210,
+      "window_region_fallback": false,
+      "window_start": 110
+    },
+    {
+      "axis_mae": [
+        0.04355311393737793,
+        0.003833589842543006,
+        0.0012705090921372175,
+        0.09941409528255463
+      ],
+      "axis_normalized_mae": [
+        2.8503775596618652,
+        0.3833589553833008,
+        0.12705089151859283,
+        1.262457013130188
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 1.155811071395874,
+      "raw_gradient_norm": 12.667354583740234,
+      "regularization": 0.00029340284527279437,
+      "requested_window_region": "crossing_post",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 1.155811071395874,
+      "update": 166,
+      "valid_fraction": 0.9449999928474426,
+      "window_end": 560,
+      "window_region_fallback": false,
+      "window_start": 460
+    },
+    {
+      "axis_mae": [
+        0.014504628255963326,
+        0.004980726633220911,
+        0.0013644290156662464,
+        0.07137446105480194
+      ],
+      "axis_normalized_mae": [
+        0.9492702484130859,
+        0.49807271361351013,
+        0.1364428997039795,
+        0.9063824415206909
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6225420832633972,
+      "raw_gradient_norm": 6.8247575759887695,
+      "regularization": 0.00029987507150508463,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6225420832633972,
+      "update": 167,
+      "valid_fraction": 1.0,
+      "window_end": 135,
+      "window_region_fallback": false,
+      "window_start": 35
+    },
+    {
+      "axis_mae": [
+        0.03129022568464279,
+        0.004686299711465836,
+        0.0008939975523389876,
+        0.044195305556058884
+      ],
+      "axis_normalized_mae": [
+        2.047820806503296,
+        0.46862998604774475,
+        0.08939975500106812,
+        0.5612350702285767
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.791771411895752,
+      "raw_gradient_norm": 11.149465560913086,
+      "regularization": 0.000307861075270921,
+      "requested_window_region": "approach",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.791771411895752,
+      "update": 168,
+      "valid_fraction": 1.0,
+      "window_end": 268,
+      "window_region_fallback": false,
+      "window_start": 168
+    },
+    {
+      "axis_mae": [
+        0.005567850545048714,
+        0.002892355900257826,
+        0.0019981837831437588,
+        0.1031310185790062
+      ],
+      "axis_normalized_mae": [
+        0.3643936514854431,
+        0.2892356216907501,
+        0.19981834292411804,
+        1.309658169746399
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.5407764315605164,
+      "raw_gradient_norm": 16.067628860473633,
+      "regularization": 0.0003167971153743565,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5407764315605164,
+      "update": 169,
+      "valid_fraction": 1.0,
+      "window_end": 636,
+      "window_region_fallback": false,
+      "window_start": 536
+    },
+    {
+      "axis_mae": [
+        0.018638839945197105,
+        0.0031882417388260365,
+        0.000994788366369903,
+        0.03665735200047493
+      ],
+      "axis_normalized_mae": [
+        1.2198377847671509,
+        0.3188242018222809,
+        0.0994788333773613,
+        0.4655107855796814
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.525912880897522,
+      "raw_gradient_norm": 4.113534927368164,
+      "regularization": 0.00032468681456521153,
+      "requested_window_region": "launch",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.525912880897522,
+      "update": 170,
+      "valid_fraction": 1.0,
+      "window_end": 109,
+      "window_region_fallback": false,
+      "window_start": 9
+    },
+    {
+      "axis_mae": [
+        0.006290325429290533,
+        0.006108912639319897,
+        0.0013939491473138332,
+        0.040955185890197754
+      ],
+      "axis_normalized_mae": [
+        0.4116767942905426,
+        0.6108912825584412,
+        0.13939490914344788,
+        0.5200889110565186
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.42051297426223755,
+      "raw_gradient_norm": 10.658464431762695,
+      "regularization": 0.0003330049221403897,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.42051297426223755,
+      "update": 171,
+      "valid_fraction": 1.0,
+      "window_end": 232,
+      "window_region_fallback": false,
+      "window_start": 132
+    },
+    {
+      "axis_mae": [
+        0.07268290966749191,
+        0.0020393652375787497,
+        0.0015282778767868876,
+        0.08910828083753586
+      ],
+      "axis_normalized_mae": [
+        4.75680685043335,
+        0.20393653213977814,
+        0.15282778441905975,
+        1.1315838098526
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 1.5612887144088745,
+      "raw_gradient_norm": 13.555160522460938,
+      "regularization": 0.00033988204086199403,
+      "requested_window_region": "crossing_post",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 1.5612887144088745,
+      "update": 172,
+      "valid_fraction": 0.6856249570846558,
+      "window_end": 660,
+      "window_region_fallback": false,
+      "window_start": 560
+    },
+    {
+      "axis_mae": [
+        0.014360400848090649,
+        0.004528516437858343,
+        0.0012193003203719854,
+        0.06969193369150162
+      ],
+      "axis_normalized_mae": [
+        0.9398310780525208,
+        0.45285165309906006,
+        0.12193003296852112,
+        0.8850162029266357
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.5999072790145874,
+      "raw_gradient_norm": 4.847999572753906,
+      "regularization": 0.00034685630816966295,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5999072790145874,
+      "update": 173,
+      "valid_fraction": 1.0,
+      "window_end": 135,
+      "window_region_fallback": false,
+      "window_start": 35
+    },
+    {
+      "axis_mae": [
+        0.026446284726262093,
+        0.0035094628110527992,
+        0.0008217643480747938,
+        0.04320814087986946
+      ],
+      "axis_normalized_mae": [
+        1.7308039665222168,
+        0.3509462773799896,
+        0.08217643946409225,
+        0.5486990809440613
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.6781564354896545,
+      "raw_gradient_norm": 10.15170955657959,
+      "regularization": 0.0003572022542357445,
+      "requested_window_region": "approach",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.6781564354896545,
+      "update": 174,
+      "valid_fraction": 1.0,
+      "window_end": 291,
+      "window_region_fallback": false,
+      "window_start": 191
+    },
+    {
+      "axis_mae": [
+        0.0024018369149416685,
+        0.0038700175937265158,
+        0.001723563764244318,
+        0.08350615203380585
+      ],
+      "axis_normalized_mae": [
+        0.15719065070152283,
+        0.38700175285339355,
+        0.17235639691352844,
+        1.0604424476623535
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.4442478120326996,
+      "raw_gradient_norm": 19.94021987915039,
+      "regularization": 0.00036824631388299167,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.4442478120326996,
+      "update": 175,
+      "valid_fraction": 1.0,
+      "window_end": 552,
+      "window_region_fallback": false,
+      "window_start": 452
+    },
+    {
+      "axis_mae": [
+        0.02558356337249279,
+        0.0032346267253160477,
+        0.0009277653880417347,
+        0.03563603013753891
+      ],
+      "axis_normalized_mae": [
+        1.6743425130844116,
+        0.32346266508102417,
+        0.09277653694152832,
+        0.4525410830974579
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6357806921005249,
+      "raw_gradient_norm": 3.3876137733459473,
+      "regularization": 0.0003783677821047604,
+      "requested_window_region": "launch",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.6357806921005249,
+      "update": 176,
+      "valid_fraction": 1.0,
+      "window_end": 107,
+      "window_region_fallback": false,
+      "window_start": 7
+    },
+    {
+      "axis_mae": [
+        0.010345502756536007,
+        0.005853470414876938,
+        0.0023406269028782845,
+        0.05724361538887024
+      ],
+      "axis_normalized_mae": [
+        0.6770720481872559,
+        0.5853469967842102,
+        0.23406268656253815,
+        0.7269352674484253
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.5558542609214783,
+      "raw_gradient_norm": 8.15438461303711,
+      "regularization": 0.00038981949910521507,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5558542609214783,
+      "update": 177,
+      "valid_fraction": 1.0,
+      "window_end": 203,
+      "window_region_fallback": false,
+      "window_start": 103
+    },
+    {
+      "axis_mae": [
+        0.04118648171424866,
+        0.0028932427521795034,
+        0.0014983663568273187,
+        0.11257494986057281
+      ],
+      "axis_normalized_mae": [
+        2.695491075515747,
+        0.2893242835998535,
+        0.14983662962913513,
+        1.429586410522461
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 1.1410596370697021,
+      "raw_gradient_norm": 6.480484485626221,
+      "regularization": 0.0003995952138211578,
+      "requested_window_region": "crossing_post",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 1.1410596370697021,
+      "update": 178,
+      "valid_fraction": 0.6850000023841858,
+      "window_end": 633,
+      "window_region_fallback": false,
+      "window_start": 533
+    },
+    {
+      "axis_mae": [
+        0.008345500566065311,
+        0.0029157281387597322,
+        0.00079710828140378,
+        0.03595935180783272
+      ],
+      "axis_normalized_mae": [
+        0.5461798310279846,
+        0.29157283902168274,
+        0.07971081882715225,
+        0.45664694905281067
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.343527615070343,
+      "raw_gradient_norm": 3.5375475883483887,
+      "regularization": 0.0004089333233423531,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.343527615070343,
+      "update": 179,
+      "valid_fraction": 1.0,
+      "window_end": 100,
+      "window_region_fallback": false,
+      "window_start": 0
+    },
+    {
+      "axis_mae": [
+        0.04414885491132736,
+        0.002415706403553486,
+        0.0009609574335627258,
+        0.03441614657640457
+      ],
+      "axis_normalized_mae": [
+        2.88936710357666,
+        0.24157065153121948,
+        0.0960957333445549,
+        0.4370497763156891
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.9160208702087402,
+      "raw_gradient_norm": 9.857866287231445,
+      "regularization": 0.00041872478323057294,
+      "requested_window_region": "approach",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.9160208702087402,
+      "update": 180,
+      "valid_fraction": 1.0,
+      "window_end": 359,
+      "window_region_fallback": false,
+      "window_start": 259
+    },
+    {
+      "axis_mae": [
+        0.0022011769469827414,
+        0.004045035690069199,
+        0.0014632961247116327,
+        0.07782808691263199
+      ],
+      "axis_normalized_mae": [
+        0.14405827224254608,
+        0.40450358390808105,
+        0.1463296264410019,
+        0.9883369207382202
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.4208070933818817,
+      "raw_gradient_norm": 20.148591995239258,
+      "regularization": 0.0004291338846087456,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.4208070933818817,
+      "update": 181,
+      "valid_fraction": 1.0,
+      "window_end": 526,
+      "window_region_fallback": false,
+      "window_start": 426
+    },
+    {
+      "axis_mae": [
+        0.03040354512631893,
+        0.004889284260571003,
+        0.0010817567817866802,
+        0.05073969066143036
+      ],
+      "axis_normalized_mae": [
+        1.989790916442871,
+        0.4889284372329712,
+        0.10817568004131317,
+        0.6443420648574829
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.8078092932701111,
+      "raw_gradient_norm": 4.649909019470215,
+      "regularization": 0.00043874411494471133,
+      "requested_window_region": "launch",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.8078092932701111,
+      "update": 182,
+      "valid_fraction": 1.0,
+      "window_end": 147,
+      "window_region_fallback": false,
+      "window_start": 47
+    },
+    {
+      "axis_mae": [
+        0.010566122829914093,
+        0.006056149024516344,
+        0.0018836066592484713,
+        0.05452366918325424
+      ],
+      "axis_normalized_mae": [
+        0.6915106177330017,
+        0.6056149005889893,
+        0.18836067616939545,
+        0.6923947334289551
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.5444702506065369,
+      "raw_gradient_norm": 9.894085884094238,
+      "regularization": 0.00045118757407180965,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5444702506065369,
+      "update": 183,
+      "valid_fraction": 1.0,
+      "window_end": 206,
+      "window_region_fallback": false,
+      "window_start": 106
+    },
+    {
+      "axis_mae": [
+        0.03346627205610275,
+        0.0019287999020889401,
+        0.0012258023489266634,
+        0.070252425968647
+      ],
+      "axis_normalized_mae": [
+        2.190234422683716,
+        0.19287998974323273,
+        0.12258023023605347,
+        0.8921339511871338
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.8494571447372437,
+      "raw_gradient_norm": 9.785233497619629,
+      "regularization": 0.00046160901547409594,
+      "requested_window_region": "crossing_post",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.8494571447372437,
+      "update": 184,
+      "valid_fraction": 0.3856250047683716,
+      "window_end": 693,
+      "window_region_fallback": false,
+      "window_start": 593
+    },
+    {
+      "axis_mae": [
+        0.01859201118350029,
+        0.004464448429644108,
+        0.0015639957273378968,
+        0.07326766848564148
+      ],
+      "axis_normalized_mae": [
+        1.2167731523513794,
+        0.44644486904144287,
+        0.15639957785606384,
+        0.9304242730140686
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6875104904174805,
+      "raw_gradient_norm": 4.383116245269775,
+      "regularization": 0.0004715964896604419,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6875104904174805,
+      "update": 185,
+      "valid_fraction": 1.0,
+      "window_end": 150,
+      "window_region_fallback": false,
+      "window_start": 50
+    },
+    {
+      "axis_mae": [
+        0.04386551305651665,
+        0.004066014662384987,
+        0.0008532364736311138,
+        0.03730595111846924
+      ],
+      "axis_normalized_mae": [
+        2.8708231449127197,
+        0.4066014885902405,
+        0.08532364666461945,
+        0.4737473428249359
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.9591238498687744,
+      "raw_gradient_norm": 14.145491600036621,
+      "regularization": 0.0004844973445869982,
+      "requested_window_region": "approach",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.9591238498687744,
+      "update": 186,
+      "valid_fraction": 1.0,
+      "window_end": 304,
+      "window_region_fallback": false,
+      "window_start": 204
+    },
+    {
+      "axis_mae": [
+        0.0021129315719008446,
+        0.004466723650693893,
+        0.0009891347726806998,
+        0.07174210250377655
+      ],
+      "axis_normalized_mae": [
+        0.13828296959400177,
+        0.44667235016822815,
+        0.09891346842050552,
+        0.9110511541366577
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.39872997999191284,
+      "raw_gradient_norm": 13.320232391357422,
+      "regularization": 0.0004976957570761442,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.39872997999191284,
+      "update": 187,
+      "valid_fraction": 1.0,
+      "window_end": 504,
+      "window_region_fallback": false,
+      "window_start": 404
+    },
+    {
+      "axis_mae": [
+        0.030778083950281143,
+        0.004140899050980806,
+        0.0010264405282214284,
+        0.04401442036032677
+      ],
+      "axis_normalized_mae": [
+        2.014302968978882,
+        0.4140898883342743,
+        0.10264405608177185,
+        0.5589380860328674
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.7724937200546265,
+      "raw_gradient_norm": 3.5133328437805176,
+      "regularization": 0.0005088906036689878,
+      "requested_window_region": "launch",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.7724937200546265,
+      "update": 188,
+      "valid_fraction": 1.0,
+      "window_end": 135,
+      "window_region_fallback": false,
+      "window_start": 35
+    },
+    {
+      "axis_mae": [
+        0.004777710419148207,
+        0.00465382868424058,
+        0.0007498541381210089,
+        0.028295081108808517
+      ],
+      "axis_normalized_mae": [
+        0.3126821219921112,
+        0.4653828740119934,
+        0.07498541474342346,
+        0.3593185544013977
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.30309224128723145,
+      "raw_gradient_norm": 15.84671401977539,
+      "regularization": 0.0005229676025919616,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.30309224128723145,
+      "update": 189,
+      "valid_fraction": 1.0,
+      "window_end": 371,
+      "window_region_fallback": false,
+      "window_start": 271
+    },
+    {
+      "axis_mae": [
+        0.07014292478561401,
+        0.0025639929808676243,
+        0.0012481134617701173,
+        0.09959510713815689
+      ],
+      "axis_normalized_mae": [
+        4.590575218200684,
+        0.2563992738723755,
+        0.12481135129928589,
+        1.2647557258605957
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 1.5591353178024292,
+      "raw_gradient_norm": 7.646992206573486,
+      "regularization": 0.0005341297946870327,
+      "requested_window_region": "crossing_post",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 1.5591353178024292,
+      "update": 190,
+      "valid_fraction": 0.8831250071525574,
+      "window_end": 615,
+      "window_region_fallback": false,
+      "window_start": 515
+    },
+    {
+      "axis_mae": [
+        0.017514407634735107,
+        0.004284198395907879,
+        0.0012107961811125278,
+        0.0630238801240921
+      ],
+      "axis_normalized_mae": [
+        1.1462483406066895,
+        0.428419828414917,
+        0.12107961624860764,
+        0.8003387451171875
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6240216493606567,
+      "raw_gradient_norm": 5.622900009155273,
+      "regularization": 0.0005438646185211837,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6240216493606567,
+      "update": 191,
+      "valid_fraction": 1.0,
+      "window_end": 130,
+      "window_region_fallback": false,
+      "window_start": 30
+    },
+    {
+      "axis_mae": [
+        0.04775968939065933,
+        0.0021774559281766415,
+        0.001328146900050342,
+        0.048955801874399185
+      ],
+      "axis_normalized_mae": [
+        3.1256818771362305,
+        0.2177456021308899,
+        0.1328146904706955,
+        0.6216885447502136
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 1.0244827270507812,
+      "raw_gradient_norm": 6.910808086395264,
+      "regularization": 0.0005554324598051608,
+      "requested_window_region": "approach",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 1.0244827270507812,
+      "update": 192,
+      "valid_fraction": 1.0,
+      "window_end": 451,
+      "window_region_fallback": false,
+      "window_start": 351
+    },
+    {
+      "axis_mae": [
+        0.01672741025686264,
+        0.005054387729614973,
+        0.0012978117447346449,
+        0.07322726398706436
+      ],
+      "axis_normalized_mae": [
+        1.0947424173355103,
+        0.5054388642311096,
+        0.12978117167949677,
+        0.9299112558364868
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.6649684309959412,
+      "raw_gradient_norm": 12.544723510742188,
+      "regularization": 0.0005669331876561046,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6649684309959412,
+      "update": 193,
+      "valid_fraction": 0.7962499856948853,
+      "window_end": 777,
+      "window_region_fallback": false,
+      "window_start": 677
+    },
+    {
+      "axis_mae": [
+        0.0233247522264719,
+        0.0031902154441922903,
+        0.0009506334317848086,
+        0.035231608897447586
+      ],
+      "axis_normalized_mae": [
+        1.5265121459960938,
+        0.3190215826034546,
+        0.09506334364414215,
+        0.44740530848503113
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.5970005989074707,
+      "raw_gradient_norm": 4.283526420593262,
+      "regularization": 0.0005764092202298343,
+      "requested_window_region": "launch",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.5970005989074707,
+      "update": 194,
+      "valid_fraction": 1.0,
+      "window_end": 110,
+      "window_region_fallback": false,
+      "window_start": 10
+    },
+    {
+      "axis_mae": [
+        0.010507592931389809,
+        0.004058200865983963,
+        0.0019349908689036965,
+        0.07176794856786728
+      ],
+      "axis_normalized_mae": [
+        0.6876800656318665,
+        0.4058200716972351,
+        0.19349908828735352,
+        0.9113792181015015
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.5495945811271667,
+      "raw_gradient_norm": 5.605203151702881,
+      "regularization": 0.0005858030053786933,
+      "requested_window_region": "approach",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.5495945811271667,
+      "update": 195,
+      "valid_fraction": 1.0,
+      "window_end": 175,
+      "window_region_fallback": false,
+      "window_start": 75
+    },
+    {
+      "axis_mae": [
+        0.060246791690588,
+        0.0016672412166371942,
+        0.0011939429678022861,
+        0.09203820675611496
+      ],
+      "axis_normalized_mae": [
+        3.9429125785827637,
+        0.16672416031360626,
+        0.11939430236816406,
+        1.1687908172607422
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 1.34945547580719,
+      "raw_gradient_norm": 6.357459545135498,
+      "regularization": 0.0005953011568635702,
+      "requested_window_region": "crossing_post",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 1.34945547580719,
+      "update": 196,
+      "valid_fraction": 0.8481249809265137,
+      "window_end": 617,
+      "window_region_fallback": false,
+      "window_start": 517
+    },
+    {
+      "axis_mae": [
+        0.01849263347685337,
+        0.004267714451998472,
+        0.0014196542324498296,
+        0.06864944100379944
+      ],
+      "axis_normalized_mae": [
+        1.2102693319320679,
+        0.42677146196365356,
+        0.14196540415287018,
+        0.8717776536941528
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.6626960039138794,
+      "raw_gradient_norm": 4.550448894500732,
+      "regularization": 0.0006030111690051854,
+      "requested_window_region": "launch",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6626960039138794,
+      "update": 197,
+      "valid_fraction": 1.0,
+      "window_end": 145,
+      "window_region_fallback": false,
+      "window_start": 45
+    },
+    {
+      "axis_mae": [
+        0.038491711020469666,
+        0.0023338862229138613,
+        0.0010613250778988004,
+        0.030838456004858017
+      ],
+      "axis_normalized_mae": [
+        2.5191290378570557,
+        0.23338863253593445,
+        0.10613250732421875,
+        0.39161673188209534
+      ],
+      "block": 1,
+      "effective_window_region": "approach",
+      "imitation_loss": 0.8125667572021484,
+      "raw_gradient_norm": 9.711977005004883,
+      "regularization": 0.0006144439103081822,
+      "requested_window_region": "approach",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.8125667572021484,
+      "update": 198,
+      "valid_fraction": 1.0,
+      "window_end": 276,
+      "window_region_fallback": false,
+      "window_start": 176
+    },
+    {
+      "axis_mae": [
+        0.015223649330437183,
+        0.004788987338542938,
+        0.0013160952366888523,
+        0.07247233390808105
+      ],
+      "axis_normalized_mae": [
+        0.9963272213935852,
+        0.4788987338542938,
+        0.13160952925682068,
+        0.9203242659568787
+      ],
+      "block": 1,
+      "effective_window_region": "crossing_post",
+      "imitation_loss": 0.6317899227142334,
+      "raw_gradient_norm": 15.010039329528809,
+      "regularization": 0.0006254499894566834,
+      "requested_window_region": "crossing_post",
+      "source": "expert",
+      "teacher_driven_source": true,
+      "total_loss": 0.6317899227142334,
+      "update": 199,
+      "valid_fraction": 0.7425000071525574,
+      "window_end": 783,
+      "window_region_fallback": false,
+      "window_start": 683
+    },
+    {
+      "axis_mae": [
+        0.027459196746349335,
+        0.003748985007405281,
+        0.0010148207657039165,
+        0.0417923741042614
+      ],
+      "axis_normalized_mae": [
+        1.7970950603485107,
+        0.3748985230922699,
+        0.1014820858836174,
+        0.5307203531265259
+      ],
+      "block": 1,
+      "effective_window_region": "launch",
+      "imitation_loss": 0.7010489702224731,
+      "raw_gradient_norm": 6.732471942901611,
+      "regularization": 0.0006353331846185029,
+      "requested_window_region": "launch",
+      "source": "student",
+      "teacher_driven_source": false,
+      "total_loss": 0.7010489702224731,
+      "update": 200,
+      "valid_fraction": 1.0,
+      "window_end": 130,
+      "window_region_fallback": false,
+      "window_start": 30
+    }
+  ],
+  "hover_config": {
+    "angular_drag": 2e-05,
+    "camera_fov_degrees": 90.0,
+    "dt": 0.01,
+    "foreleg_joint_limit": 0.65,
+    "inertia_x": 3e-05,
+    "inertia_y": 3e-05,
+    "inertia_z": 5e-05,
+    "linear_drag": 0.12,
+    "mass": 0.035,
+    "max_roll_pitch_rate": 4.1887902047863905,
+    "max_roll_pitch_torque": 0.002,
+    "max_yaw_rate": 3.141592653589793,
+    "max_yaw_torque": 0.0008,
+    "motor_time_constant": 0.045,
+    "rate_gain": 0.018,
+    "roll_stick_gain": 1.0,
+    "stick_damping": 8.0,
+    "stick_motor_strength": 100.0,
+    "stick_spring": 25.0,
+    "target_band_width": 0.18,
+    "thrust_to_weight": 1.5,
+    "wall_x": 5.0
+  },
+  "method": "dense successful-trajectory imitation with three DAgger refreshes",
+  "midpoint_progress_passed": false,
+  "paired_final": null,
+  "peak_cuda_memory_bytes": 995777024,
+  "promotion": {
+    "checks": {
+      "completed_all_updates": false,
+      "midpoint_progress_gate": false
+    },
+    "passed": false
+  },
+  "protocol": {
+    "action_scale_floor": 0.01,
+    "added_recurrent_module": false,
+    "all_native_parameter_families_trainable": true,
+    "batch_pairs": 8,
+    "block_schedule": [
+      "100% expert",
+      "50/50 expert/student",
+      "50/50 expert/student",
+      "50/50 expert/student"
+    ],
+    "block_updates": 100,
+    "clock_actor_input": false,
+    "collection_episodes": 64,
+    "collection_seconds": 12.0,
+    "current_native_state_recomputed_from_prefix": true,
+    "device": "cuda",
+    "engineered_history_features": false,
+    "expert_seed": 1021031,
+    "final_episodes": 1024,
+    "final_heavy_margin": 0.02,
+    "final_light_improvement": 0.1,
+    "final_seed": 1024031,
+    "fixed_topology_and_transmitter_signs": true,
+    "gradient_check_scales": [
+      0.001,
+      0.0003,
+      0.0001
+    ],
+    "gradient_check_tolerance": 0.1,
+    "gradient_norm_cap": 0.5,
+    "gradient_window_seconds": 1.0,
+    "imitation_objective": "equal-weight per-axis RMS-normalized MAE/L1",
+    "imitation_objective_version": 2,
+    "learning_rate": 0.0001,
+    "mass_actor_input": false,
+    "midpoint_maximum_mass_drop": 0.05,
+    "midpoint_minimum_improvement": 0.05,
+    "midpoint_update": 200,
+    "optimization_seed": 1025031,
+    "regularization_weight": 1e-06,
+    "replay_parity_absolute_tolerance": 1e-06,
+    "selection_uses_flight_not_action_fidelity": true,
+    "stored_native_state_used": false,
+    "student_refreshes": 3,
+    "student_seed": 1022031,
+    "teacher_drives_deployed_actor": false,
+    "teacher_takeover_seconds": 0.5,
+    "throttle_scale_definition": "RMS valid teacher-minus-immutable-source-shadow correction after takeover, floored at the fixed action scale",
+    "time_constant_learning_rate": 1e-06,
+    "updates": 400,
+    "validation_episodes": 256,
+    "validation_interval": 50,
+    "validation_seconds": 12.0,
+    "validation_seed": 1023031,
+    "window_steps": 100
+  },
+  "selected_parameter_change_from_source": {
+    "bias": {
+      "changed_fraction_above_1e-7": 0.0,
+      "count": 1138,
+      "l2_change": 0.0,
+      "maximum_absolute_change": 0.0
+    },
+    "edge_magnitude": {
+      "changed_fraction_above_1e-7": 0.0,
+      "count": 4469,
+      "l2_change": 0.0,
+      "maximum_absolute_change": 0.0
+    },
+    "raw_time_constant": {
+      "changed_fraction_above_1e-7": 0.0,
+      "count": 1138,
+      "l2_change": 0.0,
+      "maximum_absolute_change": 0.0
+    },
+    "time_constant_seconds": {
+      "maximum": 0.02533341571688652,
+      "mean": 0.021342065185308456,
+      "minimum": 0.018759390339255333
+    }
+  },
+  "selected_parameter_vector_sha256": "a300beecb9d5cf41ba8964e775529d54bbe14d1866a21aa63675715fe3ef5316",
+  "selected_update": 0,
+  "selected_vector": "runs/gate/dense-dagger-v2/selected-vector.json",
+  "selected_vector_sha256": "6b1efe8b939ecd70f6453b912129ed938ae84789e56a0d7e0719964cd85da402",
+  "stopped_at_midpoint": true,
+  "teacher_mass_argument_invariant": true,
+  "teacher_mode": "visual_accelerometer_reserve",
+  "teacher_spec": "artifacts/gate-analytic-teacher-reserve-v1/candidate.json",
+  "teacher_spec_sha256": "36a3291d6a8ba2a590b3428cca68aa3e7e3a08d989a2f460b5e9f719906cd3f1",
+  "updates_completed": 200,
+  "validation_selections": {
+    "0": {
+      "midpoint_qualified": false,
+      "safe": true,
+      "summary": {
+        "approach_score_mean": 0.4950632154941559,
+        "clean_pass_rate": 0.19921875,
+        "crossing_radial_mean_m": 1.1032590866088867,
+        "episode_reward_mean": 0.0,
+        "heavy_success_rate": 0.375,
+        "light_success_rate": 0.0234375,
+        "miss_rate": 0.546875,
+        "negative_lateral_success_rate": 0.2578125,
+        "negative_obliquity_success_rate": 0.1796875,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.140625,
+        "positive_obliquity_success_rate": 0.21875,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.25390625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.19921875
+      },
+      "throttle_diagnostics": {
+        "approach_2.5_to_3.5_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.009222128428518772,
+            "normalized_absolute_error_mean": 0.11711157858371735,
+            "samples": 3200,
+            "signed_error_mean": -0.0013702146243304014
+          },
+          "light": {
+            "absolute_error_mean": 0.03075672872364521,
+            "normalized_absolute_error_mean": 0.3905789256095886,
+            "samples": 3200,
+            "signed_error_mean": 0.03075672872364521
+          }
+        },
+        "crossing_4.0_to_5.0_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.03266524523496628,
+            "normalized_absolute_error_mean": 0.41481512784957886,
+            "samples": 3200,
+            "signed_error_mean": 0.03266304358839989
+          },
+          "light": {
+            "absolute_error_mean": 0.08603540062904358,
+            "normalized_absolute_error_mean": 1.0925613641738892,
+            "samples": 3200,
+            "signed_error_mean": 0.08603540062904358
+          }
+        },
+        "late_5.0_to_6.0_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.06312370300292969,
+            "normalized_absolute_error_mean": 0.8016063570976257,
+            "samples": 3200,
+            "signed_error_mean": 0.06312370300292969
+          },
+          "light": {
+            "absolute_error_mean": 0.10682189464569092,
+            "normalized_absolute_error_mean": 1.3565285205841064,
+            "samples": 3200,
+            "signed_error_mean": 0.10682189464569092
+          }
+        },
+        "takeover_0.5_to_1.5_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.08305986225605011,
+            "normalized_absolute_error_mean": 1.0547751188278198,
+            "samples": 3200,
+            "signed_error_mean": -0.0828881710767746
+          },
+          "light": {
+            "absolute_error_mean": 0.0909539982676506,
+            "normalized_absolute_error_mean": 1.1550225019454956,
+            "samples": 3200,
+            "signed_error_mean": -0.0908006802201271
+          }
+        }
+      }
+    },
+    "100": {
+      "midpoint_qualified": false,
+      "safe": false,
+      "summary": {
+        "approach_score_mean": 0.4588938355445862,
+        "clean_pass_rate": 0.11328125,
+        "crossing_radial_mean_m": 1.4324619770050049,
+        "episode_reward_mean": 0.0,
+        "heavy_success_rate": 0.2265625,
+        "light_success_rate": 0.0,
+        "miss_rate": 0.6484375,
+        "negative_lateral_success_rate": 0.1796875,
+        "negative_obliquity_success_rate": 0.1015625,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.046875,
+        "positive_obliquity_success_rate": 0.125,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.23828125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.11328125
+      },
+      "throttle_diagnostics": {
+        "approach_2.5_to_3.5_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.013829867355525494,
+            "normalized_absolute_error_mean": 0.17562514543533325,
+            "samples": 3200,
+            "signed_error_mean": -0.011750874109566212
+          },
+          "light": {
+            "absolute_error_mean": 0.020787246525287628,
+            "normalized_absolute_error_mean": 0.26397672295570374,
+            "samples": 3200,
+            "signed_error_mean": 0.020754599943757057
+          }
+        },
+        "crossing_4.0_to_5.0_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.022956637665629387,
+            "normalized_absolute_error_mean": 0.29152578115463257,
+            "samples": 3200,
+            "signed_error_mean": 0.022445907816290855
+          },
+          "light": {
+            "absolute_error_mean": 0.07583626359701157,
+            "normalized_absolute_error_mean": 0.9630427956581116,
+            "samples": 3200,
+            "signed_error_mean": 0.07583626359701157
+          }
+        },
+        "late_5.0_to_6.0_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.052160680294036865,
+            "normalized_absolute_error_mean": 0.6623871922492981,
+            "samples": 3200,
+            "signed_error_mean": 0.052160680294036865
+          },
+          "light": {
+            "absolute_error_mean": 0.09732063114643097,
+            "normalized_absolute_error_mean": 1.2358722686767578,
+            "samples": 3200,
+            "signed_error_mean": 0.09732063114643097
+          }
+        },
+        "takeover_0.5_to_1.5_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.09016251564025879,
+            "normalized_absolute_error_mean": 1.144971489906311,
+            "samples": 3200,
+            "signed_error_mean": -0.09008044004440308
+          },
+          "light": {
+            "absolute_error_mean": 0.09833557158708572,
+            "normalized_absolute_error_mean": 1.2487609386444092,
+            "samples": 3200,
+            "signed_error_mean": -0.0982653796672821
+          }
+        }
+      }
+    },
+    "150": {
+      "midpoint_qualified": false,
+      "safe": false,
+      "summary": {
+        "approach_score_mean": 0.3550873100757599,
+        "clean_pass_rate": 0.0,
+        "crossing_radial_mean_m": 2.8427340984344482,
+        "episode_reward_mean": 0.0,
+        "heavy_success_rate": 0.0,
+        "light_success_rate": 0.0,
+        "miss_rate": 0.97265625,
+        "negative_lateral_success_rate": 0.0,
+        "negative_obliquity_success_rate": 0.0,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.0,
+        "positive_obliquity_success_rate": 0.0,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.02734375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.0
+      },
+      "throttle_diagnostics": {
+        "approach_2.5_to_3.5_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.00894031673669815,
+            "normalized_absolute_error_mean": 0.11353285610675812,
+            "samples": 3200,
+            "signed_error_mean": 0.0023017104249447584
+          },
+          "light": {
+            "absolute_error_mean": 0.03438330441713333,
+            "normalized_absolute_error_mean": 0.4366327226161957,
+            "samples": 3200,
+            "signed_error_mean": 0.03438330441713333
+          }
+        },
+        "crossing_4.0_to_5.0_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.036910779774188995,
+            "normalized_absolute_error_mean": 0.46872907876968384,
+            "samples": 3200,
+            "signed_error_mean": 0.036910779774188995
+          },
+          "light": {
+            "absolute_error_mean": 0.09001224488019943,
+            "normalized_absolute_error_mean": 1.1430633068084717,
+            "samples": 3200,
+            "signed_error_mean": 0.09001224488019943
+          }
+        },
+        "late_5.0_to_6.0_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.06674611568450928,
+            "normalized_absolute_error_mean": 0.8476072549819946,
+            "samples": 3200,
+            "signed_error_mean": 0.06674611568450928
+          },
+          "light": {
+            "absolute_error_mean": 0.11130727827548981,
+            "normalized_absolute_error_mean": 1.4134883880615234,
+            "samples": 3200,
+            "signed_error_mean": 0.11130727827548981
+          }
+        },
+        "takeover_0.5_to_1.5_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.07923737168312073,
+            "normalized_absolute_error_mean": 1.0062334537506104,
+            "samples": 3200,
+            "signed_error_mean": -0.0783885195851326
+          },
+          "light": {
+            "absolute_error_mean": 0.08688876032829285,
+            "normalized_absolute_error_mean": 1.1033982038497925,
+            "samples": 3200,
+            "signed_error_mean": -0.08615321666002274
+          }
+        }
+      }
+    },
+    "200": {
+      "midpoint_qualified": false,
+      "safe": false,
+      "summary": {
+        "approach_score_mean": 0.3127320408821106,
+        "clean_pass_rate": 0.0,
+        "crossing_radial_mean_m": 4.428597450256348,
+        "episode_reward_mean": 0.0,
+        "heavy_success_rate": 0.0,
+        "light_success_rate": 0.0,
+        "miss_rate": 0.96484375,
+        "negative_lateral_success_rate": 0.0,
+        "negative_obliquity_success_rate": 0.0,
+        "plane_crossing_rate": 0.96484375,
+        "positive_lateral_success_rate": 0.0,
+        "positive_obliquity_success_rate": 0.0,
+        "progress_mean": 0.9942634105682373,
+        "ring_collision_rate": 0.0,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.0
+      },
+      "throttle_diagnostics": {
+        "approach_2.5_to_3.5_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.01745615340769291,
+            "normalized_absolute_error_mean": 0.22167526185512543,
+            "samples": 3200,
+            "signed_error_mean": 0.01740352436900139
+          },
+          "light": {
+            "absolute_error_mean": 0.04934869706630707,
+            "normalized_absolute_error_mean": 0.6266778707504272,
+            "samples": 3200,
+            "signed_error_mean": 0.04934869706630707
+          }
+        },
+        "crossing_4.0_to_5.0_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.05227351933717728,
+            "normalized_absolute_error_mean": 0.6638201475143433,
+            "samples": 3200,
+            "signed_error_mean": 0.05227351933717728
+          },
+          "light": {
+            "absolute_error_mean": 0.10523602366447449,
+            "normalized_absolute_error_mean": 1.3363896608352661,
+            "samples": 3200,
+            "signed_error_mean": 0.10523602366447449
+          }
+        },
+        "late_5.0_to_6.0_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.08135809749364853,
+            "normalized_absolute_error_mean": 1.0331645011901855,
+            "samples": 3200,
+            "signed_error_mean": 0.08135809749364853
+          },
+          "light": {
+            "absolute_error_mean": 0.1264563649892807,
+            "normalized_absolute_error_mean": 1.6058661937713623,
+            "samples": 3200,
+            "signed_error_mean": 0.1264563649892807
+          }
+        },
+        "takeover_0.5_to_1.5_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.06682173162698746,
+            "normalized_absolute_error_mean": 0.8485674858093262,
+            "samples": 3200,
+            "signed_error_mean": -0.06323720514774323
+          },
+          "light": {
+            "absolute_error_mean": 0.07341568171977997,
+            "normalized_absolute_error_mean": 0.9323039054870605,
+            "samples": 3200,
+            "signed_error_mean": -0.070782870054245
+          }
+        }
+      }
+    },
+    "50": {
+      "midpoint_qualified": false,
+      "safe": true,
+      "summary": {
+        "approach_score_mean": 0.5084619522094727,
+        "clean_pass_rate": 0.1953125,
+        "crossing_radial_mean_m": 1.4107801914215088,
+        "episode_reward_mean": 0.0,
+        "heavy_success_rate": 0.390625,
+        "light_success_rate": 0.0,
+        "miss_rate": 0.69140625,
+        "negative_lateral_success_rate": 0.171875,
+        "negative_obliquity_success_rate": 0.2265625,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.21875,
+        "positive_obliquity_success_rate": 0.1640625,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.11328125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.1953125
+      },
+      "throttle_diagnostics": {
+        "approach_2.5_to_3.5_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.010606267489492893,
+            "normalized_absolute_error_mean": 0.13468872010707855,
+            "samples": 3200,
+            "signed_error_mean": -0.005827257409691811
+          },
+          "light": {
+            "absolute_error_mean": 0.026692423969507217,
+            "normalized_absolute_error_mean": 0.338966429233551,
+            "samples": 3200,
+            "signed_error_mean": 0.026692423969507217
+          }
+        },
+        "crossing_4.0_to_5.0_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.02831900306046009,
+            "normalized_absolute_error_mean": 0.3596222996711731,
+            "samples": 3200,
+            "signed_error_mean": 0.028255900368094444
+          },
+          "light": {
+            "absolute_error_mean": 0.08182685822248459,
+            "normalized_absolute_error_mean": 1.0391172170639038,
+            "samples": 3200,
+            "signed_error_mean": 0.08182685822248459
+          }
+        },
+        "late_5.0_to_6.0_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.05840742960572243,
+            "normalized_absolute_error_mean": 0.7417144775390625,
+            "samples": 3200,
+            "signed_error_mean": 0.05840742960572243
+          },
+          "light": {
+            "absolute_error_mean": 0.10298749804496765,
+            "normalized_absolute_error_mean": 1.3078356981277466,
+            "samples": 3200,
+            "signed_error_mean": 0.10298749804496765
+          }
+        },
+        "takeover_0.5_to_1.5_seconds": {
+          "heavy": {
+            "absolute_error_mean": 0.08610817044973373,
+            "normalized_absolute_error_mean": 1.0934854745864868,
+            "samples": 3200,
+            "signed_error_mean": -0.0859970822930336
+          },
+          "light": {
+            "absolute_error_mean": 0.09397483617067337,
+            "normalized_absolute_error_mean": 1.193384051322937,
+            "samples": 3200,
+            "signed_error_mean": -0.09387849271297455
+          }
+        }
+      }
+    }
+  }
+}

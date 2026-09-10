@@ -453,6 +453,24 @@ The unchanged failure stops this exact-action configuration without a post-hoc e
 see
 [`gate-joint-multitime-source-init-diagnostic-v1`](../artifacts/gate-joint-multitime-source-init-diagnostic-v1/).
 
+The next bounded experiment replaced endpoint fitting with dense trajectory imitation and
+DAgger. It used 1-second native recurrent windows, recomputed current-parameter burn-in
+state from the sensor prefix, and opened all fixed-sign edge magnitudes, biases, and time
+constants. The 64-flight mass-free expert set was perfect; FP32 replay agreed within
+`2.1e-7`, and every parameter family passed central finite differences. Fixed-suite
+success nevertheless moved only from 19.9% to 21.1%, entirely on the heavy-mass half, and
+the run stopped at its update-200 midpoint gate. See
+[`gate-dense-dagger-diagnostic-v1`](../artifacts/gate-dense-dagger-diagnostic-v1/).
+
+V2 tested the concrete weighting defect revealed by that record. It normalized throttle
+MAE by the teacher-minus-source correction RMS (`0.0787`) rather than the absolute hover
+command (`0.388`) and measured fixed expert-history throttle errors by mass and time.
+Crossing-window light-mass error improved slightly at update 50, while the takeover-window
+error worsened and flight stayed below baseline. Later checkpoints collapsed to misses;
+the source was restored and no parameters were promoted. This rejects loss rescaling as a
+sufficient fix, not dense imitation or native recurrent capacity in general. See
+[`gate-dense-dagger-diagnostic-v2`](../artifacts/gate-dense-dagger-diagnostic-v2/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:
