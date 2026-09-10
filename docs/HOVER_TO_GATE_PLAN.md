@@ -318,3 +318,13 @@ selected-bias displacement squared. Preflight steps cap each selected family at 
 later optimization, if authorized by preflight, has a source-metric radius of `5e-4`.
 The preflight tries the fixed scales 1, 1/2, 1/4, 1/8, 1/16 and 1/32 and requires at
 least `1e-4` fixed-scale motion NRMSE improvement in addition to every functional guard.
+
+That shallow-route preflight is complete and rejected. The target had 0.567 motor-unit
+headroom, and the projected direction was both descending and finite-difference verified.
+All functional checks passed at scale 1, including common-throttle RMS `4.57e-6`, maximum
+common drift `8.73e-6` and height-response ratios within `5e-5` of source. Exact
+common-output projection nevertheless shrank the selected-edge RMS from `2e-5` to
+`2.657e-6`, and motion NRMSE improved only `3.016e-5` against the preregistered `1e-4`
+floor. Damping sign remained wrong in every complete-replay sample. No update was retained
+and the 50-update run did not start. See
+[`artifacts/variable-height-native-damping-route-preflight-v1/`](../artifacts/variable-height-native-damping-route-preflight-v1/).

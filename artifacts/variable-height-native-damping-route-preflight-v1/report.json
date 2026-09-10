@@ -1,0 +1,76 @@
+{
+  "accepted_scale": null,
+  "actor_contract_unchanged": true,
+  "baseline_motion": {
+    "correct_sign_fraction": 0.0,
+    "fixed_scale_nrmse": 1.270498991,
+    "relative_target_nrmse": 1.4558757544,
+    "teacher_aligned_gain": -0.4456468821
+  },
+  "best_trial": {
+    "actual_loss_change": -0.0000765324,
+    "complete_zero_state_correct_sign_fraction": 0.0,
+    "complete_zero_state_teacher_aligned_gain": -0.5516708493,
+    "height_response_student_to_source_ratio": {
+      "medium": 0.9999595284,
+      "small": 0.9999544024
+    },
+    "motion_fixed_scale_nrmse": 1.2704688311,
+    "motion_nrmse_improvement": 0.00003015995,
+    "predicted_first_order_loss_change": -0.000073781,
+    "scale": 1.0,
+    "source_common_throttle_max_absolute": 0.0000087321,
+    "source_common_throttle_rms": 0.0000045684
+  },
+  "direction": {
+    "first_order_loss_derivative": -0.000073781,
+    "projected_family_rms": {
+      "bias": 8.7668404092e-8,
+      "edge_magnitude": 0.0000026569
+    },
+    "projected_linearized_residual_max_absolute": 0.0000012042,
+    "raw_family_rms": {
+      "bias": 4.6881717708e-7,
+      "edge_magnitude": 0.00002
+    },
+    "retained_constraint_rank": 12,
+    "rows": 16
+  },
+  "experiment": "variable-height-native-damping-route-preflight-v1",
+  "full_report_sha256": "0c723a12cab461c8abc4e7ba704cc538e4e6b5cd6133d836f615da52d4f0084c",
+  "mask": {
+    "bias_body_ids_sha256": "bf4f7a43f738ce1cf82b817136afee9bd511e051b05308ea211ed89b3b858a0d",
+    "bias_node_indices_sha256": "0b518b0411d8e39b9f4c56cfc8b68e057814a561ca4268ae16cf67cea777b593",
+    "edge_indices_sha256": "cd0a11e986d30701cb3b08d4b404f253476ce8044cc250e0b01a10dff1c449a7",
+    "intermediate_biases": 303,
+    "intermediate_superclass_counts": {
+      "ascending_neuron": 18,
+      "descending_neuron": 32,
+      "vnc_intrinsic": 253
+    },
+    "selected_edge_magnitudes": 12314
+  },
+  "parameters_restored_max_absolute_error": 0.0,
+  "pass": false,
+  "source": {
+    "checkpoint": "runs/visual-hover/paired-dynamic-001/controller.pt",
+    "checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+    "graph": "data/derived/full-visual-connectome-v1.npz",
+    "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665"
+  },
+  "status": "rejected_no_retained_parameter_changes",
+  "target_feasibility": {
+    "desired_branch_output_bound_margin": 0.567184329,
+    "pass": true
+  },
+  "thresholds": {
+    "height_contrast_source_ratio_range": [
+      0.9,
+      1.1
+    ],
+    "maximum_source_common_throttle_absolute": 0.005,
+    "maximum_source_common_throttle_rms": 0.0025,
+    "minimum_motion_nrmse_improvement": 0.0001,
+    "selected_family_step_rms_cap": 0.00002
+  }
+}
