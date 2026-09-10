@@ -992,3 +992,61 @@ promote the stopped fit. The correction audit passes only if both its training
 feasibility test and this update-8 development-transfer test pass. A pass authorizes a
 separately registered corrected fitting protocol; it does not authorize closed-loop
 hover or promotion.
+
+Result: every immutable source, update-8, update-9 proposal and scale-1/16 starting-
+candidate reproduction passed. The fixed update-8 controller also passed its separate
+development diagnostic: endpoint-D NRMSE improved from 1.398940 to 1.336928, an
+absolute improvement of 0.062012, while every original C/P/RPY, validity and motor-
+output preservation gate passed. This is useful evidence that update 8 transfers, but it
+does not establish adequate damping or authorize that checkpoint for closed-loop use.
+
+The correction audit itself failed two frozen numerical controls. The two mathematically
+equivalent endpoint-D gradient paths differed by `2.60e-5` at their worst coordinate,
+above the registered combined absolute limit of `1.41e-5`, although their relative L2
+difference of `8.37e-6` passed its `1e-5` limit. The continuous active-set correction
+reached maximum linear violation `3.04e-11`; after conversion to authoritative float32
+parameters, accumulated rounding raised that violation to `1.33e-5`, above `1e-6`.
+The full correction's actual endpoint-C NRMSE was 1.68369424, only `4.14e-6` above the
+source-plus-0.0199 interior target and still inside the original source-plus-0.02 outer
+gate. It retained 0.002232 endpoint-D improvement from update 8 and passed every other
+outer gate. The fixed thresholds are not relaxed after observing this result. Parameters,
+Adam state and the resume file were restored exactly; no corrected candidate, fitting
+authorization, closed-loop run or promotion resulted. See
+[`artifacts/variable-height-full-native-d-first-nonlinear-correction-audit-v1/`](../artifacts/variable-height-full-native-d-first-nonlinear-correction-audit-v1/).
+
+Run one separately registered **canonical guard-band correction repeat**. Reconstruct
+the same hash-locked update-8 state, rejected update-9 proposal and scale-1/16 starting
+candidate; preserve the failed audit and all of its measurements. At the actual starting
+candidate, compute C/P and any activated RPY rows exactly as before. Generate the
+authoritative endpoint-D retention row with the dedicated normalized endpoint-D
+objective and `accumulated_endpoint_damping_gradient`, rather than the multi-loss row.
+Still compute the multi-loss row once and report its agreement under the prior failed
+absolute and relative limits, but make that duplicate comparison diagnostic only.
+
+Replace the failed duplicate-gradient control with one directional finite-difference
+control. Its fixed probe is the once-materialized interpolation one quarter of the way
+from the starting candidate back toward update 8. Compare the authoritative endpoint-D
+squared-error row's float64 dot product with the complete-replay endpoint-D squared-
+error change over that displacement. Require both values and their comparison to be
+finite, the direction to produce a measurable nonzero change, native parameter bounds
+to hold, and relative disagreement no greater than 20%. Restore the exact starting
+candidate before solving the correction.
+
+Keep distinct solver and acceptance specifications. The one zero-reference, minimum-
+norm, bound-aware solve uses an internal endpoint-C target of original source plus
+0.0198, squared before projection. This supplies a numerical guard band; it does not
+change the actual acceptance limit of source plus 0.0199 or the original outer limit of
+source plus 0.02. The endpoint-D retention limit remains update-8 NRMSE minus 0.001,
+squared, and all other constraints remain unchanged. Check the ideal continuous solve
+against the stricter solver specifications. Check each canonical, post-materialization
+linear displacement against separate acceptance specifications containing the unchanged
+source-plus-0.0199 endpoint-C target, and apply all unchanged nonlinear D-retention,
+C/P/RPY, validity, output and native-bound gates.
+
+Use the same single fixed Jacobian, one correction solve, no relinearization and fixed
+descending correction scales 1, 1/2, 1/4 and 1/8. Select the first actual passing scale,
+repeat the fixed update-8 development-transfer diagnostic, then restore update-8
+parameters and the complete optimizer state exactly. Retain no corrected candidate. A
+pass authorizes only a separately registered corrected fitting protocol. If this one
+canonical guard-band repeat fails, stop this correction route rather than adding a
+residual-repair solve or changing a threshold after the result.

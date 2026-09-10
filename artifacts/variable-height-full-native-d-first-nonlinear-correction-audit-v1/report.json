@@ -1,0 +1,61 @@
+{
+  "actor_contract_unchanged": true,
+  "classification": "audit_control_failure",
+  "correction": {
+    "authoritative_parameter_second_projection_maximum_change": 0.0,
+    "endpoint_damping_duplicate_gradient": {
+      "maximum_absolute_difference": 0.0000260174,
+      "maximum_absolute_difference_limit": 0.0000141310,
+      "relative_l2_difference": 0.0000083747,
+      "relative_l2_difference_limit": 0.00001
+    },
+    "fixed_edges": 1530,
+    "maximum_linearized_violation_after_float32_materialization": 0.0000132991,
+    "maximum_linearized_violation_before_float32_materialization": 3.0386e-11,
+    "selected_scale": null
+  },
+  "corrected_candidate_retained": false,
+  "corrected_fitting_protocol_authorized": false,
+  "development_update_8": {
+    "all_original_preservation_gates_pass": true,
+    "endpoint_damping_nrmse": 1.3369280,
+    "endpoint_damping_nrmse_improvement": 0.0620123,
+    "pass": true,
+    "source_endpoint_damping_nrmse": 1.3989403
+  },
+  "experiment": "variable-height-full-native-d-first-nonlinear-correction-audit-v1",
+  "full_report_sha256": "fcdd9842ba9e8d0ed652525409af76cb5cd18353ce02d606df5b8bbc6cf42b5f",
+  "implementation_commit": "2b38fd0",
+  "pass": false,
+  "promoted": false,
+  "protocol_commit": "236671c",
+  "reproduction": {
+    "proposal": true,
+    "source_development": true,
+    "source_training": true,
+    "starting_candidate": true,
+    "update_8": true
+  },
+  "restoration": {
+    "optimizer_exact": true,
+    "parameters_exact": true,
+    "resume_file_unchanged": true
+  },
+  "source_report_sha256": "bd7d27595d0cec185542e0ede5f873cdc3057252138ae7b700b6b5faa8e22e43",
+  "source_resume_sha256": "eb30a7c1d6f75ee65a6588dbe09475b66c172227170300248625baea1b15b148",
+  "starting_candidate": {
+    "archive_file_sha256": "1722759d122f02aa98ca764c1768a9809a24b840389baa495863db2ece1b97ba",
+    "parameter_tensor_sha256": "d878e0d4e42d597e9d7324a8116d2f52d1e31ee96c4356b1817eb5e9e5aa16a3",
+    "scale": 0.0625
+  },
+  "training_full_correction": {
+    "all_original_outer_preservation_gates_pass": true,
+    "endpoint_common_nrmse": 1.6836942,
+    "endpoint_common_nrmse_interior_limit": 1.6836901,
+    "endpoint_common_nrmse_outer_limit": 1.6837901,
+    "endpoint_damping_nrmse": 1.3740146,
+    "endpoint_damping_nrmse_improvement_from_update_8": 0.0022317,
+    "endpoint_damping_nrmse_limit": 1.3752463,
+    "pass": false
+  }
+}
