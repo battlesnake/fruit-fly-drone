@@ -237,3 +237,39 @@ and tonic collective across independent trajectory banks; then train only suppor
 native routes under randomized progressive teacher handoff. Teacher control, decoded
 probe values and phase remain training-only. The deployed actor still receives only RGB
 and estimated roll/pitch and still drives all four axes through the two front legs.
+
+### Preregistered native control-responsibility audit
+
+The next run is a diagnostic-only, three-assay audit of the unchanged source. Current
+height error uses a common recurrent prefix and identical vehicle pose while the physical
+marker differs by plus or minus 5 or 10 cm. Vertical motion uses mirrored, smooth
+camera-height histories ending at exactly the same pose and retinal image with endpoint
+speeds of plus or minus 0.15 or 0.30 m/s. Self-generated command history uses those same
+marker amplitudes to elicit different native throttle commands, executes the existing
+foreleg and aircraft actuator plants in shadow, then supplies 0.26 seconds of identical
+RGB and attitude. The last assay tests native efference/history retention; it is not a
+hover-thrust estimate and does not supply leg state to the actor.
+
+Each assay uses 64 development pairs and 128 unseen-style test pairs. Train-only sparse
+linear probes may select at most 26 neurons in each disjoint anatomical partition, equal
+to the complete motor interface size. Selection, scaling and ridge choice use development
+data only; evaluation uses the independent bank and includes a separately selected
+shuffled-label control. Representation requires test R2 at least 0.50, sign accuracy at
+least 90%, and a paired-bootstrap R2 improvement over the constant predictor whose lower
+95% bound is above zero. Endpoint retinal contrast must be exactly zero for the two
+history assays.
+
+Representation alone does not assign a control role. On a separate 16-pair causal bank,
+each population is replaced once by its paired mean at the shared endpoint, after which
+the untouched graph runs for 0.20 seconds. A native response is usable only if it has the
+correct sign in at least 90% of pairs and reaches 10% of the conventional teacher's motor
+contrast (or 10% retention of the prior native command). A partition is selectively
+causal only if replacement removes at least 30% of that response with a paired 95%
+confidence interval excluding zero while changing common motor output by at most 0.0025.
+Identical-history and whole-state replacements check the intervention implementation.
+
+If error and motion are represented and selectively used, proceed to anatomy-restricted
+progressive teacher handoff. If they are represented but not used, train native routing
+and readout without rebuilding the graph. A failed linear probe first triggers checks of
+temporal retinal drive, saturation and probe sensitivity. FeCO becomes a controlled later
+test only if physical leg state proves necessary; it is not added to rescue nominal hover.
