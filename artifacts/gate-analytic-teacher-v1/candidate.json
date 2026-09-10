@@ -1,0 +1,13 @@
+{
+  "checkpoint": "artifacts/gate-motor-interface-es-v1/controller.pt",
+  "checkpoint_sha256": "28e2b0f887f30fe00a40ccaa97dd393949b2ea03257ffbbd0b433c69b56cd986",
+  "counts_toward_direct_sensor_goal": false,
+  "kind": "privileged_analytic_gate_teacher",
+  "minimum_success_per_mass_half": 0.9,
+  "preflight_episodes": 1024,
+  "preflight_passed": true,
+  "preflight_seed": 999031,
+  "takeover_seconds": 0.5,
+  "teacher_mode": "visual_accelerometer_exact_mass",
+  "uses_exact_simulator_mass": true
+}

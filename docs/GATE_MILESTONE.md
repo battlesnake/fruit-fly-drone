@@ -392,6 +392,25 @@ action and points specifically to full-prefix, multi-time temporal credit assign
 the next flight-training step. The diagnostic parameters are not promoted. See
 [`gate-conditional-overfit-diagnostic-v1`](../artifacts/gate-conditional-overfit-diagnostic-v1/).
 
+That next experiment first applied a fixed teacher-quality gate. A hybrid of the promoted
+controller's steering and the old oracle's throttle scored 87.5% overall and on each mass
+half across 64 deliberately diverse cases, below the preregistered 90%, so it stopped
+before update 1. A bounded recalibration of the promoted controller's privileged mass bias
+then achieved 79.6% over 1,024 fresh flights. Swapping mass labels reduced it to 6.1%, but
+the remaining error was strongly directional: 100% success for negative lateral offsets
+and 59.2% for positive offsets. This rejects the two-parameter throttle-only oracle family
+for the broader geometry distribution.
+
+Four steering-aware analytical teachers were then compared on a disjoint selection set.
+All achieved 100%; the chosen visual/accelerometer teacher with exact training-only mass
+had the smallest radial error. Frozen before evaluation, it retained 100% overall, light,
+heavy, negative/positive lateral, and negative/positive obliquity success over 1,024 fresh
+flights after a 0.5-second promoted-controller prefix. This validates the next teacher but
+does not count as direct-sensor flight. Records are in
+[`gate-multitime-preflight-diagnostic-v1`](../artifacts/gate-multitime-preflight-diagnostic-v1/),
+[`gate-promoted-oracle-diagnostic-v1`](../artifacts/gate-promoted-oracle-diagnostic-v1/), and
+[`gate-analytic-teacher-v1`](../artifacts/gate-analytic-teacher-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:
@@ -449,6 +468,16 @@ Re-run the tiny conditional representability audit with:
 ```bash
 scripts/run_gate_conditional_overfit.sh \
   --output-dir runs/gate/conditional-overfit-v1
+```
+
+Re-run the diverse teacher diagnostics with:
+
+```bash
+scripts/run_gate_promoted_oracle.sh \
+  --output-dir runs/gate/promoted-oracle-v1
+
+scripts/run_gate_analytic_teachers.sh \
+  --output-dir runs/gate/analytic-teacher-v1
 ```
 
 Re-run the negative throttle-stick proprioception search and the privileged mass oracle

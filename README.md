@@ -178,6 +178,19 @@ the conditional action, so the next iteration targets multi-time, full-prefix cr
 assignment rather than adding engineered history. See the
 [`conditional-overfit diagnostic`](artifacts/gate-conditional-overfit-diagnostic-v1/).
 
+The first multi-time run then stopped before update 1 because its spliced target—promoted
+steering plus the older oracle's throttle—reached only 87.5% on a broader set of balanced
+gate geometries, below the fixed 90% teacher threshold. Recalibrating privileged mass bias
+for the promoted controller confirmed a throttle-only ceiling: 79.6% over 1,024 fresh
+flights, with 100% success on negative offsets but only 59.2% on positive offsets. A
+steering-aware analytical teacher was therefore selected instead. Its visual/accelerometer
+variant with exact training-only mass achieved **100%** overall, on both mass halves, both
+lateral sides, and both obliquity signs over 1,024 new flights after a 0.5-second promoted
+prefix. These are teacher diagnostics, not fly-controlled results. See the
+[`stopped multi-time preflight`](artifacts/gate-multitime-preflight-diagnostic-v1/),
+[`promoted-oracle calibration`](artifacts/gate-promoted-oracle-diagnostic-v1/), and
+[`analytical-teacher audit`](artifacts/gate-analytic-teacher-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.

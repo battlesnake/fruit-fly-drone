@@ -1,0 +1,40 @@
+{
+  "claim_scope": "Target-policy preflight failed; no training was run.",
+  "elapsed_seconds": 10.512790702000075,
+  "goal_passed": false,
+  "graph": "artifacts/gate-accel-v2/connectome.npz",
+  "graph_sha256": "d385bcb96f18fad904d263ab34cbead73c794f9c90961d7961671761d323f3ea",
+  "hybrid_target_preflight": {
+    "approach_score_mean": 0.8579477071762085,
+    "clean_pass_rate": 0.875,
+    "crossing_radial_mean_m": 0.32668113708496094,
+    "episode_reward_mean": 0.0,
+    "heavy_success_rate": 0.875,
+    "light_success_rate": 0.875,
+    "minimum_required_per_stratum": 0.9,
+    "miss_rate": 0.0625,
+    "negative_lateral_success_rate": 1.0,
+    "negative_obliquity_success_rate": 0.8125,
+    "passed": false,
+    "plane_crossing_rate": 1.0,
+    "positive_lateral_success_rate": 0.75,
+    "positive_obliquity_success_rate": 0.9375,
+    "progress_mean": 1.0,
+    "ring_collision_rate": 0.0625,
+    "stick_saturation_fraction": 0.006666666828095913,
+    "success_rate": 0.875,
+    "takeover_seconds": 0.5,
+    "target_policy": "promoted_source_roll_pitch_yaw_plus_oracle_throttle"
+  },
+  "method": "full-prefix multi-time residual oracle distillation",
+  "promotion": {
+    "checks": {
+      "hybrid_target_preflight": false
+    },
+    "passed": false
+  },
+  "student_checkpoint": "artifacts/gate-motor-interface-es-v1/controller.pt",
+  "student_checkpoint_sha256": "28e2b0f887f30fe00a40ccaa97dd393949b2ea03257ffbbd0b433c69b56cd986",
+  "teacher_checkpoint": "artifacts/gate-accel-v2/controller.pt",
+  "teacher_checkpoint_sha256": "1fbfeb15297ce57fd71b331fbe7b6d39facade7fafec266f6b678b8ddbbbb8b6"
+}
