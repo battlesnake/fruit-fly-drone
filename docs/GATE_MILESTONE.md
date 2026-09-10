@@ -481,6 +481,16 @@ full takeover, ruling out irrecoverable damage during its native prefix. This lo
 task to coupled post-takeover steering and throttle control; see
 [`gate-axis-takeover-factorial-v1`](../artifacts/gate-axis-takeover-factorial-v1/).
 
+A staged complete-flight evolution strategy then optimized the existing native readout
+while the complementary teacher axes stabilized each flight. The 18 steering parameters
+passed their bounded gate: fixed assisted success rose from 53.9% to 75.4%, and the worst
+mass/lateral stratum rose from 10.2% to 53.1%. The six throttle-pool gains and biases did
+not: under teacher steering, light-mass success remained zero and overall success moved
+only from 35.9% to 39.1%. The run stopped at throttle generation 20, before merge or native
+joint polish. This demonstrates useful steering readout capacity but rejects a static
+six-parameter throttle trim for the diverse task; see
+[`gate-assisted-motor-es-diagnostic-v1`](../artifacts/gate-assisted-motor-es-diagnostic-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:

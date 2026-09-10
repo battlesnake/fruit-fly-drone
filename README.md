@@ -247,6 +247,15 @@ also fully recoverable by the complete takeover. Thus the remaining failure requ
 coupled steering and throttle learning, while the first half-second is not the obstacle.
 See the [`axis-takeover factorial diagnostic`](artifacts/gate-axis-takeover-factorial-v1/).
 
+A teacher-assisted complete-flight evolution strategy then tested the existing 24-value
+motor readout directly. With teacher throttle, the 18 steering gains/biases raised fixed
+validation success from 53.9% to 75.4% and the worst mass/lateral stratum from 10.2% to
+53.1%. With teacher steering, however, all six-parameter throttle candidates retained
+zero light-mass success; the best safe result moved only from 35.9% to 39.1%. The fixed
+gate stopped the run before native merge. This narrows the next search to recurrent
+acceleration-to-throttle circuitry rather than a wider static output trim. See the
+[`assisted motor-interface diagnostic`](artifacts/gate-assisted-motor-es-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.
