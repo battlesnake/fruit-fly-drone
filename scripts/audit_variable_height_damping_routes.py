@@ -45,7 +45,7 @@ BACKTRACK_SCALES = (1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125)
 MOTION_MOTOR_SCALE = 0.05
 
 
-def parse_args() -> argparse.Namespace:
+def argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--graph",
@@ -71,7 +71,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--unroll", type=int, default=25)
     parser.add_argument("--constraint-prefix-steps", type=int, default=50)
     parser.add_argument("--history-steps", type=int, default=25)
-    return parser.parse_args()
+    return parser
+
+
+def parse_args() -> argparse.Namespace:
+    return argument_parser().parse_args()
 
 
 def validate_args(args: argparse.Namespace) -> None:

@@ -328,3 +328,20 @@ common-output projection nevertheless shrank the selected-edge RMS from `2e-5` t
 floor. Damping sign remained wrong in every complete-replay sample. No update was retained
 and the 50-update run did not start. See
 [`artifacts/variable-height-native-damping-route-preflight-v1/`](../artifacts/variable-height-native-damping-route-preflight-v1/).
+
+One revised preflight is authorized on the identical mask with identical loss and
+acceptance thresholds. V1 imposed pointwise linearized equality on every pair-common
+output, then left its projected direction far below the final step cap. V2 instead treats
+common output as the bounded functional quantity it is: per-update RMS at most 0.001,
+source-global RMS at most 0.0025 and maximum absolute drift at most 0.005 native motor
+units. It constructs the raw equal-metric descent and the equality-projected direction
+rescaled to the final `2e-5` selected-family cap, screens their fixed 0%, 25%, 50%, 75%
+and 100% blends against the linearized inequalities and parameter bounds, then gives the
+best predicted admissible direction the same full-replay and backtracking test. The
+rescaled equality direction is always replayed as a sanity control.
+
+This does not revise v1's rejection or lower its `1e-4` improvement threshold. V2 opens
+no new parameters: the route hashes, frozen time constants and motor biases are
+unchanged. A pass authorizes the already documented bounded training run; it does not
+show that one step reversed damping or promote a controller. Failure closes this shallow
+route/constraint family rather than triggering further post-hoc relaxation.
