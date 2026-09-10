@@ -616,6 +616,26 @@ training horizon, and it does not reject native recurrence itself. No parameter 
 updated or promoted; see
 [`gate-recurrent-routing-flight-diagnostic-v1`](../artifacts/gate-recurrent-routing-flight-diagnostic-v1/).
 
+A source-initialized recurrent-PPO experiment next optimized complete 12-second assisted
+flight rather than replay fidelity. Only the same 125 fixed-sign magnitudes were
+trainable. A parallel frozen source supplied steering during the first 0.5 seconds, the
+analytical reserve supplied it thereafter, and the candidate's recurrent actor supplied
+native throttle throughout. Exploration and PPO likelihood were scalar throttle only;
+the critic's simulator state, mass, gate pose, and reward bookkeeping remained
+training-only.
+
+Native parity, assisted-evaluator parity, scalar likelihood finite differences, unchanged-
+policy replay, and every truncated burn-in audit passed. Exact replay KL was `7.54e-13`,
+burn-in mean exact KL stayed below `4.45e-7`, and PPO's maximum accepted post-update KL
+was 0.00134 under the 0.01 cap. The development source scored 38.28% overall, 0% light,
+76.56% heavy, and 0% in the worst mass/lateral stratum. Iteration 5 reached 39.06%, 0%,
+78.12%, and 0%; iteration 10 reached 35.94%, 0%, 71.88%, and 0%, triggering the fixed
+stop. Independent per-step exploration produced no light success across the 320 light
+training episodes. The fresh 1,024-case set was not consumed, and nothing was compiled or
+promoted. This rejects the tested PPO/exploration configuration, not recurrence itself;
+see
+[`gate-recurrent-routing-ppo-diagnostic-v1`](../artifacts/gate-recurrent-routing-ppo-diagnostic-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:

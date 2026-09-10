@@ -331,6 +331,17 @@ separate trajectory shift, accumulated action error, and behavior beyond the tra
 horizon. No weights were promoted. See the
 [`assisted-flight diagnostic`](artifacts/gate-recurrent-routing-flight-diagnostic-v1/).
 
+A source-initialized follow-up then optimized complete 12-second assisted-flight outcomes
+with recurrent PPO. It exposed only those 125 fixed-sign magnitudes, explored scalar
+native throttle, used frozen-source steering for the 0.5-second launch, and used reserve
+steering thereafter. All likelihood-gradient, exact-replay, recurrent burn-in, parity,
+and KL checks passed. Nevertheless, light-mass success stayed at 0% in both deterministic
+validations and all 320 light exploratory training episodes. Iteration 5 moved overall
+success only from 38.3% to 39.1%; iteration 10 fell to 35.9% and triggered the fixed stop.
+No fresh final case or promotion was used. This rejects the tested independent-noise PPO
+configuration and motivates an exploration-timescale audit before more training. See the
+[`assisted recurrent-PPO diagnostic`](artifacts/gate-recurrent-routing-ppo-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.
