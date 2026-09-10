@@ -711,3 +711,61 @@ Jacobian projection protocol. If a scale passes without measurable D improvement
 safe collective calibration only and do not automatically proceed to multi-step fitting.
 If the selected scale fails development, stop without trying a smaller scale there. No
 audit endpoint is retained or promoted and no closed-loop test follows directly.
+
+Result: the run is formally an audit-control failure. Both factorial-cache hashes and
+all registered scalar controls reproduced within tolerance, and source replay agreed to
+`5.96e-8`, but independently regenerated source-driven CUDA attitude trajectories did
+not reproduce their frozen byte hashes. The failed exact-hash gate is preserved rather
+than revised after the result. Counterfactually applying the substantive gates, scale
+1/2 was the largest training-feasible update and passed development safety. It reduced
+the collective-dominated joint loss by 0.4582 on training and 0.5375 on development while
+keeping RPY below 0.05. However, damping NRMSE improved by just 0.000263 on training and
+worsened by 0.000466 on development; endpoint damping remained wrong-signed in every
+scene. Edge-only updates supplied most of the collective gain but broke pitch safety,
+bias-only changes were safe with only a tiny damping effect, and time-constant changes
+were negligible at this learning rate. These family probes remain nonselective and
+nonadditive diagnostics. No candidate was retained, no multi-step fitting was authorized,
+and no closed-loop test ran. See
+[`artifacts/variable-height-full-native-step-family-audit-v1/`](../artifacts/variable-height-full-native-step-family-audit-v1/).
+
+The next experiment is a fresh-cache, full-native **endpoint-damping-only step audit**.
+It tests the specific hypothesis that the previous joint gradient neglected visual
+damping because common collective calibration dominated its normalized objective. It is
+not a training run and does not revise or rerun the failed step-family audit. One
+training bank at seed `340961` (attitude seed `340962`) and one disjoint development
+bank at seed `350961` (attitude seed `350962`) are generated once, persisted as immutable
+tensors below the ignored run directory, hashed, reloaded, and then reused exactly for
+source replay, autograd, finite differences and every candidate evaluation.
+Independently regenerated CUDA rollouts are not required to be byte-identical; the
+protocol requires exact reuse of the persisted caches and numerical source replay within
+`1e-6`.
+
+Starting from `paired-dynamic-001`, all native edge magnitudes, biases and raw time
+constants remain open under the same Adam learning rates, global norm cap and parameter
+bounds as the joint preflight. Topology, transmitter signs, sensory mappings and gains,
+actor inputs and front-leg output pools remain fixed. Native recurrence starts at zero
+and the entire five-step prefix and 25-step response are differentiated. The objective
+contains only endpoint `D`: the teacher-normalized squared error of the velocity-odd
+throttle component at step 25, where opposite-motion branches have the exact same pose
+and image. Its normalization is the RMS endpoint-D teacher target on the frozen training
+bank, floored at 0.01 motor units, and is reused unchanged for development. Joint loss
+and all intermediate-horizon components remain reporting and preservation metrics, not
+optimization terms.
+
+The actual bound-projected Adam displacement must have a negative endpoint-D directional
+derivative and a scale-0.0625 finite difference agreeing within 20%. Replay its complete
+displacement on training at the unchanged fixed descending scales 1, 1/2, 1/4 and 1/8.
+Select the largest scale that improves endpoint-D NRMSE by at least 0.001 while keeping
+aggregate C and P NRMSE, and each one's NRMSE at every labelled horizon, no worse than
+their own source values plus 0.02; every RPY source NRMSE must remain at most 0.05, all
+values finite and outputs within [-1, 1]. The interaction component and joint loss are
+reported but do not gate the damping-specific claim. Evaluate only that selected scale
+on development, with the same 0.001 endpoint-D improvement and preservation gates; do
+not retry a smaller scale after development failure.
+
+Every parameter is restored bit-exactly and no endpoint is retained. A pass shows only
+that a safe, transferable first-order damping-directed step exists and authorizes a
+separately preregistered bounded D-first fitting diagnostic. It is not a damping-capacity,
+hover or flight claim. If the direction learns damping but fails RPY preservation, the
+next justified diagnostic is an RPY-output-Jacobian-constrained displacement. If it fits
+training but not development, projection would not address the demonstrated failure.

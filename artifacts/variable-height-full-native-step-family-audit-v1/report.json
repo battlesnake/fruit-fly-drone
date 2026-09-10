@@ -1,0 +1,86 @@
+{
+  "actor_contract_unchanged": true,
+  "classification": "audit_control_failure",
+  "controls": {
+    "attitude_cache_exact_hash_match": false,
+    "development_attitude_actual_sha256": "39c772b41103e3892f2a8fa6cffadcb1d0f0461d81b67a319cd861db3320d3a3",
+    "development_attitude_expected_sha256": "ba6e59873bd4ede816b7cf478a6921eca8f83149c382cec07731df87aabe5115",
+    "factorial_cache_exact_hash_match": true,
+    "registered_scalars_within_tolerance": true,
+    "source_replay_max_absolute_difference": 0.0000000596,
+    "training_attitude_actual_sha256": "bd87e2c910f075afb34dd42216ec4cf3d76360806bce6883f6a80cddc5502123",
+    "training_attitude_expected_sha256": "8c90e4e200d36968f21011c061323480a90b78203e9b95de365897c321608cbd"
+  },
+  "development_selected_scale": {
+    "damping_nrmse": 1.0881304,
+    "damping_nrmse_improvement": -0.0004658,
+    "endpoint_damping_correct_sign_fraction": 0.0,
+    "endpoint_damping_teacher_aligned_gain": -0.3240318,
+    "joint_normalized_mse": 0.7184005,
+    "joint_normalized_mse_improvement": 0.5374587,
+    "pass": true,
+    "rpy_source_nrmse": {
+      "pitch": 0.0433474,
+      "roll": 0.0265684,
+      "yaw": 0.0047543
+    },
+    "scale": 0.5
+  },
+  "directional_derivative": {
+    "autograd": -1.1403942,
+    "finite_difference": -1.1131516,
+    "pass": true,
+    "relative_error": 0.0238888,
+    "scale": 0.0625
+  },
+  "experiment": "variable-height-full-native-step-family-audit-v1",
+  "family_probes_training_diagnostic_only": {
+    "bias": {
+      "damping_nrmse_improvement": 0.0002034,
+      "joint_normalized_mse_improvement": 0.1048599,
+      "pass": true,
+      "pitch_nrmse": 0.0090124
+    },
+    "edge_magnitude": {
+      "damping_nrmse_improvement": 0.0024744,
+      "joint_normalized_mse_improvement": 0.6599996,
+      "pass": false,
+      "pitch_nrmse": 0.0776444
+    },
+    "raw_time_constant": {
+      "damping_nrmse_improvement": 0.0000002,
+      "joint_normalized_mse_improvement": 0.0000154,
+      "pass": false,
+      "pitch_nrmse": 0.0000013
+    }
+  },
+  "full_report_sha256": "edfea71ba0c15d8fa512150ddfbe01bb7a3b4159b2c2676be63d9f713e168677",
+  "measurable_damping_error_reduction_on_both_banks": false,
+  "multi_step_joint_fitting_authorized": false,
+  "parameters_restored_exactly": true,
+  "pass": false,
+  "promoted": false,
+  "protocol_commit": "14d32d3870f0061b05e120aa32c541069225d960",
+  "selected_training_scale": {
+    "damping_nrmse": 1.1132215,
+    "damping_nrmse_improvement": 0.0002632,
+    "endpoint_damping_correct_sign_fraction": 0.0,
+    "endpoint_damping_teacher_aligned_gain": -0.4454049,
+    "joint_normalized_mse": 0.5823739,
+    "joint_normalized_mse_improvement": 0.4582387,
+    "pass": true,
+    "rpy_source_nrmse": {
+      "pitch": 0.0433468,
+      "roll": 0.0254181,
+      "yaw": 0.0044666
+    },
+    "scale": 0.5
+  },
+  "source": {
+    "checkpoint": "runs/visual-hover/paired-dynamic-001/controller.pt",
+    "checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+    "graph": "data/derived/full-visual-connectome-v1.npz",
+    "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665"
+  },
+  "status": "diagnostic_only_no_retained_parameter_changes"
+}
