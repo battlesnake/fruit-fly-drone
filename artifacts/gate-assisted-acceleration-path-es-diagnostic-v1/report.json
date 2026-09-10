@@ -1,0 +1,4752 @@
+{
+  "acceleration_dependence_demonstrated": false,
+  "archive": "runs/gate/assisted-acceleration-path-es-v1/archive.pt",
+  "archive_sha256": "6035fe5ed08fb061a44aa0270d4feae15af2fde91496cae4e087453ab7722b98",
+  "assisted_motor_report": "artifacts/gate-assisted-motor-es-diagnostic-v1/report.json",
+  "assisted_motor_report_sha256": "889c3d6214c19730f449aef9c6b5022d3458099ba00171114bb367af85611de4",
+  "candidate_checkpoint": null,
+  "causal_checks": null,
+  "checkpoint": "artifacts/gate-motor-interface-es-v1/controller.pt",
+  "checkpoint_progress_passed": false,
+  "checkpoint_sha256": "28e2b0f887f30fe00a40ccaa97dd393949b2ea03257ffbbd0b433c69b56cd986",
+  "claim_scope": "This is a training-only causal diagnostic. Reserve steering is externally substituted after 0.5 seconds, so no candidate from this run is deployable. Only existing signed edge magnitudes on four-hop acceleration-to-throttle paths vary; topology, signs, biases, time constants, actor inputs, and recurrent state are unchanged.",
+  "compiled_edges_changed_if_applied": 282,
+  "compiled_or_promoted": false,
+  "device": "cuda",
+  "elapsed_seconds": 170.2892098200009,
+  "final": null,
+  "final_performance_qualified": false,
+  "gate_config": {
+    "drone_radius": 0.09,
+    "edge_softness": 0.018,
+    "inner_radius": 0.62,
+    "maximum_distance": 4.6,
+    "maximum_height": 1.1,
+    "maximum_lateral_offset": 0.8,
+    "maximum_obliquity_degrees": 20.0,
+    "minimum_distance": 4.6,
+    "minimum_height": 1.1,
+    "minimum_lateral_offset": 0.8,
+    "minimum_obliquity_degrees": 20.0,
+    "outer_radius": 0.76
+  },
+  "generations": [
+    {
+      "applied_normalized_update_rms": 0.007499999832361937,
+      "best_candidate": {
+        "approach_score_mean": 0.552817702293396,
+        "clean_pass_rate": 0.40625,
+        "crossing_radial_mean_m": 1.1349848508834839,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05875356122851372,
+            0.416655957698822,
+            0.7452424764633179,
+            0.7728276252746582
+          ],
+          "light": [
+            0.05875343829393387,
+            0.41662299633026123,
+            0.7498234510421753,
+            0.7843322157859802
+          ]
+        },
+        "hazard_rate": 0.0625,
+        "heavy_mean_reward": 11.237689971923828,
+        "heavy_success_rate": 0.8125,
+        "light_mean_reward": 1.3665187358856201,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.302104473114014,
+        "miss_rate": 0.53125,
+        "negative_lateral_success_rate": 0.3125,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.5,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0625,
+        "stick_saturation_fraction": 0.007135416846722364,
+        "success_rate": 0.40625
+      },
+      "best_candidate_objective": 0.04893934726715088,
+      "center": {
+        "approach_score_mean": 0.6064483523368835,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.2226600646972656,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.059777699410915375,
+            0.4257354736328125,
+            0.7631694078445435,
+            0.7937166094779968
+          ],
+          "light": [
+            0.059777576476335526,
+            0.42570391297340393,
+            0.7674531936645508,
+            0.8024572134017944
+          ]
+        },
+        "hazard_rate": 0.125,
+        "heavy_mean_reward": 10.393983840942383,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.317579746246338,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.855781555175781,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.3125,
+        "positive_obliquity_success_rate": 0.375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "center_objective": 3.5762786865234375e-07,
+      "development_seed": 1036031,
+      "generation": 1,
+      "next_center_sha256": "2efc18d9f19cc4a92f749970c287416c1b792e3426c990ecaf8a81d07bf4b253",
+      "proposed_normalized_update_rms": 0.035443875938653946,
+      "reference": {
+        "approach_score_mean": 0.6064481735229492,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.2226606607437134,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.059777699410915375,
+            0.4257354736328125,
+            0.7631693482398987,
+            0.7937166094779968
+          ],
+          "light": [
+            0.059777580201625824,
+            0.4257039427757263,
+            0.7674531936645508,
+            0.8024572730064392
+          ]
+        },
+        "hazard_rate": 0.125,
+        "heavy_mean_reward": 10.393983840942383,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.3175793886184692,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.855781555175781,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.3125,
+        "positive_obliquity_success_rate": 0.375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.03,
+      "update_cap_scale": 0.21160214004193437
+    },
+    {
+      "applied_normalized_update_rms": 0.007425000425428152,
+      "best_candidate": {
+        "approach_score_mean": 0.6072211265563965,
+        "clean_pass_rate": 0.40625,
+        "crossing_radial_mean_m": 1.1065560579299927,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05939618870615959,
+            0.4209023118019104,
+            0.7492688894271851,
+            0.7754318714141846
+          ],
+          "light": [
+            0.05939606577157974,
+            0.42086878418922424,
+            0.7534648180007935,
+            0.7858507633209229
+          ]
+        },
+        "hazard_rate": 0.09375,
+        "heavy_mean_reward": 11.199263572692871,
+        "heavy_success_rate": 0.8125,
+        "light_mean_reward": 1.3888453245162964,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.2940545082092285,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.09375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.40625
+      },
+      "best_candidate_objective": 0.05096638202667236,
+      "center": {
+        "approach_score_mean": 0.6274065971374512,
+        "clean_pass_rate": 0.4375,
+        "crossing_radial_mean_m": 1.1356221437454224,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05917637050151825,
+            0.42192721366882324,
+            0.7533329725265503,
+            0.7812161445617676
+          ],
+          "light": [
+            0.059176258742809296,
+            0.42189574241638184,
+            0.7576268911361694,
+            0.7910674810409546
+          ]
+        },
+        "hazard_rate": 0.0625,
+        "heavy_mean_reward": 12.133943557739258,
+        "heavy_success_rate": 0.875,
+        "light_mean_reward": 1.3695367574691772,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.751739978790283,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.5,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.5,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.4375
+      },
+      "center_objective": 0.03165781497955322,
+      "development_seed": 1036032,
+      "generation": 2,
+      "next_center_sha256": "d07b210143a9ab65d9f4a35d82733d527c05cd767e561b095c72df0e3d7b23ae",
+      "proposed_normalized_update_rms": 0.020450493320822716,
+      "reference": {
+        "approach_score_mean": 0.6334265470504761,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.222151756286621,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05984668433666229,
+            0.4272361099720001,
+            0.7634944319725037,
+            0.7934205532073975
+          ],
+          "light": [
+            0.059846580028533936,
+            0.4272054433822632,
+            0.76755291223526,
+            0.8016113042831421
+          ]
+        },
+        "hazard_rate": 0.0625,
+        "heavy_mean_reward": 10.677640914916992,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.337878942489624,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.007760047912598,
+        "miss_rate": 0.5625,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.3125,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.3125,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.029699999999999997,
+      "update_cap_scale": 0.36307192611534
+    },
+    {
+      "applied_normalized_update_rms": 0.0073507498018443584,
+      "best_candidate": {
+        "approach_score_mean": 0.6404575109481812,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.2027815580368042,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.060294464230537415,
+            0.42877185344696045,
+            0.7678146958351135,
+            0.7953758835792542
+          ],
+          "light": [
+            0.06029435247182846,
+            0.4287451505661011,
+            0.7716644406318665,
+            0.802422285079956
+          ]
+        },
+        "hazard_rate": 0.0625,
+        "heavy_mean_reward": 10.644399642944336,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.3851819038391113,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.0147905349731445,
+        "miss_rate": 0.5625,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.3125,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.3125,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "best_candidate_objective": 0.000662684440612793,
+      "center": {
+        "approach_score_mean": 0.636583149433136,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.1448476314544678,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05947978049516678,
+            0.42428338527679443,
+            0.7606130838394165,
+            0.7877105474472046
+          ],
+          "light": [
+            0.059479668736457825,
+            0.42425626516342163,
+            0.7645849585533142,
+            0.7955096364021301
+          ]
+        },
+        "hazard_rate": 0.0625,
+        "heavy_mean_reward": 10.619756698608398,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.4020761251449585,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.010916233062744,
+        "miss_rate": 0.5625,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.3125,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.3125,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "center_objective": -0.028978586196899414,
+      "development_seed": 1036033,
+      "generation": 3,
+      "next_center_sha256": "8682184444cdfefbeb4e8fcec81ddd37ef63b901f2757784c5e24dadf2a00ec2",
+      "proposed_normalized_update_rms": 0.036264486610889435,
+      "reference": {
+        "approach_score_mean": 0.6394386887550354,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.2062101364135742,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.059822551906108856,
+            0.4277016818523407,
+            0.7672041058540344,
+            0.7953813672065735
+          ],
+          "light": [
+            0.0598224475979805,
+            0.4276750683784485,
+            0.7711004614830017,
+            0.8025296926498413
+          ]
+        },
+        "hazard_rate": 0.0625,
+        "heavy_mean_reward": 10.643024444580078,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.3845192193984985,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.013772010803223,
+        "miss_rate": 0.5625,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.3125,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.3125,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.029403,
+      "update_cap_scale": 0.20269830589005855
+    },
+    {
+      "applied_normalized_update_rms": 0.007277242839336395,
+      "best_candidate": {
+        "approach_score_mean": 0.6167855262756348,
+        "clean_pass_rate": 0.34375,
+        "crossing_radial_mean_m": 1.2101480960845947,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05953951179981232,
+            0.42323368787765503,
+            0.760033905506134,
+            0.7903516292572021
+          ],
+          "light": [
+            0.05953940376639366,
+            0.4232054352760315,
+            0.7641723155975342,
+            0.7996333837509155
+          ]
+        },
+        "hazard_rate": 0.09375,
+        "heavy_mean_reward": 9.742130279541016,
+        "heavy_success_rate": 0.6875,
+        "light_mean_reward": 1.365107774734497,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.553618907928467,
+        "miss_rate": 0.5625,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.3125,
+        "positive_obliquity_success_rate": 0.3125,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.09375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.34375
+      },
+      "best_candidate_objective": 0.004511594772338867,
+      "center": {
+        "approach_score_mean": 0.6116408109664917,
+        "clean_pass_rate": 0.34375,
+        "crossing_radial_mean_m": 1.255129098892212,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05985894426703453,
+            0.42525678873062134,
+            0.7621839046478271,
+            0.795040488243103
+          ],
+          "light": [
+            0.059858836233615875,
+            0.42522671818733215,
+            0.7663114666938782,
+            0.8038594722747803
+          ]
+        },
+        "hazard_rate": 0.0625,
+        "heavy_mean_reward": 9.87022590637207,
+        "heavy_success_rate": 0.6875,
+        "light_mean_reward": 1.3517227172851562,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.610974311828613,
+        "miss_rate": 0.59375,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.3125,
+        "positive_obliquity_success_rate": 0.3125,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.34375
+      },
+      "center_objective": -0.006451129913330078,
+      "development_seed": 1036034,
+      "generation": 4,
+      "next_center_sha256": "b453bf2e51b2d59682ef176d5989488b389956561f4b3c7ebfa29ce7c833781a",
+      "proposed_normalized_update_rms": 0.02063920348882675,
+      "reference": {
+        "approach_score_mean": 0.6139243841171265,
+        "clean_pass_rate": 0.34375,
+        "crossing_radial_mean_m": 1.2305845022201538,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.059692174196243286,
+            0.42462092638015747,
+            0.7609084844589233,
+            0.7926453351974487
+          ],
+          "light": [
+            0.05969206616282463,
+            0.4245905578136444,
+            0.7649737596511841,
+            0.8014360666275024
+          ]
+        },
+        "hazard_rate": 0.09375,
+        "heavy_mean_reward": 9.743341445922852,
+        "heavy_success_rate": 0.6875,
+        "light_mean_reward": 1.3581738471984863,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.55075740814209,
+        "miss_rate": 0.5625,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.3125,
+        "positive_obliquity_success_rate": 0.3125,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.09375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.34375
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.029108969999999998,
+      "update_cap_scale": 0.3525931852912643
+    },
+    {
+      "applied_normalized_update_rms": 0.007204469759017229,
+      "best_candidate": {
+        "approach_score_mean": 0.642513632774353,
+        "clean_pass_rate": 0.40625,
+        "crossing_radial_mean_m": 1.1564769744873047,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05897017568349838,
+            0.42160049080848694,
+            0.7548099160194397,
+            0.7838757038116455
+          ],
+          "light": [
+            0.05897006019949913,
+            0.4215720295906067,
+            0.758989691734314,
+            0.7931252717971802
+          ]
+        },
+        "hazard_rate": 0.09375,
+        "heavy_mean_reward": 11.224193572998047,
+        "heavy_success_rate": 0.8125,
+        "light_mean_reward": 1.4343340396881104,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.329263687133789,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.4375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.09375,
+        "stick_saturation_fraction": 0.007500000298023224,
+        "success_rate": 0.40625
+      },
+      "best_candidate_objective": 0.024497151374816895,
+      "center": {
+        "approach_score_mean": 0.6395914554595947,
+        "clean_pass_rate": 0.34375,
+        "crossing_radial_mean_m": 1.3211438655853271,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.06027733534574509,
+            0.43011409044265747,
+            0.7705605626106262,
+            0.8025838732719421
+          ],
+          "light": [
+            0.060277216136455536,
+            0.430086612701416,
+            0.7745487689971924,
+            0.8099929094314575
+          ]
+        },
+        "hazard_rate": 0.0625,
+        "heavy_mean_reward": 9.886836051940918,
+        "heavy_success_rate": 0.6875,
+        "light_mean_reward": 1.3910136222839355,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.638924598693848,
+        "miss_rate": 0.59375,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.4375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.3125,
+        "positive_obliquity_success_rate": 0.25,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.34375
+      },
+      "center_objective": -1.2746330499649048,
+      "development_seed": 1036035,
+      "generation": 5,
+      "next_center_sha256": "bdec6f0ad4fe03fd5a0347eec19b6a6c6fa0a5e0e9aa9a288964042a6944a0e4",
+      "proposed_normalized_update_rms": 0.040909554809331894,
+      "reference": {
+        "approach_score_mean": 0.6504555940628052,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.2216575145721436,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05982721969485283,
+            0.42705783247947693,
+            0.7645642757415771,
+            0.7939916253089905
+          ],
+          "light": [
+            0.059827107936143875,
+            0.42702990770339966,
+            0.7686106562614441,
+            0.8021090030670166
+          ]
+        },
+        "hazard_rate": 0.09375,
+        "heavy_mean_reward": 10.514740943908691,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.4098368883132935,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.962288856506348,
+        "miss_rate": 0.53125,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.4375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.3125,
+        "positive_obliquity_success_rate": 0.3125,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.09375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.028817880299999998,
+      "update_cap_scale": 0.17610727148163893
+    },
+    {
+      "applied_normalized_update_rms": 0.007132425904273987,
+      "best_candidate": {
+        "approach_score_mean": 0.5625196099281311,
+        "clean_pass_rate": 0.40625,
+        "crossing_radial_mean_m": 1.182475209236145,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05919504538178444,
+            0.41736316680908203,
+            0.7450599670410156,
+            0.7777016162872314
+          ],
+          "light": [
+            0.05919491499662399,
+            0.4173324704170227,
+            0.7496228218078613,
+            0.7891402244567871
+          ]
+        },
+        "hazard_rate": 0.09375,
+        "heavy_mean_reward": 11.164271354675293,
+        "heavy_success_rate": 0.8125,
+        "light_mean_reward": 1.3344348669052124,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.249352931976318,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.09375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.40625
+      },
+      "best_candidate_objective": 0.03856980800628662,
+      "center": {
+        "approach_score_mean": 0.5818196535110474,
+        "clean_pass_rate": 0.40625,
+        "crossing_radial_mean_m": 1.2484370470046997,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05943567305803299,
+            0.42148929834365845,
+            0.7546839714050293,
+            0.7879599928855896
+          ],
+          "light": [
+            0.059435561299324036,
+            0.42146027088165283,
+            0.7591730356216431,
+            0.798154354095459
+          ]
+        },
+        "hazard_rate": 0.0625,
+        "heavy_mean_reward": 11.355432510375977,
+        "heavy_success_rate": 0.8125,
+        "light_mean_reward": 1.3068740367889404,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.331153392791748,
+        "miss_rate": 0.53125,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.40625
+      },
+      "center_objective": 0.011008977890014648,
+      "development_seed": 1036036,
+      "generation": 6,
+      "next_center_sha256": "3507a371f08c621a1798a5973a4bd14db2f527afa299c36beda9aad9f674d94a",
+      "proposed_normalized_update_rms": 0.020031142979860306,
+      "reference": {
+        "approach_score_mean": 0.580721378326416,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.2800061702728271,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05964306741952896,
+            0.42385154962539673,
+            0.7589589357376099,
+            0.7927039861679077
+          ],
+          "light": [
+            0.05964295193552971,
+            0.42382240295410156,
+            0.7633169889450073,
+            0.8020752668380737
+          ]
+        },
+        "hazard_rate": 0.0625,
+        "heavy_mean_reward": 10.61424446105957,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.2958650588989258,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.955054759979248,
+        "miss_rate": 0.5625,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.3125,
+        "positive_obliquity_success_rate": 0.375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.028529701496999998,
+      "update_cap_scale": 0.35606681962287806
+    },
+    {
+      "applied_normalized_update_rms": 0.007061101030558348,
+      "best_candidate": {
+        "approach_score_mean": 0.5546445846557617,
+        "clean_pass_rate": 0.40625,
+        "crossing_radial_mean_m": 1.1441491842269897,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.058852627873420715,
+            0.41711050271987915,
+            0.7485957145690918,
+            0.7791602611541748
+          ],
+          "light": [
+            0.058852508664131165,
+            0.417080819606781,
+            0.7531061172485352,
+            0.7912020683288574
+          ]
+        },
+        "hazard_rate": 0.09375,
+        "heavy_mean_reward": 11.163143157958984,
+        "heavy_success_rate": 0.8125,
+        "light_mean_reward": 1.319812536239624,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.241477966308594,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.09375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.40625
+      },
+      "best_candidate_objective": 0.04016757011413574,
+      "center": {
+        "approach_score_mean": 0.5581938028335571,
+        "clean_pass_rate": 0.40625,
+        "crossing_radial_mean_m": 1.1487364768981934,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05899352580308914,
+            0.41800257563591003,
+            0.7500423192977905,
+            0.780901312828064
+          ],
+          "light": [
+            0.058993399143218994,
+            0.4179724156856537,
+            0.7544388771057129,
+            0.7923884987831116
+          ]
+        },
+        "hazard_rate": 0.09375,
+        "heavy_mean_reward": 11.173381805419922,
+        "heavy_success_rate": 0.8125,
+        "light_mean_reward": 1.3166720867156982,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.2450270652771,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.09375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.40625
+      },
+      "center_objective": 0.03702712059020996,
+      "development_seed": 1036037,
+      "generation": 7,
+      "next_center_sha256": "5e0dd39d71cf84b94b520a3a1da689eb5376cf8b836c81446c852c62e6c85d62",
+      "proposed_normalized_update_rms": 0.03834854066371918,
+      "reference": {
+        "approach_score_mean": 0.5821694731712341,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.1820193529129028,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05968640744686127,
+            0.4238165616989136,
+            0.7605459690093994,
+            0.793628454208374
+          ],
+          "light": [
+            0.05968629568815231,
+            0.4237864017486572,
+            0.7648918628692627,
+            0.8034393787384033
+          ]
+        },
+        "hazard_rate": 0.09375,
+        "heavy_mean_reward": 10.508360862731934,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.2796449661254883,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.894002914428711,
+        "miss_rate": 0.53125,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.3125,
+        "positive_obliquity_success_rate": 0.375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.09375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.02824440448203,
+      "update_cap_scale": 0.18412959132986964
+    },
+    {
+      "applied_normalized_update_rms": 0.006990490015596151,
+      "best_candidate": {
+        "approach_score_mean": 0.6380149126052856,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.1887500286102295,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.059549808502197266,
+            0.42488229274749756,
+            0.7621226906776428,
+            0.7930315732955933
+          ],
+          "light": [
+            0.05954969301819801,
+            0.42485132813453674,
+            0.7659481763839722,
+            0.8010338544845581
+          ]
+        },
+        "hazard_rate": 0.0,
+        "heavy_mean_reward": 10.905739784240723,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.3689565658569336,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.137348175048828,
+        "miss_rate": 0.625,
+        "negative_lateral_success_rate": 0.3125,
+        "negative_obliquity_success_rate": 0.3125,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.4375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "best_candidate_objective": 0.0038518905639648438,
+      "center": {
+        "approach_score_mean": 0.6371158957481384,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.1946922540664673,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05964583158493042,
+            0.4243696331977844,
+            0.7614283561706543,
+            0.793289065361023
+          ],
+          "light": [
+            0.059645719826221466,
+            0.4243401288986206,
+            0.7653080821037292,
+            0.8014787435531616
+          ]
+        },
+        "hazard_rate": 0.0,
+        "heavy_mean_reward": 10.903573036193848,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.3693256378173828,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.136449337005615,
+        "miss_rate": 0.625,
+        "negative_lateral_success_rate": 0.3125,
+        "negative_obliquity_success_rate": 0.3125,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.4375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "center_objective": -0.0001125335693359375,
+      "development_seed": 1036038,
+      "generation": 8,
+      "next_center_sha256": "89b296bf8ff77f8199cdcb75e9f827984a0e812ee553f0f6827b669b7bd69203",
+      "proposed_normalized_update_rms": 0.03216593712568283,
+      "reference": {
+        "approach_score_mean": 0.6358908414840698,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.2096710205078125,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.059763580560684204,
+            0.4259393811225891,
+            0.7638917565345764,
+            0.7955942153930664
+          ],
+          "light": [
+            0.05976346880197525,
+            0.42590954899787903,
+            0.7676604986190796,
+            0.8033279180526733
+          ]
+        },
+        "hazard_rate": 0.0,
+        "heavy_mean_reward": 10.906135559082031,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.3643131256103516,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.135224342346191,
+        "miss_rate": 0.625,
+        "negative_lateral_success_rate": 0.3125,
+        "negative_obliquity_success_rate": 0.3125,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.4375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.027961960437209697,
+      "update_cap_scale": 0.21732586499775505
+    },
+    {
+      "applied_normalized_update_rms": 0.0069205849431455135,
+      "best_candidate": {
+        "approach_score_mean": 0.5883728861808777,
+        "clean_pass_rate": 0.4375,
+        "crossing_radial_mean_m": 1.1701171398162842,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05945124849677086,
+            0.4199184775352478,
+            0.7511261105537415,
+            0.7787894010543823
+          ],
+          "light": [
+            0.05945112556219101,
+            0.4198930263519287,
+            0.7555365562438965,
+            0.7891055345535278
+          ]
+        },
+        "hazard_rate": 0.03125,
+        "heavy_mean_reward": 12.227421760559082,
+        "heavy_success_rate": 0.875,
+        "light_mean_reward": 1.322991132736206,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.775206565856934,
+        "miss_rate": 0.53125,
+        "negative_lateral_success_rate": 0.5,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.5,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.03125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.4375
+      },
+      "best_candidate_objective": 0.026174426078796387,
+      "center": {
+        "approach_score_mean": 0.5846351385116577,
+        "clean_pass_rate": 0.34375,
+        "crossing_radial_mean_m": 1.3466246128082275,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.060114555060863495,
+            0.4271906912326813,
+            0.7664226293563843,
+            0.7992283701896667
+          ],
+          "light": [
+            0.060114435851573944,
+            0.42716577649116516,
+            0.7705854177474976,
+            0.8076041340827942
+          ]
+        },
+        "hazard_rate": 0.125,
+        "heavy_mean_reward": 9.635921478271484,
+        "heavy_success_rate": 0.6875,
+        "light_mean_reward": 1.2820152044296265,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.458968162536621,
+        "miss_rate": 0.53125,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.3125,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.3125,
+        "positive_obliquity_success_rate": 0.375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.34375
+      },
+      "center_objective": -1.804558277130127,
+      "development_seed": 1036039,
+      "generation": 9,
+      "next_center_sha256": "23dba4c779d65c0828633977e6c563e051f982a4039059058708dab2f92b9f64",
+      "proposed_normalized_update_rms": 0.0464378260076046,
+      "reference": {
+        "approach_score_mean": 0.6019752025604248,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.257739782333374,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05970323830842972,
+            0.42468324303627014,
+            0.7614138722419739,
+            0.7920775413513184
+          ],
+          "light": [
+            0.059703126549720764,
+            0.4246582090854645,
+            0.7655291557312012,
+            0.8008037209510803
+          ]
+        },
+        "hazard_rate": 0.09375,
+        "heavy_mean_reward": 10.530799865722656,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.2968167066574097,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.913808345794678,
+        "miss_rate": 0.53125,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.3125,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.3125,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.09375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.0276823408328376,
+      "update_cap_scale": 0.14902905245986525
+    },
+    {
+      "applied_normalized_update_rms": 0.006851379293948412,
+      "best_candidate": {
+        "approach_score_mean": 0.6018722653388977,
+        "clean_pass_rate": 0.40625,
+        "crossing_radial_mean_m": 1.1572455167770386,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05943676829338074,
+            0.4223760962486267,
+            0.7546826601028442,
+            0.7868501543998718
+          ],
+          "light": [
+            0.05943666025996208,
+            0.42234349250793457,
+            0.7586650848388672,
+            0.7959973812103271
+          ]
+        },
+        "hazard_rate": 0.09375,
+        "heavy_mean_reward": 11.274077415466309,
+        "heavy_success_rate": 0.8125,
+        "light_mean_reward": 1.3033335208892822,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.288705348968506,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.09375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.40625
+      },
+      "best_candidate_objective": 0.01251363754272461,
+      "center": {
+        "approach_score_mean": 0.5979830622673035,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.1769111156463623,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.059552986174821854,
+            0.42226579785346985,
+            0.7549422979354858,
+            0.788981556892395
+          ],
+          "light": [
+            0.0595528781414032,
+            0.42223280668258667,
+            0.7589622139930725,
+            0.7982314825057983
+          ]
+        },
+        "hazard_rate": 0.09375,
+        "heavy_mean_reward": 10.523731231689453,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.295901894569397,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.909816741943359,
+        "miss_rate": 0.53125,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.3125,
+        "positive_obliquity_success_rate": 0.375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.09375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "center_objective": 0.0050820112228393555,
+      "development_seed": 1036040,
+      "generation": 10,
+      "next_center_sha256": "e2a7761476cc0f74d08b63b859c0b7831de6662389e4067a3557d7e26637259e",
+      "proposed_normalized_update_rms": 0.03068806603550911,
+      "reference": {
+        "approach_score_mean": 0.5937613248825073,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.197458028793335,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.059675734490156174,
+            0.4241846799850464,
+            0.7584770917892456,
+            0.7919634580612183
+          ],
+          "light": [
+            0.05967561900615692,
+            0.4241514205932617,
+            0.7624841332435608,
+            0.8007657527923584
+          ]
+        },
+        "hazard_rate": 0.09375,
+        "heavy_mean_reward": 10.520369529724121,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.2908198833465576,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.905594825744629,
+        "miss_rate": 0.53125,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.3125,
+        "positive_obliquity_success_rate": 0.375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.09375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.027405517424509224,
+      "update_cap_scale": 0.22325875303447232
+    },
+    {
+      "applied_normalized_update_rms": 0.00678286561742425,
+      "best_candidate": {
+        "approach_score_mean": 0.6262040734291077,
+        "clean_pass_rate": 0.4375,
+        "crossing_radial_mean_m": 1.2483625411987305,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05955084413290024,
+            0.42687472701072693,
+            0.7642474174499512,
+            0.7905718088150024
+          ],
+          "light": [
+            0.05955072492361069,
+            0.4268399477005005,
+            0.768561840057373,
+            0.7993242144584656
+          ]
+        },
+        "hazard_rate": 0.03125,
+        "heavy_mean_reward": 12.297203063964844,
+        "heavy_success_rate": 0.875,
+        "light_mean_reward": 1.3288718461990356,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.813037395477295,
+        "miss_rate": 0.53125,
+        "negative_lateral_success_rate": 0.5,
+        "negative_obliquity_success_rate": 0.4375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.03125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.4375
+      },
+      "best_candidate_objective": 0.006253361701965332,
+      "center": {
+        "approach_score_mean": 0.6043620705604553,
+        "clean_pass_rate": 0.4375,
+        "crossing_radial_mean_m": 1.175278902053833,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05911288410425186,
+            0.42151737213134766,
+            0.7531851530075073,
+            0.779273509979248
+          ],
+          "light": [
+            0.05911276489496231,
+            0.4214830994606018,
+            0.7576668858528137,
+            0.7893667817115784
+          ]
+        },
+        "hazard_rate": 0.03125,
+        "heavy_mean_reward": 12.231184959411621,
+        "heavy_success_rate": 0.875,
+        "light_mean_reward": 1.3512057065963745,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.791195392608643,
+        "miss_rate": 0.53125,
+        "negative_lateral_success_rate": 0.5,
+        "negative_obliquity_success_rate": 0.4375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.03125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.4375
+      },
+      "center_objective": -0.10337269306182861,
+      "development_seed": 1036041,
+      "generation": 11,
+      "next_center_sha256": "e3477a7617333bba5277d95a71c4aafa2ce7ced6ad144f1c2344ac3df6cc24f7",
+      "proposed_normalized_update_rms": 0.047124262899160385,
+      "reference": {
+        "approach_score_mean": 0.623058557510376,
+        "clean_pass_rate": 0.4375,
+        "crossing_radial_mean_m": 1.272078037261963,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.059879202395677567,
+            0.42824557423591614,
+            0.765954315662384,
+            0.7943404912948608
+          ],
+          "light": [
+            0.059879083186388016,
+            0.42821186780929565,
+            0.7699863910675049,
+            0.8022953271865845
+          ]
+        },
+        "hazard_rate": 0.03125,
+        "heavy_mean_reward": 12.297164916992188,
+        "heavy_success_rate": 0.875,
+        "light_mean_reward": 1.3226184844970703,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.809891700744629,
+        "miss_rate": 0.53125,
+        "negative_lateral_success_rate": 0.5,
+        "negative_obliquity_success_rate": 0.4375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.03125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.4375
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.02713146225026413,
+      "update_cap_scale": 0.1439357380948421
+    },
+    {
+      "applied_normalized_update_rms": 0.00671503646299243,
+      "best_candidate": {
+        "approach_score_mean": 0.63423091173172,
+        "clean_pass_rate": 0.40625,
+        "crossing_radial_mean_m": 1.181769609451294,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05924190580844879,
+            0.4217376112937927,
+            0.7540208101272583,
+            0.7801454067230225
+          ],
+          "light": [
+            0.05924178659915924,
+            0.42170533537864685,
+            0.7583879232406616,
+            0.7903327941894531
+          ]
+        },
+        "hazard_rate": 0.09375,
+        "heavy_mean_reward": 11.17339038848877,
+        "heavy_success_rate": 0.8125,
+        "light_mean_reward": 1.4687381982803345,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.321064472198486,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.4375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.09375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.40625
+      },
+      "best_candidate_objective": 0.027775883674621582,
+      "center": {
+        "approach_score_mean": 0.6482638120651245,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.2400380373001099,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05969594419002533,
+            0.42593449354171753,
+            0.7614813446998596,
+            0.7893043756484985
+          ],
+          "light": [
+            0.059695832431316376,
+            0.4259023070335388,
+            0.7659033536911011,
+            0.798582136631012
+          ]
+        },
+        "hazard_rate": 0.0625,
+        "heavy_mean_reward": 10.598474502563477,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.4467203617095947,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.022597312927246,
+        "miss_rate": 0.5625,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.3125,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "center_objective": -0.25634217262268066,
+      "development_seed": 1036042,
+      "generation": 12,
+      "next_center_sha256": "f8c989ed941998bd259d36dfa543b5048a17bd52cdec3bfce1e7bbfd25fd66b8",
+      "proposed_normalized_update_rms": 0.023089293390512466,
+      "reference": {
+        "approach_score_mean": 0.6484101414680481,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.2582740783691406,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05983491986989975,
+            0.42773494124412537,
+            0.7647824287414551,
+            0.792263388633728
+          ],
+          "light": [
+            0.0598348043859005,
+            0.42770302295684814,
+            0.769054651260376,
+            0.8009576797485352
+          ]
+        },
+        "hazard_rate": 0.03125,
+        "heavy_mean_reward": 10.729524612426758,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.440962314605713,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.085243225097656,
+        "miss_rate": 0.59375,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.3125,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.03125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.02686014762776149,
+      "update_cap_scale": 0.29082903462518356
+    },
+    {
+      "applied_normalized_update_rms": 0.006647886708378792,
+      "best_candidate": {
+        "approach_score_mean": 0.6472374796867371,
+        "clean_pass_rate": 0.40625,
+        "crossing_radial_mean_m": 1.1838401556015015,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05982794612646103,
+            0.4241378605365753,
+            0.7599472999572754,
+            0.7947115302085876
+          ],
+          "light": [
+            0.05982783064246178,
+            0.4241027235984802,
+            0.7639856934547424,
+            0.8030120730400085
+          ]
+        },
+        "hazard_rate": 0.0625,
+        "heavy_mean_reward": 11.396252632141113,
+        "heavy_success_rate": 0.8125,
+        "light_mean_reward": 1.3968889713287354,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.396570682525635,
+        "miss_rate": 0.53125,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.4375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.40625
+      },
+      "best_candidate_objective": -0.0003230571746826172,
+      "center": {
+        "approach_score_mean": 0.6376783847808838,
+        "clean_pass_rate": 0.40625,
+        "crossing_radial_mean_m": 1.137916922569275,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05942447483539581,
+            0.4204177260398865,
+            0.7522903084754944,
+            0.7863537669181824
+          ],
+          "light": [
+            0.05942435562610626,
+            0.4203828275203705,
+            0.7565608024597168,
+            0.7957198023796082
+          ]
+        },
+        "hazard_rate": 0.0625,
+        "heavy_mean_reward": 11.359288215637207,
+        "heavy_success_rate": 0.8125,
+        "light_mean_reward": 1.4147353172302246,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.387011528015137,
+        "miss_rate": 0.53125,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.4375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.40625
+      },
+      "center_objective": -0.05640554428100586,
+      "development_seed": 1036043,
+      "generation": 13,
+      "next_center_sha256": "bb5175157a0a1f6b379601da2a9308c5962c34c01424b50ffeb42aedd6202e14",
+      "proposed_normalized_update_rms": 0.03939451649785042,
+      "reference": {
+        "approach_score_mean": 0.6473467350006104,
+        "clean_pass_rate": 0.40625,
+        "crossing_radial_mean_m": 1.1825780868530273,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.059752579778432846,
+            0.4244232475757599,
+            0.7600683569908142,
+            0.7944463491439819
+          ],
+          "light": [
+            0.05975246801972389,
+            0.424388587474823,
+            0.7640457153320312,
+            0.8026928901672363
+          ]
+        },
+        "hazard_rate": 0.0625,
+        "heavy_mean_reward": 11.396357536315918,
+        "heavy_success_rate": 0.8125,
+        "light_mean_reward": 1.3970022201538086,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.396679878234863,
+        "miss_rate": 0.53125,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.4375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.40625
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.026591546151483875,
+      "update_cap_scale": 0.16875157074801803
+    },
+    {
+      "applied_normalized_update_rms": 0.006581407506018877,
+      "best_candidate": {
+        "approach_score_mean": 0.5847789645195007,
+        "clean_pass_rate": 0.4375,
+        "crossing_radial_mean_m": 1.179875373840332,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05942254513502121,
+            0.42573457956314087,
+            0.7613519430160522,
+            0.7897696495056152
+          ],
+          "light": [
+            0.05942241847515106,
+            0.42569848895072937,
+            0.7655435800552368,
+            0.7987810373306274
+          ]
+        },
+        "hazard_rate": 0.0,
+        "heavy_mean_reward": 12.373433113098145,
+        "heavy_success_rate": 0.875,
+        "light_mean_reward": 1.2946879863739014,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.8340606689453125,
+        "miss_rate": 0.5625,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.5,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.4375,
+        "positive_obliquity_success_rate": 0.375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0,
+        "stick_saturation_fraction": 0.0071875001303851604,
+        "success_rate": 0.4375
+      },
+      "best_candidate_objective": 0.004116058349609375,
+      "center": {
+        "approach_score_mean": 0.5835211873054504,
+        "clean_pass_rate": 0.40625,
+        "crossing_radial_mean_m": 1.2042754888534546,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.06003998965024948,
+            0.42807263135910034,
+            0.7652867436408997,
+            0.7934496402740479
+          ],
+          "light": [
+            0.06003987044095993,
+            0.4280395209789276,
+            0.7694076299667358,
+            0.8020159602165222
+          ]
+        },
+        "hazard_rate": 0.03125,
+        "heavy_mean_reward": 11.504228591918945,
+        "heavy_success_rate": 0.8125,
+        "light_mean_reward": 1.2864805459976196,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.395354747772217,
+        "miss_rate": 0.5625,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.5,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.4375,
+        "positive_obliquity_success_rate": 0.3125,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.03125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.40625
+      },
+      "center_objective": -1.7423802614212036,
+      "development_seed": 1036044,
+      "generation": 14,
+      "next_center_sha256": "a939a4aa2aefcd524e8c9bd0f31cb08a55c33769f79d1e543e587058f068f7a4",
+      "proposed_normalized_update_rms": 0.03355751186609268,
+      "reference": {
+        "approach_score_mean": 0.5826389193534851,
+        "clean_pass_rate": 0.4375,
+        "crossing_radial_mean_m": 1.18718421459198,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.0598934143781662,
+            0.42820119857788086,
+            0.7653963565826416,
+            0.7923372983932495
+          ],
+          "light": [
+            0.05989329516887665,
+            0.42816799879074097,
+            0.7694118618965149,
+            0.8007485270500183
+          ]
+        },
+        "hazard_rate": 0.0,
+        "heavy_mean_reward": 12.373373031616211,
+        "heavy_success_rate": 0.875,
+        "light_mean_reward": 1.290571928024292,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.831972599029541,
+        "miss_rate": 0.5625,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.5,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.4375,
+        "positive_obliquity_success_rate": 0.375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.4375
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.026325630689969032,
+      "update_cap_scale": 0.19612323162559234
+    },
+    {
+      "applied_normalized_update_rms": 0.006515593267977238,
+      "best_candidate": {
+        "approach_score_mean": 0.5363091230392456,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.1204533576965332,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05813329666852951,
+            0.41159534454345703,
+            0.7419396638870239,
+            0.7705295085906982
+          ],
+          "light": [
+            0.058133188635110855,
+            0.41157594323158264,
+            0.7456774115562439,
+            0.7823476195335388
+          ]
+        },
+        "hazard_rate": 0.0625,
+        "heavy_mean_reward": 10.442636489868164,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.3784821033477783,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.910559177398682,
+        "miss_rate": 0.5625,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.3125,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0625,
+        "stick_saturation_fraction": 0.007500000298023224,
+        "success_rate": 0.375
+      },
+      "best_candidate_objective": 0.0697629451751709,
+      "center": {
+        "approach_score_mean": 0.5935014486312866,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.179358959197998,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.059335410594940186,
+            0.4197671413421631,
+            0.7550034523010254,
+            0.7860512733459473
+          ],
+          "light": [
+            0.05933530628681183,
+            0.41974765062332153,
+            0.7591854333877563,
+            0.7961694002151489
+          ]
+        },
+        "hazard_rate": 0.0625,
+        "heavy_mean_reward": 10.610504150390625,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.3251655101776123,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.967834949493408,
+        "miss_rate": 0.5625,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.4375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.3125,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "center_objective": 0.016446352005004883,
+      "development_seed": 1036045,
+      "generation": 15,
+      "next_center_sha256": "10051b5aa620d707291545e28deaf5315f1e9380b00d34a20d5543dac175e4f4",
+      "proposed_normalized_update_rms": 0.023314815014600754,
+      "reference": {
+        "approach_score_mean": 0.591426432132721,
+        "clean_pass_rate": 0.34375,
+        "crossing_radial_mean_m": 1.2228537797927856,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05959880352020264,
+            0.42323440313339233,
+            0.7615298628807068,
+            0.7928800582885742
+          ],
+          "light": [
+            0.05959870666265488,
+            0.42321544885635376,
+            0.7654463052749634,
+            0.8017631769180298
+          ]
+        },
+        "hazard_rate": 0.09375,
+        "heavy_mean_reward": 9.747800827026367,
+        "heavy_success_rate": 0.6875,
+        "light_mean_reward": 1.3087191581726074,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.528260231018066,
+        "miss_rate": 0.5625,
+        "negative_lateral_success_rate": 0.3125,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.3125,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.09375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.34375
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.026062374383069346,
+      "update_cap_scale": 0.2794615179956173
+    },
+    {
+      "applied_normalized_update_rms": 0.006450437940657139,
+      "best_candidate": {
+        "approach_score_mean": 0.5672610998153687,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.1123167276382446,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05933690071105957,
+            0.41912686824798584,
+            0.7480413913726807,
+            0.7753164768218994
+          ],
+          "light": [
+            0.059336770325899124,
+            0.4190914034843445,
+            0.7518560886383057,
+            0.7838054299354553
+          ]
+        },
+        "hazard_rate": 0.125,
+        "heavy_mean_reward": 10.252037048339844,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.3811519145965576,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.81659460067749,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.5,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.25,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "best_candidate_objective": 0.06493198871612549,
+      "center": {
+        "approach_score_mean": 0.5930755734443665,
+        "clean_pass_rate": 0.34375,
+        "crossing_radial_mean_m": 1.1886464357376099,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05934518575668335,
+            0.4212549924850464,
+            0.7550816535949707,
+            0.7856074571609497
+          ],
+          "light": [
+            0.0593450702726841,
+            0.421223521232605,
+            0.7588167786598206,
+            0.7934590578079224
+          ]
+        },
+        "hazard_rate": 0.15625,
+        "heavy_mean_reward": 9.469371795654297,
+        "heavy_success_rate": 0.6875,
+        "light_mean_reward": 1.3404459953308105,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.404909133911133,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.3125,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.3125,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.15625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.34375
+      },
+      "center_objective": 0.024226069450378418,
+      "development_seed": 1036046,
+      "generation": 16,
+      "next_center_sha256": "a8ef43423cd128183e351fe742f8e6e96215d251c6e15c7567fd78caa98e2770",
+      "proposed_normalized_update_rms": 0.04330192133784294,
+      "reference": {
+        "approach_score_mean": 0.5865386724472046,
+        "clean_pass_rate": 0.3125,
+        "crossing_radial_mean_m": 1.2497702836990356,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05976281315088272,
+            0.42594408988952637,
+            0.7638573050498962,
+            0.7948021292686462
+          ],
+          "light": [
+            0.059762708842754364,
+            0.4259132146835327,
+            0.7673979997634888,
+            0.8015865087509155
+          ]
+        },
+        "hazard_rate": 0.125,
+        "heavy_mean_reward": 8.855524063110352,
+        "heavy_success_rate": 0.625,
+        "light_mean_reward": 1.3162199258804321,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.085872173309326,
+        "miss_rate": 0.5625,
+        "negative_lateral_success_rate": 0.25,
+        "negative_obliquity_success_rate": 0.3125,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.3125,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.3125
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.025801750639238653,
+      "update_cap_scale": 0.14896423670171924
+    },
+    {
+      "applied_normalized_update_rms": 0.0063859326764941216,
+      "best_candidate": {
+        "approach_score_mean": 0.548461377620697,
+        "clean_pass_rate": 0.34375,
+        "crossing_radial_mean_m": 1.1225295066833496,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05872630327939987,
+            0.41391026973724365,
+            0.7401100397109985,
+            0.7700567245483398
+          ],
+          "light": [
+            0.058726198971271515,
+            0.4138772487640381,
+            0.7440613508224487,
+            0.7822960019111633
+          ]
+        },
+        "hazard_rate": 0.0625,
+        "heavy_mean_reward": 9.70541763305664,
+        "heavy_success_rate": 0.6875,
+        "light_mean_reward": 1.3901710510253906,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.547794342041016,
+        "miss_rate": 0.59375,
+        "negative_lateral_success_rate": 0.25,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.4375,
+        "positive_obliquity_success_rate": 0.3125,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.34375
+      },
+      "best_candidate_objective": 0.07440781593322754,
+      "center": {
+        "approach_score_mean": 0.5913963317871094,
+        "clean_pass_rate": 0.3125,
+        "crossing_radial_mean_m": 1.1227903366088867,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05890510603785515,
+            0.41636237502098083,
+            0.7460358142852783,
+            0.7779287099838257
+          ],
+          "light": [
+            0.05890499800443649,
+            0.41632965207099915,
+            0.7499226927757263,
+            0.7882677316665649
+          ]
+        },
+        "hazard_rate": 0.1875,
+        "heavy_mean_reward": 8.565727233886719,
+        "heavy_success_rate": 0.625,
+        "light_mean_reward": 1.365732192993164,
+        "light_success_rate": 0.0,
+        "mean_reward": 4.965729713439941,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.25,
+        "negative_obliquity_success_rate": 0.3125,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.3125,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.1875,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.3125
+      },
+      "center_objective": -0.2891385555267334,
+      "development_seed": 1036047,
+      "generation": 17,
+      "next_center_sha256": "f7a0288eeaa7d48b092894fcc69ffd6eadb4503d845ccd3c0d10bc6331b04961",
+      "proposed_normalized_update_rms": 0.03804635629057884,
+      "reference": {
+        "approach_score_mean": 0.5886887311935425,
+        "clean_pass_rate": 0.3125,
+        "crossing_radial_mean_m": 1.2383919954299927,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05965883284807205,
+            0.42355281114578247,
+            0.7595114707946777,
+            0.793645441532135
+          ],
+          "light": [
+            0.059658732265233994,
+            0.4235212504863739,
+            0.7633602619171143,
+            0.8021149635314941
+          ]
+        },
+        "hazard_rate": 0.15625,
+        "heavy_mean_reward": 8.735280990600586,
+        "heavy_success_rate": 0.625,
+        "light_mean_reward": 1.315763235092163,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.025522232055664,
+        "miss_rate": 0.53125,
+        "negative_lateral_success_rate": 0.3125,
+        "negative_obliquity_success_rate": 0.3125,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.3125,
+        "positive_obliquity_success_rate": 0.3125,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.15625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.3125
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.025543733132846264,
+      "update_cap_scale": 0.16784611999212315
+    },
+    {
+      "applied_normalized_update_rms": 0.006322073750197887,
+      "best_candidate": {
+        "approach_score_mean": 0.6500723361968994,
+        "clean_pass_rate": 0.40625,
+        "crossing_radial_mean_m": 1.140854835510254,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05964197218418121,
+            0.4195684790611267,
+            0.7507767677307129,
+            0.7823972105979919
+          ],
+          "light": [
+            0.05964185297489166,
+            0.41954153776168823,
+            0.7550048828125,
+            0.7925899624824524
+          ]
+        },
+        "hazard_rate": 0.09375,
+        "heavy_mean_reward": 11.240522384643555,
+        "heavy_success_rate": 0.8125,
+        "light_mean_reward": 1.4332895278930664,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.3369059562683105,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.5,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.4375,
+        "positive_obliquity_success_rate": 0.3125,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.09375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.40625
+      },
+      "best_candidate_objective": 0.025765657424926758,
+      "center": {
+        "approach_score_mean": 0.638744592666626,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.131374478340149,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05901408568024635,
+            0.41708141565322876,
+            0.7479076981544495,
+            0.7789195775985718
+          ],
+          "light": [
+            0.0590139664709568,
+            0.4170542359352112,
+            0.7522367835044861,
+            0.789747953414917
+          ]
+        },
+        "hazard_rate": 0.15625,
+        "heavy_mean_reward": 10.332219123840332,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.3189365863800049,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.825577735900879,
+        "miss_rate": 0.46875,
+        "negative_lateral_success_rate": 0.3125,
+        "negative_obliquity_success_rate": 0.4375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.4375,
+        "positive_obliquity_success_rate": 0.3125,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.15625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "center_objective": -0.23198366165161133,
+      "development_seed": 1036048,
+      "generation": 18,
+      "next_center_sha256": "5f097177ae2e0fb2f32995c73503929b7952028745b303defd6b427d3cff8c65",
+      "proposed_normalized_update_rms": 0.04375786334276199,
+      "reference": {
+        "approach_score_mean": 0.6563873887062073,
+        "clean_pass_rate": 0.375,
+        "crossing_radial_mean_m": 1.183554768562317,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05965910106897354,
+            0.4233797788619995,
+            0.7597622871398926,
+            0.7923790216445923
+          ],
+          "light": [
+            0.05965898931026459,
+            0.4233541190624237,
+            0.7639281153678894,
+            0.8014624118804932
+          ]
+        },
+        "hazard_rate": 0.125,
+        "heavy_mean_reward": 10.40391731262207,
+        "heavy_success_rate": 0.75,
+        "light_mean_reward": 1.4075238704681396,
+        "light_success_rate": 0.0,
+        "mean_reward": 5.9057207107543945,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.5,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.25,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.375
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.025288295801517802,
+      "update_cap_scale": 0.14447857978936687
+    },
+    {
+      "applied_normalized_update_rms": 0.006258853245526552,
+      "best_candidate": {
+        "approach_score_mean": 0.5670013427734375,
+        "clean_pass_rate": 0.40625,
+        "crossing_radial_mean_m": 1.1145519018173218,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05874978378415108,
+            0.4159970283508301,
+            0.7440702319145203,
+            0.7718185186386108
+          ],
+          "light": [
+            0.058749642223119736,
+            0.4159611165523529,
+            0.748778223991394,
+            0.7842363715171814
+          ]
+        },
+        "hazard_rate": 0.03125,
+        "heavy_mean_reward": 11.36790657043457,
+        "heavy_success_rate": 0.8125,
+        "light_mean_reward": 1.389763355255127,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.3788347244262695,
+        "miss_rate": 0.5625,
+        "negative_lateral_success_rate": 0.3125,
+        "negative_obliquity_success_rate": 0.4375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.5,
+        "positive_obliquity_success_rate": 0.375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.03125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.40625
+      },
+      "best_candidate_objective": 0.051576852798461914,
+      "center": {
+        "approach_score_mean": 0.6297789216041565,
+        "clean_pass_rate": 0.46875,
+        "crossing_radial_mean_m": 1.174356460571289,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05960257723927498,
+            0.42313796281814575,
+            0.756930947303772,
+            0.7882055044174194
+          ],
+          "light": [
+            0.05960244685411453,
+            0.4231029152870178,
+            0.7613788843154907,
+            0.7979576587677002
+          ]
+        },
+        "hazard_rate": 0.03125,
+        "heavy_mean_reward": 13.034423828125,
+        "heavy_success_rate": 0.9375,
+        "light_mean_reward": 1.3488013744354248,
+        "light_success_rate": 0.0,
+        "mean_reward": 7.191612720489502,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.4375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.5,
+        "positive_obliquity_success_rate": 0.5,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.03125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.46875
+      },
+      "center_objective": 0.010614871978759766,
+      "development_seed": 1036049,
+      "generation": 19,
+      "next_center_sha256": "d053a2fb4add5a3dcc1b7ead2819bba1e1264009d675e56a058b85437d996fe5",
+      "proposed_normalized_update_rms": 0.04566357657313347,
+      "reference": {
+        "approach_score_mean": 0.6272271871566772,
+        "clean_pass_rate": 0.40625,
+        "crossing_radial_mean_m": 1.2014129161834717,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05977035313844681,
+            0.42592623829841614,
+            0.7621901631355286,
+            0.7931430339813232
+          ],
+          "light": [
+            0.059770241379737854,
+            0.4258924722671509,
+            0.7664655447006226,
+            0.802020251750946
+          ]
+        },
+        "hazard_rate": 0.09375,
+        "heavy_mean_reward": 11.289935111999512,
+        "heavy_success_rate": 0.8125,
+        "light_mean_reward": 1.338186502456665,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.314060688018799,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.4375,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.09375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.40625
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.025035412843502625,
+      "update_cap_scale": 0.1370644544421889
+    },
+    {
+      "applied_normalized_update_rms": 0.006196265108883381,
+      "best_candidate": {
+        "approach_score_mean": 0.5313494205474854,
+        "clean_pass_rate": 0.40625,
+        "crossing_radial_mean_m": 1.1640769243240356,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05832087621092796,
+            0.41271907091140747,
+            0.7410507202148438,
+            0.7687175273895264
+          ],
+          "light": [
+            0.05832074582576752,
+            0.4126851558685303,
+            0.7456969022750854,
+            0.7821288108825684
+          ]
+        },
+        "hazard_rate": 0.03125,
+        "heavy_mean_reward": 11.335763931274414,
+        "heavy_success_rate": 0.8125,
+        "light_mean_reward": 1.3506016731262207,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.343182563781738,
+        "miss_rate": 0.5625,
+        "negative_lateral_success_rate": 0.3125,
+        "negative_obliquity_success_rate": 0.375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.5,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.03125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.40625
+      },
+      "best_candidate_objective": 0.06302011013031006,
+      "center": {
+        "approach_score_mean": 0.5944993495941162,
+        "clean_pass_rate": 0.4375,
+        "crossing_radial_mean_m": 1.1648014783859253,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05892528221011162,
+            0.41773009300231934,
+            0.7489752769470215,
+            0.7781985998153687
+          ],
+          "light": [
+            0.05892515182495117,
+            0.4176951050758362,
+            0.7534399628639221,
+            0.7895559072494507
+          ]
+        },
+        "hazard_rate": 0.0625,
+        "heavy_mean_reward": 12.112813949584961,
+        "heavy_success_rate": 0.875,
+        "light_mean_reward": 1.324851393699646,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.718832492828369,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.375,
+        "negative_obliquity_success_rate": 0.4375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.5,
+        "positive_obliquity_success_rate": 0.4375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.0625,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.4375
+      },
+      "center_objective": 0.03726983070373535,
+      "development_seed": 1036050,
+      "generation": 20,
+      "next_center_sha256": "33e6768e0b61b74b91da0705c2b90664a7d6be84d8520356baa178689ed1c51a",
+      "proposed_normalized_update_rms": 0.030505748465657234,
+      "reference": {
+        "approach_score_mean": 0.6088749170303345,
+        "clean_pass_rate": 0.40625,
+        "crossing_radial_mean_m": 1.2596931457519531,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05966196209192276,
+            0.4245831370353699,
+            0.7618063688278198,
+            0.7930002212524414
+          ],
+          "light": [
+            0.05966184288263321,
+            0.424550324678421,
+            0.7661435604095459,
+            0.8023279905319214
+          ]
+        },
+        "hazard_rate": 0.09375,
+        "heavy_mean_reward": 11.303834915161133,
+        "heavy_success_rate": 0.8125,
+        "light_mean_reward": 1.2875815629959106,
+        "light_success_rate": 0.0,
+        "mean_reward": 6.295708179473877,
+        "miss_rate": 0.5,
+        "negative_lateral_success_rate": 0.4375,
+        "negative_obliquity_success_rate": 0.4375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.375,
+        "positive_obliquity_success_rate": 0.375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.09375,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.40625
+      },
+      "shaping_weight": 1.0,
+      "sigma": 0.024785058715067598,
+      "update_cap_scale": 0.20311793646835222
+    }
+  ],
+  "generations_budget": 40,
+  "generations_completed": 20,
+  "goal_passed": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "graph": "artifacts/gate-accel-v2/connectome.npz",
+  "graph_sha256": "d385bcb96f18fad904d263ab34cbead73c794f9c90961d7961671761d323f3ea",
+  "hover_config": {
+    "angular_drag": 2e-05,
+    "camera_fov_degrees": 90.0,
+    "dt": 0.01,
+    "foreleg_joint_limit": 0.65,
+    "inertia_x": 3e-05,
+    "inertia_y": 3e-05,
+    "inertia_z": 5e-05,
+    "linear_drag": 0.12,
+    "mass": 0.035,
+    "max_roll_pitch_rate": 4.1887902047863905,
+    "max_roll_pitch_torque": 0.002,
+    "max_yaw_rate": 3.141592653589793,
+    "max_yaw_torque": 0.0008,
+    "motor_time_constant": 0.045,
+    "rate_gain": 0.018,
+    "roll_stick_gain": 1.0,
+    "stick_damping": 8.0,
+    "stick_motor_strength": 100.0,
+    "stick_spring": 25.0,
+    "target_band_width": 0.18,
+    "thrust_to_weight": 1.5,
+    "wall_x": 5.0
+  },
+  "maximum_edge_magnitude_change_if_applied": 0.31154894828796387,
+  "merge_eligible": false,
+  "method": "teacher-steering-assisted edge-only acceleration-path ES",
+  "parameterization": {
+    "count": 282,
+    "edge_overlap_audit": {
+      "caveat": "Disjoint parameters do not imply disjoint behavior: recurrent path edges may alter activity that later reaches steering motor pools.",
+      "direct_parameter_disjointness_passed": true,
+      "path_edge_count": 282,
+      "path_involved_node_count": 93,
+      "steering_output_gain_edge_count": 161,
+      "steering_output_gain_overlap_count": 0,
+      "steering_output_gain_overlap_indices": [],
+      "throttle_output_gain_edge_count": 37,
+      "throttle_output_gain_overlap_count": 36,
+      "throttle_output_gain_overlap_indices": [
+        238,
+        263,
+        447,
+        630,
+        751,
+        777,
+        807,
+        826,
+        924,
+        939,
+        985,
+        1144,
+        1233,
+        1291,
+        1296,
+        1513,
+        1576,
+        1589,
+        1667,
+        2196,
+        2410,
+        2500,
+        2640,
+        2910,
+        3141,
+        3233,
+        3306,
+        3715,
+        3853,
+        3891,
+        4073,
+        4093,
+        4154,
+        4235,
+        4285,
+        4404
+      ]
+    },
+    "maximum_hops": 4,
+    "scale_floor": 0.02590295299887657,
+    "scale_floor_quantile": 0.25,
+    "selected_edge_indices": [
+      14,
+      37,
+      38,
+      45,
+      65,
+      78,
+      80,
+      104,
+      113,
+      118,
+      126,
+      127,
+      140,
+      150,
+      153,
+      161,
+      192,
+      238,
+      249,
+      258,
+      263,
+      303,
+      320,
+      328,
+      334,
+      336,
+      348,
+      353,
+      379,
+      382,
+      400,
+      404,
+      405,
+      423,
+      441,
+      447,
+      488,
+      493,
+      515,
+      525,
+      526,
+      541,
+      553,
+      557,
+      575,
+      596,
+      623,
+      626,
+      630,
+      635,
+      639,
+      640,
+      642,
+      647,
+      675,
+      680,
+      692,
+      699,
+      714,
+      726,
+      740,
+      742,
+      743,
+      749,
+      751,
+      760,
+      777,
+      807,
+      826,
+      850,
+      854,
+      857,
+      859,
+      865,
+      870,
+      924,
+      925,
+      930,
+      939,
+      976,
+      984,
+      985,
+      1022,
+      1027,
+      1036,
+      1037,
+      1062,
+      1083,
+      1102,
+      1105,
+      1126,
+      1136,
+      1144,
+      1157,
+      1175,
+      1185,
+      1187,
+      1191,
+      1192,
+      1206,
+      1219,
+      1224,
+      1230,
+      1233,
+      1274,
+      1281,
+      1291,
+      1293,
+      1296,
+      1314,
+      1333,
+      1345,
+      1367,
+      1386,
+      1389,
+      1392,
+      1437,
+      1441,
+      1459,
+      1513,
+      1514,
+      1519,
+      1526,
+      1569,
+      1576,
+      1583,
+      1589,
+      1608,
+      1609,
+      1614,
+      1620,
+      1641,
+      1667,
+      1676,
+      1710,
+      1729,
+      1739,
+      1740,
+      1741,
+      1760,
+      1762,
+      1797,
+      1820,
+      1862,
+      1871,
+      1921,
+      1925,
+      1981,
+      1982,
+      2013,
+      2023,
+      2033,
+      2046,
+      2079,
+      2107,
+      2148,
+      2154,
+      2158,
+      2179,
+      2196,
+      2244,
+      2255,
+      2257,
+      2282,
+      2306,
+      2320,
+      2321,
+      2335,
+      2340,
+      2344,
+      2410,
+      2412,
+      2500,
+      2505,
+      2519,
+      2531,
+      2577,
+      2640,
+      2658,
+      2692,
+      2693,
+      2708,
+      2722,
+      2748,
+      2774,
+      2812,
+      2849,
+      2861,
+      2872,
+      2881,
+      2882,
+      2910,
+      2936,
+      2941,
+      2952,
+      2973,
+      2977,
+      3044,
+      3059,
+      3093,
+      3100,
+      3129,
+      3141,
+      3142,
+      3145,
+      3179,
+      3233,
+      3252,
+      3261,
+      3292,
+      3306,
+      3364,
+      3367,
+      3375,
+      3410,
+      3421,
+      3439,
+      3460,
+      3469,
+      3488,
+      3499,
+      3500,
+      3585,
+      3587,
+      3603,
+      3604,
+      3608,
+      3628,
+      3669,
+      3680,
+      3681,
+      3698,
+      3702,
+      3709,
+      3715,
+      3737,
+      3743,
+      3746,
+      3748,
+      3774,
+      3779,
+      3794,
+      3796,
+      3804,
+      3806,
+      3813,
+      3823,
+      3830,
+      3853,
+      3891,
+      3894,
+      3912,
+      3982,
+      3988,
+      3992,
+      4034,
+      4065,
+      4066,
+      4073,
+      4078,
+      4093,
+      4154,
+      4155,
+      4166,
+      4193,
+      4204,
+      4234,
+      4235,
+      4249,
+      4259,
+      4285,
+      4288,
+      4301,
+      4328,
+      4365,
+      4390,
+      4404,
+      4427,
+      4432,
+      4447,
+      4454,
+      4456
+    ],
+    "zero_edge_count": 13
+  },
+  "peak_cuda_memory_bytes": 281221120,
+  "preserved_assisted_steering_file_sha256": "d7da47000fd1c0bd8ea58d4a17bf1da683262aee0c2bad9526cefeb95d51e798",
+  "preserved_assisted_steering_vector": "runs/gate/assisted-acceleration-path-es-v1/preserved-steering-vector.json",
+  "preserved_assisted_steering_vector_sha256": "6b23b4db749a3dc8bc3812a764d50ef4a3ec40a6aca40202db103641d6a8bfd6",
+  "protocol": {
+    "added_recurrent_module": false,
+    "antithetic_directions": 32,
+    "axis_intervention": "mass-free reserve roll/pitch/yaw after 0.5 seconds",
+    "biases_frozen": true,
+    "checkpoint_gate": "one fixed-validation candidate must simultaneously gain >=10pp light and >=10pp worst mass/lateral, with no mass/lateral stratum dropping >5pp",
+    "checkpoint_generation": 20,
+    "clock_actor_input": false,
+    "development_episodes": 32,
+    "development_seed": 1036031,
+    "device": "cuda",
+    "engineered_history_features": false,
+    "final_episodes": 1024,
+    "final_seed": 1038031,
+    "fixed_topology_and_transmitter_signs": true,
+    "generations": 40,
+    "heavy_reward_penalty": 2.0,
+    "intervention_training_only": true,
+    "learning_rate": 0.012,
+    "mass_actor_input": false,
+    "maximum_edge_magnitude": 8.0,
+    "maximum_hops": 4,
+    "maximum_path_hops": 4,
+    "maximum_stratum_drop": 0.05,
+    "maximum_update_sigma_fraction": 0.25,
+    "minimum_floor_gain": 0.1,
+    "minimum_light_gain": 0.1,
+    "nonselected_edges_frozen": true,
+    "scale_floor_quantile": 0.25,
+    "search_objective": "delta_light_mean_reward - 2*max(0,-delta_heavy_mean_reward)",
+    "search_seed": 1039031,
+    "seconds": 12.0,
+    "sigma": 0.03,
+    "sigma_decay": 0.99,
+    "takeover_seconds": 0.5,
+    "time_constants_frozen": true,
+    "top_candidates": 3,
+    "validation_episodes": 256,
+    "validation_interval": 10,
+    "validation_nominees": "current center, current generation best, global archive best",
+    "validation_seed": 1037031
+  },
+  "selected_candidate": "d053a2fb4add5a3dcc1b7ead2819bba1e1264009d675e56a058b85437d996fe5",
+  "selected_metrics": {
+    "approach_score_mean": 0.6086529493331909,
+    "clean_pass_rate": 0.44140625,
+    "crossing_radial_mean_m": 1.1391539573669434,
+    "early_throttle_stick_mean_by_mass": {
+      "bins_seconds": [
+        [
+          0.0,
+          0.25
+        ],
+        [
+          0.25,
+          0.5
+        ],
+        [
+          0.5,
+          1.0
+        ],
+        [
+          1.0,
+          1.5
+        ]
+      ],
+      "heavy": [
+        0.05901152640581131,
+        0.4186957776546478,
+        0.7493832111358643,
+        0.7791770100593567
+      ],
+      "light": [
+        0.05901139974594116,
+        0.4186592698097229,
+        0.7536799907684326,
+        0.7894039750099182
+      ]
+    },
+    "hazard_rate": 0.0546875,
+    "heavy_mean_reward": 10.374333381652832,
+    "heavy_success_rate": 0.8828125,
+    "light_mean_reward": -0.0006666667177341878,
+    "light_success_rate": 0.0,
+    "mean_reward": 5.186833381652832,
+    "miss_rate": 0.50390625,
+    "negative_lateral_success_rate": 0.4140625,
+    "negative_obliquity_success_rate": 0.421875,
+    "plane_crossing_rate": 1.0,
+    "positive_lateral_success_rate": 0.46875,
+    "positive_obliquity_success_rate": 0.4609375,
+    "progress_mean": 1.0,
+    "ring_collision_rate": 0.0546875,
+    "stick_saturation_fraction": 0.006666666828095913,
+    "success_rate": 0.44140625
+  },
+  "selected_validation_qualified": false,
+  "selected_vector": "runs/gate/assisted-acceleration-path-es-v1/selected-theta.json",
+  "selected_vector_sha256": "905b01fbc59abfc53b357006f8303e3e4cf252ca3204ea94ea11913cf1076061",
+  "stopped_at_checkpoint": true,
+  "validations": [
+    {
+      "baseline": {
+        "approach_score_mean": 0.6218760013580322,
+        "clean_pass_rate": 0.3984375,
+        "crossing_radial_mean_m": 1.2290494441986084,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05974750220775604,
+            0.4255377948284149,
+            0.7621996402740479,
+            0.7935689687728882
+          ],
+          "light": [
+            0.05974738299846649,
+            0.4255031645298004,
+            0.7662307620048523,
+            0.8018711805343628
+          ]
+        },
+        "hazard_rate": 0.078125,
+        "heavy_mean_reward": 9.249333381652832,
+        "heavy_success_rate": 0.796875,
+        "light_mean_reward": -0.0006666667177341878,
+        "light_success_rate": 0.0,
+        "mean_reward": 4.624333381652832,
+        "miss_rate": 0.5234375,
+        "negative_lateral_success_rate": 0.3828125,
+        "negative_obliquity_success_rate": 0.3984375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.4140625,
+        "positive_obliquity_success_rate": 0.3984375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.078125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.3984375
+      },
+      "candidates": {
+        "0b2e1cc9c79390a76cf0750b00c0711aec030e5137283f364b75360c734d6369": {
+          "mass_lateral_safe": true,
+          "metrics": {
+            "approach_score_mean": 0.5884813070297241,
+            "clean_pass_rate": 0.4140625,
+            "crossing_radial_mean_m": 1.117771863937378,
+            "early_throttle_stick_mean_by_mass": {
+              "bins_seconds": [
+                [
+                  0.0,
+                  0.25
+                ],
+                [
+                  0.25,
+                  0.5
+                ],
+                [
+                  0.5,
+                  1.0
+                ],
+                [
+                  1.0,
+                  1.5
+                ]
+              ],
+              "heavy": [
+                0.05929502844810486,
+                0.4191631078720093,
+                0.7479087114334106,
+                0.775726318359375
+              ],
+              "light": [
+                0.05929490551352501,
+                0.41912558674812317,
+                0.7521578073501587,
+                0.7862135767936707
+              ]
+            },
+            "hazard_rate": 0.078125,
+            "heavy_mean_reward": 9.639958381652832,
+            "heavy_success_rate": 0.828125,
+            "light_mean_reward": -0.0162916649132967,
+            "light_success_rate": 0.0,
+            "mean_reward": 4.811833381652832,
+            "miss_rate": 0.5078125,
+            "negative_lateral_success_rate": 0.3515625,
+            "negative_obliquity_success_rate": 0.390625,
+            "plane_crossing_rate": 1.0,
+            "positive_lateral_success_rate": 0.4765625,
+            "positive_obliquity_success_rate": 0.4375,
+            "progress_mean": 1.0,
+            "ring_collision_rate": 0.078125,
+            "stick_saturation_fraction": 0.006666666828095913,
+            "success_rate": 0.4140625
+          },
+          "performance_qualified": false,
+          "source": {
+            "development": {
+              "approach_score_mean": 0.6072211265563965,
+              "clean_pass_rate": 0.40625,
+              "crossing_radial_mean_m": 1.1065560579299927,
+              "early_throttle_stick_mean_by_mass": {
+                "bins_seconds": [
+                  [
+                    0.0,
+                    0.25
+                  ],
+                  [
+                    0.25,
+                    0.5
+                  ],
+                  [
+                    0.5,
+                    1.0
+                  ],
+                  [
+                    1.0,
+                    1.5
+                  ]
+                ],
+                "heavy": [
+                  0.05939618870615959,
+                  0.4209023118019104,
+                  0.7492688894271851,
+                  0.7754318714141846
+                ],
+                "light": [
+                  0.05939606577157974,
+                  0.42086878418922424,
+                  0.7534648180007935,
+                  0.7858507633209229
+                ]
+              },
+              "hazard_rate": 0.09375,
+              "heavy_mean_reward": 11.199263572692871,
+              "heavy_success_rate": 0.8125,
+              "light_mean_reward": 1.3888453245162964,
+              "light_success_rate": 0.0,
+              "mean_reward": 6.2940545082092285,
+              "miss_rate": 0.5,
+              "negative_lateral_success_rate": 0.4375,
+              "negative_obliquity_success_rate": 0.375,
+              "plane_crossing_rate": 1.0,
+              "positive_lateral_success_rate": 0.375,
+              "positive_obliquity_success_rate": 0.4375,
+              "progress_mean": 1.0,
+              "ring_collision_rate": 0.09375,
+              "stick_saturation_fraction": 0.006666666828095913,
+              "success_rate": 0.40625
+            },
+            "generation": 2,
+            "kind": "direction_29_plus",
+            "objective": 0.05096638202667236
+          }
+        },
+        "23dba4c779d65c0828633977e6c563e051f982a4039059058708dab2f92b9f64": {
+          "mass_lateral_safe": true,
+          "metrics": {
+            "approach_score_mean": 0.6240577697753906,
+            "clean_pass_rate": 0.40234375,
+            "crossing_radial_mean_m": 1.2116763591766357,
+            "early_throttle_stick_mean_by_mass": {
+              "bins_seconds": [
+                [
+                  0.0,
+                  0.25
+                ],
+                [
+                  0.25,
+                  0.5
+                ],
+                [
+                  0.5,
+                  1.0
+                ],
+                [
+                  1.0,
+                  1.5
+                ]
+              ],
+              "heavy": [
+                0.05962427705526352,
+                0.42361459136009216,
+                0.7586792707443237,
+                0.7906357049942017
+              ],
+              "light": [
+                0.059624165296554565,
+                0.4235801696777344,
+                0.762877345085144,
+                0.7995907068252563
+              ]
+            },
+            "hazard_rate": 0.078125,
+            "heavy_mean_reward": 9.343083381652832,
+            "heavy_success_rate": 0.8046875,
+            "light_mean_reward": -0.0006666667177341878,
+            "light_success_rate": 0.0,
+            "mean_reward": 4.671208381652832,
+            "miss_rate": 0.51953125,
+            "negative_lateral_success_rate": 0.390625,
+            "negative_obliquity_success_rate": 0.3984375,
+            "plane_crossing_rate": 1.0,
+            "positive_lateral_success_rate": 0.4140625,
+            "positive_obliquity_success_rate": 0.40625,
+            "progress_mean": 1.0,
+            "ring_collision_rate": 0.078125,
+            "stick_saturation_fraction": 0.006666666828095913,
+            "success_rate": 0.40234375
+          },
+          "performance_qualified": false,
+          "source": {
+            "development": {
+              "approach_score_mean": 0.5979830622673035,
+              "clean_pass_rate": 0.375,
+              "crossing_radial_mean_m": 1.1769111156463623,
+              "early_throttle_stick_mean_by_mass": {
+                "bins_seconds": [
+                  [
+                    0.0,
+                    0.25
+                  ],
+                  [
+                    0.25,
+                    0.5
+                  ],
+                  [
+                    0.5,
+                    1.0
+                  ],
+                  [
+                    1.0,
+                    1.5
+                  ]
+                ],
+                "heavy": [
+                  0.059552986174821854,
+                  0.42226579785346985,
+                  0.7549422979354858,
+                  0.788981556892395
+                ],
+                "light": [
+                  0.0595528781414032,
+                  0.42223280668258667,
+                  0.7589622139930725,
+                  0.7982314825057983
+                ]
+              },
+              "hazard_rate": 0.09375,
+              "heavy_mean_reward": 10.523731231689453,
+              "heavy_success_rate": 0.75,
+              "light_mean_reward": 1.295901894569397,
+              "light_success_rate": 0.0,
+              "mean_reward": 5.909816741943359,
+              "miss_rate": 0.53125,
+              "negative_lateral_success_rate": 0.4375,
+              "negative_obliquity_success_rate": 0.375,
+              "plane_crossing_rate": 1.0,
+              "positive_lateral_success_rate": 0.3125,
+              "positive_obliquity_success_rate": 0.375,
+              "progress_mean": 1.0,
+              "ring_collision_rate": 0.09375,
+              "stick_saturation_fraction": 0.006666666828095913,
+              "success_rate": 0.375
+            },
+            "generation": 10,
+            "kind": "evaluated_center",
+            "objective": 0.0050820112228393555
+          }
+        },
+        "f5919d4945aa43bc18e49655a864ddea6ff30ecf7529d0a3d77119e46cd278db": {
+          "mass_lateral_safe": true,
+          "metrics": {
+            "approach_score_mean": 0.6244300007820129,
+            "clean_pass_rate": 0.4140625,
+            "crossing_radial_mean_m": 1.1890344619750977,
+            "early_throttle_stick_mean_by_mass": {
+              "bins_seconds": [
+                [
+                  0.0,
+                  0.25
+                ],
+                [
+                  0.25,
+                  0.5
+                ],
+                [
+                  0.5,
+                  1.0
+                ],
+                [
+                  1.0,
+                  1.5
+                ]
+              ],
+              "heavy": [
+                0.059507861733436584,
+                0.42371904850006104,
+                0.7583714127540588,
+                0.788453996181488
+              ],
+              "light": [
+                0.05950774997472763,
+                0.4236850440502167,
+                0.7624657154083252,
+                0.7972332239151001
+              ]
+            },
+            "hazard_rate": 0.0703125,
+            "heavy_mean_reward": 9.655583381652832,
+            "heavy_success_rate": 0.828125,
+            "light_mean_reward": -0.0006666667177341878,
+            "light_success_rate": 0.0,
+            "mean_reward": 4.827458381652832,
+            "miss_rate": 0.515625,
+            "negative_lateral_success_rate": 0.40625,
+            "negative_obliquity_success_rate": 0.40625,
+            "plane_crossing_rate": 1.0,
+            "positive_lateral_success_rate": 0.421875,
+            "positive_obliquity_success_rate": 0.421875,
+            "progress_mean": 1.0,
+            "ring_collision_rate": 0.0703125,
+            "stick_saturation_fraction": 0.006666666828095913,
+            "success_rate": 0.4140625
+          },
+          "performance_qualified": false,
+          "source": {
+            "development": {
+              "approach_score_mean": 0.6018722653388977,
+              "clean_pass_rate": 0.40625,
+              "crossing_radial_mean_m": 1.1572455167770386,
+              "early_throttle_stick_mean_by_mass": {
+                "bins_seconds": [
+                  [
+                    0.0,
+                    0.25
+                  ],
+                  [
+                    0.25,
+                    0.5
+                  ],
+                  [
+                    0.5,
+                    1.0
+                  ],
+                  [
+                    1.0,
+                    1.5
+                  ]
+                ],
+                "heavy": [
+                  0.05943676829338074,
+                  0.4223760962486267,
+                  0.7546826601028442,
+                  0.7868501543998718
+                ],
+                "light": [
+                  0.05943666025996208,
+                  0.42234349250793457,
+                  0.7586650848388672,
+                  0.7959973812103271
+                ]
+              },
+              "hazard_rate": 0.09375,
+              "heavy_mean_reward": 11.274077415466309,
+              "heavy_success_rate": 0.8125,
+              "light_mean_reward": 1.3033335208892822,
+              "light_success_rate": 0.0,
+              "mean_reward": 6.288705348968506,
+              "miss_rate": 0.5,
+              "negative_lateral_success_rate": 0.4375,
+              "negative_obliquity_success_rate": 0.375,
+              "plane_crossing_rate": 1.0,
+              "positive_lateral_success_rate": 0.375,
+              "positive_obliquity_success_rate": 0.4375,
+              "progress_mean": 1.0,
+              "ring_collision_rate": 0.09375,
+              "stick_saturation_fraction": 0.006666666828095913,
+              "success_rate": 0.40625
+            },
+            "generation": 10,
+            "kind": "direction_30_plus",
+            "objective": 0.01251363754272461
+          }
+        }
+      },
+      "generation": 10,
+      "required_nominees": [
+        "23dba4c779d65c0828633977e6c563e051f982a4039059058708dab2f92b9f64",
+        "f5919d4945aa43bc18e49655a864ddea6ff30ecf7529d0a3d77119e46cd278db",
+        "0b2e1cc9c79390a76cf0750b00c0711aec030e5137283f364b75360c734d6369"
+      ],
+      "validation_seed": 1037031
+    },
+    {
+      "baseline": {
+        "approach_score_mean": 0.6218763589859009,
+        "clean_pass_rate": 0.3984375,
+        "crossing_radial_mean_m": 1.2290453910827637,
+        "early_throttle_stick_mean_by_mass": {
+          "bins_seconds": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.25,
+              0.5
+            ],
+            [
+              0.5,
+              1.0
+            ],
+            [
+              1.0,
+              1.5
+            ]
+          ],
+          "heavy": [
+            0.05974750220775604,
+            0.4255378246307373,
+            0.7621996402740479,
+            0.7935689687728882
+          ],
+          "light": [
+            0.05974738672375679,
+            0.4255031943321228,
+            0.7662307620048523,
+            0.801871120929718
+          ]
+        },
+        "hazard_rate": 0.078125,
+        "heavy_mean_reward": 9.249333381652832,
+        "heavy_success_rate": 0.796875,
+        "light_mean_reward": -0.0006666667177341878,
+        "light_success_rate": 0.0,
+        "mean_reward": 4.624333381652832,
+        "miss_rate": 0.5234375,
+        "negative_lateral_success_rate": 0.3828125,
+        "negative_obliquity_success_rate": 0.3984375,
+        "plane_crossing_rate": 1.0,
+        "positive_lateral_success_rate": 0.4140625,
+        "positive_obliquity_success_rate": 0.3984375,
+        "progress_mean": 1.0,
+        "ring_collision_rate": 0.078125,
+        "stick_saturation_fraction": 0.006666666828095913,
+        "success_rate": 0.3984375
+      },
+      "candidates": {
+        "1358d115eb17d078794573748f2e613c59faf6154059a31932fa83be492f40e3": {
+          "mass_lateral_safe": false,
+          "metrics": {
+            "approach_score_mean": 0.5547456741333008,
+            "clean_pass_rate": 0.34765625,
+            "crossing_radial_mean_m": 1.1205253601074219,
+            "early_throttle_stick_mean_by_mass": {
+              "bins_seconds": [
+                [
+                  0.0,
+                  0.25
+                ],
+                [
+                  0.25,
+                  0.5
+                ],
+                [
+                  0.5,
+                  1.0
+                ],
+                [
+                  1.0,
+                  1.5
+                ]
+              ],
+              "heavy": [
+                0.05840661749243736,
+                0.4136773347854614,
+                0.7414532899856567,
+                0.7698018550872803
+              ],
+              "light": [
+                0.058406487107276917,
+                0.4136418104171753,
+                0.7457551956176758,
+                0.7816944122314453
+              ]
+            },
+            "hazard_rate": 0.109375,
+            "heavy_mean_reward": 7.936833381652832,
+            "heavy_success_rate": 0.6953125,
+            "light_mean_reward": -0.03191666305065155,
+            "light_success_rate": 0.0,
+            "mean_reward": 3.952458381652832,
+            "miss_rate": 0.54296875,
+            "negative_lateral_success_rate": 0.2890625,
+            "negative_obliquity_success_rate": 0.3125,
+            "plane_crossing_rate": 1.0,
+            "positive_lateral_success_rate": 0.40625,
+            "positive_obliquity_success_rate": 0.3828125,
+            "progress_mean": 1.0,
+            "ring_collision_rate": 0.109375,
+            "stick_saturation_fraction": 0.006666666828095913,
+            "success_rate": 0.34765625
+          },
+          "performance_qualified": false,
+          "source": {
+            "development": {
+              "approach_score_mean": 0.5313494205474854,
+              "clean_pass_rate": 0.40625,
+              "crossing_radial_mean_m": 1.1640769243240356,
+              "early_throttle_stick_mean_by_mass": {
+                "bins_seconds": [
+                  [
+                    0.0,
+                    0.25
+                  ],
+                  [
+                    0.25,
+                    0.5
+                  ],
+                  [
+                    0.5,
+                    1.0
+                  ],
+                  [
+                    1.0,
+                    1.5
+                  ]
+                ],
+                "heavy": [
+                  0.05832087621092796,
+                  0.41271907091140747,
+                  0.7410507202148438,
+                  0.7687175273895264
+                ],
+                "light": [
+                  0.05832074582576752,
+                  0.4126851558685303,
+                  0.7456969022750854,
+                  0.7821288108825684
+                ]
+              },
+              "hazard_rate": 0.03125,
+              "heavy_mean_reward": 11.335763931274414,
+              "heavy_success_rate": 0.8125,
+              "light_mean_reward": 1.3506016731262207,
+              "light_success_rate": 0.0,
+              "mean_reward": 6.343182563781738,
+              "miss_rate": 0.5625,
+              "negative_lateral_success_rate": 0.3125,
+              "negative_obliquity_success_rate": 0.375,
+              "plane_crossing_rate": 1.0,
+              "positive_lateral_success_rate": 0.5,
+              "positive_obliquity_success_rate": 0.4375,
+              "progress_mean": 1.0,
+              "ring_collision_rate": 0.03125,
+              "stick_saturation_fraction": 0.006666666828095913,
+              "success_rate": 0.40625
+            },
+            "generation": 20,
+            "kind": "direction_12_plus",
+            "objective": 0.06302011013031006
+          }
+        },
+        "d053a2fb4add5a3dcc1b7ead2819bba1e1264009d675e56a058b85437d996fe5": {
+          "mass_lateral_safe": true,
+          "metrics": {
+            "approach_score_mean": 0.6086529493331909,
+            "clean_pass_rate": 0.44140625,
+            "crossing_radial_mean_m": 1.1391539573669434,
+            "early_throttle_stick_mean_by_mass": {
+              "bins_seconds": [
+                [
+                  0.0,
+                  0.25
+                ],
+                [
+                  0.25,
+                  0.5
+                ],
+                [
+                  0.5,
+                  1.0
+                ],
+                [
+                  1.0,
+                  1.5
+                ]
+              ],
+              "heavy": [
+                0.05901152640581131,
+                0.4186957776546478,
+                0.7493832111358643,
+                0.7791770100593567
+              ],
+              "light": [
+                0.05901139974594116,
+                0.4186592698097229,
+                0.7536799907684326,
+                0.7894039750099182
+              ]
+            },
+            "hazard_rate": 0.0546875,
+            "heavy_mean_reward": 10.374333381652832,
+            "heavy_success_rate": 0.8828125,
+            "light_mean_reward": -0.0006666667177341878,
+            "light_success_rate": 0.0,
+            "mean_reward": 5.186833381652832,
+            "miss_rate": 0.50390625,
+            "negative_lateral_success_rate": 0.4140625,
+            "negative_obliquity_success_rate": 0.421875,
+            "plane_crossing_rate": 1.0,
+            "positive_lateral_success_rate": 0.46875,
+            "positive_obliquity_success_rate": 0.4609375,
+            "progress_mean": 1.0,
+            "ring_collision_rate": 0.0546875,
+            "stick_saturation_fraction": 0.006666666828095913,
+            "success_rate": 0.44140625
+          },
+          "performance_qualified": false,
+          "source": {
+            "development": {
+              "approach_score_mean": 0.5944993495941162,
+              "clean_pass_rate": 0.4375,
+              "crossing_radial_mean_m": 1.1648014783859253,
+              "early_throttle_stick_mean_by_mass": {
+                "bins_seconds": [
+                  [
+                    0.0,
+                    0.25
+                  ],
+                  [
+                    0.25,
+                    0.5
+                  ],
+                  [
+                    0.5,
+                    1.0
+                  ],
+                  [
+                    1.0,
+                    1.5
+                  ]
+                ],
+                "heavy": [
+                  0.05892528221011162,
+                  0.41773009300231934,
+                  0.7489752769470215,
+                  0.7781985998153687
+                ],
+                "light": [
+                  0.05892515182495117,
+                  0.4176951050758362,
+                  0.7534399628639221,
+                  0.7895559072494507
+                ]
+              },
+              "hazard_rate": 0.0625,
+              "heavy_mean_reward": 12.112813949584961,
+              "heavy_success_rate": 0.875,
+              "light_mean_reward": 1.324851393699646,
+              "light_success_rate": 0.0,
+              "mean_reward": 6.718832492828369,
+              "miss_rate": 0.5,
+              "negative_lateral_success_rate": 0.375,
+              "negative_obliquity_success_rate": 0.4375,
+              "plane_crossing_rate": 1.0,
+              "positive_lateral_success_rate": 0.5,
+              "positive_obliquity_success_rate": 0.4375,
+              "progress_mean": 1.0,
+              "ring_collision_rate": 0.0625,
+              "stick_saturation_fraction": 0.006666666828095913,
+              "success_rate": 0.4375
+            },
+            "generation": 20,
+            "kind": "evaluated_center",
+            "objective": 0.03726983070373535
+          }
+        },
+        "e51df2c75ca8e08b9ad97688dc33a029374c801b5ac5762f5c554ad962733283": {
+          "mass_lateral_safe": false,
+          "metrics": {
+            "approach_score_mean": 0.5616668462753296,
+            "clean_pass_rate": 0.37890625,
+            "crossing_radial_mean_m": 1.1243386268615723,
+            "early_throttle_stick_mean_by_mass": {
+              "bins_seconds": [
+                [
+                  0.0,
+                  0.25
+                ],
+                [
+                  0.25,
+                  0.5
+                ],
+                [
+                  0.5,
+                  1.0
+                ],
+                [
+                  1.0,
+                  1.5
+                ]
+              ],
+              "heavy": [
+                0.05881871283054352,
+                0.4159555733203888,
+                0.7427128553390503,
+                0.7705368995666504
+              ],
+              "light": [
+                0.05881859362125397,
+                0.41591933369636536,
+                0.7470491528511047,
+                0.7821648120880127
+              ]
+            },
+            "hazard_rate": 0.078125,
+            "heavy_mean_reward": 8.811833381652832,
+            "heavy_success_rate": 0.7578125,
+            "light_mean_reward": -0.03191666305065155,
+            "light_success_rate": 0.0,
+            "mean_reward": 4.389958381652832,
+            "miss_rate": 0.54296875,
+            "negative_lateral_success_rate": 0.3046875,
+            "negative_obliquity_success_rate": 0.34375,
+            "plane_crossing_rate": 1.0,
+            "positive_lateral_success_rate": 0.453125,
+            "positive_obliquity_success_rate": 0.4140625,
+            "progress_mean": 1.0,
+            "ring_collision_rate": 0.078125,
+            "stick_saturation_fraction": 0.006666666828095913,
+            "success_rate": 0.37890625
+          },
+          "performance_qualified": false,
+          "source": {
+            "development": {
+              "approach_score_mean": 0.548461377620697,
+              "clean_pass_rate": 0.34375,
+              "crossing_radial_mean_m": 1.1225295066833496,
+              "early_throttle_stick_mean_by_mass": {
+                "bins_seconds": [
+                  [
+                    0.0,
+                    0.25
+                  ],
+                  [
+                    0.25,
+                    0.5
+                  ],
+                  [
+                    0.5,
+                    1.0
+                  ],
+                  [
+                    1.0,
+                    1.5
+                  ]
+                ],
+                "heavy": [
+                  0.05872630327939987,
+                  0.41391026973724365,
+                  0.7401100397109985,
+                  0.7700567245483398
+                ],
+                "light": [
+                  0.058726198971271515,
+                  0.4138772487640381,
+                  0.7440613508224487,
+                  0.7822960019111633
+                ]
+              },
+              "hazard_rate": 0.0625,
+              "heavy_mean_reward": 9.70541763305664,
+              "heavy_success_rate": 0.6875,
+              "light_mean_reward": 1.3901710510253906,
+              "light_success_rate": 0.0,
+              "mean_reward": 5.547794342041016,
+              "miss_rate": 0.59375,
+              "negative_lateral_success_rate": 0.25,
+              "negative_obliquity_success_rate": 0.375,
+              "plane_crossing_rate": 1.0,
+              "positive_lateral_success_rate": 0.4375,
+              "positive_obliquity_success_rate": 0.3125,
+              "progress_mean": 1.0,
+              "ring_collision_rate": 0.0625,
+              "stick_saturation_fraction": 0.006666666828095913,
+              "success_rate": 0.34375
+            },
+            "generation": 17,
+            "kind": "direction_24_minus",
+            "objective": 0.07440781593322754
+          }
+        }
+      },
+      "generation": 20,
+      "required_nominees": [
+        "d053a2fb4add5a3dcc1b7ead2819bba1e1264009d675e56a058b85437d996fe5",
+        "1358d115eb17d078794573748f2e613c59faf6154059a31932fa83be492f40e3",
+        "e51df2c75ca8e08b9ad97688dc33a029374c801b5ac5762f5c554ad962733283"
+      ],
+      "validation_seed": 1037031
+    }
+  ]
+}

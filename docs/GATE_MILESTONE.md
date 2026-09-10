@@ -491,6 +491,16 @@ joint polish. This demonstrates useful steering readout capacity but rejects a s
 six-parameter throttle trim for the diverse task; see
 [`gate-assisted-motor-es-diagnostic-v1`](../artifacts/gate-assisted-motor-es-diagnostic-v1/).
 
+The next bounded diagnostic kept teacher steering but widened throttle adaptation to the
+complete four-hop accelerometer-to-throttle path: 282 fixed-sign edge magnitudes across 93
+neurons. The preserved successful steering vector was not merged into this search. On the
+fixed 256-case suite, the source scored 39.8% overall (0% light, 79.7% heavy); the best
+candidate scored 44.1% (0% light, 88.3% heavy). Early throttle commands remained almost
+identical between matched light and heavy cases. Because no candidate simultaneously
+raised light success and the worst mass/lateral stratum by ten points, generation 20
+stopped the run before final causal controls. No vector was compiled or promoted; see
+[`gate-assisted-acceleration-path-es-diagnostic-v1`](../artifacts/gate-assisted-acceleration-path-es-diagnostic-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:
@@ -527,6 +537,12 @@ Re-run the matched recurrent acceleration-path search with:
 
 ```bash
 scripts/run_gate_acceleration_path_es.sh
+```
+
+Re-run the teacher-steering-assisted recurrent acceleration-path diagnostic with:
+
+```bash
+scripts/run_gate_assisted_acceleration_path_es.sh
 ```
 
 Re-run the recurrent-PPO diagnostic under AIRA with:

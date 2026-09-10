@@ -256,6 +256,14 @@ gate stopped the run before native merge. This narrows the next search to recurr
 acceleration-to-throttle circuitry rather than a wider static output trim. See the
 [`assisted motor-interface diagnostic`](artifacts/gate-assisted-motor-es-diagnostic-v1/).
 
+That recurrent search then varied all 282 signed edge magnitudes on four-hop-or-shorter
+accelerometer-to-throttle paths while a teacher supplied only steering. Fixed validation
+improved from 39.8% to 44.1%, but the gain was again entirely heavy-mass: light-mass
+success stayed at zero and early throttle remained nearly mass-invariant. The
+preregistered generation-20 gate stopped the run before its causal final, and no weights
+were merged or promoted. See the
+[`assisted acceleration-path diagnostic`](artifacts/gate-assisted-acceleration-path-es-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.
