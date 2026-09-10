@@ -307,3 +307,14 @@ teacher-aligned gain 0.5-1.5 on fresh motion pairs, height contrast within 10% o
 source-global common-throttle RMS at most 0.0025, maximum drift at most 0.005 and all
 existing attitude guards. This earns only a small nominal-mass closed-loop hover test;
 checkpoint promotion still requires the full Goal 1 gate.
+
+The deterministic v1 route mask contains 12,314 edge magnitudes and 303 nonmotor
+intermediate biases. Its selected-edge-index SHA-256 is
+`cd0a11e986d30701cb3b08d4b404f253476ce8044cc250e0b01a10dff1c449a7`; its selected
+bias-index SHA-256 is
+`0b518b0411d8e39b9f4c56cfc8b68e057814a561ca4268ae16cf67cea777b593`. The mask
+metric is the square root of mean selected-edge displacement squared plus mean
+selected-bias displacement squared. Preflight steps cap each selected family at `2e-5`;
+later optimization, if authorized by preflight, has a source-metric radius of `5e-4`.
+The preflight tries the fixed scales 1, 1/2, 1/4, 1/8, 1/16 and 1/32 and requires at
+least `1e-4` fixed-scale motion NRMSE improvement in addition to every functional guard.
