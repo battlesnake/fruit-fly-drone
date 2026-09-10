@@ -209,6 +209,14 @@ strong cross-time interference. Middle-horizon throttle means improved while the
 stopped after round one without flight evaluation or promotion. See the
 [`sampled-horizon diagnostic`](artifacts/gate-multitime-reserve-sampled-diagnostic-v1/).
 
+A bounded joint-horizon capacity audit then supervised all seven endpoints from each
+complete recurrent replay and raised the steering weight. Its worst training margin fell
+from 18.75 to 5.03 in 150 updates and disjoint holdout improved to 4.52, but it still
+failed the fixed fit gate. This audit had inherited the earlier exact-mass overfit vector,
+whose wrong-sign 0.75-second reserve target made it a poor initialization; it was never a
+promoted controller. The result and rejected vector are preserved in the
+[`joint multi-time diagnostic`](artifacts/gate-joint-multitime-overfit-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.

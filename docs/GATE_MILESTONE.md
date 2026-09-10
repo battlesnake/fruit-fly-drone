@@ -434,6 +434,16 @@ means, while roll error stayed high, exposing multi-objective interference rathe
 need for a mass input. The rejected record is in
 [`gate-multitime-reserve-sampled-diagnostic-v1`](../artifacts/gate-multitime-reserve-sampled-diagnostic-v1/).
 
+A follow-up capacity audit placed all seven weighted endpoint losses in every complete
+500-step replay and gave each steering axis equal effective weight. Over its fixed 150
+updates, the worst threshold-normalized training error improved from 18.75 to 5.03 and
+disjoint holdout improved from 19.52 to 4.52, but the training fit still failed. Every
+native parameter family had finite, nonzero gradients. The initialization was the earlier
+unpromoted exact-mass conditional-overfit vector, whose 0.75-second reserve contrast began
+with the wrong sign; the audit therefore rejects that initialization and budget, not
+native recurrence. See
+[`gate-joint-multitime-overfit-diagnostic-v1`](../artifacts/gate-joint-multitime-overfit-diagnostic-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:
