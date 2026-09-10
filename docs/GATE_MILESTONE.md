@@ -600,6 +600,22 @@ sufficient fixes for the 125-edge circuit, without attributing the residual to r
 itself. No parameter was compiled or promoted; see
 [`gate-recurrent-routing-continuation-diagnostic-v1`](../artifacts/gate-recurrent-routing-continuation-diagnostic-v1/).
 
+A subsequent read-only assisted-flight audit recovered both stopped vectors
+deterministically and evaluated them with the source on 256 identical fresh, matched
+12-second cases. The source drove the first 0.5 seconds; the analytical reserve then
+supplied steering while native fly output retained throttle. A full-reserve positive
+control passed every flight and every reported stratum, with 0.0788 m mean and 0.1636 m
+p90 gate-plane radial error. The source succeeded on 38.28% overall (0% lower mass,
+76.56% higher mass), whereas both continuation arms succeeded on 0%, missed every gate,
+and increased mean radial error from 1.224 m to about 3.46 m. The geometry-paired success
+difference was -38.28 points for each arm, with 95% interval `[-41.96, -34.60]` points.
+This closes the tested replay-imitation continuation family because its improving
+open-loop objective failed to transfer to closed-loop flight. The audit does not isolate
+changed sensory trajectories, accumulated action errors, or behavior past the 1.5-second
+training horizon, and it does not reject native recurrence itself. No parameter was
+updated or promoted; see
+[`gate-recurrent-routing-flight-diagnostic-v1`](../artifacts/gate-recurrent-routing-flight-diagnostic-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:

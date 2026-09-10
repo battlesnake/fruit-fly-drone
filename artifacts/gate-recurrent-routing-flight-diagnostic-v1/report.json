@@ -1,0 +1,201 @@
+{
+  "arm_magnitudes": "artifacts/gate-recurrent-routing-continuation-diagnostic-v1/arm-magnitudes.json",
+  "arm_magnitudes_sha256": "b8ae3d73147a7dd29500b67dc553bc0b29f08d8dc1e6ecd4ed4ee97c90784402",
+  "candidate_checkpoint": null,
+  "candidate_progress": {
+    "control_equal_window": false,
+    "treatment_early_fourfold": false
+  },
+  "checkpoint": "artifacts/gate-motor-interface-es-v1/controller.pt",
+  "checkpoint_sha256": "28e2b0f887f30fe00a40ccaa97dd393949b2ea03257ffbbd0b433c69b56cd986",
+  "claim_scope": "This diagnostic evaluates source, two stopped recurrent-routing vectors, and a full-reserve positive control on identical fresh cases. It performs no update, selection, interpolation, merge, compilation, or promotion.",
+  "classification": {
+    "interpretation": "no_stopped_candidate_has_meaningful_flight_progress",
+    "next_step": "pause this training family if neither candidate progresses; redesign around closed-loop task outcomes and state-distribution mismatch"
+  },
+  "compiled_or_promoted": false,
+  "continuation_report": "artifacts/gate-recurrent-routing-continuation-diagnostic-v1/report.json",
+  "continuation_report_sha256": "e6ea4900f6efa638f4e8ba12f040a419eadb747a385502862bb6c963acd47a80",
+  "device": "cuda",
+  "elapsed_seconds": 34.942136125002435,
+  "fresh_cases_consumed": true,
+  "gate_config": {
+    "drone_radius": 0.09,
+    "edge_softness": 0.018,
+    "inner_radius": 0.62,
+    "maximum_distance": 4.6,
+    "maximum_height": 1.1,
+    "maximum_lateral_offset": 0.8,
+    "maximum_obliquity_degrees": 20.0,
+    "minimum_distance": 4.6,
+    "minimum_height": 1.1,
+    "minimum_lateral_offset": 0.8,
+    "minimum_obliquity_degrees": 20.0,
+    "outer_radius": 0.76
+  },
+  "geometry_paired_success_differences_against_source": {
+    "control_equal_window": {
+      "confidence_95": [
+        -0.41964980997145174,
+        -0.34597519002854826
+      ],
+      "episodes_per_cluster": 2,
+      "independent_geometry_clusters": 128,
+      "mean": -0.3828125,
+      "standard_error": 0.018794545903801918
+    },
+    "full_reserve_positive_control": {
+      "confidence_95": [
+        0.5803501900285483,
+        0.6540248099714517
+      ],
+      "episodes_per_cluster": 2,
+      "independent_geometry_clusters": 128,
+      "mean": 0.6171875,
+      "standard_error": 0.018794545903801918
+    },
+    "treatment_early_fourfold": {
+      "confidence_95": [
+        -0.41964980997145174,
+        -0.34597519002854826
+      ],
+      "episodes_per_cluster": 2,
+      "independent_geometry_clusters": 128,
+      "mean": -0.3828125,
+      "standard_error": 0.018794545903801918
+    }
+  },
+  "goal_passed": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "graph": "artifacts/gate-accel-v2/connectome.npz",
+  "graph_sha256": "d385bcb96f18fad904d263ab34cbead73c794f9c90961d7961671761d323f3ea",
+  "hover_config": {
+    "angular_drag": 2e-05,
+    "camera_fov_degrees": 90.0,
+    "dt": 0.01,
+    "foreleg_joint_limit": 0.65,
+    "inertia_x": 3e-05,
+    "inertia_y": 3e-05,
+    "inertia_z": 5e-05,
+    "linear_drag": 0.12,
+    "mass": 0.035,
+    "max_roll_pitch_rate": 4.1887902047863905,
+    "max_roll_pitch_torque": 0.002,
+    "max_yaw_rate": 3.141592653589793,
+    "max_yaw_torque": 0.0008,
+    "motor_time_constant": 0.045,
+    "rate_gain": 0.018,
+    "roll_stick_gain": 1.0,
+    "stick_damping": 8.0,
+    "stick_motor_strength": 100.0,
+    "stick_spring": 25.0,
+    "target_band_width": 0.18,
+    "thrust_to_weight": 1.5,
+    "wall_x": 5.0
+  },
+  "method": "read-only stopped-checkpoint assisted-flight diagnostic",
+  "peak_cuda_memory_bytes": 63863296,
+  "positive_control_passed": true,
+  "prerequisite_checks": {
+    "assisted_flight_was_not_run": true,
+    "both_development_arms_failed": true,
+    "checkpoint_hash_matches": true,
+    "fresh_replay_was_not_run": true,
+    "graph_hash_matches": true,
+    "source_was_preserved": true
+  },
+  "protocol": {
+    "added_recurrent_module": false,
+    "candidate_intervention": "reserve steering only after 0.5 seconds",
+    "case_structure": "128 distinct geometries with adjacent light/heavy episodes",
+    "checkpoint_selection_performed": false,
+    "clock_actor_input": false,
+    "device": "cuda",
+    "engineered_history_features": false,
+    "episodes": 256,
+    "mass_actor_input": false,
+    "maximum_stratum_drop": 0.05,
+    "minimum_floor_gain": 0.1,
+    "minimum_light_gain": 0.1,
+    "native_candidate_forward_from_initialization": true,
+    "optimizer_updates_performed": 0,
+    "positive_control_intervention": "all reserve axes after source 0.5-second prefix",
+    "positive_control_minimum_mass_success": 0.9,
+    "recovery_maximum_difference": 1e-05,
+    "seconds": 12.0,
+    "seed": 1048031,
+    "takeover_seconds": 0.5
+  },
+  "recovered_treatment_maximum_absolute_difference": 7.152557373046875e-07,
+  "source_preserved": true,
+  "summaries": {
+    "control_equal_window": {
+      "crossing_radial_mean_m": 3.461324453353882,
+      "crossing_radial_p90_m": 5.060477256774902,
+      "miss_rate": 1.0,
+      "plane_crossing_rate": 1.0,
+      "ring_collision_rate": 0.0,
+      "success_by_stratum": {
+        "higher_mass": 0.0,
+        "lower_mass": 0.0,
+        "negative_lateral_offset": 0.0,
+        "negative_obliquity": 0.0,
+        "positive_lateral_offset": 0.0,
+        "positive_obliquity": 0.0
+      },
+      "success_rate": 0.0,
+      "worst_mass_lateral_success_rate": 0.0
+    },
+    "full_reserve_positive_control": {
+      "crossing_radial_mean_m": 0.0788269117474556,
+      "crossing_radial_p90_m": 0.16356775164604187,
+      "miss_rate": 0.0,
+      "plane_crossing_rate": 1.0,
+      "ring_collision_rate": 0.0,
+      "success_by_stratum": {
+        "higher_mass": 1.0,
+        "lower_mass": 1.0,
+        "negative_lateral_offset": 1.0,
+        "negative_obliquity": 1.0,
+        "positive_lateral_offset": 1.0,
+        "positive_obliquity": 1.0
+      },
+      "success_rate": 1.0,
+      "worst_mass_lateral_success_rate": 1.0
+    },
+    "source": {
+      "crossing_radial_mean_m": 1.2237024307250977,
+      "crossing_radial_p90_m": 2.5838804244995117,
+      "miss_rate": 0.52734375,
+      "plane_crossing_rate": 1.0,
+      "ring_collision_rate": 0.08984375,
+      "success_by_stratum": {
+        "higher_mass": 0.765625,
+        "lower_mass": 0.0,
+        "negative_lateral_offset": 0.3828125,
+        "negative_obliquity": 0.40625,
+        "positive_lateral_offset": 0.3828125,
+        "positive_obliquity": 0.359375
+      },
+      "success_rate": 0.3828125,
+      "worst_mass_lateral_success_rate": 0.0
+    },
+    "treatment_early_fourfold": {
+      "crossing_radial_mean_m": 3.4603238105773926,
+      "crossing_radial_p90_m": 5.0534796714782715,
+      "miss_rate": 1.0,
+      "plane_crossing_rate": 1.0,
+      "ring_collision_rate": 0.0,
+      "success_by_stratum": {
+        "higher_mass": 0.0,
+        "lower_mass": 0.0,
+        "negative_lateral_offset": 0.0,
+        "negative_obliquity": 0.0,
+        "positive_lateral_offset": 0.0,
+        "positive_obliquity": 0.0
+      },
+      "success_rate": 0.0,
+      "worst_mass_lateral_success_rate": 0.0
+    }
+  }
+}

@@ -320,6 +320,17 @@ checks passed. Both arms stopped without fresh replay or flight, ruling out thes
 training-duration and loss-weighting changes as sufficient fixes. See the
 [`paired continuation diagnostic`](artifacts/gate-recurrent-routing-continuation-diagnostic-v1/).
 
+A final read-only flight audit evaluated both stopped arms on 256 fresh matched flights,
+with steering supplied by the analytical reserve controller after the shared 0.5-second
+source prefix. The full-reserve positive control passed 100% in every reported stratum,
+but the source achieved 38.3% and both continuation arms fell to 0%, missing every gate.
+Their paired loss relative to source was 38.3 percentage points (95% cluster interval
+34.6--42.0 points). This closes the tested 125-edge replay-imitation continuation family:
+its lower replay error did not transfer to complete closed-loop flight. The audit cannot
+separate trajectory shift, accumulated action error, and behavior beyond the trained
+horizon. No weights were promoted. See the
+[`assisted-flight diagnostic`](artifacts/gate-recurrent-routing-flight-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.
