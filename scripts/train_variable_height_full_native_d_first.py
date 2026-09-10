@@ -704,6 +704,49 @@ def find_safe_trial(
     return selected_scale, selected_metrics, trials
 
 
+def accepted_trial_metadata(
+    selected_scale: float | None, trials: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Extract optional acceptance provenance without coupling the base trainer to a fitter."""
+    if selected_scale is None:
+        return {
+            "acceptance_kind": None,
+            "accepted_proposal_scale": None,
+            "accepted_correction_scale": None,
+        }
+    passing = [trial for trial in trials if trial.get("decision", {}).get("pass")]
+    selected = passing[-1] if passing else {}
+    return {
+        "acceptance_kind": selected.get("acceptance_kind", "ordinary"),
+        "accepted_proposal_scale": selected.get("proposal_scale", selected_scale),
+        "accepted_correction_scale": selected.get("correction_scale"),
+    }
+
+
+def resumed_stop_state(
+    accepted_updates: int,
+    history: list[dict[str, Any]],
+    development_history: list[dict[str, Any]],
+) -> tuple[str | None, bool]:
+    """Recover a previously persisted terminal condition without advancing training."""
+    if history:
+        last = history[-1]
+        if (
+            not last.get("accepted", False)
+            and int(last.get("update", -1)) == accepted_updates + 1
+        ):
+            return str(last.get("stop_reason", "deterministic proposal was rejected")), False
+    if development_history:
+        last = development_history[-1]
+        if int(last.get("update", -1)) == accepted_updates:
+            mandatory = last.get("mandatory_update_50_gate")
+            if mandatory is not None and not mandatory.get("pass", False):
+                return "mandatory update-50 gate failed", False
+            if last.get("terminal", {}).get("pass", False):
+                return "first scheduled terminal checkpoint qualified", True
+    return None, False
+
+
 def install_trial(
     controller: ConnectomeController,
     source: dict[str, Tensor],
@@ -733,6 +776,8 @@ def save_resume(
     history: list[dict[str, Any]],
     development_history: list[dict[str, Any]],
     preflight: dict[str, Any],
+    run_state: str = "active",
+    qualification: dict[str, Any] | None = None,
 ) -> None:
     atomic_torch_save(
         {
@@ -745,6 +790,8 @@ def save_resume(
             "history": history,
             "development_history": development_history,
             "preflight": preflight,
+            "run_state": run_state,
+            "qualification": qualification,
         },
         path,
     )
@@ -756,7 +803,13 @@ def load_resume(
     optimizer: torch.optim.Optimizer,
     *,
     source_checkpoint_sha256: str,
-) -> tuple[int, list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+) -> tuple[
+    int,
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+    dict[str, Any],
+    dict[str, Any],
+]:
     payload = torch.load(path, map_location=student.edge_magnitude.device, weights_only=True)
     expected = (EXPERIMENT, PROTOCOL_COMMIT, source_checkpoint_sha256)
     actual = (
@@ -773,6 +826,10 @@ def load_resume(
         list(payload["history"]),
         list(payload["development_history"]),
         dict(payload["preflight"]),
+        {
+            "run_state": str(payload.get("run_state", "active")),
+            "qualification": payload.get("qualification"),
+        },
     )
 
 
@@ -1048,8 +1105,15 @@ def main() -> int:
     history: list[dict[str, Any]] = []
     development_history: list[dict[str, Any]] = []
     resumed_preflight = None
+    resume_metadata: dict[str, Any] = {"run_state": "active", "qualification": None}
     if resumed:
-        accepted_updates, history, development_history, resumed_preflight = load_resume(
+        (
+            accepted_updates,
+            history,
+            development_history,
+            resumed_preflight,
+            resume_metadata,
+        ) = load_resume(
             resume_path,
             student,
             optimizer,
@@ -1158,6 +1222,32 @@ def main() -> int:
     terminal_checkpoint = None
     if not preflight["pass"]:
         stop_reason = "constrained proposal preflight failed"
+    elif resumed and resume_metadata["run_state"] != "active":
+        stop_reason, resume_has_terminal = resumed_stop_state(
+            accepted_updates, history, development_history
+        )
+        if resume_metadata["run_state"] == "qualification_started":
+            stop_reason = "fresh qualification was interrupted and cannot be retried"
+            resume_has_terminal = False
+        elif resume_metadata["run_state"] == "complete":
+            stop_reason = "first scheduled terminal checkpoint qualified"
+            resume_has_terminal = True
+        elif stop_reason is None:
+            raise SystemExit("resume run state has no matching persisted terminal condition")
+        if resume_has_terminal:
+            terminal_checkpoint = args.output_dir / "nonpromotional-terminal.pt"
+            if not terminal_checkpoint.is_file():
+                atomic_torch_save(
+                    {
+                        "experiment": EXPERIMENT,
+                        "protocol_commit": PROTOCOL_COMMIT,
+                        "source_checkpoint_sha256": checkpoint_sha256,
+                        "graph_sha256": graph_sha256,
+                        "accepted_updates": accepted_updates,
+                        "controller": student.state_dict(),
+                    },
+                    terminal_checkpoint,
+                )
     while stop_reason is None and accepted_updates < MAXIMUM_ACCEPTED_UPDATES:
         update_number = accepted_updates + 1
         base = joint._copy_parameters(student)
@@ -1181,9 +1271,21 @@ def main() -> int:
                 {
                     "update": update_number,
                     "accepted": False,
+                    "stop_reason": stop_reason,
                     "projection": projection,
                     "trials": [],
                 }
+            )
+            save_resume(
+                resume_path,
+                student,
+                optimizer,
+                source_checkpoint_sha256=checkpoint_sha256,
+                accepted_updates=accepted_updates,
+                history=history,
+                development_history=development_history,
+                preflight=preflight,
+                run_state="stopped",
             )
             break
         selected_scale, selected_metrics, trials = find_safe_trial(
@@ -1199,10 +1301,12 @@ def main() -> int:
             endpoint_scale,
             device=device,
         )
+        trial_metadata = accepted_trial_metadata(selected_scale, trials)
         entry = {
             "update": update_number,
             "accepted": selected_scale is not None,
             "accepted_scale": selected_scale,
+            **trial_metadata,
             "projection": projection,
             "trials": trials,
         }
@@ -1210,25 +1314,28 @@ def main() -> int:
         if selected_scale is None or selected_metrics is None:
             optimizer.load_state_dict(optimizer_before)
             stop_reason = "deterministic constrained proposal had no acceptable scale"
+            entry["stop_reason"] = stop_reason
+            save_resume(
+                resume_path,
+                student,
+                optimizer,
+                source_checkpoint_sha256=checkpoint_sha256,
+                accepted_updates=accepted_updates,
+                history=history,
+                development_history=development_history,
+                preflight=preflight,
+                run_state="stopped",
+            )
             break
         accepted_updates = update_number
         current_training = selected_metrics
-        save_resume(
-            resume_path,
-            student,
-            optimizer,
-            source_checkpoint_sha256=checkpoint_sha256,
-            accepted_updates=accepted_updates,
-            history=history,
-            development_history=development_history,
-            preflight=preflight,
-        )
         print(
             json.dumps(
                 {
                     "progress": "accepted_update",
                     "update": accepted_updates,
                     "scale": selected_scale,
+                    **trial_metadata,
                     "training_endpoint_damping_nrmse": current_training[
                         "endpoint_damping_nrmse"
                     ],
@@ -1243,6 +1350,16 @@ def main() -> int:
             flush=True,
         )
         if accepted_updates % DEVELOPMENT_INTERVAL != 0:
+            save_resume(
+                resume_path,
+                student,
+                optimizer,
+                source_checkpoint_sha256=checkpoint_sha256,
+                accepted_updates=accepted_updates,
+                history=history,
+                development_history=development_history,
+                preflight=preflight,
+            )
             continue
         development_metrics, _ = endpoint.evaluate(
             student,
@@ -1277,6 +1394,19 @@ def main() -> int:
             "terminal": terminal,
         }
         development_history.append(development_entry)
+        if terminal["pass"]:
+            terminal_checkpoint = args.output_dir / "nonpromotional-terminal.pt"
+            atomic_torch_save(
+                {
+                    "experiment": EXPERIMENT,
+                    "protocol_commit": PROTOCOL_COMMIT,
+                    "source_checkpoint_sha256": checkpoint_sha256,
+                    "graph_sha256": graph_sha256,
+                    "accepted_updates": accepted_updates,
+                    "controller": student.state_dict(),
+                },
+                terminal_checkpoint,
+            )
         save_resume(
             resume_path,
             student,
@@ -1286,6 +1416,15 @@ def main() -> int:
             history=history,
             development_history=development_history,
             preflight=preflight,
+            run_state=(
+                "terminal_pending_qualification"
+                if terminal["pass"]
+                else (
+                    "stopped"
+                    if mandatory is not None and not mandatory["pass"]
+                    else "active"
+                )
+            ),
         )
         print(
             json.dumps(
@@ -1304,27 +1443,42 @@ def main() -> int:
             stop_reason = "mandatory update-50 gate failed"
             break
         if terminal["pass"]:
-            terminal_checkpoint = args.output_dir / "nonpromotional-terminal.pt"
-            atomic_torch_save(
-                {
-                    "experiment": EXPERIMENT,
-                    "protocol_commit": PROTOCOL_COMMIT,
-                    "source_checkpoint_sha256": checkpoint_sha256,
-                    "graph_sha256": graph_sha256,
-                    "accepted_updates": accepted_updates,
-                    "controller": student.state_dict(),
-                },
-                terminal_checkpoint,
-            )
             stop_reason = "first scheduled terminal checkpoint qualified"
             break
     if stop_reason is None:
         stop_reason = "maximum accepted-update budget reached without terminal qualification"
 
-    qualification = None
-    if terminal_checkpoint is not None:
+    qualification = (
+        resume_metadata.get("qualification")
+        if resume_metadata.get("run_state") == "complete"
+        else None
+    )
+    if terminal_checkpoint is not None and qualification is None:
+        save_resume(
+            resume_path,
+            student,
+            optimizer,
+            source_checkpoint_sha256=checkpoint_sha256,
+            accepted_updates=accepted_updates,
+            history=history,
+            development_history=development_history,
+            preflight=preflight,
+            run_state="qualification_started",
+        )
         qualification = run_qualification(
             source, student, scales, endpoint_scale, device=device, config=config
+        )
+        save_resume(
+            resume_path,
+            student,
+            optimizer,
+            source_checkpoint_sha256=checkpoint_sha256,
+            accepted_updates=accepted_updates,
+            history=history,
+            development_history=development_history,
+            preflight=preflight,
+            run_state="complete",
+            qualification=qualification,
         )
     fresh_pass = bool(qualification and qualification["decision"]["pass"])
     if terminal_checkpoint is None:
