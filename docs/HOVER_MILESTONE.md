@@ -102,9 +102,13 @@ must have the correct direction and their mean response ratio must be between 0.
 
 The controller still misses the stricter research target of 0.10 m altitude RMSE and
 0.75 m horizontal drift: mean maximum drift is 1.98 m because no world-position target is
-visible.  This milestone establishes lift, visual altitude control, mostly level hover,
-and the complete four-axis foreleg/stick action path; it does not establish station
-keeping, high-rate acro performance, full-brain fidelity, or simulator transfer.
+visible. The 0.30 m goal-level RMSE limit also permits visibly loose, beginner-like
+throttle hunting—informally, a roughly 60 cm-tall tolerance box, although RMSE is not a
+hard peak-to-peak bound. This milestone establishes lift, causal visual altitude
+regulation, mostly level hover, and the complete four-axis foreleg/stick action path; it
+does not establish well-damped altitude hold, station keeping, high-rate acro performance,
+full-brain fidelity, or simulator transfer. The proposed disturbance and damping audit is
+recorded in [`CONTROL_ARCHITECTURE.md`](CONTROL_ARCHITECTURE.md).
 
 The committed [`report.json`](../artifacts/hover-v1/report.json) binds the checkpoint and
 graph SHA-256 values, evaluation seeds, image resolution, physical config, and training

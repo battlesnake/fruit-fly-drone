@@ -39,6 +39,9 @@ current quantitative results are in the [hover milestone](docs/HOVER_MILESTONE.m
 
 - [`docs/PLAN.md`](docs/PLAN.md) — architecture, simulator decision, curriculum,
   experiments, safety, and milestones.
+- [`docs/CONTROL_ARCHITECTURE.md`](docs/CONTROL_ARCHITECTURE.md) — PX4/control-theory
+  decomposition, native-circuit hypotheses, module-preserving extraction, and the
+  progressively withdrawn teacher curriculum.
 - [`docs/HEADLESS_SPIKE.md`](docs/HEADLESS_SPIKE.md) — reproducible WSL2/MJWarp
   acceptance tests and initial RTX 5080 results.
 - [`docs/HOVER_MILESTONE.md`](docs/HOVER_MILESTONE.md) — the first passing
@@ -71,6 +74,11 @@ A paired mid-flight test compared a changed world-space height band with an unch
 continuation from identical physical and recurrent state. The band-induced height
 difference had the correct direction in every trial. Freezing the initial FPV image
 reduced goal success to zero, providing evidence that the visual signal is necessary.
+
+This was a loose regulation milestone, not precise altitude hold. The acceptance test
+allowed up to 0.30 m final-window RMSE—informally a roughly 60 cm-tall tolerance box—and
+the stricter 0.10 m research target failed. Quantifying and damping the visible throttle
+hunting is part of the [control-theory roadmap](docs/CONTROL_ARCHITECTURE.md).
 
 This result uses a compact, auditable **498-neuron MaleCNS subgraph** and abstract
 bilateral two-axis foreleg/stick kinematics. It is not an articulated fly-leg result, a
