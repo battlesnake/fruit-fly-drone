@@ -808,3 +808,69 @@ control or sustained learnability. It authorizes a separately preregistered boun
 D-first fitting diagnostic whose cumulative C/P preservation is always measured against
 the original source, so repeated individually safe steps cannot silently consume the
 entire tolerance. No direct closed-loop or promotion claim follows.
+
+Result: all controls passed and both smaller scales passed training, so 1/16 was selected
+before development was examined. Endpoint-D NRMSE improved from 1.458401 to 1.454984 on
+training and from 1.398940 to 1.396360 on the single development evaluation. All C/P,
+RPY, validity and output-bound gates passed on both banks. The tightest constraint was
+training endpoint C, which worsened by 0.019590 against the 0.02 allowance. Endpoint
+damping remained wrong-signed in all scenes, although aligned gain moved in the correct
+direction on both banks. This establishes a safe, transferable local damping step and
+authorizes the bounded D-first fitting diagnostic; it does not establish independent
+C/D control or useful damping yet. Parameters were restored exactly, nothing was
+promoted, and no closed-loop test ran. See
+[`artifacts/variable-height-full-native-endpoint-damping-small-step-audit-v1/`](../artifacts/variable-height-full-native-endpoint-damping-small-step-audit-v1/).
+
+The authorized follow-up is a bounded, constraint-aware **D-first fitting diagnostic**,
+not repeated 1/16 steps: that first step consumed 98% of the permitted training endpoint
+C regression. Reuse the exact eight-scene training bank and now-exposed eight-scene
+development bank, their source baselines, endpoint-D normalization, actor contract and
+complete zero-state replay. Reserve an ungenerated 64-scene qualification cohort
+beginning at seed `360971`; expose it only after a development-qualified endpoint exists.
+The full-native parameter families and Adam settings remain unchanged. Endpoint-D
+normalized MSE remains the only fitting objective; C/P/RPY are constraints rather than
+weighted competing losses.
+
+At each update, form the full-bank endpoint-D Adam displacement. Minimally modify it in
+learning-rate-scaled Euclidean coordinates to satisfy the linearized *remaining*
+cumulative C/P allowances relative to the original source. The eight inequality rows
+are the gradients of squared normalized error for aggregate C and P and for C and P at
+each of steps 15, 20 and 25; their limits are the squares of the corresponding original
+source NRMSE plus 0.02. Solve the small dual nonnegative quadratic program to project the
+proposal onto these half-spaces, and report primal violation, dual convergence and the
+fraction of damping descent retained. Do not impose 48 individual-output equalities.
+RPY remains forward-checked; add its analogous constraint row for an axis only when the
+accepted current controller reaches NRMSE 0.04, because RPY has not been the observed
+limiter. Parameter bounds are then applied and every directional and safety decision is
+made from the actual post-bound displacement and replay, not the linear model alone.
+
+Before fitting, the constrained proposal must pass a preflight on the complete training
+bank: exact cache/source replay, teacher and foreleg/stick controls, finite values,
+negative endpoint-D directional derivative, linearized constraint satisfaction, and a
+scale-0.0625 endpoint-D finite difference agreeing within 20%. No update occurs if this
+preflight fails. During fitting, backtrack each projected displacement at fixed scales
+1, 1/2, 1/4, 1/8, 1/16 and 1/32. Accept the largest scale with actual endpoint-D NRMSE
+improvement at least 0.001 and all cumulative aggregate/per-horizon C/P, RPY, validity
+and motor-bound gates passing against the original source. Retain the Adam state only
+with an accepted update. If no scale qualifies, restore both parameters and optimizer
+and stop immediately; a deterministic rejected full-bank proposal is not retried.
+
+Allow at most 200 accepted updates and evaluate development only every ten accepted
+updates. At update 50, both training and development endpoint-D NRMSE must have improved
+at least 25% from their original source values and all preservation gates must pass, or
+stop. Thereafter the first scheduled checkpoint with training endpoint-D NRMSE at most
+0.20, development at most 0.30, at least 90% correct endpoint damping sign on each bank,
+teacher-aligned gain 0.5-1.5 on each, and every preservation gate passing is the sole
+qualification candidate. If no such checkpoint exists by update 200, stop without a
+fresh test. Checkpoints are ignored run artifacts and nonpromotional.
+
+For the fresh qualification, stream eight independently generated eight-scene banks
+with factorial seeds `360971` through `360978` and attitude seeds `370971` through
+`370978`, comparing the candidate and original source on each same bank before
+discarding its tensors. Across all 64 scenes require endpoint-D NRMSE at most 0.30, at
+least 90% correct sign, gain 0.5-1.5, and independently measured aggregate/per-horizon
+C/P, RPY, validity and motor bounds under the same source-relative limits. There is no
+fallback checkpoint. Even a pass does not promote the fit; it only authorizes a
+nominal-mass native closed-loop hover comparison against the source, including
+frozen-vision controls. The source's large absolute C error means successful damping
+fitting alone is not evidence of calibrated collective or stable hover.

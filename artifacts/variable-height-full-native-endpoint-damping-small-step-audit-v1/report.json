@@ -1,0 +1,54 @@
+{
+  "actor_contract_unchanged": true,
+  "bounded_d_first_fitting_authorized": true,
+  "classification": "safe_transferable_small_endpoint_damping_step",
+  "controls": {
+    "immutable_cache_signature_reproduced": true,
+    "immutable_displacement_file_sha256": "3090a97eef013a80edacdc832d523f560dde467bb1f37f14c6a1df6242da4739",
+    "immutable_displacement_tensor_sha256": "af612e6354777e9dee45b387d81976778f7609b9d2f0636664e406f9b29cc160",
+    "original_scalar_signature_reproduced": true,
+    "persisted_displacement_matches_regenerated_exactly": true,
+    "source_replay_max_absolute_difference": 0.0000000745
+  },
+  "development": {
+    "common_nrmse_increase": 0.0118449,
+    "endpoint_common_nrmse_increase": 0.0168494,
+    "endpoint_damping_correct_sign_fraction_after": 0.0,
+    "endpoint_damping_nrmse_after": 1.3963603,
+    "endpoint_damping_nrmse_before": 1.3989402,
+    "endpoint_damping_nrmse_improvement": 0.0025799,
+    "endpoint_damping_teacher_aligned_gain_after": -0.3764538,
+    "endpoint_damping_teacher_aligned_gain_before": -0.3788062,
+    "pass": true,
+    "rpy_source_nrmse_after": {
+      "pitch": 0.0013734,
+      "roll": 0.0008599,
+      "yaw": 0.0004815
+    }
+  },
+  "development_candidates_evaluated": 1,
+  "experiment": "variable-height-full-native-endpoint-damping-small-step-audit-v1",
+  "full_report_sha256": "a4f5b1ceb47ee7f65b0fae3664a52ce8fa2ed5bc06a765a87099793d4572b2d5",
+  "implementation_commit": "73049a18c47873bf19b19525b1a80d45fbbb3db3",
+  "parameters_restored_exactly": true,
+  "pass": true,
+  "promoted": false,
+  "protocol_commit": "f293999a134889e867e4f8c47bb5a20573acdb2e",
+  "selected_scale": 0.0625,
+  "training": {
+    "common_nrmse_increase": 0.0124629,
+    "endpoint_common_nrmse_increase": 0.0195903,
+    "endpoint_damping_correct_sign_fraction_after": 0.0,
+    "endpoint_damping_nrmse_after": 1.4549844,
+    "endpoint_damping_nrmse_before": 1.4584010,
+    "endpoint_damping_nrmse_improvement": 0.0034165,
+    "endpoint_damping_teacher_aligned_gain_after": -0.4299219,
+    "endpoint_damping_teacher_aligned_gain_before": -0.4329685,
+    "pass": true,
+    "rpy_source_nrmse_after": {
+      "pitch": 0.0013810,
+      "roll": 0.0008729,
+      "yaw": 0.0002131
+    }
+  }
+}
