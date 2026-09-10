@@ -342,6 +342,15 @@ No fresh final case or promotion was used. This rejects the tested independent-n
 configuration and motivates an exploration-timescale audit before more training. See the
 [`assisted recurrent-PPO diagnostic`](artifacts/gate-recurrent-routing-ppo-diagnostic-v1/).
 
+A frozen-source exploration audit then held latent noise RMS at 0.03 while comparing two
+matched seeds of independent per-step throttle noise with 0.2-second-correlated noise.
+Correlation increased the executed foreleg-throttle trace difference from about 0.006 to
+0.032--0.034 RMS, but light success remained 0% in both seeds and light cases still
+crossed about 2.09 m vertically off-centre. Heavy success fell by 9.375 points in each
+matched comparison. The fixed 10% light-success prerequisite failed, so correlated PPO
+was not attempted and the tested 125-edge PPO/exploration family is paused. See the
+[`exploration-timescale diagnostic`](artifacts/gate-throttle-exploration-timescale-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.

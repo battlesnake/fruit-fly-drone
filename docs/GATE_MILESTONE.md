@@ -636,6 +636,20 @@ promoted. This rejects the tested PPO/exploration configuration, not recurrence 
 see
 [`gate-recurrent-routing-ppo-diagnostic-v1`](../artifacts/gate-recurrent-routing-ppo-diagnostic-v1/).
 
+A no-learning exploration-timescale audit then evaluated the unchanged source on the
+same 256 development cases. Two matched innovation seeds compared independent per-step
+throttle noise with stationary AR(1) noise at identical latent standard deviation 0.03
+and 0.2-second correlation time. Motor perturbation RMS remained about 0.0247 in both
+modes, but correlated noise increased the measured closed-loop foreleg-throttle trace
+difference from roughly 0.0061 to 0.032--0.034 RMS. Despite that real timescale effect,
+both modes achieved 0% light success in both seeds. Light cases crossed the gate plane
+about 2.09 m vertically off-centre. Correlated heavy success was 67.97% and 67.19%, a
+9.375-point drop from each matched independent run. Both heavy noninferiority checks
+passed, but the required 10% correlated light success failed twice. No correlated PPO was
+run; the tested 125-edge PPO/exploration family is paused. No parameter changed and
+nothing was promoted; see
+[`gate-throttle-exploration-timescale-diagnostic-v1`](../artifacts/gate-throttle-exploration-timescale-diagnostic-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:
