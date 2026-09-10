@@ -1,0 +1,44 @@
+{
+  "accepted_updates": 0,
+  "actor_contract_unchanged": true,
+  "active_set": {
+    "fixed_edges": 4699,
+    "maximum_box_violation": 0.0,
+    "maximum_post_bound_linearized_violation": 0.0000007176,
+    "pass": true,
+    "rounds": 3
+  },
+  "classification": "no_terminal_checkpoint",
+  "complete_replay": {
+    "endpoint_damping_nrmse_improvement": 0.0025246,
+    "pass": true,
+    "scale": 0.0625
+  },
+  "damping_descent_fraction_retained": 0.7397221,
+  "experiment": "variable-height-full-native-d-first-bound-aware-fitting-v1",
+  "final_parameter_family_rms_from_source": {
+    "bias": 0.0,
+    "edge_magnitude": 0.0,
+    "raw_time_constant": 0.0
+  },
+  "finite_difference": {
+    "autograd": -0.1175125,
+    "forward": -0.1177188,
+    "pass": true,
+    "relative_error": 0.0017528,
+    "scale": 0.0625
+  },
+  "full_report_sha256": "1c8964221f646f5ad9f61003229da6edbf7fe95cb3019a197268ae8306f81171",
+  "implementation_commit": "97aac02",
+  "parameters_restored_exactly": true,
+  "pass": false,
+  "promoted": false,
+  "protocol_commit": "fe4401f",
+  "resume_state_created": false,
+  "stop_reason": "constrained proposal preflight failed",
+  "subsequent_clamp": {
+    "limit": 0.0000001,
+    "maximum_displacement_difference": 0.0000001190,
+    "pass": false
+  }
+}

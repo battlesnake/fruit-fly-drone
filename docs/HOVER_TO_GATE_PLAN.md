@@ -905,3 +905,40 @@ nonlinear replay, C/P/RPY, identity and restoration gates all pass. Failure at e
 rounds means this solver failed, not that no feasible damping direction exists. If the
 preflight passes, continue directly into the otherwise unchanged frozen D-first fitting
 and qualification protocol; do not change any threshold, data or actor input.
+
+Result: the active set converged in three rounds after fixing 4,699 crossing edges at
+their actual boundaries. The final direction had no box violation, kept post-bound
+linearized constraint violation to `7.18e-7` below the `1e-6` limit, retained 73.97% of
+damping descent, and passed the nonlinear scale-0.0625 replay with 0.002525 endpoint-D
+NRMSE improvement and 0.18% finite-difference error. The preflight nevertheless failed
+its separately frozen idempotence gate: re-materializing the controller parameters
+changed the float32 displacement by `1.1902e-7`, just above `1e-7`. The limit is not
+relaxed after observing it. No fitting update or resume state was created, parameters
+returned exactly to source, and no development candidate or closed-loop test ran. See
+[`artifacts/variable-height-full-native-d-first-bound-aware-preflight-v1/`](../artifacts/variable-height-full-native-d-first-bound-aware-preflight-v1/).
+
+Make one separately registered numerical-canonicalization repeat; preserve both prior
+preflight failures and keep every tolerance and substantive gate unchanged. After the
+bound-aware active-set solve, materialize its proposed controller parameters exactly
+once and make that float32 parameter tensor—not a repeatedly reconstructed float32
+displacement—the authoritative full-step candidate. Apply `project_parameters()` a
+second time directly to those authoritative parameters and require a maximum parameter
+change at most `1e-7`. Report the coordinate responsible for the prior maximum
+difference, its source/proposal/materialized values, local float32 ULP and difference in
+ULPs. Do not iterate canonicalization until a check passes.
+
+Derive the effective displacement from the authoritative candidate and current
+parameters using float64 subtraction for the constraint and damping dot products.
+Recompute all linear inequalities and damping descent from that effective direction.
+Install a scale-1 trial by directly copying the authoritative parameter tensor, avoiding
+another `source + (candidate - source)` round trip. For each smaller backtrack scale,
+materialize exactly one float64 interpolation between the current and authoritative
+parameter tensors, convert it once to the parameter dtype, apply the controller bounds,
+and evaluate its actual displacement and nonlinear replay. The same procedure supplies
+the scale-0.0625 finite difference.
+
+The corrected repeat may enter the otherwise unchanged fitting protocol only after
+parameter idempotence, linear feasibility, negative damping derivative, finite
+difference and complete replay all pass. It creates no training or resume state before
+then. This is a numerical representation correction only; it changes neither the actor
+contract, objective, constraints, thresholds, optimizer, data nor qualification plan.
