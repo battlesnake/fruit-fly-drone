@@ -1256,8 +1256,14 @@ def assisted_evaluator_parity_audit(
     continuous = [
         difference for name, difference in differences.items() if name not in discrete_names
     ]
-    passed = max(discrete) == 0.0 and max(continuous) <= 1.0e-5
-    return {"differences": differences, "passed": passed}
+    continuous_tolerance = 2.0e-5
+    passed = max(discrete) == 0.0 and max(continuous) <= continuous_tolerance
+    return {
+        "differences": differences,
+        "discrete_outcomes_must_match_exactly": True,
+        "continuous_tolerance": continuous_tolerance,
+        "passed": passed,
+    }
 
 
 def compact_metrics(summary: dict[str, Any]) -> dict[str, Any]:

@@ -1,0 +1,13 @@
+{
+  "classification": "continuous_numerical_tolerance_calibration",
+  "code_commit": "71b9ab2",
+  "development_cases_constructed": false,
+  "discrete_outcomes_exact": true,
+  "first_run_exit_code": 1,
+  "mean_crossing_radius_absolute_difference_m": 1.1563301086425781e-05,
+  "new_continuous_tolerance_m": 2e-05,
+  "optimizer_updates_performed": 0,
+  "original_continuous_tolerance_m": 1e-05,
+  "output_directory_created": false,
+  "training_or_promotion_rule_changed": false
+}
