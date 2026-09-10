@@ -49,9 +49,10 @@
     "passed": false
   },
   "paired_dynamic_marker_response": {
-    "training_height_bands_metres": [[0.6, 0.85], [1.15, 1.4]],
-    "held_out_height_band_metres": [0.9, 1.1],
+    "training_base_height_bands_metres": [[0.6, 0.85], [1.15, 1.4]],
+    "held_out_base_height_band_metres": [0.9, 1.1],
     "marker_step_metres": 0.2,
+    "post_step_absolute_marker_ranges_overlap": true,
     "pairs": 64,
     "contrast_nrmse": 0.1337458789,
     "correct_sign_rate": 1.0,

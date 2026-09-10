@@ -8,10 +8,13 @@ graph containing every 165,122 traced MaleCNS v1.0 neuron and 2,749,407 edges ab
 declared ten-synapse threshold. Estimated roll/pitch is present; acceleration, mass,
 hover thrust and external history are absent from the actor.
 
-The paired learner trained on marker heights in 0.60-0.85 m and 1.15-1.40 m, then passed
-on an unseen 0.90-1.10 m interval. The two conditions shared pose, texture and neural
-state; only the physical marker moved. The trained response achieved 0.134 normalized
-RMSE, 100% correct sign and slope 0.964 over 64 held-out pairs.
+The paired learner trained from base vehicle/reference heights in 0.60-0.85 m and
+1.15-1.40 m, then passed from a held-out 0.90-1.10 m base interval. The two conditions
+shared pose, texture and neural state; only the physical marker moved. The trained
+response achieved 0.134 normalized RMSE, 100% correct sign and slope 0.964 over 64 pairs.
+Because the marker then moves by plus or minus 0.20 m, the final marker-height ranges
+overlap; this diagnostic proves marker causality, not fully disjoint absolute-height
+generalization.
 
 A paired-mean contrast clamp leaves only 33.4% of the marker-to-throttle contrast when
 applied to non-motor VNC or `vnc_intrinsic` neurons, but 105.1% when applied only to

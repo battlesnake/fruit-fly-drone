@@ -68,22 +68,28 @@ by the connectome release.
 
 ## Marker-height anti-shortcut design
 
-The paired learner deliberately uses disconnected absolute-height ranges:
+The paired learner deliberately uses disconnected **base vehicle/reference-height**
+ranges:
 
-- training marker heights: 0.60-0.85 m and 1.15-1.40 m;
-- held-out marker heights: 0.90-1.10 m.
+- training base heights: 0.60-0.85 m and 1.15-1.40 m;
+- held-out base heights: 0.90-1.10 m.
 
 For each contrast trial, the two branches have exactly the same vehicle pose, attitude,
 velocity, world-fixed floor and wall texture, and initial neural state. Only the physical
 marker height differs by plus or minus 0.20 m. Identical-marker and swapped-marker
 controls are acceptance requirements. This is stronger than merely randomizing height:
-background position cannot explain a difference between paired branches, and the
-unseen-height interval tests generalization rather than memorization of the training
-bands.
+background position cannot explain a difference between paired branches.
+
+There is one important limit. Adding the plus/minus 0.20 m step makes the resulting
+absolute marker-height ranges overlap between training and evaluation. The completed
+test therefore holds out base scene configurations, not every final marker height. The
+next protocol will vary camera and marker height independently and reserve both unseen
+absolute marker bands and unseen marker/camera combinations.
 
 Future closed-loop training must preserve these paired batches alongside ordinary
-episodes. It should also randomize texture phase, wall range and illumination
-independently of marker height, then retain a disjoint combination test.
+episodes. It will also randomize texture phase, wall range and illumination independently
+of marker height, then retain a disjoint combination test. The fixed execution sequence
+and promotion criteria are in the [hover-to-gate plan](HOVER_TO_GATE_PLAN.md).
 
 ## Results
 
@@ -96,7 +102,7 @@ not hover-thrust estimation. Removing roll/pitch caused every episode to tumble 
 contact the ground.
 
 The follow-up paired dynamic-prefix learner passed its preregistered marker-response
-gate on 64 held-out pairs:
+gate on 64 pairs from held-out base-height configurations:
 
 | Metric | Before | After |
 | --- | ---: | ---: |
@@ -137,11 +143,12 @@ pairwise mean, leaving their common activity and every unselected state intact:
 | `vnc_intrinsic` | 13,151 | 33.4% |
 | `vnc_sensory` | 6,365 | 105.1% |
 
-Thus VNC intrinsic recurrence is causally carrying roughly two-thirds of the learned
-marker-to-throttle response in this assay; the result is not explained merely by reading
-VNC motor neurons. Conversely, current VNC sensory circuitry is not helping this
-response. This does not identify a biological control algorithm or prove a closed-loop
-flight benefit.
+The intervention shows that VNC intrinsic recurrence participates causally in the
+learned marker-to-throttle response; the result is not explained merely by reading VNC
+motor neurons. The residual percentage must not be interpreted as a literal fraction of
+the controller located in the VNC. Conversely, current VNC sensory circuitry is not
+helping this response. This does not identify a biological control algorithm or prove a
+closed-loop flight benefit.
 
 The natural next VNC responsibility is local foreleg/stick feedback through identified
 FeCO pathways. That has not been connected yet. We should add it only after the nominal
@@ -152,7 +159,8 @@ post hoc.
 ## Learning hover thrust without supplying mass
 
 The controller should learn the action required for zero vertical motion, not the drone's
-mass. The next curriculum is:
+mass. The complete bounded execution plan is in
+[`HOVER_TO_GATE_PLAN.md`](HOVER_TO_GATE_PLAN.md); its curriculum is:
 
 1. Preserve the held-out paired marker response while fitting nominal-mass closed-loop
    proportional control and visual vertical-motion damping.

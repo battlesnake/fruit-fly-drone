@@ -44,6 +44,8 @@ current quantitative results are in the [hover milestone](docs/HOVER_MILESTONE.m
   progressively withdrawn teacher curriculum.
 - [`docs/VISUAL_HOVER.md`](docs/VISUAL_HOVER.md) — the 320x200 full-connectome visual
   stack, marker-height anti-shortcut test, VNC causal audit, and current hover result.
+- [`docs/HOVER_TO_GATE_PLAN.md`](docs/HOVER_TO_GATE_PLAN.md) — the agreed variable-height
+  hover and single-annular-gate execution plan, with fixed promotion gates.
 - [`docs/HEADLESS_SPIKE.md`](docs/HEADLESS_SPIKE.md) — reproducible WSL2/MJWarp
   acceptance tests and initial RTX 5080 results.
 - [`docs/HOVER_MILESTONE.md`](docs/HOVER_MILESTONE.md) — the first passing
@@ -69,12 +71,13 @@ photoreceptors, retains 2,749,407 connectome edges, runs the fly at 50 Hz, and r
 forelegs/sticks/aircraft at 100 Hz. The actor gets estimated roll/pitch but no
 accelerometer, mass, hover-thrust value, optical flow or external history.
 
-A focused learner passed a paired marker-response test on an absolute-height interval
-excluded from training: 100% correct direction, response slope 0.964, and normalized
-RMSE 0.134 over 64 pairs. Pose, texture and recurrent state were matched; only the
-physical marker moved. Clamping paired marker information in `vnc_intrinsic` neurons
-reduced throttle contrast to 33.4%, showing that non-motor VNC recurrence is causally
-used rather than merely serving as the output location.
+A focused learner passed a paired marker-response test on held-out base-height scene
+configurations: 100% correct direction, response slope 0.964, and normalized RMSE 0.134
+over 64 pairs. Pose, texture and recurrent state were matched; only the physical marker
+moved. Clamping paired marker information in `vnc_intrinsic` neurons reduced throttle
+contrast to 33.4%, showing causal VNC participation rather than merely an output location.
+The plus/minus 0.20 m steps make final marker ranges overlap; the next protocol reserves
+genuinely unseen marker heights and marker/pose combinations.
 
 Full hover is not solved. A closed-loop step test kept 32/32 nominal-mass episodes
 airborne and moved in the right direction, but ended with 0.503 m mean absolute target

@@ -105,12 +105,13 @@ external history.
 
 The first full-connectome follow-up now makes that separation concrete. With 320x200 RGB
 vision it failed complete hover, but a dynamic-prefix paired learner acquired the correct
-marker-to-throttle response on marker heights excluded from training. A paired-mean
+marker-to-throttle response on held-out base-height scene configurations. A paired-mean
 intervention reduced that response to 33.4% when applied to `vnc_intrinsic` neurons and
 did not reduce it when applied to `vnc_sensory` neurons. Thus intrinsic VNC recurrence is
 already causally involved, while local sensory/proprioceptive use is not. Absolute
 collective and velocity damping remain unsolved. The complete result and anti-shortcut
-design are in [the full visual-hover experiment](VISUAL_HOVER.md).
+design are in [the full visual-hover experiment](VISUAL_HOVER.md), and the next bounded
+experiments are fixed in the [hover-to-gate plan](HOVER_TO_GATE_PLAN.md).
 
 ### Visual-only is reasonable; the present visual bottleneck may not be
 

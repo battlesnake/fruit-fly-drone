@@ -1,0 +1,160 @@
+# Variable-height hover to annular-gate plan
+
+## Objective and current starting point
+
+Train the recurrent full-MaleCNS controller to:
+
+1. hold a quadcopter at a height indicated only by a physical visual marker whose
+   absolute height varies; then
+2. take off, approach and fly cleanly through one physical annular gate.
+
+The starting checkpoint is `runs/visual-hover/paired-dynamic-001/controller.pt`, derived
+from the full 165,122-neuron graph. It has a correct causal marker-to-throttle response
+and acceptable short-horizon attitude stability, but it is **not** a hover checkpoint:
+the current closed-loop marker-step test ends with 0.503 m mean absolute height error.
+
+This plan advances one promotion gate at a time. Gate-training infrastructure may be
+built while hover runs, but controller optimization for the gate begins only after the
+variable-height hover gate passes.
+
+## Fixed actor boundary
+
+Throughout both goals, the deployed actor receives:
+
+- 320 by 200 linear-RGB FPV at 125-degree horizontal field of view;
+- estimated roll and pitch angles for the initial milestones;
+- only the recurrent state belonging to the MaleCNS-derived network.
+
+The actor emits roll, pitch, yaw and throttle through identified T1 front-leg motor
+pools, the abstract forelegs and Mode-2 sticks. It receives no mass, hover-thrust value,
+position, velocity, optical flow, target coordinates, gate detector, timer, phase bit,
+external history or added recurrent model. Simulator state may be used for training
+labels, critics, rewards and evaluation only. The aircraft's 100 Hz angular-rate loop
+and mixer remain aircraft machinery; the fly policy runs at 50 Hz.
+
+## Protocol correction before the next run
+
+The completed paired diagnostic held out the **base vehicle/reference-height** interval
+0.90-1.10 m from base intervals 0.60-0.85 m and 1.15-1.40 m. Its two branches then moved
+the marker by plus or minus 0.20 m. Those resulting marker-height ranges overlap, so the
+diagnostic must not be described as holding out every absolute marker height.
+
+It still proves marker causality: pose, texture, attitude and recurrent state are
+identical between each pair, and only the physical marker changes. Before new training,
+make the broader generalization protocol explicit:
+
+- vary camera height and marker height independently;
+- reserve genuinely unseen absolute marker-height bands for final evaluation;
+- reserve unseen marker-height/camera-height combinations even when each individual
+  value appeared during training;
+- randomize wall range, texture phase, floor texture and illumination independently of
+  marker height;
+- retain identical-marker and swapped-marker paired controls.
+
+Record the sampled ranges and combination split in every run report.
+
+## Goal 1 — variable-height visual hover
+
+### Training sequence
+
+Start from `paired-dynamic-001`, not the failed broad-imitation source. Use nominal mass
+and nominal thrust-to-weight until hover passes.
+
+Run an initial bounded 200-update experiment. Each update type is sampled in this fixed
+mixture:
+
+| Share | Lesson | Purpose |
+| ---: | --- | --- |
+| 50% | Current-policy closed-loop trajectories with teacher labels | Learn absolute collective calibration, vertical braking and recovery from the states the fly actually visits. |
+| 25% | Paired physical-marker contrasts | Preserve the already verified signed visual-height response and anti-shortcut controls. |
+| 25% | Dynamic attitude-recovery histories | Prevent throttle learning from destroying roll/pitch stability. |
+
+Generate current-policy prefixes and detach plant transitions between bounded recurrent
+windows; do not backpropagate naively through a complete flight. Use 25-policy-step
+windows initially, source-relative parameter regularization and normalized per-axis
+functional losses. Normalize throttle error by the useful correction range rather than
+the much larger steady collective value.
+
+The training-only teacher includes proportional height error and vertical-velocity
+damping. The actor never receives vertical velocity: it must infer motion from successive
+textured images and its native recurrent state. Include stationary targets, randomized
+marker steps and small vertical impulses. Evaluate at updates 0, 50, 100, 150 and 200,
+and select checkpoints by fresh closed-loop performance rather than imitation loss.
+
+Continue an update block only while absolute height error improves without breaking the
+paired marker-response gate or attitude safety. If current-policy imitation reaches a
+stable plateau, recurrent PPO or a small evolution-strategy search may fine-tune the
+same native parameters. RL is a fallback for the closed-loop objective, not the first
+stage and not permission to add actor state.
+
+Do not add accelerometer, FeCO feedback, randomized mass or attitude-input ablation in
+this milestone. Once nominal visual hover passes, FeCO stick-position feedback is the
+next controlled addition for action observation and hover-thrust adaptation. It requires
+live, constant and pair-shuffled controls.
+
+### Promotion gate
+
+Evaluate 256 fresh nominal-mass episodes over unseen marker/pose/texture combinations,
+reported overall and separately for upward and downward marker steps.
+
+| Requirement | Threshold |
+| --- | ---: |
+| Successful episodes | at least 90% overall and in each step direction |
+| Settled altitude RMSE | at most 0.15 m per successful episode |
+| Settled vertical-speed RMS | at most 0.20 m/s |
+| Roll/pitch tilt RMS | at most 5 degrees |
+| Marker-step settling time | at most 3 seconds |
+| Ground contact after takeoff | none |
+| Sustained stick/actuator saturation | none |
+
+The existing paired marker gate must still pass: contrast NRMSE at most 0.25, at least
+95% correct sign, response slope 0.5-1.5, identical-image equality and swapped-image
+reversal. Dynamic attitude recovery must also remain passing. A frozen-before-step image
+must remove marker-step tracking; it need not make a correctly trimmed aircraft crash.
+
+Only a checkpoint satisfying every requirement is promoted as the Goal 1 source.
+
+## Goal 2 — one annular gate
+
+Use the accepted Goal 1 controller and the same retina, recurrence, foreleg/stick plant,
+camera and aircraft dynamics. First validate any teacher through that complete action
+path. The gate is physical geometry with collision and aperture-clearance tests, not a
+screen-space target or privileged actor input.
+
+Train in this order while retaining hover, paired-marker and attitude-recovery replay:
+
+1. Begin airborne and aligned with a large, nearby gate; learn a slow centered approach
+   and continue flying after the plane crossing.
+2. Reduce the annulus to its final aperture and require whole-vehicle clearance.
+3. Add lateral and vertical offsets, balanced on both sides.
+4. Add gate-plane obliquity and the yaw/roll coordination needed for acro control.
+5. Restore takeoff and require one uninterrupted takeoff-to-gate flight.
+
+Use a visually unambiguous current-gate colour, a grey textured floor and dark background.
+For one gate, no course memory or pass-state input is needed. The passed-gate-dark and
+fixed current/next colour sequence belongs to the later multi-gate milestone.
+
+### Promotion gate
+
+Evaluate 1,024 fresh nominal-mass flights, balanced across lateral-offset sign and
+obliquity sign.
+
+- At least 90% complete takeoff-to-gate success overall and in every declared stratum.
+- The complete vehicle clears the inner aperture without annulus collision.
+- The vehicle remains airborne and controlled after crossing.
+- No ground recontact, invalid attitude or sustained stick/actuator saturation.
+- Frozen vision and role-colour controls demonstrate that the gate image is causal.
+- The Goal 1 hover, paired-marker and attitude suites remain passing.
+
+Randomized mass/thrust effectiveness, roll/pitch-input ablation and multiple coloured
+gates are later milestones. They must not weaken the nominal single-gate claim or be
+silently included in its acceptance result.
+
+## Evidence and artifact policy
+
+Every bounded run writes its full checkpoint and traces below ignored `runs/` paths. A
+small promoted or rejected diagnostic report, including configuration, seeds, data
+splits, acceptance decisions and hashes, is committed under `artifacts/`. Large binaries
+are committed only when required for a reproducible promoted milestone and must use Git
+LFS. MaleCNS-derived artifacts retain the CC BY 4.0 attribution and transformation
+notice described in [`data/README.md`](../data/README.md).
