@@ -376,6 +376,22 @@ hysteresis in this run despite the network's structural recurrence. The candidat
 rejected and no checkpoint was emitted. The compact record is in
 [`gate-full-network-oracle-diagnostic-v1`](../artifacts/gate-full-network-oracle-diagnostic-v1/).
 
+To separate representational capacity from the failed long-horizon optimization, a tiny
+follow-up froze 0.75-second promoted-student sensor prefixes for eight distinct gate
+geometries, each paired at exact mass scales 0.92 and 1.08. It trained the same complete
+native parameter set through all 75 recurrent steps. Light-minus-heavy throttle contrast
+and pair-mean correction had separate fixed normalization and equal loss weight, so the
+unconditional average learned by the full-flight experiment could not pass.
+
+The selected run achieved 2.12% normalized contrast error and 4.60% pair-mean error on its
+training pairs. When both members received the same complete prefix, their four-axis
+outputs were bit identical. On eight disjoint geometries, the 0.75-second contrast error
+was 5.71%, though pair-mean error rose to 17.84%; the untrained 0.50-second endpoint did not
+generalize. This proves the native recurrent state can support a conditional light/heavy
+action and points specifically to full-prefix, multi-time temporal credit assignment as
+the next flight-training step. The diagnostic parameters are not promoted. See
+[`gate-conditional-overfit-diagnostic-v1`](../artifacts/gate-conditional-overfit-diagnostic-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:
@@ -426,6 +442,13 @@ Re-run full-network oracle-action distillation with:
 ```bash
 scripts/run_gate_full_network_oracle.sh \
   --output-dir runs/gate/full-network-oracle-v1
+```
+
+Re-run the tiny conditional representability audit with:
+
+```bash
+scripts/run_gate_conditional_overfit.sh \
+  --output-dir runs/gate/conditional-overfit-v1
 ```
 
 Re-run the negative throttle-stick proprioception search and the privileged mass oracle

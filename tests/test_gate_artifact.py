@@ -22,6 +22,9 @@ RECURRENT_PPO_DIAGNOSTIC_DIR = REPO_ROOT / "artifacts" / "gate-recurrent-ppo-dia
 FULL_NETWORK_ORACLE_DIAGNOSTIC_DIR = (
     REPO_ROOT / "artifacts" / "gate-full-network-oracle-diagnostic-v1"
 )
+CONDITIONAL_OVERFIT_DIAGNOSTIC_DIR = (
+    REPO_ROOT / "artifacts" / "gate-conditional-overfit-diagnostic-v1"
+)
 
 
 def sha256(path: Path) -> str:
@@ -403,3 +406,58 @@ def test_full_network_oracle_distillation_is_audited_and_rejected() -> None:
     assert report["candidate_checkpoint"] is None
     assert report["goal_passed"] is False
     assert not (FULL_NETWORK_ORACLE_DIAGNOSTIC_DIR / "candidate.pt").exists()
+
+
+def test_conditional_overfit_proves_native_representability_only() -> None:
+    report = json.loads((CONDITIONAL_OVERFIT_DIAGNOSTIC_DIR / "report.json").read_text())
+    vector = json.loads((CONDITIONAL_OVERFIT_DIAGNOSTIC_DIR / "candidate-vector.json").read_text())
+    archive = torch.load(
+        CONDITIONAL_OVERFIT_DIAGNOSTIC_DIR / "archive.pt",
+        map_location="cpu",
+        weights_only=True,
+    )
+
+    assert report["graph_sha256"] == sha256(ACCEL_V2_ARTIFACT_DIR / "connectome.npz")
+    assert report["student_checkpoint_sha256"] == sha256(MOTOR_INTERFACE_ES_DIR / "controller.pt")
+    assert report["counts_toward_gate_goal"] is False
+    assert report["protocol"]["distinct_gate_geometry_pairs"] == 8
+    assert report["protocol"]["student_driven_frozen_prefixes"] is True
+    assert report["protocol"]["full_neural_prefix_in_autograd"] is True
+    assert report["protocol"]["engineered_history_features"] is False
+    assert report["protocol"]["batch_position_actor_input"] is False
+    assert report["protocol"]["mass_actor_input"] is False
+    assert report["full_prefix_gradient_audit"]["passed"] is True
+    assert all(
+        family["passed"] for family in report["full_prefix_gradient_audit"]["families"].values()
+    )
+
+    assert vector["parameter_vector_sha256"] == report["selected_parameter_vector_sha256"]
+    values = torch.tensor(
+        vector["edge_magnitude"] + vector["bias"] + vector["raw_time_constant"],
+        dtype=torch.float32,
+    )
+    assert (
+        hashlib.sha256(values.numpy().astype("<f4", copy=False).tobytes()).hexdigest()
+        == report["selected_parameter_vector_sha256"]
+    )
+    selected = archive[report["selected_parameter_vector_sha256"]]["parameters"]
+    archived = torch.cat(
+        (selected["edge_magnitude"], selected["bias"], selected["raw_time_constant"])
+    )
+    assert (
+        hashlib.sha256(archived.numpy().astype("<f4", copy=False).tobytes()).hexdigest()
+        == report["selected_parameter_vector_sha256"]
+    )
+
+    training = report["selected_training_metrics"]
+    assert training["contrast_normalized_rmse"] <= 0.10
+    assert training["mean_normalized_rmse"] <= 0.10
+    assert report["identical_input_control"] == {
+        "pair_maximum_absolute_motor_difference": 0.0,
+        "passed": True,
+    }
+    assert report["training_fit_passed"] is True
+    assert report["representability_passed"] is True
+    assert report["holdout_without_further_training"]["0.75"]["contrast_normalized_rmse"] <= 0.10
+    assert report["checkpoint_promoted"] is False
+    assert not (CONDITIONAL_OVERFIT_DIAGNOSTIC_DIR / "candidate.pt").exists()

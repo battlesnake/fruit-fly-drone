@@ -169,6 +169,15 @@ Constant-1g and matched-pair acceleration controls were indistinguishable from l
 so the candidate was rejected. See the
 [`full-network oracle-distillation diagnostic`](artifacts/gate-full-network-oracle-diagnostic-v1/).
 
+A smaller representability audit isolated the failure. Training through the complete
+75-step native recurrent prefix on eight exact light/heavy pairs reduced normalized
+throttle-contrast error to 2.1% and pair-mean error to 4.6%; identical sensor prefixes
+produced exactly identical outputs. Contrast error remained 5.7% on eight disjoint gate
+geometries, although the untrained 0.5-second endpoint failed. Native recurrence can learn
+the conditional action, so the next iteration targets multi-time, full-prefix credit
+assignment rather than adding engineered history. See the
+[`conditional-overfit diagnostic`](artifacts/gate-conditional-overfit-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.
