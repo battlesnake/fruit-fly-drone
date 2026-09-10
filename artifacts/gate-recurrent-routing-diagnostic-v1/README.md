@@ -29,6 +29,9 @@ worst-group NRMSE are different statistics, so their headline values alone do no
 establish a train/validation generalization gap. A separate frozen-checkpoint audit is
 needed to compare like with like. The result also does not show that native recurrence is
 absent. No magnitude was compiled, merged, or promoted, and the source is unchanged.
+The subsequent [`sampling audit`](../gate-recurrent-routing-sampling-diagnostic-v1/)
+found no generalization gap or meaningful exposure distortion; the limitation is shared
+across both development splits and is concentrated in the early window.
 
 The complete protocol and metrics are in [`report.json`](report.json), the exact ordered
 mask and signs are in [`preregistered-mask.json`](preregistered-mask.json), and the stopped

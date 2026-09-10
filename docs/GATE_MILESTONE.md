@@ -576,6 +576,17 @@ closed-loop flight result: logged minibatch MSE and validation worst-group NRMSE
 directly comparable. No magnitude was compiled or promoted; see
 [`gate-recurrent-routing-diagnostic-v1`](../artifacts/gate-recurrent-routing-diagnostic-v1/).
 
+A no-training sampling audit resolved that statistical ambiguity using the frozen
+update-100 vector. Aggregate NRMSE was 0.38081 over all 48 training pairs and 0.38190 over
+all 16 validation pairs. The validation-minus-training normalized-MSE pair-bootstrap 95%
+interval was `[-0.02959, 0.02801]`, so the preregistered 25% generalization-gap gate did
+not pass. Reweighting frozen per-pair loss by the exact 800 recovered minibatch exposures
+changed training MSE by only 0.014%, far below the 10% distortion gate. Early heavy error
+was similarly limiting in both splits (0.595 and 0.608 NRMSE). This leaves unresolved
+early-window fitting error, not demonstrated overfitting or sampling bias. The audit made
+no update and consumed no fresh held-out case; see
+[`gate-recurrent-routing-sampling-diagnostic-v1`](../artifacts/gate-recurrent-routing-sampling-diagnostic-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:
@@ -648,6 +659,12 @@ Re-run the one-layer native recurrent-routing diagnostic with:
 
 ```bash
 scripts/run_gate_recurrent_routing.sh
+```
+
+Re-run its frozen sampling/generalization audit with:
+
+```bash
+scripts/run_gate_recurrent_routing_sampling_audit.sh
 ```
 
 Re-run the recurrent-PPO diagnostic under AIRA with:

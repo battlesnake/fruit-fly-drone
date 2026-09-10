@@ -304,6 +304,14 @@ a failed continuation gate—not yet a train/validation gap, lack of recurrence,
 ceiling. See the
 [`recurrent-routing diagnostic`](artifacts/gate-recurrent-routing-diagnostic-v1/).
 
+A frozen follow-up then compared identical aggregate statistics over every training and
+validation pair. Their NRMSE values were 0.3808 and 0.3819, with a pair-bootstrap gap
+interval spanning zero. Reweighting by all 800 recovered minibatch exposures changed
+training MSE by just 0.014%. The run therefore rules out the suspected split gap and
+sampling distortion at its fixed thresholds; the remaining problem is early-window
+fitting shared by both splits. See the
+[`recurrent-routing sampling diagnostic`](artifacts/gate-recurrent-routing-sampling-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.
