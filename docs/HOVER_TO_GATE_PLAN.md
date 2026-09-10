@@ -422,3 +422,23 @@ but does not yet show better damping/collective separation. It authorizes only a
 separately preregistered bounded training run; no controller was retained or promoted.
 See
 [`artifacts/variable-height-native-upstream-damping-route-preflight-v1/`](../artifacts/variable-height-native-upstream-damping-route-preflight-v1/).
+
+The authorized upstream-training v1 keeps that exact mask and again restarts from the
+preserved source. Its fixed denominators 12,314/303 govern not only reported step and
+source caps but also the Riesz descent direction and common-output Jacobian projection.
+This prevents the 80,454-edge/883-bias expansion from acquiring a larger or different
+optimization metric. All frozen parameter families and all common/height/attitude limits
+remain unchanged.
+
+For direct comparison with shallow training, the schedule remains at most 50 attempts,
+two independently seeded balanced eight-pair native-recurrence gradient banks per
+attempt, and two fixed eight-pair native guard banks that must **each** improve by at
+least `1e-4`. Five consecutive rejections stop the run. Attempt 25 still requires at
+least 25% motion-NRMSE improvement on 64 held-out pairs. The new base seed `290941`
+makes its milestone (`350941` onward) and terminal (`360941` onward) cohorts previously
+unconsumed; terminal qualification still requires at least 90% correct sign, aligned
+gain 0.5-1.5 and every preservation gate. Per-step improvement/common-RMS efficiency and
+complete-native gain are diagnostic only, not post-hoc stopping criteria. Resume state
+atomically freezes all protocol fields and terminal decisions. The endpoint remains
+nonpromotional until a qualifying replay is followed by a successful small closed-loop
+hover test.
