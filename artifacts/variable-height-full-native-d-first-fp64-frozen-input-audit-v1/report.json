@@ -1,0 +1,56 @@
+{
+  "candidate_retained": false,
+  "classification": "identical_input_fp64_projection_qualified",
+  "complete_projection_primal_objective": 17920.27762329695,
+  "controls": {
+    "all_source_files_unchanged": true,
+    "archive_persisted_before_projection": true,
+    "archive_reload_pass": true,
+    "optimizer_one_step_pass": true,
+    "optimizer_restored_exactly": true,
+    "parameters_restored_exactly": true,
+    "source_metrics_reproduction_pass": true,
+    "update_20_metrics_reproduction_pass": true
+  },
+  "experiment": "variable-height-full-native-d-first-fp64-frozen-input-audit-v1",
+  "fp64_projection": {
+    "final_displacement_sha256_each_repeat": [
+      "0fb352c318ab18efafe0bc2ff68991709aa2f14b79774f7c8e5475d432135e3f",
+      "0fb352c318ab18efafe0bc2ff68991709aa2f14b79774f7c8e5475d432135e3f",
+      "0fb352c318ab18efafe0bc2ff68991709aa2f14b79774f7c8e5475d432135e3f"
+    ],
+    "fixed_edges": 5524,
+    "maximum_independent_primal_relative_distance": 8.133050535596176e-09,
+    "maximum_independent_relative_objective_difference": 6.135186824727995e-16,
+    "maximum_normalized_primary_kkt_residual": 5.992099395631891e-10,
+    "maximum_original_unit_primal_violation": 1.0227093217435312e-10,
+    "normalized_gram_dimension": 10,
+    "normalized_gram_nullity_each_round": [2, 2, 2],
+    "normalized_gram_rank_each_round": [8, 8, 8],
+    "pass_each_repeat": [true, true, true],
+    "repeats": 3,
+    "rounds_each_repeat": [3, 3, 3]
+  },
+  "frozen_input_archive_sha256": "e228a3920c47f56a7eac6d1452f996d9709721f82536240d96dbe6e0c6e1830f",
+  "full_report_sha256": "e1ead1779c568cacfcebda5df435175f505c9e7218592c37b1187faeaf929f25",
+  "implementation_commit": "8fd4782",
+  "pass": true,
+  "post_projection": {
+    "canonical_idempotence_pass": true,
+    "damping_directional_derivative": -0.09797621609011233,
+    "finite_difference_pass": true,
+    "finite_difference_relative_error": 0.0011337814010550509,
+    "maximum_post_materialization_linearized_violation": 1.184961280768955e-07,
+    "native_parameter_bounds_pass": true,
+    "pass": true
+  },
+  "primary_repeat_agreement": {
+    "maximum_complete_primal_objective_relative_difference": 0.0,
+    "maximum_learning_rate_scaled_primal_relative_distance": 0.0,
+    "pass": true
+  },
+  "promoted": false,
+  "protocol_commit": "cb7c7aa",
+  "source_fit_report_sha256": "9b236fc6a6744b1b06984958ebc2c3ff3681cc45fc1fa6da73d1f96ae56b458b",
+  "source_fit_resume_sha256": "61d32fab3995599286f6eee3b30f24b3bea48042d2528392fdd1ca68e9bf60c4"
+}

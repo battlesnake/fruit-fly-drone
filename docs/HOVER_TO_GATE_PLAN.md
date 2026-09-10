@@ -1260,3 +1260,78 @@ simulation or promotion. A pass authorizes only a separately registered one-step
 FP64-projected-plus-existing-guard-band-corrected audit. If identical-input FP64
 qualification fails, pause this numerical integration route without changing the actor,
 sensors, runtime state or preservation thresholds.
+
+Result: the frozen-input FP64 qualification passed. All three projections reloaded from
+the one persisted CPU archive produced the same final displacement hash and complete
+bound-aware primal objective, with zero pairwise numerical difference. Each fixed 5,508
+then 16 edges and converged in round three with 5,524 fixed edges. Maximum original-unit
+primal violation was `1.02e-10` and maximum normalized primary KKT residual was
+`5.99e-10`. Every independent exhaustive-support NNLS check passed against the original
+rank-deficient QP; maximum Gram-induced primal disagreement was `8.14e-9` and relative
+objective disagreement was `6.14e-16`. The nonzero out-of-range violation components
+confirmed that the pre-run protocol correction was material rather than cosmetic.
+
+Canonical idempotence, native bounds, the `1.18e-7` post-materialization linear gate,
+negative endpoint-D direction, and the scale-1/16 finite difference with 0.113%
+disagreement all passed. The reconstructed Adam transaction advanced each parameter
+counter exactly once, then parameters and Adam state were restored exactly. Every source
+and prior failed-audit file remained byte-for-byte unchanged. No candidate, development
+or fresh result, closed-loop run, or promotion resulted. See
+[`artifacts/variable-height-full-native-d-first-fp64-frozen-input-audit-v1/`](../artifacts/variable-height-full-native-d-first-fp64-frozen-input-audit-v1/).
+
+Run one restored **FP64-primary plus existing guard-band correction update-21 audit**.
+Hash-lock the passing qualification report (SHA-256
+`e1ead1779c568cacfcebda5df435175f505c9e7218592c37b1187faeaf929f25`), its frozen CPU
+archive (SHA-256
+`e228a3920c47f56a7eac6d1452f996d9709721f82536240d96dbe6e0c6e1830f`), and the stopped
+update-20 resume (SHA-256
+`61d32fab3995599286f6eee3b30f24b3bea48042d2528392fdd1ca68e9bf60c4`). Consume fresh
+clones of the already-qualified archived current parameters, raw update-21 displacement,
+ordered constraint rows/specifications, and endpoint-D gradient. Do not regenerate those
+Jacobians and do not retry a historical solver status. Recompute the primary FP64
+projection once from the archive and require its full controls plus exact agreement with
+the qualified final displacement hash
+`0fb352c318ab18efafe0bc2ff68991709aa2f14b79774f7c8e5475d432135e3f` and complete primal
+objective `17920.27762329695` under the registered relative tolerance `1e-12`.
+
+Reconstruct the pending Adam state from update 20 using the archived raw gradient and
+unchanged clipping. Require exactly one counter increment for every parameter, exact
+agreement with the archived raw displacement after native parameter projection, and the
+qualified post-step optimizer hash
+`6743cc01e41e01ccd7183b8981acff29eb5af22a72c3039bb9d234cfcbde42d6`. This is provenance
+for the one transaction, not another gradient or optimizer update. Correction and all
+candidate evaluation must leave that pending state unchanged.
+
+Canonicalize the FP64 displacement and try the unchanged ordinary proposal scales 1,
+1/2, 1/4, 1/8, 1/16 and 1/32 in descending order. Select the first candidate passing every
+existing finite, idempotence, native-bound, motor-output, validity, source-relative C/P/RPY
+and current-relative endpoint-D gate. Only if no ordinary scale passes may the fixed
+scale-1/16 candidate enter repair. It must improve endpoint-D NRMSE by at least 0.001 from
+update 20, remain a damping descent direction, and pass every ordinary gate except that
+endpoint common response at step 25 is above its original source-plus-0.02 outer limit.
+Any other failure, or any primary projection/numerical failure, rejects the transaction;
+neither is repairable.
+
+Apply the existing repair unchanged at that actual scale-1/16 candidate. Compute C/P and
+activated RPY rows against the original source, use the authoritative dedicated endpoint-D
+row with retention at least 0.001 better than update 20, and keep the duplicate multi-loss
+D row diagnostic-only. Require the fixed finite-difference probe one quarter of the way
+back toward update 20. Use one zero-reference bound-aware minimum-norm solve, one fixed
+Jacobian, no relinearization or second correction, endpoint-C25 internal solver target
+source plus 0.0198, actual acceptance source plus 0.0199, the unchanged outer gates, and
+correction scales 1, 1/2, 1/4 and 1/8. Select the first scale passing every numerical,
+canonical, bound, linear and actual nonlinear replay gate. Do not change the existing
+repair arithmetic while qualifying the FP64 primary projector.
+
+After training selection chooses exactly one ordinary or repaired candidate, evaluate
+update 20 and that candidate on the fixed development bank. Require candidate endpoint-D
+NRMSE improvement of at least 0.001 relative to update 20 and every original-source
+development preservation gate. Development failure is terminal for this audit: do not try
+another training candidate, run a fresh cohort or fall back to the source.
+
+Finally restore update-20 parameters and complete Adam state exactly and leave the stopped
+fit, qualification report and tensor archive byte-for-byte unchanged. Retain no runnable
+continuation checkpoint, run no fresh data or closed-loop simulation, and make no
+promotion. A pass authorizes only a separately registered FP64-primary corrected fitting
+continuation from update 20 toward the existing total-update-50 milestone; it neither
+accepts update 21 into the stopped run nor establishes useful damping or hover.
