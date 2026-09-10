@@ -217,6 +217,13 @@ whose wrong-sign 0.75-second reserve target made it a poor initialization; it wa
 promoted controller. The result and rejected vector are preserved in the
 [`joint multi-time diagnostic`](artifacts/gate-joint-multitime-overfit-diagnostic-v1/).
 
+Repeating that audit from the promoted source controller—while holding every other input,
+including the regularization reference, fixed—improved the initial margin from 18.75 to
+5.00. After 150 updates it reached 4.37 on training and 4.05 on disjoint holdout, but
+1--5-second contrast and roll fidelity still failed. Exact seven-endpoint imitation is
+therefore not being extended post hoc; the controlled record is in the
+[`source-initialized joint diagnostic`](artifacts/gate-joint-multitime-source-init-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.

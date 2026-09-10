@@ -444,6 +444,15 @@ with the wrong sign; the audit therefore rejects that initialization and budget,
 native recurrence. See
 [`gate-joint-multitime-overfit-diagnostic-v1`](../artifacts/gate-joint-multitime-overfit-diagnostic-v1/).
 
+A strict initialization control then restored the promoted source parameters at update 0
+while keeping the same cases, histories, scales, seeds, optimizer, budget, and old-vector
+regularization reference. Its initial training margin was 5.00 rather than 18.75, and the
+selected update-150 snapshot reached 4.37 on training and 4.05 on disjoint holdout. It
+learned the 0.75-second contrast but left later contrast and roll far outside the fit gate.
+The unchanged failure stops this exact-action configuration without a post-hoc extension;
+see
+[`gate-joint-multitime-source-init-diagnostic-v1`](../artifacts/gate-joint-multitime-source-init-diagnostic-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:
