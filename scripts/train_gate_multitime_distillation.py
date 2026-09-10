@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Train mass-conditioned native control with full-prefix multi-time losses."""
+"""Distill an analytical gate teacher into the native recurrent fly."""
 
 from __future__ import annotations
 
@@ -20,10 +20,13 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
+from audit_gate_analytic_teachers import (  # noqa: E402
+    evaluate_teacher_takeover,
+    teacher_rc_for_mode,
+)
 from gate_diverse_cases import diverse_matched_cases  # noqa: E402
 from search_gate_acceleration_path_es import (  # noqa: E402
     paired_clustered_confidence_interval,
-    sample_matched_cases,
 )
 from search_gate_motor_interface_es import (  # noqa: E402
     BalancedCases,
@@ -36,17 +39,14 @@ from train_gate_acceleration_oracle_distillation import delta_metrics  # noqa: E
 from train_gate_full_network_oracle import (  # noqa: E402
     Trajectories,
     _episode_summary,
-    collect_trajectories,
     compact_flight,
     controller_parameter_sha256,
     controller_step,
     evaluate_controller,
     load_frozen_controller,
-    oracle_bias,
     parameter_change_summary,
     parameter_snapshot,
     restore_parameters,
-    save_candidate_checkpoint,
 )
 from train_gate_recurrent_ppo import initialize_outcomes, update_outcomes  # noqa: E402
 
@@ -56,6 +56,7 @@ from flydrone.hover import (  # noqa: E402
     DifferentiableQuad,
     ForelegStickPlant,
     HoverConfig,
+    motor_target_for_rc,
 )
 
 
@@ -97,14 +98,14 @@ def parse_args() -> argparse.Namespace:
         default=REPO_ROOT / "artifacts" / "gate-motor-interface-es-v1" / "controller.pt",
     )
     parser.add_argument(
-        "--teacher-checkpoint",
+        "--teacher-spec",
         type=Path,
-        default=REPO_ROOT / "artifacts" / "gate-accel-v2" / "controller.pt",
+        default=(REPO_ROOT / "artifacts" / "gate-analytic-teacher-reserve-v1" / "candidate.json"),
     )
     parser.add_argument(
-        "--calibration",
-        type=Path,
-        default=REPO_ROOT / "artifacts" / "gate-mass-oracle-v1" / "candidate.json",
+        "--allow-exact-mass-teacher",
+        action="store_true",
+        help="allow an explicitly selected privileged-mass teacher for diagnostics",
     )
     parser.add_argument(
         "--warm-start-vector",
@@ -117,7 +118,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=REPO_ROOT / "runs" / "gate" / "multitime-distillation-v1",
+        default=REPO_ROOT / "runs" / "gate" / "multitime-reserve-v1",
     )
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--rounds", type=int, default=2)
@@ -133,13 +134,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--anchor-seconds", type=float, default=0.20)
     parser.add_argument("--anchor-weight", type=float, default=0.25)
-    parser.add_argument("--target-onset-seconds", type=float, default=0.25)
     parser.add_argument("--preflight-takeover-seconds", type=float, default=0.50)
     parser.add_argument("--preflight-minimum-success", type=float, default=0.90)
     parser.add_argument("--edge-bias-learning-rates", type=float, nargs=2, default=(3.0e-4, 1.0e-4))
     parser.add_argument("--time-constant-learning-rate", type=float, default=1.0e-6)
-    parser.add_argument("--axis-preservation-weight", type=float, default=0.25)
-    parser.add_argument("--axis-preservation-scale", type=float, default=0.01)
+    parser.add_argument("--axis-action-weight", type=float, default=0.25)
+    parser.add_argument("--axis-action-scale", type=float, default=0.01)
+    parser.add_argument("--throttle-action-scale", type=float, default=0.01)
     parser.add_argument("--regularization-weight", type=float, default=1.0e-6)
     parser.add_argument("--gradient-norm-cap", type=float, default=0.5)
     parser.add_argument("--selection-interval", type=int, default=25)
@@ -165,8 +166,7 @@ def validate_args(args: argparse.Namespace, dt: float) -> tuple[int, ...]:
     for path in (
         args.graph,
         args.student_checkpoint,
-        args.teacher_checkpoint,
-        args.calibration,
+        args.teacher_spec,
         args.warm_start_vector,
     ):
         if not path.is_file():
@@ -179,12 +179,12 @@ def validate_args(args: argparse.Namespace, dt: float) -> tuple[int, ...]:
         args.prefix_seconds,
         args.anchor_seconds,
         args.anchor_weight,
-        args.target_onset_seconds,
         args.preflight_takeover_seconds,
         args.preflight_minimum_success,
         args.time_constant_learning_rate,
-        args.axis_preservation_weight,
-        args.axis_preservation_scale,
+        args.axis_action_weight,
+        args.axis_action_scale,
+        args.throttle_action_scale,
         args.regularization_weight,
         args.gradient_norm_cap,
         args.selection_interval,
@@ -215,10 +215,10 @@ def validate_args(args: argparse.Namespace, dt: float) -> tuple[int, ...]:
         raise SystemExit("the recurrent prefix must end at the last supervised horizon")
     if sorted(set(args.horizon_seconds)) != list(args.horizon_seconds):
         raise SystemExit("horizons must be strictly increasing")
-    if args.target_onset_seconds >= min(args.horizon_seconds):
-        raise SystemExit("the oracle must activate before the first supervised horizon")
-    if args.anchor_seconds >= args.target_onset_seconds:
-        raise SystemExit("the reference-action anchor must precede oracle activation")
+    if args.anchor_seconds >= min(args.horizon_seconds):
+        raise SystemExit("the reference-action anchor must precede supervised horizons")
+    if args.preflight_takeover_seconds != min(args.horizon_seconds):
+        raise SystemExit("the teacher preflight must begin at the first supervised horizon")
     if args.preflight_takeover_seconds >= args.final_seconds:
         raise SystemExit("the preflight takeover must precede the end of evaluation")
     if args.preflight_minimum_success > 1.0:
@@ -298,36 +298,40 @@ def make_dataset(
 
 
 @torch.no_grad()
-def hybrid_teacher_takeover_audit(
+def collect_analytic_trajectories(
     behavior: ConnectomeController,
-    source: ConnectomeController,
-    teacher: ConnectomeController,
+    teacher_interface: ConnectomeController,
     cases: BalancedCases,
-    calibration: dict[str, Any],
     *,
-    takeover_seconds: float,
+    teacher_mode: str,
     seconds: float,
-    target_onset_seconds: float,
     resolution: int,
     hover_config: HoverConfig,
     gate_config: GateConfig,
-) -> dict[str, Any]:
-    """Validate the exact target: source steering plus privileged-oracle throttle."""
+) -> Trajectories:
+    """Label one behavior policy's histories with exact analytical-teacher actions."""
 
     device = cases.mass_scale.device
     episodes = len(cases.mass_scale)
     steps = round(seconds / hover_config.dt)
-    takeover_step = round(takeover_seconds / hover_config.dt)
-    onset_step = round(target_onset_seconds / hover_config.dt)
     quad = DifferentiableQuad(hover_config).to(device)
     sticks = ForelegStickPlant(hover_config).to(device)
     state = clone_state(cases.state)
     stick_state = sticks.initial_state(episodes, device=device, dtype=torch.float32)
     behavior_neural = behavior.initial_state(episodes, device=device, dtype=torch.float32)
-    source_neural = source.initial_state(episodes, device=device, dtype=torch.float32)
-    teacher_neural = teacher.initial_state(episodes, device=device, dtype=torch.float32)
-    bias = oracle_bias(cases.mass_scale, calibration)
     outcomes = initialize_outcomes(cases, gate_config)
+    active = torch.ones(episodes, dtype=torch.bool, device=device)
+    images = torch.empty(steps, episodes, resolution, resolution, dtype=torch.float32)
+    roll_pitch = torch.empty(steps, episodes, 2, dtype=torch.float32)
+    specific_force = torch.empty(steps, episodes, 3, dtype=torch.float32)
+    stick_position = torch.empty(steps, episodes, 4, dtype=torch.float32)
+    oracle_motor = torch.empty(steps, episodes, 4, dtype=torch.float32)
+    reference_motor = torch.empty(steps, episodes, 4, dtype=torch.float32)
+    valid = torch.empty(steps, episodes, dtype=torch.bool)
+
+    def cpu(value: Tensor) -> Tensor:
+        return value.detach().cpu().contiguous()
+
     for step in range(steps):
         image = render_annular_gate(
             state,
@@ -336,31 +340,31 @@ def hybrid_teacher_takeover_audit(
             hover_config=hover_config,
             gate_config=gate_config,
         )
-        inputs = (
+        images[step].copy_(cpu(image))
+        roll_pitch[step].copy_(cpu(state.euler[:, :2]))
+        specific_force[step].copy_(cpu(state.specific_force))
+        stick_position[step].copy_(cpu(stick_state.position))
+        valid[step].copy_(cpu(active))
+        behavior_motor, behavior_neural = controller_step(
+            behavior,
             image,
             state.euler[:, :2],
+            behavior_neural,
             state.specific_force,
             stick_state.position,
         )
-        behavior_motor, behavior_neural = controller_step(
-            behavior, inputs[0], inputs[1], behavior_neural, inputs[2], inputs[3]
+        target_rc = teacher_rc_for_mode(
+            teacher_mode,
+            teacher_interface,
+            state,
+            cases.gate,
+            cases.mass_scale,
+            hover_config,
         )
-        source_motor, source_neural = controller_step(
-            source, inputs[0], inputs[1], source_neural, inputs[2], inputs[3]
-        )
-        oracle_motor, teacher_neural = controller_step(
-            teacher,
-            inputs[0],
-            inputs[1],
-            teacher_neural,
-            inputs[2],
-            inputs[3],
-            privileged_bias=bias if step >= onset_step else None,
-        )
-        target_motor = source_motor.clone()
-        target_motor[:, 3] = oracle_motor[:, 3]
-        motor = target_motor if step >= takeover_step else behavior_motor
-        rc, stick_state = sticks(motor, stick_state)
+        target_motor = motor_target_for_rc(target_rc, hover_config)
+        oracle_motor[step].copy_(cpu(target_motor))
+        reference_motor[step].copy_(cpu(behavior_motor))
+        rc, stick_state = sticks(behavior_motor, stick_state)
         previous_position = state.position
         state = quad(rc, state, cases.mass_scale)
         update_outcomes(
@@ -372,10 +376,29 @@ def hybrid_teacher_takeover_audit(
             step,
             gate_config,
         )
+        irrecoverable = (
+            outcomes["collision"]
+            | outcomes["missed"]
+            | outcomes["recontact"]
+            | (outcomes["maximum_tilt"] > math.radians(40.0))
+        )
+        active &= ~irrecoverable
     summary, _ = _episode_summary(outcomes, cases, steps=steps, hover_config=hover_config)
-    summary["takeover_seconds"] = takeover_seconds
-    summary["target_policy"] = "promoted_source_roll_pitch_yaw_plus_oracle_throttle"
-    return summary
+    summary["teacher_mode"] = teacher_mode
+    return Trajectories(
+        images=images,
+        roll_pitch=roll_pitch,
+        specific_force=specific_force,
+        stick_position=stick_position,
+        oracle_motor=oracle_motor,
+        reference_motor=reference_motor,
+        valid=valid,
+        mass_scale=cpu(cases.mass_scale),
+        codes=cpu(cases.stratum_code),
+        collection_policy_sha256=controller_parameter_sha256(behavior),
+        teacher_drives_physics=False,
+        summary=summary,
+    )
 
 
 def select_pairs(
@@ -441,7 +464,12 @@ def concatenate_pair_batches(first: MultiTimeDataset, second: MultiTimeDataset) 
     )
 
 
-def target_scales(dataset: MultiTimeDataset, *, action_floor: float) -> HorizonScales:
+def target_scales(
+    dataset: MultiTimeDataset,
+    *,
+    axis_action_floor: float,
+    throttle_action_floor: float,
+) -> HorizonScales:
     target = dataset.target_correction[:, :, 3]
     contrast = target[:, 0::2] - target[:, 1::2]
     pair_mean = 0.5 * (target[:, 0::2] + target[:, 1::2])
@@ -453,23 +481,25 @@ def target_scales(dataset: MultiTimeDataset, *, action_floor: float) -> HorizonS
         mask = pair_valid[horizon]
         if not bool(mask.any()):
             raise RuntimeError("scale dataset has no complete valid pair at a horizon")
-        contrast_squared.append(contrast[horizon, mask].square().mean().clamp_min(1.0e-8))
-        mean_squared.append(pair_mean[horizon, mask].square().mean().clamp_min(1.0e-8))
+        contrast_squared.append(
+            contrast[horizon, mask].square().mean().clamp_min(throttle_action_floor**2)
+        )
+        mean_squared.append(
+            pair_mean[horizon, mask].square().mean().clamp_min(throttle_action_floor**2)
+        )
         valid = dataset.valid_at_horizons[horizon]
         if not bool(valid.any()):
             raise RuntimeError("scale dataset has no valid episode at a horizon")
-        axis_squared.append(
-            dataset.source_motor[horizon, valid, :3]
-            .std(dim=0, unbiased=False)
-            .clamp_min(action_floor)
-            .square()
+        oracle_action = (
+            dataset.source_motor[horizon, valid, :3] + dataset.target_correction[horizon, valid, :3]
         )
+        axis_squared.append(oracle_action.square().mean(dim=0).clamp_min(axis_action_floor**2))
     if not bool(dataset.valid_anchor.any()):
         raise RuntimeError("scale dataset has no valid episode at the anchor")
     anchor_squared = (
         dataset.source_anchor[dataset.valid_anchor]
         .std(dim=0, unbiased=False)
-        .clamp_min(action_floor)
+        .clamp_min(axis_action_floor)
         .square()
     )
     scales = HorizonScales(
@@ -559,7 +589,7 @@ def multitime_loss(
     horizon_index: int,
     horizon_steps: tuple[int, ...],
     anchor_step: int,
-    axis_preservation_weight: float,
+    axis_action_weight: float,
     anchor_weight: float,
     regularization_weight: float,
 ) -> tuple[Tensor, dict[str, float]]:
@@ -586,10 +616,7 @@ def multitime_loss(
         prediction_mean[pair_valid] - target_mean[pair_valid]
     ).square().mean() / scales.mean_squared[horizon_index]
     axis_loss = (
-        (
-            (motor[valid, :3] - dataset.source_motor[horizon_index, valid, :3])
-            / scales.axis_squared[horizon_index].sqrt()
-        )
+        ((prediction[valid, :3] - target[valid, :3]) / scales.axis_squared[horizon_index].sqrt())
         .square()
         .mean()
     )
@@ -613,7 +640,7 @@ def multitime_loss(
     total = (
         contrast_loss
         + mean_loss
-        + axis_preservation_weight * axis_loss
+        + axis_action_weight * axis_loss
         + anchor_weight * anchor_loss
         + regularization_weight * regularization
     )
@@ -621,7 +648,7 @@ def multitime_loss(
         "total_loss": float(total.detach()),
         "contrast_normalized_mse": float(contrast_loss.detach()),
         "mean_normalized_mse": float(mean_loss.detach()),
-        "axis_preservation_normalized_mse": float(axis_loss.detach()),
+        "axis_teacher_action_normalized_mse": float(axis_loss.detach()),
         "anchor_normalized_mse": float(anchor_loss.detach()),
         "regularization": float(regularization.detach()),
         "valid_pair_fraction": float(pair_valid.float().mean()),
@@ -676,28 +703,27 @@ def fidelity_metrics(
                 / scales.mean_squared[index].sqrt()
             )
         axis_error: dict[str, float | None]
+        axis_raw_error: dict[str, float | None]
         if valid_count:
-            values = (
-                (
-                    (motors[index, valid, :3] - dataset.source_motor[index, valid, :3])
-                    / scales.axis_squared[index].sqrt()
-                )
-                .square()
-                .mean(dim=0)
-                .sqrt()
-            )
+            raw_values = (prediction[valid, :3] - target[valid, :3]).square().mean(dim=0).sqrt()
+            values = raw_values / scales.axis_squared[index].sqrt()
             axis_error = {
                 name: float(values[axis]) for axis, name in enumerate(("roll", "pitch", "yaw"))
             }
+            axis_raw_error = {
+                name: float(raw_values[axis]) for axis, name in enumerate(("roll", "pitch", "yaw"))
+            }
         else:
             axis_error = {name: None for name in ("roll", "pitch", "yaw")}
+            axis_raw_error = {name: None for name in ("roll", "pitch", "yaw")}
         lower = dataset.mass_scale < 1.0
         report[f"{step * dt:.2f}"] = {
             "valid_episode_count": valid_count,
             "valid_matched_pair_count": pair_count,
             "contrast_normalized_rmse": contrast_error,
             "mean_normalized_rmse": mean_error,
-            "axis_preservation_normalized_rmse": axis_error,
+            "axis_teacher_action_normalized_rmse": axis_error,
+            "axis_teacher_action_rmse": axis_raw_error,
             "contrast": safe_delta(prediction_contrast[pair_valid], target_contrast[pair_valid]),
             "pair_mean": safe_delta(prediction_mean[pair_valid], target_mean[pair_valid]),
             "light_throttle_correction_mean": safe_mean(prediction[valid & lower, 3]),
@@ -712,7 +738,7 @@ def fidelity_score(metrics: dict[str, Any]) -> float:
     values: list[float | None] = []
     for horizon in metrics.values():
         values.extend((horizon["contrast_normalized_rmse"], horizon["mean_normalized_rmse"]))
-        values.extend(horizon["axis_preservation_normalized_rmse"].values())
+        values.extend(horizon["axis_teacher_action_normalized_rmse"].values())
     if not values or any(value is None or not math.isfinite(value) for value in values):
         return float("inf")
     return max(value for value in values if value is not None)
@@ -726,7 +752,7 @@ def fidelity_passed(metrics: dict[str, Any], *, threshold: float) -> bool:
         required = [
             horizon["contrast_normalized_rmse"],
             horizon["mean_normalized_rmse"],
-            *horizon["axis_preservation_normalized_rmse"].values(),
+            *horizon["axis_teacher_action_normalized_rmse"].values(),
         ]
         if any(value is None or not math.isfinite(value) for value in required):
             return False
@@ -734,7 +760,7 @@ def fidelity_passed(metrics: dict[str, Any], *, threshold: float) -> bool:
             return False
         if horizon["mean_normalized_rmse"] > threshold:
             return False
-        if max(horizon["axis_preservation_normalized_rmse"].values()) > threshold:
+        if max(horizon["axis_teacher_action_normalized_rmse"].values()) > threshold:
             return False
     return True
 
@@ -802,7 +828,7 @@ def gradient_audit(
                         horizon_index=horizon_index,
                         horizon_steps=horizon_steps,
                         anchor_step=anchor_step,
-                        axis_preservation_weight=args.axis_preservation_weight,
+                        axis_action_weight=args.axis_action_weight,
                         anchor_weight=args.anchor_weight,
                         regularization_weight=args.regularization_weight,
                     )[0]
@@ -818,7 +844,7 @@ def gradient_audit(
         horizon_index=horizon_index,
         horizon_steps=horizon_steps,
         anchor_step=anchor_step,
-        axis_preservation_weight=args.axis_preservation_weight,
+        axis_action_weight=args.axis_action_weight,
         anchor_weight=args.anchor_weight,
         regularization_weight=args.regularization_weight,
     )
@@ -845,7 +871,7 @@ def gradient_audit(
                             horizon_index=horizon_index,
                             horizon_steps=horizon_steps,
                             anchor_step=anchor_step,
-                            axis_preservation_weight=args.axis_preservation_weight,
+                            axis_action_weight=args.axis_action_weight,
                             anchor_weight=args.anchor_weight,
                             regularization_weight=args.regularization_weight,
                         )[0]
@@ -860,7 +886,7 @@ def gradient_audit(
                             horizon_index=horizon_index,
                             horizon_steps=horizon_steps,
                             anchor_step=anchor_step,
-                            axis_preservation_weight=args.axis_preservation_weight,
+                            axis_action_weight=args.axis_action_weight,
                             anchor_weight=args.anchor_weight,
                             regularization_weight=args.regularization_weight,
                         )[0]
@@ -983,7 +1009,7 @@ def train_round(
             horizon_index=horizon_index,
             horizon_steps=horizon_steps,
             anchor_step=anchor_step,
-            axis_preservation_weight=args.axis_preservation_weight,
+            axis_action_weight=args.axis_action_weight,
             anchor_weight=args.anchor_weight,
             regularization_weight=args.regularization_weight,
         )
@@ -1062,6 +1088,35 @@ def train_round(
     return updates, selections, selected_key
 
 
+def save_analytic_candidate_checkpoint(
+    path: Path,
+    source_checkpoint: dict[str, Any],
+    source_path: Path,
+    teacher_spec_path: Path,
+    controller: ConnectomeController,
+    promotion: dict[str, Any],
+) -> None:
+    checkpoint = copy.deepcopy(source_checkpoint)
+    checkpoint["controller"] = {
+        name: value.detach().cpu() for name, value in controller.state_dict().items()
+    }
+    checkpoint["source_checkpoint_sha256"] = file_sha256(source_path)
+    checkpoint["multitime_analytic_teacher_distillation"] = {
+        "method": "full-prefix multi-time analytical-teacher action distillation",
+        "teacher_spec_sha256": file_sha256(teacher_spec_path),
+        "all_native_edge_magnitudes_trainable": True,
+        "all_native_biases_trainable": True,
+        "all_native_time_constants_trainable": True,
+        "fixed_topology": True,
+        "fixed_transmitter_signs": True,
+        "training_only_privileged_teacher": True,
+        "compiled_into_native_parameters": True,
+        "parameter_vector_sha256": controller_parameter_sha256(controller),
+        "promotion": promotion,
+    }
+    torch.save(checkpoint, path)
+
+
 def main() -> int:
     args = parse_args()
     device = torch.device(args.device)
@@ -1070,22 +1125,25 @@ def main() -> int:
     source, source_checkpoint, hover_config, gate_config, resolution = load_frozen_controller(
         args.graph, args.student_checkpoint, device
     )
-    teacher, _, teacher_hover, teacher_gate, teacher_resolution = load_frozen_controller(
-        args.graph, args.teacher_checkpoint, device
-    )
     horizon_steps = validate_args(args, hover_config.dt)
     anchor_step = round(args.anchor_seconds / hover_config.dt)
-    if (
-        asdict(hover_config) != asdict(teacher_hover)
-        or asdict(gate_config) != asdict(teacher_gate)
-        or resolution != teacher_resolution
-    ):
-        raise SystemExit("student and teacher simulation contracts differ")
     if not source.uses_accelerometer or source.uses_proprioception:
         raise SystemExit("unexpected deployed sensor contract")
-    calibration = json.loads(args.calibration.read_text())
-    if calibration.get("kind") != "privileged_non_biological_mass_oracle":
-        raise SystemExit("unexpected teacher calibration")
+    teacher_spec = json.loads(args.teacher_spec.read_text())
+    if teacher_spec.get("kind") != "privileged_analytic_gate_teacher":
+        raise SystemExit("unexpected analytical teacher specification")
+    if not teacher_spec.get("preflight_passed"):
+        raise SystemExit("analytical teacher did not pass its frozen preflight")
+    if teacher_spec.get("checkpoint_sha256") != file_sha256(args.student_checkpoint):
+        raise SystemExit("analytical teacher was validated against a different source checkpoint")
+    if teacher_spec.get("takeover_seconds") != args.preflight_takeover_seconds:
+        raise SystemExit("analytical teacher was validated at a different takeover time")
+    teacher_uses_exact_mass = bool(teacher_spec.get("uses_exact_simulator_mass"))
+    if teacher_uses_exact_mass and not args.allow_exact_mass_teacher:
+        raise SystemExit(
+            "exact-mass teachers require the explicit diagnostic flag --allow-exact-mass-teacher"
+        )
+    teacher_mode = teacher_spec["teacher_mode"]
     student = copy.deepcopy(source).to(device)
     warm_start = load_warm_start(
         student, args.warm_start_vector, source_checkpoint=args.student_checkpoint
@@ -1111,15 +1169,31 @@ def main() -> int:
         gate_config=gate_config,
         extreme_fraction=0.5,
     )
-    preflight_target = hybrid_teacher_takeover_audit(
+    initial_teacher_rc = teacher_rc_for_mode(
+        teacher_mode,
         source,
+        original_cases.state,
+        original_cases.gate,
+        original_cases.mass_scale,
+        hover_config,
+    )
+    swapped_teacher_rc = teacher_rc_for_mode(
+        teacher_mode,
         source,
-        teacher,
+        original_cases.state,
+        original_cases.gate,
+        original_cases.mass_scale.flip(0),
+        hover_config,
+    )
+    teacher_mass_argument_invariant = torch.equal(initial_teacher_rc, swapped_teacher_rc)
+    if not teacher_uses_exact_mass and not teacher_mass_argument_invariant:
+        raise SystemExit("mass-free teacher actions changed when only the mass argument changed")
+    preflight_target = evaluate_teacher_takeover(
+        source,
         original_cases,
-        calibration,
+        mode=teacher_mode,
         takeover_seconds=args.preflight_takeover_seconds,
         seconds=args.final_seconds,
-        target_onset_seconds=args.target_onset_seconds,
         resolution=resolution,
         hover_config=hover_config,
         gate_config=gate_config,
@@ -1128,6 +1202,10 @@ def main() -> int:
         "overall": preflight_target["success_rate"],
         "light": preflight_target["light_success_rate"],
         "heavy": preflight_target["heavy_success_rate"],
+        "negative_lateral": preflight_target["negative_lateral_success_rate"],
+        "positive_lateral": preflight_target["positive_lateral_success_rate"],
+        "negative_obliquity": preflight_target["negative_obliquity_success_rate"],
+        "positive_obliquity": preflight_target["positive_obliquity_success_rate"],
     }
     preflight_target_passed = all(
         rate >= args.preflight_minimum_success for rate in preflight_rates.values()
@@ -1137,7 +1215,7 @@ def main() -> int:
     print(
         json.dumps(
             {
-                "phase": "hybrid_target_preflight",
+                "phase": "analytic_target_preflight",
                 "takeover_seconds": args.preflight_takeover_seconds,
                 "passed": preflight_target_passed,
                 "success_rates": preflight_rates,
@@ -1150,16 +1228,19 @@ def main() -> int:
         report_path.write_text(
             json.dumps(
                 {
-                    "method": "full-prefix multi-time residual oracle distillation",
+                    "method": "full-prefix multi-time analytical-teacher distillation",
                     "claim_scope": "Target-policy preflight failed; no training was run.",
                     "graph": stable_path(args.graph),
                     "graph_sha256": file_sha256(args.graph),
                     "student_checkpoint": stable_path(args.student_checkpoint),
                     "student_checkpoint_sha256": file_sha256(args.student_checkpoint),
-                    "teacher_checkpoint": stable_path(args.teacher_checkpoint),
-                    "teacher_checkpoint_sha256": file_sha256(args.teacher_checkpoint),
-                    "hybrid_target_preflight": preflight_target,
-                    "promotion": {"checks": {"hybrid_target_preflight": False}, "passed": False},
+                    "teacher_spec": stable_path(args.teacher_spec),
+                    "teacher_spec_sha256": file_sha256(args.teacher_spec),
+                    "analytic_target_preflight": preflight_target,
+                    "promotion": {
+                        "checks": {"analytic_target_preflight": False},
+                        "passed": False,
+                    },
                     "goal_passed": False,
                     "elapsed_seconds": perf_counter() - started,
                 },
@@ -1169,17 +1250,15 @@ def main() -> int:
             + "\n"
         )
         return 2
-    original_trajectories = collect_trajectories(
+    original_trajectories = collect_analytic_trajectories(
         source,
-        teacher,
+        source,
         original_cases,
-        calibration,
+        teacher_mode=teacher_mode,
         seconds=args.prefix_seconds,
-        target_onset_seconds=args.target_onset_seconds,
         resolution=resolution,
         hover_config=hover_config,
         gate_config=gate_config,
-        teacher_drives_physics=False,
     )
     original = make_dataset(
         original_trajectories,
@@ -1188,7 +1267,23 @@ def main() -> int:
         anchor_step=anchor_step,
         device=device,
     )
-    scales = target_scales(original, action_floor=args.axis_preservation_scale)
+    scales = target_scales(
+        original,
+        axis_action_floor=args.axis_action_scale,
+        throttle_action_floor=args.throttle_action_scale,
+    )
+    print(
+        json.dumps(
+            {
+                "phase": "fixed_target_scales",
+                "teacher_mass_argument_invariant": teacher_mass_argument_invariant,
+                "contrast_rms": scales.contrast_squared.sqrt().detach().cpu().tolist(),
+                "mean_rms": scales.mean_squared.sqrt().detach().cpu().tolist(),
+                "axis_rms": scales.axis_squared.sqrt().detach().cpu().tolist(),
+            }
+        ),
+        flush=True,
+    )
     holdout_cases = diverse_matched_cases(
         args.holdout_episodes,
         seed=args.holdout_seed,
@@ -1197,17 +1292,15 @@ def main() -> int:
         gate_config=gate_config,
         extreme_fraction=0.0,
     )
-    holdout_trajectories = collect_trajectories(
+    holdout_trajectories = collect_analytic_trajectories(
         source,
-        teacher,
+        source,
         holdout_cases,
-        calibration,
+        teacher_mode=teacher_mode,
         seconds=args.prefix_seconds,
-        target_onset_seconds=args.target_onset_seconds,
         resolution=resolution,
         hover_config=hover_config,
         gate_config=gate_config,
-        teacher_drives_physics=False,
     )
     holdout = make_dataset(
         holdout_trajectories,
@@ -1287,30 +1380,25 @@ def main() -> int:
             gate_config=gate_config,
             extreme_fraction=0.5,
         )
-        dagger_trajectories = collect_trajectories(
+        dagger_trajectories = collect_analytic_trajectories(
             student,
-            teacher,
+            source,
             dagger_cases,
-            calibration,
+            teacher_mode=teacher_mode,
             seconds=args.prefix_seconds,
-            target_onset_seconds=args.target_onset_seconds,
             resolution=resolution,
             hover_config=hover_config,
             gate_config=gate_config,
-            teacher_drives_physics=False,
         )
         dagger_summary = dagger_trajectories.summary
         takeover = {}
         for takeover_time, threshold in ((2.0, 0.60), (3.0, 0.50)):
-            result = hybrid_teacher_takeover_audit(
+            result = evaluate_teacher_takeover(
                 student,
-                source,
-                teacher,
                 dagger_cases,
-                calibration,
+                mode=teacher_mode,
                 takeover_seconds=takeover_time,
                 seconds=args.final_seconds,
-                target_onset_seconds=args.target_onset_seconds,
                 resolution=resolution,
                 hover_config=hover_config,
                 gate_config=gate_config,
@@ -1319,9 +1407,16 @@ def main() -> int:
                 **result,
                 "minimum_required": threshold,
                 "passed": min(
-                    result["success_rate"],
-                    result["light_success_rate"],
-                    result["heavy_success_rate"],
+                    result[key]
+                    for key in (
+                        "success_rate",
+                        "light_success_rate",
+                        "heavy_success_rate",
+                        "negative_lateral_success_rate",
+                        "positive_lateral_success_rate",
+                        "negative_obliquity_success_rate",
+                        "positive_obliquity_success_rate",
+                    )
                 )
                 >= threshold,
             }
@@ -1358,17 +1453,15 @@ def main() -> int:
                 gate_config=gate_config,
                 extreme_fraction=0.0,
             )
-            fresh_trajectories = collect_trajectories(
+            fresh_trajectories = collect_analytic_trajectories(
                 student,
-                teacher,
+                source,
                 fresh_cases,
-                calibration,
+                teacher_mode=teacher_mode,
                 seconds=args.prefix_seconds,
-                target_onset_seconds=args.target_onset_seconds,
                 resolution=resolution,
                 hover_config=hover_config,
                 gate_config=gate_config,
-                teacher_drives_physics=False,
             )
             fresh = make_dataset(
                 fresh_trajectories,
@@ -1397,14 +1490,16 @@ def main() -> int:
         "checks": {"fresh_student_history_fidelity": fresh_fidelity_passed},
         "passed": False,
     }
+    goal_threshold_checks = None
     goal_passed = False
     if fresh_fidelity_passed:
-        final_cases = sample_matched_cases(
+        final_cases = diverse_matched_cases(
             args.final_episodes,
             seed=args.final_seed,
             device=device,
             hover_config=hover_config,
             gate_config=gate_config,
+            extreme_fraction=0.5,
         )
         final = {}
         outcomes = {}
@@ -1491,17 +1586,29 @@ def main() -> int:
         }
         promotion = {"checks": promotion_checks, "passed": all(promotion_checks.values())}
         if promotion["passed"]:
-            save_candidate_checkpoint(
+            save_analytic_candidate_checkpoint(
                 candidate_path,
                 source_checkpoint,
                 args.student_checkpoint,
-                args.teacher_checkpoint,
+                args.teacher_spec,
                 student,
                 promotion,
             )
+        goal_threshold_checks = {
+            key: final["candidate"][key] >= 0.90
+            for key in (
+                "success_rate",
+                "light_success_rate",
+                "heavy_success_rate",
+                "negative_lateral_success_rate",
+                "positive_lateral_success_rate",
+                "negative_obliquity_success_rate",
+                "positive_obliquity_success_rate",
+            )
+        }
         goal_passed = bool(
             promotion["passed"]
-            and final["candidate"]["success_rate"] >= 0.90
+            and all(goal_threshold_checks.values())
             and final["candidate_frozen_first_frame"]["success_rate"] <= 0.05
         )
 
@@ -1534,23 +1641,26 @@ def main() -> int:
         args.output_dir / "archive.pt",
     )
     report = {
-        "method": "full-prefix multi-time residual oracle distillation",
+        "method": "full-prefix multi-time analytical-teacher distillation",
         "claim_scope": (
-            "The training schedule uses timestamps, mass labels, oracle actions, and replayed "
-            "histories, but the deployed actor receives only current FPV, roll/pitch, body-Z "
-            "specific force, and its persistent native connectome state."
+            "The training schedule uses timestamps, privileged relative geometry, "
+            f"{'exact-mass' if teacher_uses_exact_mass else 'mass-free'} analytical teacher "
+            "actions, and replayed histories, but the deployed actor receives "
+            "only current FPV, roll/pitch, body-Z specific force, and its persistent native "
+            "connectome state."
         ),
         "graph": stable_path(args.graph),
         "graph_sha256": file_sha256(args.graph),
         "student_checkpoint": stable_path(args.student_checkpoint),
         "student_checkpoint_sha256": file_sha256(args.student_checkpoint),
-        "teacher_checkpoint": stable_path(args.teacher_checkpoint),
-        "teacher_checkpoint_sha256": file_sha256(args.teacher_checkpoint),
+        "teacher_spec": stable_path(args.teacher_spec),
+        "teacher_spec_sha256": file_sha256(args.teacher_spec),
+        "teacher_mode": teacher_mode,
+        "teacher_uses_exact_simulator_mass": teacher_uses_exact_mass,
+        "teacher_mass_argument_invariant": teacher_mass_argument_invariant,
         "warm_start_vector": stable_path(args.warm_start_vector),
         "warm_start_vector_sha256": file_sha256(args.warm_start_vector),
         "warm_start_parameter_sha256": warm_start["parameter_vector_sha256"],
-        "calibration": stable_path(args.calibration),
-        "calibration_sha256": file_sha256(args.calibration),
         "device": str(device),
         "gpu": torch.cuda.get_device_name(device) if device.type == "cuda" else None,
         "hover_config": asdict(hover_config),
@@ -1560,13 +1670,14 @@ def main() -> int:
             "horizon_sampling_weights": [2, 2, 1, 1, 1, 1, 1],
             "promoted_controller_immutable_reference": True,
             "student_driven_training_histories": True,
-            "oracle_actions_training_only": True,
+            "analytical_teacher_actions_training_only": True,
             "complete_prefix_per_sampled_endpoint": True,
             "physics_and_renderer_outside_autograd": True,
             "second_round_original_current_mixture": [0.5, 0.5],
-            "distillation_target": (
-                "promoted-source roll/pitch/yaw plus privileged-oracle throttle"
-            ),
+            "final_evaluation_uses_diverse_geometry": True,
+            "final_evaluation_extreme_mass_pair_fraction": 0.5,
+            "distillation_target": "exact four-axis analytical-teacher action",
+            "axis_loss": "absolute teacher-action fidelity on roll/pitch/yaw",
             "fixed_topology": True,
             "fixed_transmitter_signs": True,
             "all_native_edge_magnitudes_trainable": True,
@@ -1586,7 +1697,7 @@ def main() -> int:
         },
         "longest_prefix_gradient_audit": audit,
         "original_collection": original.source_summary,
-        "hybrid_target_preflight": preflight_target,
+        "analytic_target_preflight": preflight_target,
         "holdout_collection": holdout.source_summary,
         "initial_holdout_metrics": initial_holdout_metrics,
         "updates": all_updates,
@@ -1595,7 +1706,7 @@ def main() -> int:
         "round1_selected_metrics": round1_metrics,
         "round1_fidelity_gate_passed": round1_gate_passed,
         "dagger_collection": dagger_summary,
-        "dagger_target_policy_takeover_audit": takeover,
+        "dagger_analytic_teacher_takeover_audit": takeover,
         "round2_selected": round2_key,
         "fresh_student_history_metrics": fresh_metrics,
         "fresh_student_history_fidelity_passed": fresh_fidelity_passed,
@@ -1610,6 +1721,7 @@ def main() -> int:
         "acceleration_dependence_demonstrated": acceleration_dependence,
         "final": final,
         "promotion": promotion,
+        "goal_threshold_checks": goal_threshold_checks,
         "candidate_checkpoint": stable_path(candidate_path) if promotion["passed"] else None,
         "candidate_checkpoint_sha256": (
             file_sha256(candidate_path) if promotion["passed"] else None

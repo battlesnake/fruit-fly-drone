@@ -411,6 +411,21 @@ does not count as direct-sensor flight. Records are in
 [`gate-promoted-oracle-diagnostic-v1`](../artifacts/gate-promoted-oracle-diagnostic-v1/), and
 [`gate-analytic-teacher-v1`](../artifacts/gate-analytic-teacher-v1/).
 
+The first full-prefix, seven-horizon distillation of that exact-mass teacher stopped after
+its fixed 200-update first round. Although the network learned the 0.75-second throttle
+contrast, its predicted 0.5-second contrast stayed essentially zero and the selected
+snapshot also failed early roll, pitch, and throttle pair-mean fidelity. No DAgger round,
+final flight evaluation, or promotion followed. The failure record is in
+[`gate-multitime-analytic-exact-mass-diagnostic-v1`](../artifacts/gate-multitime-analytic-exact-mass-diagnostic-v1/).
+
+Exact mass is unnecessary for the task: the visual/accelerometer reserve teacher was also
+perfect on the original selection set and then achieved 100% in every declared stratum on
+1,024 newly seeded cases, with no collisions or misses. It is now the frozen target for
+mass-free native distillation. Its action labels are invariant to changing only the mass
+argument, and near-zero throttle contrasts use a fixed actuator-scale normalization floor
+instead of a data-dependent microscopic denominator. See
+[`gate-analytic-teacher-reserve-v1`](../artifacts/gate-analytic-teacher-reserve-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:

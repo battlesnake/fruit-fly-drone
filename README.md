@@ -191,6 +191,17 @@ prefix. These are teacher diagnostics, not fly-controlled results. See the
 [`promoted-oracle calibration`](artifacts/gate-promoted-oracle-diagnostic-v1/), and
 [`analytical-teacher audit`](artifacts/gate-analytic-teacher-v1/).
 
+The first full analytical distillation run exposed a sharper issue: it learned the
+0.75-second mass-conditioned throttle contrast but not the 0.5-second contrast, where its
+prediction remained essentially zero. It stopped at the fixed first-round fidelity gate,
+without a promoted checkpoint. Because a mass-free visual/accelerometer reserve teacher
+also flies the same diverse distribution perfectly, a new 1,024-flight preflight froze
+that observation-compatible teacher at 100% in every declared stratum. The next run will
+distill it without privileged mass labels; near-zero target contrasts are normalized on a
+fixed 0.01 motor-command scale. See the
+[`exact-mass distillation diagnostic`](artifacts/gate-multitime-analytic-exact-mass-diagnostic-v1/)
+and [`mass-free teacher preflight`](artifacts/gate-analytic-teacher-reserve-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.
