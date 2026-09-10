@@ -1,0 +1,62 @@
+{
+  "accepted_attempts": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    9,
+    11,
+    16
+  ],
+  "accepted_step_mean_improvement_per_common_rms": 4.1199343275,
+  "accepted_updates": 10,
+  "actor_contract_unchanged": true,
+  "attempts_completed": 21,
+  "closed_loop_hover_run": false,
+  "consecutive_rejections": 5,
+  "experiment": "variable-height-native-upstream-damping-route-training-v1",
+  "full_report_sha256": "137da6fee2f0fac564931f5db8cdaa7cb3c340747af9286dfa9ef0d3f96fbcec",
+  "mask": {
+    "bias_node_indices_sha256": "f2cedb5b38e80beb9c29bba190ac9881c4cc473ea2849329b1f449c80402bd9b",
+    "edge_indices_sha256": "a8d6118684cf64850b9e2d08f5f200c4501198fef6d4f5c52ec3aa349afa5aa3",
+    "selected_biases": 883,
+    "selected_edge_magnitudes": 80454
+  },
+  "milestone_reached": false,
+  "nonpromotional_endpoint_sha256": "f6d774730b5af043af94137e9b9e90a2aa3d5e663b47d01b8896c16dd32f13d7",
+  "passed_replay_gate": false,
+  "preservation": {
+    "all_finite": true,
+    "functional_replay_pass": true,
+    "height_response_student_to_source_ratio": {
+      "medium": 0.9738882184,
+      "small": 0.9730411172
+    },
+    "reference_source_metric_norm": 0.0001340151,
+    "reference_source_metric_radius": 0.0005,
+    "source_common_throttle_max_absolute": 0.0039055943,
+    "source_common_throttle_rms": 0.0024321920,
+    "source_common_throttle_rms_limit": 0.0025
+  },
+  "promoted": false,
+  "protocol_commit": "aa65d79383a6065d5cf71ed292753c2cb328215c",
+  "source": {
+    "checkpoint": "runs/visual-hover/paired-dynamic-001/controller.pt",
+    "checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+    "graph": "data/derived/full-visual-connectome-v1.npz",
+    "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665"
+  },
+  "status": "rejected_after_five_consecutive_inadmissible_steps",
+  "stop_reason": "five consecutive unsafe or non-improving route steps",
+  "terminal": {
+    "candidate_fixed_scale_nrmse": 1.3667576313,
+    "correct_sign_fraction": 0.0,
+    "motion_nrmse_improvement_fraction": 0.0102284447,
+    "source_fixed_scale_nrmse": 1.3808819056,
+    "source_teacher_aligned_gain": -0.5671102405,
+    "teacher_aligned_gain": -0.5516117215
+  }
+}

@@ -442,3 +442,17 @@ complete-native gain are diagnostic only, not post-hoc stopping criteria. Resume
 atomically freezes all protocol fields and terminal decisions. The endpoint remains
 nonpromotional until a qualifying replay is followed by a successful small closed-loop
 hover test.
+
+Result: upstream training stopped at attempt 21 after five consecutive inadmissible or
+non-improving proposals; ten updates were accepted. On its previously unconsumed
+terminal cohort, motion NRMSE improved only 1.023% (1.380882 to 1.366758), correct sign
+remained 0%, and aligned gain remained negative at -0.552. Preservation passed and
+height responses retained about 0.973 of source, while common-throttle RMS reached
+0.002432 of its 0.0025 limit and the fixed-denominator parameter metric used only
+0.000134 of its 0.0005 radius. In the final screens, equality-heavy directions preserved
+common output but increased damping loss; damping-descent directions exceeded the common
+budget. This confirms that the expanded subspace still does not separate damping from
+collective control under source preservation. No checkpoint was promoted and no
+closed-loop test ran. Further anatomical expansion under this constraint is paused; the
+next test must change the control decomposition. See
+[`artifacts/variable-height-native-upstream-damping-route-training-v1/`](../artifacts/variable-height-native-upstream-damping-route-training-v1/).
