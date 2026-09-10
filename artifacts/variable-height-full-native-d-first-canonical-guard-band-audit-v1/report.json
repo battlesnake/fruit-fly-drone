@@ -41,7 +41,7 @@
   "source_resume_sha256": "eb30a7c1d6f75ee65a6588dbe09475b66c172227170300248625baea1b15b148",
   "starting_candidate": {
     "archive_file_sha256": "bb0b2960ca28e1d5ac54583d902e2fe368849006fe6294500bcc9793b99326f2",
-    "parameter_tensor_sha256": "d878e0d4e42d597e9d7324a8116d2f52d1e31ee96c4356b1817eb5e9e5aa16a3",
+    "parameter_tensor_sha256": "352c1a8bc047bc25b9a0c869b3b65ca745dca3d8d9addc017f28f9c1bfd05c80",
     "scale": 0.0625
   },
   "training_full_correction": {
