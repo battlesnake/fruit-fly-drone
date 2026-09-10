@@ -55,6 +55,7 @@ from flydrone.hover import (  # noqa: E402
     ForelegStickPlant,
     HoverConfig,
     QuadState,
+    motor_target_for_rc,
 )
 
 
@@ -347,10 +348,21 @@ def evaluate_policy_batch(
     hover_config: HoverConfig,
     gate_config: GateConfig,
     acceleration_control: str = "live",
+    axis_intervention: str = "native",
+    takeover_seconds: float = 0.5,
     return_outcomes: bool = False,
 ) -> dict[str, Any]:
     if acceleration_control not in {"live", "constant_1g", "pair_swapped"}:
         raise ValueError(f"unknown acceleration control: {acceleration_control}")
+    if axis_intervention not in {"native", "reserve_steering"}:
+        raise ValueError(f"unknown axis intervention: {axis_intervention}")
+    teacher_rc_for_mode = None
+    if axis_intervention == "reserve_steering":
+        # Imported lazily because the teacher module routes its case generation
+        # through this module.
+        from audit_gate_analytic_teachers import teacher_rc_for_mode as teacher
+
+        teacher_rc_for_mode = teacher
     policies, episodes = len(theta), len(cases.mass_scale)
     expanded = repeat_cases(cases, policies)
     policy_theta = theta.repeat_interleave(episodes, dim=0)
@@ -361,6 +373,7 @@ def evaluate_policy_batch(
     stick_state = sticks.initial_state(policies * episodes, device=device, dtype=torch.float32)
     neural = controller.initial_state(policies * episodes, device=device, dtype=torch.float32)
     step_count = round(seconds / hover_config.dt)
+    takeover_step = round(takeover_seconds / hover_config.dt)
     passed = torch.zeros(policies * episodes, dtype=torch.bool, device=device)
     collision = torch.zeros_like(passed)
     missed = torch.zeros_like(passed)
@@ -410,6 +423,19 @@ def evaluate_policy_batch(
             policy_theta,
             spec,
         )
+        if axis_intervention == "reserve_steering" and step >= takeover_step:
+            assert teacher_rc_for_mode is not None
+            reserve_rc = teacher_rc_for_mode(
+                "visual_accelerometer_reserve",
+                controller,
+                state,
+                expanded.gate,
+                expanded.mass_scale,
+                hover_config,
+            )
+            reserve_motor = motor_target_for_rc(reserve_rc, hover_config)
+            motor = motor.clone()
+            motor[:, :3] = reserve_motor[:, :3]
         rc, stick_state = sticks(motor, stick_state)
         for index, (begin, end) in enumerate(bin_limits):
             if begin <= step < end:
