@@ -496,6 +496,23 @@ def candidate_decision(
     }
 
 
+def damping_directional_derivative(
+    gradients: dict[str, Tensor],
+    displacement: dict[str, Tensor],
+    *,
+    scale: float = 1.0,
+) -> float:
+    return float(
+        sum(
+            (
+                gradients[name].double()
+                * (displacement[name].double() / scale)
+            ).sum()
+            for name in joint.PARAMETER_FAMILIES
+        )
+    )
+
+
 def terminal_decision(
     source_training: dict[str, Any],
     training: dict[str, Any],
@@ -648,12 +665,13 @@ def find_safe_trial(
     selected_scale = None
     selected_metrics = None
     for scale in BACKTRACK_SCALES:
-        actual_rms = step_audit.set_displacement(student, base, displacement, scale=scale)
+        actual_rms = install_trial(student, base, displacement, scale=scale)
         actual = {
             name: getattr(student, name).detach() - base[name] for name in joint.PARAMETER_FAMILIES
         }
-        derivative = float(
-            sum((raw_gradients[name] * actual[name]).sum() for name in joint.PARAMETER_FAMILIES)
+        derivative = damping_directional_derivative(
+            raw_gradients,
+            actual,
         )
         metrics, _ = endpoint.evaluate(
             student,
@@ -684,6 +702,18 @@ def find_safe_trial(
     if selected_scale is None:
         joint._load_parameters(student, base)
     return selected_scale, selected_metrics, trials
+
+
+def install_trial(
+    controller: ConnectomeController,
+    source: dict[str, Tensor],
+    displacement: dict[str, Tensor],
+    *,
+    scale: float,
+) -> dict[str, float]:
+    return step_audit.set_displacement(
+        controller, source, displacement, scale=scale
+    )
 
 
 def atomic_torch_save(payload: dict[str, Any], path: Path) -> None:
@@ -1050,7 +1080,7 @@ def main() -> int:
             endpoint_scale,
             device=device,
         )
-        step_audit.set_displacement(
+        install_trial(
             student,
             preflight_parameters,
             displacement,
@@ -1068,11 +1098,10 @@ def main() -> int:
             name: getattr(student, name).detach() - preflight_parameters[name]
             for name in joint.PARAMETER_FAMILIES
         }
-        derivative = float(
-            sum(
-                (raw_gradients[name] * (actual_fd[name] / joint.FINITE_DIFFERENCE_SCALE)).sum()
-                for name in joint.PARAMETER_FAMILIES
-            )
+        derivative = damping_directional_derivative(
+            raw_gradients,
+            actual_fd,
+            scale=joint.FINITE_DIFFERENCE_SCALE,
         )
         finite_difference = (
             finite_difference_metrics["endpoint_damping_nrmse"] ** 2
