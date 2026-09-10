@@ -52,6 +52,7 @@ def test_dense_expert_labels_executed_actions_and_window_rebuilds_state() -> Non
     assert trajectories.behavior_parameter_sha256
     parity = controller_replay_parity(source, trajectories, trajectories.targets, steps=2)
     assert parity["exact"]
+    assert parity["within_tolerance"]
     assert parity["maximum_absolute_error"] == 0.0
     assert parity["stored_image_dtype"] == "torch.float32"
     scales = fixed_axis_scales(trajectories, floor=0.01)

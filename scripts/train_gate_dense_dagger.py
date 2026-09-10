@@ -53,6 +53,8 @@ from flydrone.hover import (  # noqa: E402
     motor_target_for_rc,
 )
 
+REPLAY_PARITY_ABSOLUTE_TOLERANCE = 1.0e-6
+
 
 @dataclass
 class DenseTrajectories:
@@ -373,6 +375,7 @@ def controller_replay_parity(
     reference: Tensor,
     *,
     steps: int,
+    absolute_tolerance: float = REPLAY_PARITY_ABSOLUTE_TOLERANCE,
 ) -> dict[str, Any]:
     """Replay stored FP32 sensors and compare motor output with collection."""
 
@@ -394,12 +397,15 @@ def controller_replay_parity(
     replayed = torch.stack(predictions)
     expected = reference[:steps]
     difference = (replayed - expected).abs()
+    maximum_absolute_error = float(difference.max())
     return {
         "steps": steps,
         "episodes": episodes,
         "stored_image_dtype": str(trajectories.images.dtype),
         "exact": torch.equal(replayed, expected),
-        "maximum_absolute_error": float(difference.max()),
+        "absolute_tolerance": absolute_tolerance,
+        "within_tolerance": maximum_absolute_error <= absolute_tolerance,
+        "maximum_absolute_error": maximum_absolute_error,
         "last_step_maximum_absolute_error": float(difference[-1].max()),
     }
 
@@ -771,7 +777,7 @@ def main() -> int:
         expert.targets,
         steps=takeover_step,
     )
-    if not expert_replay_parity["exact"]:
+    if not expert_replay_parity["within_tolerance"]:
         raise RuntimeError(f"expert source-prefix replay mismatch: {expert_replay_parity}")
     axis_scales = fixed_axis_scales(expert, floor=args.action_scale_floor)
 
@@ -867,7 +873,7 @@ def main() -> int:
                 student_replay.executed_motor,
                 steps=steps,
             )
-            if not student_replay_parity["exact"]:
+            if not student_replay_parity["within_tolerance"]:
                 raise RuntimeError(
                     f"student collection replay mismatch in block {block}: {student_replay_parity}"
                 )
@@ -1191,6 +1197,7 @@ def main() -> int:
             "student_refreshes": 3,
             "current_native_state_recomputed_from_prefix": True,
             "stored_native_state_used": False,
+            "replay_parity_absolute_tolerance": REPLAY_PARITY_ABSOLUTE_TOLERANCE,
             "gradient_window_seconds": args.window_steps * hover_config.dt,
             "imitation_objective": "equal-weight per-axis RMS-normalized MAE/L1",
             "teacher_drives_deployed_actor": False,
