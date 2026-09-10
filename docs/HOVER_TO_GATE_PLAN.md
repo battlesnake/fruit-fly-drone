@@ -593,7 +593,8 @@ the controller's intrinsic 10-250 ms parameterization. There is no local route m
 source-distance ball, height-null projection, added state or privileged actor input.
 
 The preflight freezes eight training scenes at seed `320953` and eight disjoint
-development scenes at `330953`. Each scene has the same four signed height-by-velocity
+development scenes at `330953`; their separately cached dynamic-attitude banks use seeds
+`320954` and `330954`. Each factorial scene has the same four signed height-by-velocity
 branches and balanced magnitudes used by the factorial audit: 0.05/0.10 m marker error,
 0.15/0.30 m/s vertical speed, and approach durations 15/18/22/25 policy steps. A neutral
 five-step common prefix and a 25-step response are both differentiated from zero native
@@ -625,9 +626,12 @@ so batching cannot change the declared objective or turn GPU memory into an expe
 variable.
 
 Before a learnability pass, teacher-against-teacher component error must be numerically
-zero, source replay must be deterministic to `1e-6`, all labels and outputs must be finite,
-and the analytical teacher's commands must pass through the actual foreleg/stick plant
-with bounded measured sticks and the intended endpoint response signs. The actual
+zero after a measured Hadamard reconstruction, source replay must be deterministic to
+`1e-6`, and all labels and outputs must be finite. Every labelled analytical-teacher
+command is also held for one second at the 100 Hz physics rate through the actual
+foreleg/stick plant. Its measured RC must be within 0.02 of the target, remain bounded,
+and retain the intended endpoint response signs. This checks command units, signs and
+steady-state reachability, not time-varying tracking or closed-loop stability. The actual
 proposed update must then pass a directional check. That update is one clipped Adam step
 (global gradient-norm cap 1.0; edge/bias learning rate `1e-4`; raw-time-constant learning
 rate `1e-6`; no weight decay). After edge-bound projection, its displacement is the
