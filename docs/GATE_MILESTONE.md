@@ -426,6 +426,14 @@ argument, and near-zero throttle contrasts use a fixed actuator-scale normalizat
 instead of a data-dependent microscopic denominator. See
 [`gate-analytic-teacher-reserve-v1`](../artifacts/gate-analytic-teacher-reserve-v1/).
 
+The first mass-free distillation confirmed that the 0.5-second issue was fixed: its raw
+teacher contrast was only about 0.0003 motor units and the learned error was 0.028 of the
+predeclared 0.01 actuator scale. The sampled-endpoint optimizer still failed its first-round
+fidelity gate. Updates that improved the middle horizons damaged the 0.5- and 5-second
+means, while roll error stayed high, exposing multi-objective interference rather than a
+need for a mass input. The rejected record is in
+[`gate-multitime-reserve-sampled-diagnostic-v1`](../artifacts/gate-multitime-reserve-sampled-diagnostic-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:

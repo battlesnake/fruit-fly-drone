@@ -202,6 +202,13 @@ fixed 0.01 motor-command scale. See the
 [`exact-mass distillation diagnostic`](artifacts/gate-multitime-analytic-exact-mass-diagnostic-v1/)
 and [`mass-free teacher preflight`](artifacts/gate-analytic-teacher-reserve-v1/).
 
+That mass-free run verified the diagnosis: its tiny 0.5-second throttle contrast was fit
+to 2.8% of the fixed actuator scale. But sampling only one horizon per update caused
+strong cross-time interference. Middle-horizon throttle means improved while the
+5-second mean error grew to 4.24 normalized RMSE, and roll fidelity remained poor. It too
+stopped after round one without flight evaluation or promotion. See the
+[`sampled-horizon diagnostic`](artifacts/gate-multitime-reserve-sampled-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.
