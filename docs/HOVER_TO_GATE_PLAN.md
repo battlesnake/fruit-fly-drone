@@ -703,9 +703,11 @@ D improvement is measurable only if its fixed-scale NRMSE reduction is at least 
 above the replay floor.
 
 If the selected scale passes both banks, the result establishes step-size overshoot for
-this one update; it does not establish absence of longer-term task conflict. It authorizes
-only a separately preregistered joint-fitting run using that step-control rule and the
-mandatory update-50 endpoint-D improvement gate. If no scale passes, family probes guide
-a later individual-output RPY-Jacobian projection protocol. If a scale passes without
-measurable D improvement, report collective calibration only. No audit endpoint is
-retained or promoted and no closed-loop test follows directly.
+this one update; it does not establish absence of longer-term task conflict. Only a pass
+with measurable D-error reduction on **both** banks authorizes a separately preregistered
+joint-fitting run using that step-control rule and the mandatory update-50 endpoint-D
+improvement gate. If no scale passes, family probes guide a later individual-output RPY-
+Jacobian projection protocol. If a scale passes without measurable D improvement, report
+safe collective calibration only and do not automatically proceed to multi-step fitting.
+If the selected scale fails development, stop without trying a smaller scale there. No
+audit endpoint is retained or promoted and no closed-loop test follows directly.
