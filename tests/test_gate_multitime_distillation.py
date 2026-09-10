@@ -10,8 +10,10 @@ from scripts.train_gate_full_network_oracle import load_frozen_controller, param
 from scripts.train_gate_multitime_distillation import (
     collect_analytic_trajectories,
     diverse_matched_cases,
+    fidelity_margin_score,
     fidelity_passed,
     fidelity_score,
+    joint_multitime_loss,
     make_dataset,
     multitime_loss,
     select_pairs,
@@ -129,6 +131,28 @@ def test_multitime_loss_replays_complete_native_prefix() -> None:
         for parameter in student.parameters()
     )
 
+    student.zero_grad(set_to_none=True)
+    joint_loss, joint_details = joint_multitime_loss(
+        student,
+        batch,
+        scales,
+        parameter_snapshot(student),
+        horizon_steps=horizons,
+        horizon_weights=(2.0, 1.0),
+        anchor_step=1,
+        axis_action_weight=3.0,
+        anchor_weight=0.25,
+        regularization_weight=1.0e-6,
+    )
+    joint_loss.backward()
+    assert torch.isfinite(joint_loss)
+    assert joint_details["included_horizon_weight"] == 3.0
+    assert all(item["included"] for item in joint_details["endpoints"])
+    assert all(
+        parameter.grad is not None and bool(torch.isfinite(parameter.grad).all())
+        for parameter in student.parameters()
+    )
+
     assert trajectories.summary["teacher_mode"] == "visual_accelerometer_exact_mass"
 
     reserve = teacher_rc_for_mode(
@@ -175,12 +199,14 @@ def test_fidelity_gate_rejects_empty_and_nonfinite_metrics() -> None:
     }
     assert fidelity_passed(valid_metrics, threshold=0.25)
     assert fidelity_score(valid_metrics) == 0.10
+    assert fidelity_margin_score(valid_metrics, threshold=0.25) == 0.5
 
     missing = copy.deepcopy(valid_metrics)
     missing["0.50"]["valid_matched_pair_count"] = 0
     missing["0.50"]["contrast_normalized_rmse"] = None
     assert not fidelity_passed(missing, threshold=0.25)
     assert fidelity_score(missing) == float("inf")
+    assert fidelity_margin_score(missing, threshold=0.25) == float("inf")
 
     nonfinite = copy.deepcopy(valid_metrics)
     nonfinite["0.50"]["axis_teacher_action_normalized_rmse"]["yaw"] = float("nan")

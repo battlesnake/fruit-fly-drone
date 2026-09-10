@@ -548,6 +548,40 @@ def replay_multitime(
     return torch.stack(outputs)
 
 
+def replay_multitime_and_anchor(
+    controller: ConnectomeController,
+    dataset: MultiTimeDataset,
+    *,
+    horizon_steps: tuple[int, ...],
+    anchor_step: int,
+) -> tuple[Tensor, Tensor]:
+    neural = controller.initial_state(
+        dataset.mass_scale.numel(),
+        device=dataset.images.device,
+        dtype=dataset.images.dtype,
+    )
+    requested = set(horizon_steps)
+    outputs = []
+    anchor = None
+    for step in range(horizon_steps[-1]):
+        motor, neural = controller_step(
+            controller,
+            dataset.images[step],
+            dataset.roll_pitch[step],
+            neural,
+            dataset.specific_force[step],
+            dataset.stick_position[step],
+        )
+        completed = step + 1
+        if completed == anchor_step:
+            anchor = motor
+        if completed in requested:
+            outputs.append(motor)
+    if anchor is None or len(outputs) != len(horizon_steps):
+        raise RuntimeError("joint replay did not reach every endpoint and its anchor")
+    return torch.stack(outputs), anchor
+
+
 def replay_endpoint_and_anchor(
     controller: ConnectomeController,
     dataset: MultiTimeDataset,
@@ -655,6 +689,110 @@ def multitime_loss(
     }
 
 
+def joint_multitime_loss(
+    controller: ConnectomeController,
+    dataset: MultiTimeDataset,
+    scales: HorizonScales,
+    initial_parameters: dict[str, Tensor],
+    *,
+    horizon_steps: tuple[int, ...],
+    horizon_weights: tuple[float, ...],
+    anchor_step: int,
+    axis_action_weight: float,
+    anchor_weight: float,
+    regularization_weight: float,
+) -> tuple[Tensor, dict[str, Any]]:
+    """Average every endpoint's loss from one complete recurrent replay."""
+
+    if len(horizon_steps) != len(horizon_weights):
+        raise ValueError("every horizon requires one fixed weight")
+    motors, anchor_motor = replay_multitime_and_anchor(
+        controller,
+        dataset,
+        horizon_steps=horizon_steps,
+        anchor_step=anchor_step,
+    )
+    weighted_endpoint = motors.sum() * 0.0
+    included_weight = 0.0
+    endpoint_details = []
+    for index, (step, weight) in enumerate(zip(horizon_steps, horizon_weights, strict=True)):
+        valid = dataset.valid_at_horizons[index]
+        pair_valid = valid[0::2] & valid[1::2]
+        if not bool(valid.any()) or not bool(pair_valid.any()):
+            endpoint_details.append(
+                {
+                    "horizon_seconds": step * 0.01,
+                    "included": False,
+                    "valid_episode_count": int(valid.sum()),
+                    "valid_pair_count": int(pair_valid.sum()),
+                }
+            )
+            continue
+        prediction = motors[index] - dataset.source_motor[index]
+        target = dataset.target_correction[index]
+        prediction_contrast = prediction[0::2, 3] - prediction[1::2, 3]
+        target_contrast = target[0::2, 3] - target[1::2, 3]
+        prediction_mean = 0.5 * (prediction[0::2, 3] + prediction[1::2, 3])
+        target_mean = 0.5 * (target[0::2, 3] + target[1::2, 3])
+        contrast_loss = (
+            prediction_contrast[pair_valid] - target_contrast[pair_valid]
+        ).square().mean() / scales.contrast_squared[index]
+        mean_loss = (
+            prediction_mean[pair_valid] - target_mean[pair_valid]
+        ).square().mean() / scales.mean_squared[index]
+        axis_loss = (
+            ((prediction[valid, :3] - target[valid, :3]) / scales.axis_squared[index].sqrt())
+            .square()
+            .mean()
+        )
+        endpoint_loss = contrast_loss + mean_loss + axis_action_weight * axis_loss
+        weighted_endpoint = weighted_endpoint + weight * endpoint_loss
+        included_weight += weight
+        endpoint_details.append(
+            {
+                "horizon_seconds": step * 0.01,
+                "included": True,
+                "weight": weight,
+                "contrast_normalized_mse": float(contrast_loss.detach()),
+                "mean_normalized_mse": float(mean_loss.detach()),
+                "axis_teacher_action_normalized_mse": float(axis_loss.detach()),
+                "valid_episode_count": int(valid.sum()),
+                "valid_pair_count": int(pair_valid.sum()),
+            }
+        )
+    if included_weight <= 0.0:
+        raise RuntimeError("joint batch has no supervised endpoint")
+    endpoint_average = weighted_endpoint / included_weight
+    anchor_valid = dataset.valid_anchor
+    if not bool(anchor_valid.any()):
+        raise RuntimeError("joint batch has no valid anchor")
+    anchor_loss = (
+        (
+            (anchor_motor[anchor_valid] - dataset.source_anchor[anchor_valid])
+            / scales.anchor_squared.sqrt()
+        )
+        .square()
+        .mean()
+    )
+    edge_scale = initial_parameters["edge_magnitude"].clamp_min(0.05)
+    regularization = (
+        ((controller.edge_magnitude - initial_parameters["edge_magnitude"]) / edge_scale)
+        .square()
+        .mean()
+        + (controller.bias - initial_parameters["bias"]).square().mean()
+        + (controller.raw_time_constant - initial_parameters["raw_time_constant"]).square().mean()
+    )
+    total = endpoint_average + anchor_weight * anchor_loss + regularization_weight * regularization
+    return total, {
+        "total_loss": float(total.detach()),
+        "weighted_endpoint_loss": float(endpoint_average.detach()),
+        "included_horizon_weight": included_weight,
+        "anchor_normalized_mse": float(anchor_loss.detach()),
+        "regularization": float(regularization.detach()),
+        "endpoints": endpoint_details,
+    }
+
+
 @torch.no_grad()
 def fidelity_metrics(
     controller: ConnectomeController,
@@ -742,6 +880,28 @@ def fidelity_score(metrics: dict[str, Any]) -> float:
     if not values or any(value is None or not math.isfinite(value) for value in values):
         return float("inf")
     return max(value for value in values if value is not None)
+
+
+def fidelity_margin_score(metrics: dict[str, Any], *, threshold: float) -> float:
+    """Worst fidelity error divided by its preregistered acceptance limit."""
+
+    values: list[float] = []
+    for time, horizon in metrics.items():
+        if horizon["valid_episode_count"] == 0 or horizon["valid_matched_pair_count"] == 0:
+            return float("inf")
+        contrast_limit = 0.20 if time in {"0.50", "0.75"} else threshold
+        components = (
+            (horizon["contrast_normalized_rmse"], contrast_limit),
+            (horizon["mean_normalized_rmse"], threshold),
+            *(
+                (value, threshold)
+                for value in horizon["axis_teacher_action_normalized_rmse"].values()
+            ),
+        )
+        if any(value is None or not math.isfinite(value) for value, _ in components):
+            return float("inf")
+        values.extend(value / limit for value, limit in components if value is not None)
+    return max(values, default=float("inf"))
 
 
 def fidelity_passed(metrics: dict[str, Any], *, threshold: float) -> bool:
