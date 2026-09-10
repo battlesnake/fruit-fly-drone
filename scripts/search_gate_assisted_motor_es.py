@@ -245,6 +245,38 @@ def candidate_rank(summary: dict[str, Any]) -> tuple[float, float, float]:
     )
 
 
+def assisted_controller_step(
+    controller: ConnectomeController,
+    image: Tensor,
+    roll_pitch: Tensor,
+    neural: Tensor,
+    body_specific_force: Tensor,
+    stick_position: Tensor,
+    interface: Tensor,
+    spec: MotorInterfaceSpec,
+    *,
+    native_controller_forward: bool,
+) -> tuple[Tensor, Tensor]:
+    if native_controller_forward:
+        return controller(
+            image,
+            roll_pitch,
+            neural,
+            body_specific_force,
+            stick_position,
+        )
+    return controller_step_with_interface(
+        controller,
+        image,
+        roll_pitch,
+        neural,
+        body_specific_force,
+        stick_position,
+        interface,
+        spec,
+    )
+
+
 @torch.no_grad()
 def evaluate_assisted_policy_batch(
     controller: ConnectomeController,
@@ -260,6 +292,7 @@ def evaluate_assisted_policy_batch(
     hover_config: HoverConfig,
     gate_config: GateConfig,
     return_outcomes: bool = False,
+    native_controller_forward: bool = False,
 ) -> dict[str, Any]:
     """Evaluate complete flights, optionally substituting the complementary teacher axes."""
 
@@ -304,7 +337,7 @@ def evaluate_assisted_policy_batch(
             hover_config=hover_config,
             gate_config=gate_config,
         )
-        native_motor, neural = controller_step_with_interface(
+        native_motor, neural = assisted_controller_step(
             controller,
             image,
             state.euler[:, :2],
@@ -313,6 +346,7 @@ def evaluate_assisted_policy_batch(
             stick_state.position,
             interface,
             spec,
+            native_controller_forward=native_controller_forward,
         )
         if intervention == "native" or step < takeover_step:
             motor = native_motor
