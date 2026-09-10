@@ -1,0 +1,550 @@
+{
+  "arms": {
+    "fixed_sign": {
+      "fits": [
+        {
+          "active_lower_bounds": 22,
+          "active_upper_bounds": 10,
+          "arm": "fixed_sign",
+          "converged_under_preregistered_rule": true,
+          "cost": 0.03361113562457392,
+          "development_normalized_equal_group_mse": 0.06722227124914784,
+          "function_evaluations": 149,
+          "jacobian_evaluations": 148,
+          "message": "`ftol` termination condition is satisfied.",
+          "projected_gradient": {
+            "l2_projected_gradient": 1.0302852614937155e-09,
+            "maximum_absolute_projected_gradient": 1.018969043690976e-09,
+            "maximum_absolute_raw_gradient": 0.002405886910604135
+          },
+          "scipy_first_order_optimality": 2.64102068856695e-09,
+          "start": "source",
+          "status": 2,
+          "success": true,
+          "weights": [
+            2.146659220468758e-49,
+            6.125031973769463e-42,
+            3.305710687962381,
+            7.999999999999999,
+            7.801161174322916e-40,
+            7.999999999999999,
+            3.3290061051205597e-43,
+            1.5796593734205986,
+            1.981749187923631e-37,
+            6.747118587651887e-37,
+            4.6810486970910076e-38,
+            7.999999999999999,
+            7.999999999999999,
+            2.222914695957387e-37,
+            3.1703135102059337e-46,
+            3.0781561973379335e-37,
+            4.773895098205237e-39,
+            7.999999999999999,
+            2.8023887012408647e-37,
+            7.999999999999999,
+            3.426389124032287e-38,
+            3.1920347310320184e-32,
+            1.0861144853511792e-35,
+            7.999999999999999,
+            4.0059031055092597e-38,
+            7.999999999999999,
+            7.999999999999999,
+            2.413108316987632e-34,
+            1.707446992059147e-37,
+            1.303975422282076e-57,
+            2.5918556652128246,
+            7.840813542407921,
+            6.694027313108944e-39,
+            2.9667278765994594,
+            1.3062230194578107e-37,
+            7.999999999999999,
+            1.0464964336639297e-41
+          ]
+        },
+        {
+          "active_lower_bounds": 22,
+          "active_upper_bounds": 10,
+          "arm": "fixed_sign",
+          "converged_under_preregistered_rule": true,
+          "cost": 0.03361113562457102,
+          "development_normalized_equal_group_mse": 0.06722227124914204,
+          "function_evaluations": 187,
+          "jacobian_evaluations": 183,
+          "message": "`ftol` termination condition is satisfied.",
+          "projected_gradient": {
+            "l2_projected_gradient": 8.849486956867813e-10,
+            "maximum_absolute_projected_gradient": 8.752375295871528e-10,
+            "maximum_absolute_raw_gradient": 0.0024058869164004775
+          },
+          "scipy_first_order_optimality": 2.2684861866478192e-09,
+          "start": "adam_update_200",
+          "status": 2,
+          "success": true,
+          "weights": [
+            5.214463669261766e-40,
+            4.3713329415301455e-43,
+            3.3057087212780796,
+            7.999999999999999,
+            1.7631978080028168e-38,
+            7.999999999999999,
+            6.561728658073941e-43,
+            1.5796615938376686,
+            5.0638566485869784e-37,
+            6.772520866497606e-36,
+            8.246821645089998e-39,
+            7.999999999999999,
+            7.999999999999999,
+            1.2049995851162432e-38,
+            6.393045758262835e-28,
+            3.1559142385405824e-38,
+            1.4275008399952296e-49,
+            7.999999999999999,
+            2.0831837630380583e-42,
+            7.999999999999999,
+            4.0598784331794775e-38,
+            1.5094157190968736e-33,
+            3.3346794773612893e-28,
+            7.999999999999999,
+            1.0691281228903395e-49,
+            7.999999999999999,
+            7.999999999999999,
+            2.730563301836981e-31,
+            7.600266154138218e-47,
+            5.889398601995091e-35,
+            2.59185205154292,
+            7.840810789999334,
+            2.8104549581500366e-37,
+            2.966727814601159,
+            2.15124592391667e-40,
+            7.999999999999999,
+            7.539272415556443e-40
+          ]
+        }
+      ],
+      "held_out": {
+        "aggregate_equal_group_nrmse": 0.2487240329441205,
+        "aggregate_equal_group_rmse": 0.015055482652421922,
+        "maximum_group_nrmse": 0.3661731191329675,
+        "per_window_and_mass": {
+          "0.50:0.75/heavy": {
+            "bias": 0.0038299997535913275,
+            "normalization_scale": 0.037974262734007,
+            "nrmse": 0.3661731191329675,
+            "rmse": 0.013905154232086155,
+            "samples": 3200,
+            "target_rms": 0.036734690220154416
+          },
+          "0.50:0.75/light": {
+            "bias": -0.007443526339693723,
+            "normalization_scale": 0.05682043788159184,
+            "nrmse": 0.32380587987391884,
+            "rmse": 0.018398791883070195,
+            "samples": 3200,
+            "target_rms": 0.057268792843359353
+          },
+          "0.75:1.00/heavy": {
+            "bias": -0.0014892596050402945,
+            "normalization_scale": 0.0811645729608984,
+            "nrmse": 0.12019424927244468,
+            "rmse": 0.009755514914553747,
+            "samples": 3200,
+            "target_rms": 0.08082757561342349
+          },
+          "0.75:1.00/light": {
+            "bias": -0.013938291717744291,
+            "normalization_scale": 0.09145282181394912,
+            "nrmse": 0.17667609395748576,
+            "rmse": 0.016157527339478478,
+            "samples": 3200,
+            "target_rms": 0.09185142283602465
+          },
+          "1.00:1.50/heavy": {
+            "bias": 0.004397201168134125,
+            "normalization_scale": 0.0730878781399838,
+            "nrmse": 0.16067499652290387,
+            "rmse": 0.011743394566008319,
+            "samples": 6400,
+            "target_rms": 0.07323173193144705
+          },
+          "1.00:1.50/light": {
+            "bias": 0.004857975308363846,
+            "normalization_scale": 0.07413437738692799,
+            "nrmse": 0.2465183809081229,
+            "rmse": 0.018275486683057247,
+            "samples": 6400,
+            "target_rms": 0.07434007587533663
+          }
+        },
+        "rmse_improvement_over_constant": 0.4675445649647365
+      },
+      "pass_gate": {
+        "checks": {
+          "aggregate_rmse_improves_at_least_fifty_percent_over_constant": false,
+          "every_window_and_mass_nrmse_at_most_threshold": false
+        },
+        "passed": false
+      },
+      "selected_converged": true,
+      "selected_start": "adam_update_200",
+      "selection_rule": "minimum development normalized equal-group MSE"
+    },
+    "relaxed_sign": {
+      "fits": [
+        {
+          "active_lower_bounds": 0,
+          "active_upper_bounds": 1,
+          "arm": "relaxed_sign",
+          "converged_under_preregistered_rule": false,
+          "cost": 0.017008774088387302,
+          "development_normalized_equal_group_mse": 0.03401754817677459,
+          "function_evaluations": 300,
+          "jacobian_evaluations": 274,
+          "message": "The maximum number of function evaluations is exceeded.",
+          "projected_gradient": {
+            "l2_projected_gradient": 0.00010760946129760048,
+            "maximum_absolute_projected_gradient": 8.210139898306166e-05,
+            "maximum_absolute_raw_gradient": 8.210139898306166e-05
+          },
+          "scipy_first_order_optimality": 7.631387681802408e-05,
+          "start": "source",
+          "status": 0,
+          "success": false,
+          "weights": [
+            -7.99999680175854,
+            7.952271516110871,
+            -7.9998733622395655,
+            -7.999999999984829,
+            -6.050637613904363,
+            0.45135635817877234,
+            7.999916375110576,
+            -3.880268961206052,
+            -3.7605899986888227,
+            7.999999999999997,
+            -7.999999999348995,
+            -6.271006035367357,
+            3.3030844349256494,
+            7.999958336745906,
+            3.0886284765224024,
+            3.0133082852255146,
+            -7.999975299302725,
+            -3.9204006924042267,
+            2.940151059299178,
+            -6.653594876852691,
+            -0.7440966920948794,
+            -1.354178391082615,
+            -0.24624350669021672,
+            -1.7943605105681009,
+            -6.524924051130601,
+            0.8145134940911081,
+            -3.6711968196178373,
+            -1.587264349461597,
+            7.9871170585175,
+            4.9884317292554154,
+            -7.791042425187996,
+            -5.864617139719094,
+            -7.999999189411203,
+            7.999999455834309,
+            -7.999806647239587,
+            -7.980299667114661,
+            4.266909081132522
+          ]
+        },
+        {
+          "active_lower_bounds": 3,
+          "active_upper_bounds": 0,
+          "arm": "relaxed_sign",
+          "converged_under_preregistered_rule": false,
+          "cost": 0.017137202429664183,
+          "development_normalized_equal_group_mse": 0.03427440485932836,
+          "function_evaluations": 300,
+          "jacobian_evaluations": 288,
+          "message": "The maximum number of function evaluations is exceeded.",
+          "projected_gradient": {
+            "l2_projected_gradient": 0.00014220631029805215,
+            "maximum_absolute_projected_gradient": 0.00010197298380102055,
+            "maximum_absolute_raw_gradient": 0.00010197298380102055
+          },
+          "scipy_first_order_optimality": 0.00034097523378875857,
+          "start": "adam_update_200",
+          "status": 0,
+          "success": false,
+          "weights": [
+            -7.999999587755457,
+            7.999970551592043,
+            -7.999995599213985,
+            -7.999999999999999,
+            -5.786659782309061,
+            -4.606545458271021,
+            7.999946269860428,
+            -3.29589287659426,
+            5.579790633615533,
+            7.4478331019390085,
+            -7.999999999999999,
+            -7.239121768884658,
+            -2.412241424762961,
+            7.9999226848564415,
+            3.370928225453563,
+            7.59486739419998,
+            -7.999991217094371,
+            -7.852476658577252,
+            0.3987570534788759,
+            -7.999954122993522,
+            3.014214412713722,
+            -0.3270993018358553,
+            3.1570909359881094,
+            -4.096438541900614,
+            -7.9999246707903415,
+            7.60016788855711,
+            -3.1174448172640936,
+            -5.570900401736225,
+            7.999999343397201,
+            7.9990919596755985,
+            2.308404347227601,
+            -7.209211116911831,
+            -7.999999999999999,
+            7.9999969421679635,
+            -7.99986936678864,
+            -7.98949890435621,
+            7.141748096679252
+          ]
+        }
+      ],
+      "held_out": {
+        "aggregate_equal_group_nrmse": 0.18128257744268111,
+        "aggregate_equal_group_rmse": 0.012043571326084388,
+        "maximum_group_nrmse": 0.23537365698266752,
+        "per_window_and_mass": {
+          "0.50:0.75/heavy": {
+            "bias": 0.0029410309607826334,
+            "normalization_scale": 0.037974262734007,
+            "nrmse": 0.19553285333050072,
+            "rmse": 0.00742521594550249,
+            "samples": 3200,
+            "target_rms": 0.036734690220154416
+          },
+          "0.50:0.75/light": {
+            "bias": -0.007830704578942376,
+            "normalization_scale": 0.05682043788159184,
+            "nrmse": 0.23537365698266752,
+            "rmse": 0.013374034255546766,
+            "samples": 3200,
+            "target_rms": 0.057268792843359353
+          },
+          "0.75:1.00/heavy": {
+            "bias": 0.005368327363260765,
+            "normalization_scale": 0.0811645729608984,
+            "nrmse": 0.12272901992445348,
+            "rmse": 0.009961248492077858,
+            "samples": 3200,
+            "target_rms": 0.08082757561342349
+          },
+          "0.75:1.00/light": {
+            "bias": -0.008486013022301345,
+            "normalization_scale": 0.09145282181394912,
+            "nrmse": 0.13695060542323828,
+            "rmse": 0.012524519315083865,
+            "samples": 3200,
+            "target_rms": 0.09185142283602465
+          },
+          "1.00:1.50/heavy": {
+            "bias": 0.0013080570700702465,
+            "normalization_scale": 0.0730878781399838,
+            "nrmse": 0.14010587781475678,
+            "rmse": 0.010240041324420404,
+            "samples": 6400,
+            "target_rms": 0.07323173193144705
+          },
+          "1.00:1.50/light": {
+            "bias": 0.0015812299563812305,
+            "normalization_scale": 0.07413437738692799,
+            "nrmse": 0.2238277116823486,
+            "rmse": 0.016593328047511742,
+            "samples": 6400,
+            "target_rms": 0.07434007587533663
+          }
+        },
+        "rmse_improvement_over_constant": 0.5740644682170382
+      },
+      "pass_gate": {
+        "checks": {
+          "aggregate_rmse_improves_at_least_fifty_percent_over_constant": true,
+          "every_window_and_mass_nrmse_at_most_threshold": true
+        },
+        "passed": true
+      },
+      "selected_converged": false,
+      "selected_start": "source",
+      "selection_rule": "minimum development normalized equal-group MSE"
+    }
+  },
+  "candidate_checkpoint": null,
+  "checkpoint": "artifacts/gate-motor-interface-es-v1/controller.pt",
+  "checkpoint_sha256": "28e2b0f887f30fe00a40ccaa97dd393949b2ea03257ffbbd0b433c69b56cd986",
+  "claim_scope": "Both fitted arms are frozen-replay diagnostics. The relaxed-sign arm violates the native transmitter-sign constraint and can never be compiled or deployed. No source controller parameter, actor input, state, or checkpoint is changed.",
+  "classification": {
+    "fixed_sign_converged": true,
+    "fixed_sign_passed": false,
+    "interpretation": "evidence_for_fixed_sign_readout_restriction",
+    "next_step": "audit alternative existing signed anatomical routing; do not deploy relaxed weights",
+    "relaxed_sign_passed": true
+  },
+  "compiled_or_promoted": false,
+  "constant_baseline": {
+    "aggregate_equal_group_nrmse": 0.5639313624302054,
+    "aggregate_equal_group_rmse": 0.02827557324384308,
+    "maximum_group_nrmse": 1.1189732626613897,
+    "per_window_and_mass": {
+      "0.50:0.75/heavy": {
+        "bias": 0.03615746902612352,
+        "normalization_scale": 0.037974262734007,
+        "nrmse": 1.1189732626613897,
+        "rmse": 0.042492184668632645,
+        "samples": 3200,
+        "target_rms": 0.036734690220154416
+      },
+      "0.50:0.75/light": {
+        "bias": 0.017653147497524856,
+        "normalization_scale": 0.05682043788159184,
+        "nrmse": 0.6389238528799999,
+        "rmse": 0.03630393309363536,
+        "samples": 3200,
+        "target_rms": 0.057268792843359353
+      },
+      "0.75:1.00/heavy": {
+        "bias": -0.01509842167297996,
+        "normalization_scale": 0.0811645729608984,
+        "nrmse": 0.21047702183412298,
+        "rmse": 0.017083277595248282,
+        "samples": 3200,
+        "target_rms": 0.08082757561342349
+      },
+      "0.75:1.00/light": {
+        "bias": -0.025901324168468482,
+        "normalization_scale": 0.09145282181394912,
+        "nrmse": 0.30613993642015186,
+        "rmse": 0.02799736105556586,
+        "samples": 3200,
+        "target_rms": 0.09185142283602465
+      },
+      "1.00:1.50/heavy": {
+        "bias": -0.006927763299706052,
+        "normalization_scale": 0.0730878781399838,
+        "nrmse": 0.1882259147551829,
+        "rmse": 0.013757032720413787,
+        "samples": 6400,
+        "target_rms": 0.07323173193144705
+      },
+      "1.00:1.50/light": {
+        "bias": -0.0065013013190279075,
+        "normalization_scale": 0.07413437738692799,
+        "nrmse": 0.27264519890748923,
+        "rmse": 0.020212382068541854,
+        "samples": 6400,
+        "target_rms": 0.07434007587533663
+      }
+    }
+  },
+  "device": "cuda",
+  "elapsed_seconds": 210.00765869099996,
+  "gate_config": {
+    "drone_radius": 0.09,
+    "edge_softness": 0.018,
+    "inner_radius": 0.62,
+    "maximum_distance": 4.6,
+    "maximum_height": 1.1,
+    "maximum_lateral_offset": 0.8,
+    "maximum_obliquity_degrees": 20.0,
+    "minimum_distance": 4.6,
+    "minimum_height": 1.1,
+    "minimum_lateral_offset": 0.8,
+    "minimum_obliquity_degrees": 20.0,
+    "outer_radius": 0.76
+  },
+  "goal_passed": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "graph": "artifacts/gate-accel-v2/connectome.npz",
+  "graph_sha256": "d385bcb96f18fad904d263ab34cbead73c794f9c90961d7961671761d323f3ea",
+  "hover_config": {
+    "angular_drag": 2e-05,
+    "camera_fov_degrees": 90.0,
+    "dt": 0.01,
+    "foreleg_joint_limit": 0.65,
+    "inertia_x": 3e-05,
+    "inertia_y": 3e-05,
+    "inertia_z": 5e-05,
+    "linear_drag": 0.12,
+    "mass": 0.035,
+    "max_roll_pitch_rate": 4.1887902047863905,
+    "max_roll_pitch_torque": 0.002,
+    "max_yaw_rate": 3.141592653589793,
+    "max_yaw_torque": 0.0008,
+    "motor_time_constant": 0.045,
+    "rate_gain": 0.018,
+    "roll_stick_gain": 1.0,
+    "stick_damping": 8.0,
+    "stick_motor_strength": 100.0,
+    "stick_spring": 25.0,
+    "target_band_width": 0.18,
+    "thrust_to_weight": 1.5,
+    "wall_x": 5.0
+  },
+  "method": "paired FP64 bounded trust-region throttle-readout constraint audit",
+  "peak_cuda_memory_bytes": 374793728,
+  "prerequisite_checks": {
+    "checkpoint_hash_matches": true,
+    "graph_hash_matches": true,
+    "history_hash_matches": true,
+    "native_readout_failed": true,
+    "readout_hash_matches": true,
+    "return_source_probe_passed": true
+  },
+  "protocol": {
+    "added_recurrent_module": false,
+    "analytic_jacobian": true,
+    "clock_actor_input": false,
+    "development_pairs": 64,
+    "development_source": "identical frozen histories from routing audit v1",
+    "device": "cuda",
+    "engineered_history_features": false,
+    "fixed_sign_bounds": [
+      0.0,
+      8.0
+    ],
+    "fresh_held_out_episodes": 256,
+    "held_out_evaluated_after_selection": true,
+    "held_out_pairs": 128,
+    "held_out_seed": 1042031,
+    "mass_actor_input": false,
+    "maximum_edge_magnitude": 8.0,
+    "maximum_evaluations": 300,
+    "maximum_group_nrmse": 0.25,
+    "minimum_constant_improvement": 0.5,
+    "normalization_floor": 0.01,
+    "projected_gradient_threshold": 1e-06,
+    "relaxed_effective_weight_bounds": [
+      -8.0,
+      8.0
+    ],
+    "relaxed_sign_deployable": false,
+    "selection": "minimum development loss only",
+    "solver": "scipy.optimize.least_squares method=trf tr_solver=exact, FP64",
+    "starts_per_arm": [
+      "source",
+      "routing-audit Adam update 200"
+    ],
+    "windows": [
+      "0.50:0.75",
+      "0.75:1.00",
+      "1.00:1.50"
+    ]
+  },
+  "replay_histories": "runs/gate/throttle-routing-audit-v1/replay-histories.pt",
+  "replay_histories_sha256": "b7ce415cca62bc8f348118c396e8515f28a73340b31b114e7c2fed6994ddbf1a",
+  "routing_readouts": "artifacts/gate-throttle-routing-diagnostic-v1/fitted-readouts.json",
+  "routing_readouts_sha256": "3066cd806310ee576bffcaa92cdfec23cc5cce2e4fecce7714ab5a5beec66d07",
+  "routing_report": "artifacts/gate-throttle-routing-diagnostic-v1/report.json",
+  "routing_report_sha256": "6489415268b1753673118b604bfa2e0324906b1a6be7b8f7c97d2bd83f33e572",
+  "selected_weights": "runs/gate/throttle-readout-constraint-v1/selected-weights.json",
+  "selected_weights_sha256": "d984750fc3c9e535fb9453b0bb2b8f86f83d226d59c106fe27e64bd17c8332f3",
+  "source_preserved": true
+}

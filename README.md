@@ -273,6 +273,15 @@ but barely changed the return-source prediction, so useful information reaches t
 boundary without establishing that acceleration is its carrier there. See the
 [`throttle-routing diagnostic`](artifacts/gate-throttle-routing-diagnostic-v1/).
 
+A paired FP64 trust-region fit then tested whether the failed native readout was merely
+under-optimized. Both legal fixed-sign starts fully converged to the same solution, but
+still missed the held-out thresholds (worst-group NRMSE 0.366; 46.8% improvement over a
+constant). Allowing the same edges to reverse sign for diagnosis only passed at 0.235 and
+57.4%, reversing 15 of 37 signs. This implicates the fixed signs of that final readout and
+redirects work toward a different legal anatomical route; no sign-relaxed weights can be
+deployed. See the
+[`readout-constraint diagnostic`](artifacts/gate-throttle-readout-constraint-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.

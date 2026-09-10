@@ -519,6 +519,21 @@ does not distinguish optimizer limitation from signed-readout constraint. All fi
 diagnostic only and the source was preserved; see
 [`gate-throttle-routing-diagnostic-v1`](../artifacts/gate-throttle-routing-diagnostic-v1/).
 
+A paired FP64 trust-region discriminator then used the same frozen development histories
+to distinguish optimizer budget from the final readout's fixed signs. Both legal `[0,8]`
+magnitude fits converged from different starts to the same loss, with projected gradients
+below `1.1e-9`. On 128 fresh held-out pairs they still missed both gates: worst-group
+NRMSE was 0.366 and aggregate improvement over the constant baseline was 46.8%. Thirty-two
+of 37 magnitudes were pinned to a bound.
+
+A diagnostic-only `[-8,8]` effective-weight relaxation passed the held-out screen at 0.235
+worst-group NRMSE and 57.4% improvement, reversing 15 original signs. This implicates the
+fixed-sign restriction of the final 37-edge mapping rather than the earlier Adam budget.
+It does not justify changing MaleCNS transmitter signs; the next candidate must find a
+different route through existing legal circuitry. No fitted weight was compiled or
+promoted; see
+[`gate-throttle-readout-constraint-diagnostic-v1`](../artifacts/gate-throttle-readout-constraint-diagnostic-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:
@@ -567,6 +582,12 @@ Re-run the frozen throttle-routing diagnostic with:
 
 ```bash
 scripts/run_gate_throttle_routing_audit.sh
+```
+
+Re-run the paired fixed-sign/readout-constraint diagnostic with:
+
+```bash
+scripts/run_gate_throttle_readout_constraint.sh
 ```
 
 Re-run the recurrent-PPO diagnostic under AIRA with:
