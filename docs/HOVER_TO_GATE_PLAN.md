@@ -942,3 +942,53 @@ parameter idempotence, linear feasibility, negative damping derivative, finite
 difference and complete replay all pass. It creates no training or resume state before
 then. This is a numerical representation correction only; it changes neither the actor
 contract, objective, constraints, thresholds, optimizer, data nor qualification plan.
+
+Result: canonicalization resolved the numerical control issue and the preflight passed.
+The second direct parameter projection was exactly idempotent; the earlier maximum
+difference was measured as 0.4996 local float32 ULP. Eight fitting updates were accepted
+at scales 1/2, 1/2, 1/2, 1/8, 1/8, 1/16, 1/16 and 1/4. Training endpoint-D NRMSE fell
+from 1.458400 to 1.376246 and aligned gain moved from -0.43297 to -0.35893, while sign
+remained 0/8. At update 8, endpoint C was 1.68378794 against its source-relative limit
+of 1.68379011, leaving only `2.17e-6` NRMSE slack. The update-9 linear tangent remained
+feasible, but nonlinear replay exceeded endpoint C even at 1/32; that smallest trial
+otherwise improved endpoint-D NRMSE by 0.001118 and passed every other gate. The run
+therefore stopped after the first rejected deterministic proposal, before development
+update 10. Its update-8 resume state is ignored and nonpromotional. No terminal, fresh,
+closed-loop or promotion claim resulted. See
+[`artifacts/variable-height-full-native-d-first-canonical-fitting-v1/`](../artifacts/variable-height-full-native-d-first-canonical-fitting-v1/).
+
+Do not yet resume fitting or infer an unavoidable C/D tradeoff. Run one restored
+**nonlinear feasibility-correction audit** from the exact ignored update-8 resume state
+(SHA-256 `eb30a7c1d6f75ee65a6588dbe09475b66c172227170300248625baea1b15b148`).
+First reproduce the frozen update-8 metrics, optimizer state and rejected update-9 Adam
+proposal. Use only the update-9 1/16 trial as the starting candidate; its registered
+training signature includes endpoint-D NRMSE 1.374014, endpoint C NRMSE 1.683883, pitch
+NRMSE 0.044974 and actual endpoint-D improvement 0.002233 from update 8. Persist and hash
+the reproduced starting parameter tensors before correction.
+
+At that actual nonlinear candidate, compute fresh gradients of the same aggregate and
+per-horizon C/P squared normalized errors, plus any RPY row activated at NRMSE 0.04.
+Add one endpoint-D retention inequality. Solve a single minimum-norm correction in the
+same learning-rate-scaled Euclidean metric with the established active-set boundary
+materialization. Endpoint C must target NRMSE no greater than the original source plus
+0.0199, placing it at least 0.0001 inside the unchanged outer source-plus-0.02 gate. All
+other C/P and RPY constraints retain their original outer limits. Endpoint-D NRMSE must
+remain at least 0.001 below update 8. Convert every NRMSE limit to its squared-error RHS
+before projection.
+
+Materialize the correction once at scales 1, 1/2, 1/4 and 1/8 in that fixed descending
+order. Select the first scale whose actual complete replay satisfies the endpoint-C
+interior target, the endpoint-D retention target, every original preservation/validity/
+bound gate, linear feasibility and canonical parameter idempotence. There is one
+correction solve and no retry with a newly linearized correction. Restore the update-8
+parameters exactly and retain no corrected candidate. Failure does not automatically
+authorize a D-sacrificing collective-restoration phase.
+
+As a separate registered diagnostic in the same run, evaluate the fixed update-8
+checkpoint once on the already-exposed development bank. Require endpoint-D NRMSE to
+improve by at least 0.001 from the development source and all original C/P/RPY,
+validity and motor-bound gates to pass. This evaluation cannot retroactively continue or
+promote the stopped fit. The correction audit passes only if both its training
+feasibility test and this update-8 development-transfer test pass. A pass authorizes a
+separately registered corrected fitting protocol; it does not authorize closed-loop
+hover or promotion.
