@@ -567,3 +567,85 @@ protection. Only then may the equally sized fresh cohort beginning at `380949` b
 it requires at least 90% correct damping sign and teacher-aligned gain 0.5-1.5. Even a
 fresh replay pass authorizes only a small nominal-mass closed-loop hover test and does not
 itself promote a controller.
+
+Result: all 25 attempted updates were accepted at full scale, showing that the same-case
+height-null construction remains feasible over the complete bounded run. On the
+independent development cohort, every per-scene `P` ratio remained in 0.98100-1.00578
+and the existing small/medium height assays retained 0.98155/0.98207 of source. All RPY,
+validity and motor-bound checks passed. Yet `D` NRMSE improved only 0.742% (0.594106 to
+0.589698) against the 25% gate; damping sign stayed 0/64 and aligned gain only moved from
+-0.3393 to -0.3300. The fixed source metric reached 0.0004214 of 0.0005, while unanchored
+common-throttle drift reached 0.005645 RMS. Thus clean P/D separation prevents the prior
+height-attenuation confound, but this local mask/metric family did not demonstrate useful
+damping authority. It found safe local descent without producing a correctly signed
+braking response; this is not evidence that the unrestricted native graph lacks one. The
+fresh cohort was not exposed, no checkpoint was promoted, and no closed-loop test ran.
+This family is now closed rather than extended or relaxed. See
+[`artifacts/variable-height-factorial-damping-route-training-v1/`](../artifacts/variable-height-factorial-damping-route-training-v1/).
+
+The next experiment is therefore a restored, full-native **learnability preflight**, not
+another route expansion and not a hover-training run. It starts again from
+`paired-dynamic-001`. Every existing native edge magnitude, every native bias including
+the motor-pool biases, and every native time constant may change; topology, transmitter
+signs, the retinal and attitude mappings, sensory gains, actor inputs and foreleg outputs
+remain fixed. Edge magnitudes retain their [0, 8] projection and time constants retain
+the controller's intrinsic 10-250 ms parameterization. There is no local route mask,
+source-distance ball, height-null projection, added state or privileged actor input.
+
+The preflight freezes eight training scenes at seed `320953` and eight disjoint
+development scenes at `330953`. Each scene has the same four signed height-by-velocity
+branches and balanced magnitudes used by the factorial audit: 0.05/0.10 m marker error,
+0.15/0.30 m/s vertical speed, and approach durations 15/18/22/25 policy steps. A neutral
+five-step common prefix and a 25-step response are both differentiated from zero native
+state; no source-generated neural state is injected or detached. Labels are applied at
+one-indexed response steps 15, 20 and 25. At each label, the analytical teacher receives
+the actual instantaneous camera height and the exact derivative of the complete
+prescribed smooth trajectory, including its sinusoidal term and inactive interval; the
+fly still receives only the rendered image and roll/pitch. Rendered inputs, attitudes and
+labels are cached once and reused byte-for-byte by autograd, finite differences and
+replay. The endpoint opposite-motion branches must again have bit-identical pose and
+image.
+
+At every labelled time, the four throttle outputs and teacher targets are Hadamard-
+decomposed into common collective `C`, transient marker response `P`, visual damping `D`
+and height-by-velocity interaction `I`. `D` is a bookkeeping name at intermediate times:
+because opposite-motion branches then occupy different heights, their velocity-odd term
+contains both position and velocity effects. Literal damping sign and aligned gain are
+therefore scored only at the step-25 identical-image endpoint. `C` and `I` use fixed
+motor-unit scales 0.05 and 0.01. `P` and `D` each use the RMS of their analytical-teacher
+targets over the complete frozen training bank, floored at 0.01 motor units; those two
+values are frozen before optimization and reused unchanged on development data. Three
+dynamic attitude lessons replay the unchanged source's roll, pitch and yaw outputs at
+scales 0.05, 0.05 and 0.04. The joint objective is the unweighted mean of these seven
+separately normalized MSEs, with the three labelled horizons weighted equally and also
+reported separately. Source replay is used for RPY because the source already passed the
+attitude guard; no analytical attitude controller or privileged rate enters the actor or
+target. Scenes are processed in deterministic microbatches and gradients are accumulated,
+so batching cannot change the declared objective or turn GPU memory into an experimental
+variable.
+
+Before a learnability pass, teacher-against-teacher component error must be numerically
+zero, source replay must be deterministic to `1e-6`, all labels and outputs must be finite,
+and the analytical teacher's commands must pass through the actual foreleg/stick plant
+with bounded measured sticks and the intended endpoint response signs. The actual
+proposed update must then pass a directional check. That update is one clipped Adam step
+(global gradient-norm cap 1.0; edge/bias learning rate `1e-4`; raw-time-constant learning
+rate `1e-6`; no weight decay). After edge-bound projection, its displacement is the
+tested direction. A forward finite difference on the cached training bank at scale
+0.0625 must be negative and agree with the autograd directional derivative within 20%.
+
+The full step must reduce joint normalized MSE by at least `1e-4` on the fixed training
+scenes. Each of training `C`, `P` and `D` NRMSE may be at most its own source baseline
+plus 0.02; this permits a first joint step to trade a small component error without
+mistaking unconstrained regression for learnability. Each dynamic RPY source NRMSE must
+remain at most 0.05, and all outputs must remain finite and within [-1, 1]. The disjoint
+development bank must independently reduce joint objective, with the same baseline-plus-
+0.02 C/P/D, RPY, validity and motor-bound guards. Every parameter is then restored bit-
+exactly; a pass retains no controller and authorizes only a separately preregistered,
+at-most-200-update joint teacher-fitting diagnostic. That later diagnostic will have a
+mandatory update-50 stop unless training endpoint `D` error has fallen at least 25% and
+C/P have recovered to no worse than their source fidelity while RPY remains passing. It
+will require disjoint-development damping sign, gain and component-error gates before any
+small closed-loop teacher-handoff test. All fitting checkpoints remain nonpromotional.
+Failure of this preflight sends work to the learning dynamics/parameterization audit,
+not to more sensors, RL, a looser threshold or a post-hoc narrower claim.

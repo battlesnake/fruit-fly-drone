@@ -1,0 +1,101 @@
+{
+  "accepted_scales": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+  ],
+  "accepted_updates": 25,
+  "actor_contract_unchanged": true,
+  "attempts_completed": 25,
+  "closed_loop_hover_run": false,
+  "development": {
+    "candidate": {
+      "common_fixed_scale_nrmse": 1.2237191200,
+      "damping_correct_sign_fraction": 0.0,
+      "damping_fixed_scale_nrmse": 0.5896978378,
+      "damping_teacher_aligned_gain": -0.3299694955,
+      "height_fixed_scale_nrmse": 0.1185385659,
+      "height_teacher_aligned_gain": 1.0012215376,
+      "interaction_fixed_scale_nrmse": 0.0593162999
+    },
+    "damping_nrmse_improvement_fraction": 0.0074197558,
+    "required_improvement_fraction": 0.25,
+    "seed": 370949,
+    "source": {
+      "common_fixed_scale_nrmse": 1.1666145325,
+      "damping_correct_sign_fraction": 0.0,
+      "damping_fixed_scale_nrmse": 0.5941059589,
+      "damping_teacher_aligned_gain": -0.3393276036,
+      "height_fixed_scale_nrmse": 0.1184330955,
+      "height_teacher_aligned_gain": 1.0032362938,
+      "interaction_fixed_scale_nrmse": 0.0608064905
+    }
+  },
+  "experiment": "variable-height-factorial-damping-route-training-v1",
+  "fresh_qualification_evaluated": false,
+  "full_report_sha256": "26449d62329907284a3492ccb688b42fa2bf07a71bbeedbf4fcb91fbea812b33",
+  "mask": {
+    "bias_node_indices_sha256": "f2cedb5b38e80beb9c29bba190ac9881c4cc473ea2849329b1f449c80402bd9b",
+    "edge_indices_sha256": "a8d6118684cf64850b9e2d08f5f200c4501198fef6d4f5c52ec3aa349afa5aa3",
+    "selected_biases": 883,
+    "selected_edge_magnitudes": 80454
+  },
+  "nonpromotional_endpoint_sha256": "9efd7a12a8a703c6a1662c54b46002d3e3145a15a85efb534f1ec087ec15b03f",
+  "passed_fresh_qualification": false,
+  "passed_useful_progress_gate": false,
+  "preservation": {
+    "all_finite": true,
+    "dynamic_rpy_nrmse": {
+      "pitch": 0.0021306127,
+      "roll": 0.0019820610,
+      "yaw": 0.0038375808
+    },
+    "existing_height_response_ratio": {
+      "medium": 0.9820717573,
+      "small": 0.9815533757
+    },
+    "functional_ablation_pass": true,
+    "legacy_rpy_nrmse_original_denominator": 0.0027808605,
+    "matched_height_response_ratio_range": [
+      0.9810033441,
+      1.0057799816
+    ],
+    "reference_source_metric_norm": 0.0004214206,
+    "reference_source_metric_radius": 0.0005,
+    "source_pair_common_throttle_max_absolute_diagnostic": 0.0076609254,
+    "source_pair_common_throttle_rms_diagnostic": 0.0056451252
+  },
+  "promoted": false,
+  "protocol_commit": "da95d2a57a46fd8585143c5f6d99db0f7fe0941d",
+  "source": {
+    "checkpoint": "runs/visual-hover/paired-dynamic-001/controller.pt",
+    "checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+    "graph": "data/derived/full-visual-connectome-v1.npz",
+    "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665"
+  },
+  "status": "rejected_at_useful_progress_gate",
+  "stop_reason": "attempt limit reached",
+  "training_state_sha256": "04534659e03a5d9c7c2279b80b80a461587ea43cbfe9d2da409e8bbc62a38c06"
+}
