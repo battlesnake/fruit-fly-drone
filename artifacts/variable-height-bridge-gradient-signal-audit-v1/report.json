@@ -1,0 +1,92 @@
+{
+  "actor_parameters_changed": false,
+  "candidate_checkpoint_sha256": "6b8d55b4b381d76f96a83860f8270b5a41ec107c3a8d241d31528a8f12cf4044",
+  "classification": "marker_signal_survives_but_contrast_updates_shift_common_collective",
+  "device": "cuda",
+  "diagnostic_only": true,
+  "elapsed_seconds": 618.4421960649997,
+  "experiment": "variable-height-bridge-gradient-signal-audit-v1",
+  "functional_direction": {
+    "description": "negative fixed-burn-in training-support contrast gradient, independently normalized to unit RMS in edge magnitude, bias and raw time-constant parameters",
+    "rms_step_1e_4": {
+      "dynamic_pitch_source_nrmse": 0.16723637282848358,
+      "dynamic_roll_source_nrmse": 0.04513859376311302,
+      "dynamic_throttle_source_nrmse": 1.4344538450241089,
+      "dynamic_yaw_source_nrmse": 0.0379502959549427,
+      "fixed_medium_common_throttle_nrmse": 1.993425726890564,
+      "fixed_medium_contrast_nrmse": 0.5784085392951965,
+      "fixed_small_common_throttle_nrmse": 2.003955364227295,
+      "fixed_small_contrast_nrmse": 0.6007659435272217,
+      "full_replay_common_throttle_nrmse": 1.216483235359192,
+      "full_replay_contrast_nrmse": 0.8537585139274597
+    },
+    "rms_step_2e_5": {
+      "dynamic_pitch_source_nrmse": 0.04038967192173004,
+      "dynamic_roll_source_nrmse": 0.005314948502928019,
+      "dynamic_throttle_source_nrmse": 0.32227206230163574,
+      "dynamic_yaw_source_nrmse": 0.0117237139493227,
+      "fixed_medium_common_throttle_nrmse": 0.4830954074859619,
+      "fixed_medium_contrast_nrmse": 0.6707347631454468,
+      "fixed_small_common_throttle_nrmse": 0.4815863072872162,
+      "fixed_small_contrast_nrmse": 0.7167187929153442,
+      "full_replay_common_throttle_nrmse": 0.2984340190887451,
+      "full_replay_contrast_nrmse": 0.7723820209503174
+    },
+    "source_fixed_medium_contrast_nrmse": 0.7132659554481506,
+    "source_fixed_small_contrast_nrmse": 0.762060284614563
+  },
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "gradient_observation": {
+    "candidate_common_throttle_gradient_global_norms": [
+      12.293805122375488,
+      7.643250942230225
+    ],
+    "candidate_contrast_gradient_global_norms": [
+      2.4659628868103027,
+      1.9997408390045166
+    ],
+    "candidate_legacy_gradient_global_norms": [
+      4.853470802307129,
+      5.783792495727539
+    ],
+    "source_common_throttle_gradient_global_norms": [
+      0.000016792380847618915,
+      0.0004694553790614009
+    ],
+    "source_contrast_gradient_global_norms": [
+      2.549321413040161,
+      2.4513068199157715
+    ],
+    "source_legacy_gradient_global_norms": [
+      0.00001794813033484388,
+      0.000005432055331766605
+    ],
+    "source_parameter_anchor_gradient_norm": 0.0
+  },
+  "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665",
+  "marker_signal": {
+    "candidate": {
+      "medium_throttle_sensitivity_per_metre": 0.12571586295962334,
+      "small_throttle_sensitivity_per_metre": 0.11519205756485462,
+      "static_style_throttle_range": 0.008405119180679321
+    },
+    "source": {
+      "medium_retina_marker_to_nuisance_rms_ratio": 0.6600093379263073,
+      "medium_throttle_sensitivity_per_metre": 0.11100476607680321,
+      "small_retina_marker_to_nuisance_rms_ratio": 0.3372357254316918,
+      "small_throttle_sensitivity_per_metre": 0.10155533440411091,
+      "static_style_throttle_range": 0.007658541202545166
+    }
+  },
+  "native_annotation_partition_node_counts": {
+    "central_brain_descending_ascending": 40939,
+    "output_motor": 26,
+    "remaining": 1245,
+    "visual_neurons_and_pathways": 103270,
+    "vnc_interneurons": 19642
+  },
+  "next_intervention": "functionally constrained backtracked trust-region update",
+  "seed": 307,
+  "source_checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+  "trials": 2
+}

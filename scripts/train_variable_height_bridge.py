@@ -227,6 +227,7 @@ def _teacher_pair_loss(
     device: torch.device,
     config: HoverConfig,
     all_style_combinations: bool,
+    objective: str = "combined",
 ) -> tuple[torch.Tensor, dict[str, float]]:
     pairs = sample_marker_pairs(
         batch,
@@ -288,18 +289,36 @@ def _teacher_pair_loss(
 
     student_common = 0.5 * (student_a[:, :, 3] + student_b[:, :, 3])
     source_common = 0.5 * (source_a[:, :, 3] + source_b[:, :, 3])
-    common_loss = hover.masked_mean(
-        ((student_common - source_common) / 0.05).square(), valid_steps
-    )
+    common_error = student_common - source_common
+    common_loss = hover.masked_mean((common_error / 0.05).square(), valid_steps)
+    common_signed = hover.masked_mean(common_error / 0.05, valid_steps)
     axis_error = (
         ((student_a[:, :, :3] - source_a[:, :, :3]) / 0.05).square().mean(dim=2)
         + ((student_b[:, :, :3] - source_b[:, :, :3]) / 0.05).square().mean(dim=2)
     ) * 0.5
     axis_loss = hover.masked_mean(axis_error, valid_steps)
-    loss = contrast_loss + 0.75 * common_loss + 0.5 * axis_loss
+    component_losses = {
+        "contrast": contrast_loss,
+        "common_throttle": common_loss,
+        "common_signed": common_signed,
+        "rpy": axis_loss,
+        "combined": contrast_loss + 0.75 * common_loss + 0.5 * axis_loss,
+    }
+    if objective not in component_losses:
+        raise ValueError(f"unknown paired objective: {objective}")
+    loss = component_losses[objective]
     return loss, {
         "contrast_nrmse": float(torch.sqrt(contrast_loss.detach())),
         "common_nrmse": float(torch.sqrt(common_loss.detach())),
+        "common_error_mean": float(
+            hover.masked_mean(common_error.detach(), valid_steps).detach()
+        ),
+        "common_error_rms": float(
+            torch.sqrt(hover.masked_mean(common_error.detach().square(), valid_steps))
+        ),
+        "common_error_max_absolute": float(
+            common_error.detach()[:, valid].abs().max() if bool(valid.any()) else 0.0
+        ),
         "axis_nrmse": float(torch.sqrt(axis_loss.detach())),
         "valid_fraction": float(valid.float().mean()),
     }
@@ -381,6 +400,7 @@ def _dynamic_source_replay_loss(
     device: torch.device,
     config: HoverConfig,
     all_style_combinations: bool,
+    axis_weights: tuple[float, float, float, float] | None = None,
 ) -> tuple[torch.Tensor, dict[str, float]]:
     conditions = sample_height_conditions(batch, device=device, split="train")
     state, stick_state = hover.nominal_initial_state(
@@ -413,6 +433,7 @@ def _dynamic_source_replay_loss(
     sticks = ForelegStickPlant(config).to(device)
     scales = conditions.marker_height.new_tensor(hover.MOTOR_CORRECTION_SCALES)
     losses = []
+    per_axis_losses = []
     valid_fractions = []
     for _ in range(unroll):
         image = render_visual_hover_scene(
@@ -421,8 +442,25 @@ def _dynamic_source_replay_loss(
         student_motor, student_neural = student(image, state.euler[:, :2], student_neural)
         with torch.no_grad():
             source_motor, source_neural = source(image, state.euler[:, :2], source_neural)
-        error = ((student_motor - source_motor) / scales).square().mean(dim=1)
+        per_axis_error = ((student_motor - source_motor) / scales).square()
+        if axis_weights is None:
+            error = per_axis_error.mean(dim=1)
+        else:
+            weights = per_axis_error.new_tensor(axis_weights)
+            error = (per_axis_error * weights).sum(dim=1) / weights.sum().clamp_min(1.0)
         losses.append(hover.masked_mean(error, valid))
+        per_axis_losses.append(
+            torch.stack(
+                [
+                    hover.masked_mean(
+                        ((student_motor[:, axis] - source_motor[:, axis]) / scales[axis])
+                        .square(),
+                        valid,
+                    )
+                    for axis in range(4)
+                ]
+            )
+        )
         valid_fractions.append(valid.float().mean())
         state, stick_state, _ = hover.advance_physics(
             quad,
@@ -436,8 +474,13 @@ def _dynamic_source_replay_loss(
         stick_state = stick_state.detach()
         valid &= hover.state_is_valid(state)
     loss = torch.stack(losses).mean()
+    axis_nrmse = torch.sqrt(torch.stack(per_axis_losses).mean(dim=0))
     return loss, {
         "source_motor_nrmse": float(torch.sqrt(loss.detach())),
+        "roll_source_nrmse": float(axis_nrmse[0].detach()),
+        "pitch_source_nrmse": float(axis_nrmse[1].detach()),
+        "yaw_source_nrmse": float(axis_nrmse[2].detach()),
+        "throttle_source_nrmse": float(axis_nrmse[3].detach()),
         "valid_fraction": float(torch.stack(valid_fractions).mean()),
     }
 

@@ -176,7 +176,29 @@ the original source remains the selected controller. See
 [`bridge-v1`](../artifacts/variable-height-visual-response-bridge-v1/) and
 [`bridge-v2`](../artifacts/variable-height-visual-response-bridge-v2/).
 
-The next bounded step is a lesson-gradient and visual-signal propagation audit at the
-source and rejected update-25 checkpoint. It will determine whether the bottleneck is
-multi-objective gradient conflict, weak propagation of marker pixels through the native
-graph, or loss calibration before another optimizer run is authorized.
+The lesson-gradient and visual-signal propagation audit is now complete. Marker-height
+information survives from the retina through central-brain and VNC populations to the
+26 foreleg motor neurons. The rejected bridge did not fail because the marker signal
+vanished: its principal failure was a source-global shift in common collective. At the
+unchanged source, the squared common-throttle and replay-preservation losses have zero
+first derivative, so they cannot oppose the first contrast-learning step. A family-RMS
+parameter step of only `2e-5` improved the fixed visual contrast while already producing
+0.482 normalized common-throttle error. See
+[`artifacts/variable-height-bridge-gradient-signal-audit-v1/`](../artifacts/variable-height-bridge-gradient-signal-audit-v1/).
+
+The authorized next experiment is therefore a bounded projected-Adam feasibility test,
+not another unconstrained bridge. It retains the v2 all-style lessons and actor contract,
+but projects each proposed optimizer displacement in an equal-family-RMS metric against
+signed, per-style small- and medium-marker common-throttle Jacobian rows. It then applies
+one scalar step cap and at most six backtracking trials. Every accepted update must pass
+complete replay from zero; a fixed-burn-in Jacobian alone is never acceptance evidence.
+
+Per-update family RMS is capped at `2e-5`, source-global family RMS at `1e-4`, normalized
+common-throttle RMS at 0.02 per update and 0.05 from source, and maximum absolute
+source-global common-throttle drift at 0.005 motor units. Legacy response, dynamic R/P/Y
+and validity guards remain in force. The run is capped at 25 attempted updates and stops
+after five consecutive rejected proposals. At update 25 it must improve the fixed
+training-support contrast by at least 10% and a separate development-height matrix by at
+least 5%, while marker-flight RMSE remains within 5% of source with no new ground or
+invalid events. Passing establishes only safe local plasticity; it does not promote a
+hover controller or consume the final held-out evidence.
