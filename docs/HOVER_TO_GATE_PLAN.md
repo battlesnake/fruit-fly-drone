@@ -1219,17 +1219,33 @@ diagnostic only. Each FP64 run must independently satisfy L-BFGS-B success, orig
 primal violation at most `1e-6`, normalized projected-gradient residual at most `1e-8`,
 native box bounds and active-set convergence. Dependent rows permit nonunique dual
 multipliers, so compare primary **primal** results: require pairwise learning-rate-scaled
-displacement difference divided by `max(1, displacement norm)` at most `1e-10`, and dual
-objective relative difference at most `1e-12`; do not gate on dual coefficients, iteration
+displacement difference divided by `max(1, displacement norm)` at most `1e-10`, and
+relative difference in the complete bound-aware projection objective `0.5 * ||(projected
+- raw) / learning_rate||^2` at most `1e-12`; do not gate on dual coefficients, iteration
 counts or historical status strings.
 
-Replace the prior SLSQP status comparison with one independent nonnegative least-squares
-solution of each small FP64 dual QP. Form its least-squares factor from the normalized
-Gram eigendecomposition using the frozen relative rank cutoff `1e-12`. Report the
-violation component outside the retained eigenspace. Compare the independent and primary
-solutions by the Gram-induced primal correction distance, normalized by the primary
-correction norm, and by relative dual objective; require at most `1e-6` and `1e-8`
-respectively. These compare the unique primal effect rather than a nonunique dual vector.
+An implementation review before any formal frozen-input run found a flaw in the initially
+registered eigenspace-factor NNLS check. For rank-deficient Gram `G`, projecting the linear
+term `v` into `range(G)` changes the nonnegative dual QP whenever `v` has a nullspace
+component; differing aggregate and horizon limits can produce exactly that case. For
+example, `G = ones(2, 2)` and `v = [2, 1]` has the correct multiplier sum 2, while the
+factorized NNLS problem returns sum 1.5. KKT-gating that approximation would reject the
+correct primary answer rather than independently validate it. This paragraph therefore
+supersedes only that independent-check detail of commit `df0910d`, before looking at any
+formal result.
+
+Replace the prior SLSQP status comparison with an exhaustive active-support check of each
+small FP64 dual QP (at most `2^10` supports). On every support, use Lawson-Hanson
+nonnegative least squares on the original stationarity equations `G_SS * lambda_S = v_S`;
+embed the result in the full dual vector and retain only finite solutions satisfying the
+original full-QP normalized KKT residual at most `1e-8`. Report the normalized Gram rank,
+nullity, and the violation component outside its retained eigenspace using the frozen
+relative rank cutoff `1e-12`, but do not discard that component in the solve. Select the
+KKT-feasible solution with the lowest original dual objective. Compare this independent
+solution and the primary solution by Gram-induced primal correction distance normalized
+by the primary correction norm, and by relative original dual objective; require at most
+`1e-6` and `1e-8` respectively. These compare the unique primal effect rather than a
+nonunique dual vector.
 
 Canonicalize the first repeated FP64 result once and require the unchanged `1e-7`
 idempotence, native bounds, `1e-6` post-materialized linear gate, negative endpoint-D
