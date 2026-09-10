@@ -1,0 +1,75 @@
+{
+  "accepted_scale": 1.0,
+  "actor_contract_unchanged": true,
+  "baseline": {
+    "complete_zero_state": {
+      "damping_correct_sign_fraction": 0.0,
+      "damping_fixed_scale_nrmse": 0.5389353037,
+      "damping_teacher_aligned_gain": -0.2119287550,
+      "height_fixed_scale_nrmse": 0.1455864459,
+      "interaction_fixed_scale_nrmse": 0.0320448726
+    },
+    "fixed_prefix": {
+      "damping_correct_sign_fraction": 0.0,
+      "damping_fixed_scale_nrmse": 0.5874752402,
+      "damping_teacher_aligned_gain": -0.3302755952,
+      "height_fixed_scale_nrmse": 0.1371539086,
+      "interaction_fixed_scale_nrmse": 0.0695996210
+    }
+  },
+  "closed_loop_hover_run": false,
+  "experiment": "variable-height-factorial-damping-route-preflight-v1",
+  "finite_difference": {
+    "autograd_directional_derivative": -0.0002196194,
+    "forward_directional_derivative": -0.0002112389,
+    "pass": true,
+    "relative_error": 0.0381592311,
+    "relative_error_limit": 0.2,
+    "scale": 0.0625
+  },
+  "full_report_sha256": "385aa3f335fa42469de45d00871fdeaa3c1eba0093e220b01fff103bfb40ba89",
+  "mask": {
+    "bias_node_indices_sha256": "f2cedb5b38e80beb9c29bba190ac9881c4cc473ea2849329b1f449c80402bd9b",
+    "edge_indices_sha256": "a8d6118684cf64850b9e2d08f5f200c4501198fef6d4f5c52ec3aa349afa5aa3",
+    "selected_biases": 883,
+    "selected_edge_magnitudes": 80454
+  },
+  "parameters_restored_max_absolute_error": 0.0,
+  "pass": true,
+  "projection": {
+    "converged_without_bound_violation": true,
+    "damping_derivative_retained_fraction": 0.2797529195,
+    "frozen_bound_edges": 696,
+    "height_component_max_absolute_replay_difference": 3.7252902985e-8,
+    "height_component_max_relative_linearized_change": 3.5557283784e-9,
+    "height_component_relative_change_limit": 0.001,
+    "iterations": 3
+  },
+  "promoted": false,
+  "protocol_commit": "d514d9e2697e6e85cc3d3f6692b2b8e34e055f2c",
+  "source": {
+    "checkpoint": "runs/visual-hover/paired-dynamic-001/controller.pt",
+    "checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+    "graph": "data/derived/full-visual-connectome-v1.npz",
+    "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665"
+  },
+  "trial": {
+    "complete_zero_state_damping_nrmse_improvement": 0.0001498461,
+    "complete_zero_state_height_ratio_range": [
+      0.9995461702,
+      1.0003185272
+    ],
+    "existing_height_response_ratio": {
+      "medium": 0.9992617369,
+      "small": 0.9991002679
+    },
+    "fixed_prefix_damping_nrmse_improvement": 0.0001865029,
+    "fixed_prefix_height_ratio_range": [
+      0.9999946952,
+      0.9999995828
+    ],
+    "non_throttle_functional_preservation_pass": true,
+    "reference_actual_metric_norm": 0.0000200025,
+    "source_pair_common_throttle_rms_diagnostic": 0.0003830786
+  }
+}

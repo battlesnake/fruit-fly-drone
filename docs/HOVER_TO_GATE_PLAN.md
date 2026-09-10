@@ -539,3 +539,30 @@ training again misses useful progress, close this local mask/metric family rathe
 interpreting reduced wrong-sign amplitude as learned damping. Joint absolute
 height-and-damping teaching would then be a separately declared broader redesign, not a
 post-hoc continuation.
+
+Result: the restored preflight passed at full scale. Its same-case objective/projection
+replays agreed on the source `P` component within `3.73e-8`; bound-aware projection froze
+696 edge coordinates and left a maximum linearized `P` change of only `3.56e-9` of source.
+The projected damping derivative was -0.00021962 and its finite difference was
+-0.00021124 (3.82% relative error). Actual damping NRMSE improved by 0.0001865 on the
+fixed-prefix cases and 0.0001498 on the separately seeded complete-zero-state cases.
+Every per-scene `P` ratio stayed within 0.99955-1.00032, existing height response retained
+at least 0.99910 of source, and all non-throttle protections passed. Parameters were
+restored exactly; no checkpoint or closed-loop test resulted. See
+[`artifacts/variable-height-factorial-damping-route-preflight-v1/`](../artifacts/variable-height-factorial-damping-route-preflight-v1/).
+
+The authorized bounded run uses new base seed `310949`. At each of at most 25 attempts,
+two independently seeded four-scene factorial banks produce the averaged complete-native
+`D` gradient and all eight same-case `P` rows. The bound-aware height-null direction is
+accepted only if each of two fixed guard banks (`seed + 40000`) improves `D` NRMSE by at
+least `1e-4`; every scene in those banks retains `P` within 10% of the unchanged source,
+and all existing height, RPY, validity, motor-bound, `2e-5` step-family and `5e-4`
+source-metric protections pass. Common throttle and the interaction component remain
+diagnostic only. Five consecutive rejections stop the run; its complete protocol and
+resume state are atomic.
+
+At attempt 25, the independent development cohort beginning at seed `370949` must reduce
+factorial `D` NRMSE by at least 25% from source while retaining every protection. Only
+then may the fresh cohort beginning at `380949` be exposed; it requires at least 90%
+correct damping sign and teacher-aligned gain 0.5-1.5. Even a fresh replay pass authorizes
+only a small nominal-mass closed-loop hover test and does not itself promote a controller.
