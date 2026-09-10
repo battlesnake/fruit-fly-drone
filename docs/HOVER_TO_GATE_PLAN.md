@@ -410,3 +410,15 @@ by at least `1e-4`, with every preservation gate passing. Improvement per common
 drift is reported beside the same-seed shallow preflight. This tests selective
 descending-signal recoding, not a claimed biological damping module; optimization beyond
 one restored preflight step is not authorized until it passes.
+
+Result: the upstream preflight passed at full scale and restored all parameters exactly.
+Autograd and the scale-0.0625 finite difference agreed within 0.389%. Fixed-prefix and
+complete zero-state motion NRMSE improved by 0.002654 and 0.002219, respectively, while
+common-throttle RMS remained within bounds at 0.000577 and height contrast retained
+about 0.9953 of source. Against the identical shallow fixed-prefix preflight, raw NRMSE
+improvement was 11.4% larger but common drift was 35.5% larger, so improvement per unit
+common RMS was worse (4.60 versus 5.59). This passes the local credit-assignment gates
+but does not yet show better damping/collective separation. It authorizes only a
+separately preregistered bounded training run; no controller was retained or promoted.
+See
+[`artifacts/variable-height-native-upstream-damping-route-preflight-v1/`](../artifacts/variable-height-native-upstream-damping-route-preflight-v1/).

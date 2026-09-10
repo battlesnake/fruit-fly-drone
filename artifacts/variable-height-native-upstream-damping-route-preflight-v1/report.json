@@ -1,0 +1,65 @@
+{
+  "accepted_scale": 1.0,
+  "actor_contract_unchanged": true,
+  "baseline_motion": {
+    "complete_zero_state_fixed_scale_nrmse": 1.3702355623,
+    "complete_zero_state_teacher_aligned_gain": -0.5494793057,
+    "fixed_prefix_fixed_scale_nrmse": 1.4496514797,
+    "fixed_prefix_teacher_aligned_gain": -0.6389387250
+  },
+  "experiment": "variable-height-native-upstream-damping-route-preflight-v1",
+  "finite_difference": {
+    "autograd_directional_derivative": -0.0077051353,
+    "forward_derivative": -0.0076751709,
+    "pass": true,
+    "relative_error": 0.0038888834,
+    "relative_error_limit": 0.2,
+    "scale": 0.0625
+  },
+  "full_report_sha256": "4a93a09acee7efc96e55043cddfd089f198ed253c44cab1e419972e8c5c8f6ea",
+  "mask": {
+    "added_descending_biases": 580,
+    "added_incoming_edges": 68140,
+    "bias_node_indices_sha256": "f2cedb5b38e80beb9c29bba190ac9881c4cc473ea2849329b1f449c80402bd9b",
+    "edge_indices_sha256": "a8d6118684cf64850b9e2d08f5f200c4501198fef6d4f5c52ec3aa349afa5aa3",
+    "expanded_biases": 883,
+    "expanded_edges": 80454,
+    "selected_descending_neurons": 612
+  },
+  "metric": {
+    "bias_denominator": 303,
+    "edge_denominator": 12314,
+    "step_family_rms_cap": 0.00002
+  },
+  "parameters_restored_max_absolute_error": 0.0,
+  "pass": true,
+  "selected_candidate": "equality_to_raw_1.00",
+  "shallow_comparison": {
+    "expanded_improvement_per_common_rms": 4.5981582971,
+    "expanded_motion_nrmse_improvement": 0.0026537180,
+    "expanded_source_common_throttle_rms": 0.0005771263,
+    "shallow_improvement_per_common_rms": 5.5912599418,
+    "shallow_motion_nrmse_improvement": 0.0023820400,
+    "shallow_source_common_throttle_rms": 0.0004260292
+  },
+  "source": {
+    "checkpoint": "runs/visual-hover/paired-dynamic-001/controller.pt",
+    "checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+    "graph": "data/derived/full-visual-connectome-v1.npz",
+    "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665"
+  },
+  "status": "passed_no_retained_parameter_changes",
+  "trial": {
+    "all_finite": true,
+    "complete_zero_state_motion_nrmse_improvement": 0.0022187233,
+    "fixed_prefix_motion_nrmse_improvement": 0.0026537180,
+    "height_response_student_to_source_ratio": {
+      "medium": 0.9952853322,
+      "small": 0.9952840805
+    },
+    "maximum_common_throttle_drift": 0.0007490218,
+    "per_update_common_throttle_rms": 0.0005771330,
+    "reference_metric_norm": 0.0000200008,
+    "source_common_throttle_rms": 0.0005771263
+  }
+}
