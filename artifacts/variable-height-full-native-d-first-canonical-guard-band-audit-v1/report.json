@@ -1,0 +1,56 @@
+{
+  "actor_contract_unchanged": true,
+  "classification": "nonlinear_correction_feasible_and_update_8_transfers",
+  "correction": {
+    "authoritative_endpoint_damping_directional_finite_difference": {
+      "autograd": 0.0015333894,
+      "complete_replay": 0.0015347446,
+      "pass": true,
+      "relative_error": 0.00088305,
+      "relative_error_limit": 0.20
+    },
+    "canonical_acceptance_linearized_violation": -0.0001671420,
+    "canonical_solver_linearized_violation": 0.0000138293,
+    "duplicate_multi_loss_row_diagnostic_pass": false,
+    "fixed_edges": 1533,
+    "ideal_solver_linearized_violation": -9.1833e-12,
+    "parameter_idempotence_pass": true,
+    "selected_scale": 1.0
+  },
+  "corrected_candidate_retained": false,
+  "corrected_fitting_protocol_authorized": true,
+  "development_update_8": {
+    "all_original_preservation_gates_pass": true,
+    "endpoint_damping_nrmse": 1.3369280,
+    "endpoint_damping_nrmse_improvement": 0.0620123,
+    "pass": true,
+    "source_endpoint_damping_nrmse": 1.3989403
+  },
+  "experiment": "variable-height-full-native-d-first-canonical-guard-band-audit-v1",
+  "full_report_sha256": "40c34d00e8ab5c69558a3d385197ab8ef0170c8a2bd076c09f75ed2ee22c019e",
+  "implementation_commit": "ce6f560",
+  "pass": true,
+  "promoted": false,
+  "protocol_commit": "4a51b39",
+  "restoration": {
+    "optimizer_exact": true,
+    "parameters_exact": true,
+    "resume_file_unchanged": true
+  },
+  "source_failed_audit_sha256": "fcdd9842ba9e8d0ed652525409af76cb5cd18353ce02d606df5b8bbc6cf42b5f",
+  "source_resume_sha256": "eb30a7c1d6f75ee65a6588dbe09475b66c172227170300248625baea1b15b148",
+  "starting_candidate": {
+    "archive_file_sha256": "bb0b2960ca28e1d5ac54583d902e2fe368849006fe6294500bcc9793b99326f2",
+    "parameter_tensor_sha256": "d878e0d4e42d597e9d7324a8116d2f52d1e31ee96c4356b1817eb5e9e5aa16a3",
+    "scale": 0.0625
+  },
+  "training_full_correction": {
+    "all_original_outer_preservation_gates_pass": true,
+    "endpoint_common_nrmse": 1.6835940,
+    "endpoint_common_nrmse_acceptance_limit": 1.6836901,
+    "endpoint_damping_nrmse": 1.3740144,
+    "endpoint_damping_nrmse_improvement_from_update_8": 0.0022320,
+    "endpoint_damping_nrmse_limit": 1.3752463,
+    "pass": true
+  }
+}

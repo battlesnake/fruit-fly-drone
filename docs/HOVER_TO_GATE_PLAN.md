@@ -1050,3 +1050,64 @@ parameters and the complete optimizer state exactly. Retain no corrected candida
 pass authorizes only a separately registered corrected fitting protocol. If this one
 canonical guard-band repeat fails, stop this correction route rather than adding a
 residual-repair solve or changing a threshold after the result.
+
+Result: the canonical guard-band repeat passed all controls. The authoritative endpoint-
+D row's fixed directional finite difference was finite and measurable and disagreed by
+only 0.0883%, below its 20% limit. The duplicate multi-loss row failed its preserved old
+diagnostic limits again, as expected, but was not a gate. The ideal stricter-target solve
+reached maximum linear violation `-9.18e-12`. Float32 materialization left `1.38e-5`
+relative to the deliberately stricter solver boundary but `-1.67e-4` relative to the
+unchanged acceptance specification, so the guard band worked without relaxing a task
+threshold. Scale 1 was the first correction scale. Its actual endpoint-C NRMSE was
+1.68359399 against the 1.68369011 acceptance limit; endpoint-D was 1.37401438, retaining
+0.002232 improvement from update 8. All original outer gates, the repeated update-8
+development diagnostic, canonical idempotence, bounds and exact restoration passed. No
+candidate was retained and nothing was promoted. See
+[`artifacts/variable-height-full-native-d-first-canonical-guard-band-audit-v1/`](../artifacts/variable-height-full-native-d-first-canonical-guard-band-audit-v1/).
+
+Proceed with one separately registered **corrected D-first fitting run** beginning from
+the exact update-8 resume state, without reopening or overwriting the stopped canonical
+fit. Preserve its source/cache hashes, native recurrent actor and inputs, endpoint-D-only
+Adam objective, parameter families, learning rates, gradient clipping, original C/P/RPY/
+validity/output constraints, development and qualification banks, terminal gates and
+no-automatic-promotion rule. The budget remains 200 total accepted updates, not 200 new
+updates: start at accepted update 8, evaluate development at totals 10, 20 and so on,
+apply the mandatory progress gate at total 50, and stop at total 200 if no terminal pass.
+
+For each attempted update, take exactly one Adam moment/step update and form the same
+canonical, bound-aware proposal. It must pass every existing numerical and projected-
+direction control; a failed projection or other numerical control cannot be repaired.
+Try the original backtrack scales in their fixed descending order and accept the first
+ordinary passing candidate exactly as before. Retain the one pending Adam state when an
+ordinary candidate is accepted.
+
+Only if every ordinary backtrack fails may the fixed scale-1/16 candidate enter the
+repair path. It is eligible only when its actual endpoint-D NRMSE improves by at least
+0.001 from the current accepted controller, its actual displacement remains a damping
+descent direction, and every ordinary finite/validity/native-bound/motor-output and
+source-relative C/P/RPY gate passes except that endpoint common response at step 25 may
+exceed its original nonlinear source-plus-0.02 limit. Any additional failure rejects the
+proposal without repair.
+
+At an eligible candidate, apply exactly the passing guard-band mechanism: C/P and
+activated RPY refer to the original source, while endpoint-D retention requires at least
+0.001 improvement from the current accepted controller. The authoritative D row comes
+from the dedicated accumulated endpoint-D objective. Its fixed finite-difference probe
+moves one quarter from the candidate back toward that current controller. Require the
+same finite, measurable, bound, restoration and 20%-agreement controls. Report the
+multi-loss D row under the prior limits as a non-gating diagnostic.
+
+Use one zero-reference bound-aware minimum-norm correction with a fixed Jacobian, no
+relinearization or second solve, endpoint-C solver target source plus 0.0198, actual
+linear and nonlinear acceptance at source plus 0.0199, unchanged remaining outer
+constraints, and correction scales 1, 1/2, 1/4 and 1/8. Accept the first passing scale.
+Correction differentiation must not perform another Adam step. Retain the already-
+pending single Adam state if repair succeeds; if eligibility, correction controls or all
+correction scales fail, restore both pre-update parameters and optimizer exactly and stop.
+
+Count repaired updates normally. Log whether each accepted update was ordinary or
+repaired, both the proposal and correction scales, endpoint-C headroom, endpoint-D
+improvement, and parameter/optimizer transaction checks. Resume artifacts remain ignored
+and nonpromotional. Qualification remains first-terminal-checkpoint-only with no candidate
+fallback. A fresh pass authorizes the already specified nominal-mass native closed-loop
+hover comparison; fitting alone still cannot establish stable hover or flight.
