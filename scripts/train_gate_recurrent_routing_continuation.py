@@ -426,6 +426,7 @@ def train_arm(
         "training_history": history,
         "validations": validations,
         "stopped_at_additional_update": stopped_at,
+        "_final_magnitudes": magnitudes.detach().cpu().clone(),
     }
 
 
@@ -494,8 +495,9 @@ def main() -> int:
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     report_path = args.output_dir / "report.json"
+    arm_path = args.output_dir / "arm-magnitudes.json"
     selection_path = args.output_dir / "selected-magnitudes.json"
-    if report_path.exists() or selection_path.exists():
+    if report_path.exists() or arm_path.exists() or selection_path.exists():
         raise SystemExit("output directory contains a stale report or selection")
     seed_everything(args.continuation_seed)
     if device.type == "cuda":
@@ -706,6 +708,27 @@ def main() -> int:
         interpretation = "additional_training_sufficient_on_development"
     else:
         interpretation = "early_window_weighting_required_on_development"
+    arm_path.write_text(
+        json.dumps(
+            {
+                "selected_edge_indices": spec.selected_edges.detach().cpu().tolist(),
+                "source_update": 100,
+                "arms": {
+                    arm["name"]: {
+                        "additional_update": arm["stopped_at_additional_update"]
+                        or args.additional_updates,
+                        "magnitudes": arm["_final_magnitudes"].tolist(),
+                    }
+                    for arm in arms
+                },
+                "deterministic_reconstruction_only": True,
+                "compiled_or_promoted": False,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n"
+    )
     selection_path.write_text(
         json.dumps(
             {
@@ -767,7 +790,11 @@ def main() -> int:
         "initial_validation": initial_validation,
         "arms": [
             {
-                **{key: value for key, value in arm.items() if key != "validations"},
+                **{
+                    key: value
+                    for key, value in arm.items()
+                    if key not in {"validations", "_final_magnitudes"}
+                },
                 "validations": [public_validation(item) for item in arm["validations"]],
             }
             for arm in arms
@@ -783,6 +810,8 @@ def main() -> int:
         "fresh_replay_passed": replay_passed,
         "assisted_flight": assisted_flight,
         "assisted_flight_passed": flight_passed,
+        "arm_magnitudes": stable_path(arm_path),
+        "arm_magnitudes_sha256": file_sha256(arm_path),
         "selected_magnitudes": stable_path(selection_path),
         "selected_magnitudes_sha256": file_sha256(selection_path),
         "classification": {
