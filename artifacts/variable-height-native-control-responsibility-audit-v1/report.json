@@ -1,0 +1,153 @@
+{
+  "actor_contract": {
+    "accelerometer": false,
+    "decoded_probe_values_used_by_actor": false,
+    "inputs": [
+      "320x200 linear RGB at 125 degree HFOV",
+      "roll angle",
+      "pitch angle"
+    ],
+    "proprioception": false,
+    "recurrent_state": "MaleCNS graph only"
+  },
+  "assays": {
+    "command_history": {
+      "causal_response_to_target_fraction_by_step": [
+        0.4127250314,
+        0.2792126238,
+        0.1338069141,
+        0.0007798546,
+        -0.1073928252,
+        -0.1852916777,
+        -0.2313800007,
+        -0.2462088913,
+        -0.2332348377,
+        -0.2031972706
+      ],
+      "endpoint_retina_max_absolute_pair_difference": 0.0,
+      "internal_probe_r2_range": [
+        0.9980368614,
+        0.9996532798
+      ],
+      "native_correct_sign_fraction_at_0_26_seconds": 1.0,
+      "native_response_to_prior_command_fraction_at_0_26_seconds": 0.4626927078,
+      "selectively_causal_partitions": [],
+      "shuffled_label_control_maximum_r2": 0.1065547466,
+      "usable_response_over_following_0_20_seconds": false
+    },
+    "height_error": {
+      "causal_response_to_target_fraction_by_step": [
+        0.9723034501,
+        0.9303750992,
+        0.8837865591,
+        0.8303411007,
+        0.7749060392,
+        0.7274588346,
+        0.6969281435,
+        0.6829100847,
+        0.6808528304,
+        0.6839247346
+      ],
+      "descending_replacement": {
+        "maximum_absolute_common_motor_change": 0.0002127886,
+        "response_removed_fraction": 0.2777358592,
+        "selective_causal_gate_passed": false
+      },
+      "endpoint_retina_max_absolute_pair_difference": 0.3060443997,
+      "internal_probe_r2_range": [
+        0.9643479586,
+        0.9885982871
+      ],
+      "native_correct_sign_fraction": 1.0,
+      "native_response_to_teacher_fraction": 0.90982759,
+      "optic_lobe_and_visual_replacement": {
+        "maximum_absolute_common_motor_change": 0.0035156012,
+        "response_removed_fraction": 0.5465976,
+        "selective_causal_gate_passed": false
+      },
+      "selectively_causal_partitions": [],
+      "shuffled_label_control_maximum_r2": 0.1859090328,
+      "usable_native_response": true
+    },
+    "vertical_motion": {
+      "causal_response_to_target_fraction_by_step": [
+        -0.61940974,
+        -0.632179916,
+        -0.625650883,
+        -0.599719822,
+        -0.55663532,
+        -0.498054922,
+        -0.426307708,
+        -0.343602836,
+        -0.25339362,
+        -0.159190252
+      ],
+      "endpoint_retina_max_absolute_pair_difference": 0.0,
+      "internal_probe_r2_range": [
+        0.8977970481,
+        0.9325562119
+      ],
+      "native_correct_sign_fraction": 0.0,
+      "native_response_to_teacher_fraction": -0.6254368424,
+      "selectively_causal_partitions": [],
+      "shuffled_label_control_maximum_r2": 0.2986204028,
+      "usable_native_response": false
+    }
+  },
+  "controls": {
+    "identical_history_max_absolute_motor_difference": 1.1920928955e-7,
+    "shared_input_whole_state_max_absolute_motor_difference": 1.1920928955e-7
+  },
+  "decision": {
+    "feco": "later controlled test; not justified as a nominal-hover rescue",
+    "next_route": "native_routing_and_readout_training",
+    "reason": "Height and motion are represented, but damping is wrong-signed and no coarse partition passed selective causality."
+  },
+  "experiment": "variable-height-native-control-responsibility-audit-v1",
+  "full_report_sha256": "6c3072fceb8c2e1348968a7fe08ff46c685f51be84e9e48c4c34fa008db3fa59",
+  "partition_throttle_reachability_within_10_hops": {
+    "ascending": {
+      "fraction": 0.987463435,
+      "nodes": 2393
+    },
+    "central_brain": {
+      "fraction": 0.9647194755,
+      "nodes": 37216
+    },
+    "descending": {
+      "fraction": 0.992481203,
+      "nodes": 1330
+    },
+    "optic_lobe_and_visual": {
+      "fraction": 0.9279171105,
+      "nodes": 103270
+    },
+    "output_motor_26": {
+      "fraction": 0.2692307692,
+      "nodes": 26
+    },
+    "vnc_intrinsic": {
+      "fraction": 0.9692799027,
+      "nodes": 13151
+    },
+    "vnc_sensory": {
+      "fraction": 0.8906495136,
+      "nodes": 6374
+    }
+  },
+  "protocol": {
+    "causal_pairs": 16,
+    "causal_response_seconds": 0.2,
+    "development_pairs": 64,
+    "policy_hz": 50,
+    "probe_feature_cap": 26,
+    "test_pairs": 128
+  },
+  "source": {
+    "checkpoint": "runs/visual-hover/paired-dynamic-001/controller.pt",
+    "checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+    "graph": "data/derived/full-visual-connectome-v1.npz",
+    "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665"
+  },
+  "status": "diagnostic_only_no_parameter_changes"
+}

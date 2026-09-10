@@ -273,3 +273,37 @@ progressive teacher handoff. If they are represented but not used, train native 
 and readout without rebuilding the graph. A failed linear probe first triggers checks of
 temporal retinal drive, saturation and probe sensitivity. FeCO becomes a controlled later
 test only if physical leg state proves necessary; it is not added to rescue nominal hover.
+
+That audit is complete and selects the second branch. Every internal partition decoded
+height correction on the unseen-style bank with R2 0.964-0.989. More importantly, every
+partition decoded vertical damping with R2 0.898-0.933 even though the endpoints had
+identical pose and retinal input. The native output nevertheless used that history in the
+wrong direction: its motion contrast was wrong-signed in all 128 pairs and measured
+-0.625 of the teacher damping contrast. Height response remained correctly signed in all
+pairs at 0.910 of teacher. No coarse partition passed the fixed selective-causality gate.
+See
+[`artifacts/variable-height-native-control-responsibility-audit-v1/`](../artifacts/variable-height-native-control-responsibility-audit-v1/).
+
+The command-history time course supplies a concrete control explanation for throttle
+hunting. After 0.26 seconds of identical input the native output retained 46.3% of the
+prior command with the correct sign, but over the next 0.20 seconds it crossed zero and
+reversed. This is useful recurrence, not a stable hover-thrust estimator. It neither
+requires FeCO now nor rules out a later live/stale/shuffled FeCO experiment.
+
+The next bounded experiment is native damping-route training, not stronger height
+feedback and not progressive handoff yet. Before optimization, enumerate and freeze an
+exact mask of existing at-most-two-synapse paths from descending or VNC interneurons to
+the throttle antagonist motor pools; no other motor neuron may be an intermediate. Open
+only those edge magnitudes and nonmotor intermediate biases. Keep motor biases, all time
+constants, topology, transmitter signs and every other parameter fixed.
+
+The preflight must differentiate the real recurrent unroll and show a finite-difference-
+confirmed descent direction for the paired motion-contrast loss while full zero-state
+replay preserves pair-common throttle, visual height response and dynamic R/P/Y. Do not
+train a persistent velocity label under a frozen image. If feasible, permit at most 50
+attempted balanced constraint-aware updates. Stop at update 25 unless motion-contrast
+NRMSE falls at least 25%. A replay pass requires at least 90% correct damping sign and
+teacher-aligned gain 0.5-1.5 on fresh motion pairs, height contrast within 10% of source,
+source-global common-throttle RMS at most 0.0025, maximum drift at most 0.005 and all
+existing attitude guards. This earns only a small nominal-mass closed-loop hover test;
+checkpoint promotion still requires the full Goal 1 gate.

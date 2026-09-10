@@ -910,7 +910,8 @@ def causal_audit(
     }
     baseline = joined["untouched"]
     sign = baseline["target"].sign()
-    baseline_pair = baseline["contrast"][:, :, 3].mean(dim=0) * sign
+    baseline_aligned_by_step = baseline["contrast"][:, :, 3] * sign[None]
+    baseline_pair = baseline_aligned_by_step.mean(dim=0)
     target_magnitude = baseline["target"].abs().mean().clamp_min(REPLAY_NOISE_FLOOR)
     usable_fraction = float(baseline_pair.mean() / target_magnitude)
     baseline_usable = (
@@ -952,6 +953,14 @@ def causal_audit(
             "aligned_throttle_response_mean": float(baseline_pair.mean()),
             "correct_sign_fraction": float((baseline_pair > REPLAY_NOISE_FLOOR).float().mean()),
             "response_to_target_fraction": usable_fraction,
+            "aligned_throttle_response_mean_by_step": baseline_aligned_by_step.mean(dim=1).tolist(),
+            "response_to_target_fraction_by_step": (
+                baseline_aligned_by_step.mean(dim=1) / target_magnitude
+            ).tolist(),
+            "correct_sign_fraction_by_step": (baseline_aligned_by_step > REPLAY_NOISE_FLOOR)
+            .float()
+            .mean(dim=1)
+            .tolist(),
             "usable_response_gate_passed": baseline_usable,
         },
         "identical_history_control_max_absolute_motor_difference": identical_max,
