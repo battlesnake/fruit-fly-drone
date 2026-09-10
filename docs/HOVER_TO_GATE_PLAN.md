@@ -511,26 +511,31 @@ Opposite-velocity histories within a height condition end at exactly the same po
 image. Training, guard and evaluation cohorts use disjoint scene/trajectory combinations
 and varied approach durations.
 
-The four endpoint throttle outputs are decomposed into matched height `P`, velocity `D`,
-common `C`, and height-by-velocity interaction components; the existing analytical
-teacher supplies the corresponding training-only targets. Optimization descends only
-the normalized `D` error after projecting against the matched `P` Jacobian in the fixed
-source metric. `C` remains unanchored and diagnostic, while the interaction is reported
-so cancellation cannot masquerade as separation. Every candidate is checked by complete
-zero-state replay, not accepted from the linear projection alone. The actor still sees
-only RGB and roll/pitch and uses only native recurrence.
+The four endpoint throttle outputs are decomposed into a transient marker-error `P`,
+velocity `D`, common `C`, and height-by-velocity interaction component; the existing
+analytical teacher supplies the corresponding training-only targets. `P` is only a
+factorial name here, not a claim that the native response is a steady-state proportional
+gain. Optimization descends only the normalized `D` error after projecting against the
+matched `P` Jacobian from the **same scenes and histories** in the fixed source metric.
+`C` remains unanchored and diagnostic, while the interaction is reported so cancellation
+cannot masquerade as separation. Every candidate is checked by complete zero-state
+replay, not accepted from the linear projection alone. The actor still sees only RGB and
+roll/pitch and uses only native recurrence.
 
 First run a restored one-step preflight. It must have a finite negative derivative,
 finite-difference agreement within 20%, at least `1e-4` actual full-replay `D`-NRMSE
-improvement, matched `P` response within 10% of source, and all existing visual-height,
-RPY, validity, motor-bound and `5e-4` source-metric checks. A pass authorizes at most 25
-attempts with two independent gradient banks and two fixed guard banks; each guard bank
-must improve `D` NRMSE by at least `1e-4`, and five consecutive rejections stop. At the
-attempt limit, useful progress requires at least 25% `D`-error reduction on an independent
-development cohort while retaining `P` within 10% of source and all other protections.
-Only then is a fresh cohort exposed for at least 90% correct damping sign and aligned
-gain 0.5-1.5. Replay alone cannot promote a checkpoint. If the height-null preflight has
-no usable damping descent, or bounded training again misses useful progress, close this
-local mask/metric family rather than interpreting reduced wrong-sign amplitude as learned
-damping. Joint absolute height-and-damping teaching would then be a separately declared
-broader redesign, not a post-hoc continuation.
+improvement, and matched `P` response within 10% of source in **every nondegenerate
+scene**, not merely in the amplitude-group mean. Bound-active edge coordinates are frozen
+and the post-bound linearized `P` change must remain at most 0.1% of source per scene.
+All existing visual-height, RPY, validity, motor-bound and `5e-4` source-metric checks
+also remain. A pass authorizes at most 25 attempts with two independent gradient banks
+and two fixed guard banks; each guard bank must improve `D` NRMSE by at least `1e-4`, and
+five consecutive rejections stop. At the attempt limit, useful progress requires at least
+25% `D`-error reduction on an independent development cohort while retaining `P` within
+10% of source and all other protections. Only then is a fresh cohort exposed for at least
+90% correct damping sign and aligned gain 0.5-1.5. Replay alone cannot promote a
+checkpoint. If the height-null preflight has no usable damping descent, or bounded
+training again misses useful progress, close this local mask/metric family rather than
+interpreting reduced wrong-sign amplitude as learned damping. Joint absolute
+height-and-damping teaching would then be a separately declared broader redesign, not a
+post-hoc continuation.
