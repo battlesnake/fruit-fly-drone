@@ -703,8 +703,8 @@ def fit_native_readout(
                 {
                     "update": update,
                     "normalized_equal_group_mse": value,
-                    "coefficient_minimum": float(magnitudes.min()),
-                    "coefficient_maximum": float(magnitudes.max()),
+                    "coefficient_minimum": float(magnitudes.detach().min()),
+                    "coefficient_maximum": float(magnitudes.detach().max()),
                 }
             )
             print(

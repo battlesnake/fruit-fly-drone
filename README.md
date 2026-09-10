@@ -264,6 +264,15 @@ preregistered generation-20 gate stopped the run before its causal final, and no
 were merged or promoted. See the
 [`assisted acceleration-path diagnostic`](artifacts/gate-assisted-acceleration-path-es-diagnostic-v1/).
 
+A frozen-history routing audit then separated latent information from the native throttle
+mapping. A linear probe of all 93 path neurons predicted the required throttle correction
+very accurately, and a probe restricted to the 19 return sources plus seven throttle
+motor states narrowly passed every held-out time/mass gate. The exact 37-edge fixed-sign
+native mapping did not pass. Acceleration ablation strongly changed the wider path probe
+but barely changed the return-source prediction, so useful information reaches the output
+boundary without establishing that acceleration is its carrier there. See the
+[`throttle-routing diagnostic`](artifacts/gate-throttle-routing-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.

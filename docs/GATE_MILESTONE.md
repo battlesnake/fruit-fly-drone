@@ -501,6 +501,24 @@ raised light success and the worst mass/lateral stratum by ten points, generatio
 stopped the run before final causal controls. No vector was compiled or promoted; see
 [`gate-assisted-acceleration-path-es-diagnostic-v1`](../artifacts/gate-assisted-acceleration-path-es-diagnostic-v1/).
 
+A frozen-replay audit next tested action-relevant routing directly instead of running a
+wider optimizer. It recorded the source's real sensor and recurrent histories for 64
+development and 128 held-out geometry pairs and fitted one time-independent throttle
+correction across 0.5--1.5 seconds. A ridge probe of the 93 path neurons passed easily
+(worst time/mass NRMSE 0.090); a probe restricted to the 19 throttle-return sources plus
+seven motor states also passed at 0.242. The exact nonlinear fit of all 37 existing
+fixed-sign throttle-incoming magnitudes failed at 0.499 and only improved aggregate RMSE
+30.2% over a constant, below the required 50%.
+
+On identical saved image, angle, and stick histories, constant-1g acceleration changed the
+wide path prediction by 0.0172 motor-drive units but the return-source prediction by only
+0.00030. The controller therefore contains a usable action correlate at the return
+boundary, while this audit does not attribute that correlate specifically to acceleration.
+The native fit was still improving when its 200-update budget ended, so the result also
+does not distinguish optimizer limitation from signed-readout constraint. All fits were
+diagnostic only and the source was preserved; see
+[`gate-throttle-routing-diagnostic-v1`](../artifacts/gate-throttle-routing-diagnostic-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:
@@ -543,6 +561,12 @@ Re-run the teacher-steering-assisted recurrent acceleration-path diagnostic with
 
 ```bash
 scripts/run_gate_assisted_acceleration_path_es.sh
+```
+
+Re-run the frozen throttle-routing diagnostic with:
+
+```bash
+scripts/run_gate_throttle_routing_audit.sh
 ```
 
 Re-run the recurrent-PPO diagnostic under AIRA with:
