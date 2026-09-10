@@ -312,6 +312,14 @@ sampling distortion at its fixed thresholds; the remaining problem is early-wind
 fitting shared by both splits. See the
 [`recurrent-routing sampling diagnostic`](artifacts/gate-recurrent-routing-sampling-diagnostic-v1/).
 
+A paired continuation then compared 100 more equal-window updates with fourfold early-
+window weighting from the exact same vector and batch sequence. The early limiting NRMSE
+improved from 0.608 to 0.554 for the control and 0.518 for the treatment, but both missed
+the preregistered 20% continuation target of about 0.487. All middle/late safety and prefix
+checks passed. Both arms stopped without fresh replay or flight, ruling out these modest
+training-duration and loss-weighting changes as sufficient fixes. See the
+[`paired continuation diagnostic`](artifacts/gate-recurrent-routing-continuation-diagnostic-v1/).
+
 [`showcase.mp4`](artifacts/gate-v1/showcase.mp4) records one complete traversal and shows
 both schematic forelegs moving the virtual transmitter sticks. Neither the gate nor hover
 checkpoint has yet been transferred to an independent simulator.

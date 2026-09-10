@@ -587,6 +587,19 @@ early-window fitting error, not demonstrated overfitting or sampling bias. The a
 no update and consumed no fresh held-out case; see
 [`gate-recurrent-routing-sampling-diagnostic-v1`](../artifacts/gate-recurrent-routing-sampling-diagnostic-v1/).
 
+A paired continuation subsequently tested extra optimization against early-window
+prioritization. Both arms reset Adam at the retained update-100 vector, used the same
+125-edge mask and identical balanced minibatches, and preserved the normalized four-axis
+prefix anchor. The control retained equal window weights; the treatment used `(4,1,1)/6`
+for early, middle, and late throttle losses. At 100 additional updates, worst early-group
+NRMSE improved from 0.6082 to 0.5540 for control and 0.5184 for treatment—8.9% and 14.8%,
+short of the 20% continuation requirement. Every middle/late regression check and both
+prefix checks passed. Neither arm continued to update 200, consumed fresh held-out data,
+or ran assisted flight. This rejects the tested duration and fourfold reweighting as
+sufficient fixes for the 125-edge circuit, without attributing the residual to recurrence
+itself. No parameter was compiled or promoted; see
+[`gate-recurrent-routing-continuation-diagnostic-v1`](../artifacts/gate-recurrent-routing-continuation-diagnostic-v1/).
+
 ## Reproduction
 
 Re-run the frozen checkpoint evaluation with:
@@ -665,6 +678,12 @@ Re-run its frozen sampling/generalization audit with:
 
 ```bash
 scripts/run_gate_recurrent_routing_sampling_audit.sh
+```
+
+Re-run the paired recurrent-routing continuation with:
+
+```bash
+scripts/run_gate_recurrent_routing_continuation.sh
 ```
 
 Re-run the recurrent-PPO diagnostic under AIRA with:
