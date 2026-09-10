@@ -1,0 +1,73 @@
+{
+  "accepted_attempts": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    10,
+    11,
+    14,
+    16,
+    17,
+    18,
+    21,
+    22
+  ],
+  "accepted_updates": 16,
+  "actor_contract_unchanged": true,
+  "attempts_completed": 25,
+  "closed_loop_hover_run": false,
+  "experiment": "variable-height-native-damping-route-training-v1",
+  "full_report_sha256": "69977eafacd02352dfedb5de337aabec3874a3c68961059f96a40d25e7d1f4c6",
+  "mask": {
+    "bias_node_indices_sha256": "0b518b0411d8e39b9f4c56cfc8b68e057814a561ca4268ae16cf67cea777b593",
+    "edge_indices_sha256": "cd0a11e986d30701cb3b08d4b404f253476ce8044cc250e0b01a10dff1c449a7",
+    "selected_edge_magnitudes": 12314,
+    "selected_intermediate_biases": 303
+  },
+  "milestone": {
+    "candidate_fixed_scale_nrmse": 1.3498643637,
+    "correct_sign_fraction": 0.0,
+    "motion_nrmse_improvement_fraction": 0.0111700792,
+    "required_improvement_fraction": 0.25,
+    "source_fixed_scale_nrmse": 1.3651127815,
+    "teacher_aligned_gain": -0.5277280807
+  },
+  "nonpromotional_endpoint_sha256": "c047763f19e5e6da837ddc8e278b303ff95d7fcb95aa1afc9ea7e98fd30ece64",
+  "passed_replay_gate": false,
+  "preservation": {
+    "all_finite": true,
+    "functional_replay_pass": true,
+    "height_response_student_to_source_ratio": {
+      "medium": 0.9699881673,
+      "small": 0.9702286720
+    },
+    "selected_source_metric_norm": 0.0001750843,
+    "selected_source_metric_radius": 0.0005,
+    "source_common_throttle_max_absolute": 0.0034407973,
+    "source_common_throttle_rms": 0.0024912949,
+    "source_common_throttle_rms_limit": 0.0025
+  },
+  "promoted": false,
+  "protocol_commit": "66734698647a1ee9cf8a5518aad4c0ed07e9e3fa",
+  "source": {
+    "checkpoint": "runs/visual-hover/paired-dynamic-001/controller.pt",
+    "checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+    "graph": "data/derived/full-visual-connectome-v1.npz",
+    "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665"
+  },
+  "status": "rejected_at_attempt_25_no_promotion",
+  "stop_reason": "attempt-25 motion NRMSE improvement below 25%",
+  "terminal": {
+    "candidate_fixed_scale_nrmse": 1.3787181377,
+    "correct_sign_fraction": 0.0,
+    "motion_nrmse_improvement_fraction": 0.0116795957,
+    "source_fixed_scale_nrmse": 1.3950113058,
+    "source_teacher_aligned_gain": -0.5691030025,
+    "teacher_aligned_gain": -0.5519167185
+  }
+}

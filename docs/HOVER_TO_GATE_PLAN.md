@@ -375,3 +375,14 @@ every preservation gate still passing. Atomic resume state includes the complete
 protocol and terminal decisions, preventing a restart from changing or bypassing gates.
 The run's endpoint remains explicitly nonpromotional; only subsequent closed-loop
 evidence can justify replacing the source.
+
+Result: the frozen run in commit `6673469` stopped at the attempt-25 gate after 16
+accepted updates. Milestone motion NRMSE improved only 1.117% (1.365113 to 1.349864),
+far below 25%. On the disjoint terminal cohort it improved 1.168% (1.395011 to
+1.378718), while correct damping sign remained 0% and aligned gain remained negative at
+-0.552. Preservation passed, including height-response ratios near 0.970, but common-
+throttle RMS reached 0.002491 of the 0.0025 source limit. This exact shallow route is
+closed as insufficient: it weakens the wrong-signed response slightly but cannot reverse
+it without consuming the tonic/height-control budget. No closed-loop test ran and no
+checkpoint was promoted. See
+[`artifacts/variable-height-native-damping-route-training-v1/`](../artifacts/variable-height-native-damping-route-training-v1/).
