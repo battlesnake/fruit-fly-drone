@@ -42,6 +42,13 @@ STARTING_TRIAL_SCALE = 0.0625
 CORRECTION_SCALES = (1.0, 0.5, 0.25, 0.125)
 ENDPOINT_COMMON_INTERIOR_MARGIN = 0.0199
 ENDPOINT_DAMPING_RETENTION_IMPROVEMENT = 0.001
+SOLVER_ENDPOINT_COMMON_INTERIOR_MARGIN = ENDPOINT_COMMON_INTERIOR_MARGIN
+USE_DISTINCT_SOLVER_ACCEPTANCE_SPECS = False
+USE_AUTHORITATIVE_ENDPOINT_DAMPING_ROW = False
+DIRECTIONAL_FINITE_DIFFERENCE_REQUIRED = False
+DIRECTIONAL_FINITE_DIFFERENCE_PROBE_FRACTION = 0.25
+DIRECTIONAL_FINITE_DIFFERENCE_RELATIVE_ERROR_LIMIT = 0.20
+DIRECTIONAL_FINITE_DIFFERENCE_MINIMUM_ABSOLUTE_CHANGE = 1.0e-8
 REPRODUCTION_ABSOLUTE_TOLERANCE = 5.0e-6
 REPRODUCTION_RELATIVE_TOLERANCE = 1.0e-5
 GRADIENT_ABSOLUTE_TOLERANCE = 1.0e-7
@@ -346,12 +353,13 @@ def correction_constraint_specs(
     source_metrics: dict[str, Any],
     update8_metrics: dict[str, Any],
     starting_metrics: dict[str, Any],
+    *,
+    endpoint_common_margin: float = ENDPOINT_COMMON_INTERIOR_MARGIN,
 ) -> list[dict[str, Any]]:
     specs = base.constraint_specs(source_metrics, starting_metrics)
     endpoint_common = next(spec for spec in specs if spec["name"] == "common.step_25")
     endpoint_common["limit_mse"] = (
-        source_metrics["by_supervision_step_nrmse"]["25"]["common"]
-        + ENDPOINT_COMMON_INTERIOR_MARGIN
+        source_metrics["by_supervision_step_nrmse"]["25"]["common"] + endpoint_common_margin
     ) ** 2
     endpoint_common["remaining_mse_allowance"] = (
         endpoint_common["limit_mse"] - endpoint_common["current_mse"]
@@ -372,6 +380,48 @@ def correction_constraint_specs(
     )
     specs.append(damping_spec)
     return specs
+
+
+def directional_finite_difference_report(
+    gradient: dict[str, Tensor],
+    displacement: dict[str, Tensor],
+    *,
+    starting_endpoint_damping_nrmse: float,
+    probe_endpoint_damping_nrmse: float,
+    canonicalization_pass: bool,
+    parameter_bounds_pass: bool,
+    starting_restored_exactly: bool,
+) -> dict[str, Any]:
+    derivative = canonical._dot_float64(gradient, displacement)
+    actual_change = probe_endpoint_damping_nrmse**2 - starting_endpoint_damping_nrmse**2
+    finite = math.isfinite(derivative) and math.isfinite(actual_change)
+    measurable = abs(actual_change) >= DIRECTIONAL_FINITE_DIFFERENCE_MINIMUM_ABSOLUTE_CHANGE
+    relative_error = (
+        abs(actual_change - derivative) / max(abs(actual_change), abs(derivative), 1.0e-30)
+        if finite
+        else math.inf
+    )
+    return {
+        "pass": bool(
+            finite
+            and measurable
+            and relative_error <= DIRECTIONAL_FINITE_DIFFERENCE_RELATIVE_ERROR_LIMIT
+            and canonicalization_pass
+            and parameter_bounds_pass
+            and starting_restored_exactly
+        ),
+        "autograd_directional_derivative": derivative,
+        "complete_replay_squared_error_change": actual_change,
+        "all_values_finite": finite,
+        "measurable_nonzero_change": measurable,
+        "minimum_absolute_change": (DIRECTIONAL_FINITE_DIFFERENCE_MINIMUM_ABSOLUTE_CHANGE),
+        "relative_error": relative_error,
+        "relative_error_limit": DIRECTIONAL_FINITE_DIFFERENCE_RELATIVE_ERROR_LIMIT,
+        "probe_fraction_toward_update_8": DIRECTIONAL_FINITE_DIFFERENCE_PROBE_FRACTION,
+        "canonicalization_pass": canonicalization_pass,
+        "parameter_bounds_pass": parameter_bounds_pass,
+        "starting_candidate_restored_exactly": starting_restored_exactly,
+    }
 
 
 def gradient_agreement(row: dict[str, Tensor], reference: dict[str, Tensor]) -> dict[str, Any]:
@@ -422,6 +472,31 @@ def linearized_constraint_violations(
 def maximum_linearized_violation(violations: list[float]) -> tuple[float, bool]:
     finite = all(math.isfinite(value) for value in violations)
     return (max(violations) if finite else math.inf), finite
+
+
+def correction_projection_preplay_pass(
+    *,
+    projection_pass: bool,
+    canonicalization_pass: bool,
+    solver_linearized_finite: bool,
+    maximum_solver_linearized_violation: float,
+    acceptance_linearized_finite: bool,
+    parameter_bounds_pass: bool,
+    damping_row_control_pass: bool,
+    distinct_solver_acceptance_specs: bool,
+) -> bool:
+    return bool(
+        projection_pass
+        and canonicalization_pass
+        and solver_linearized_finite
+        and acceptance_linearized_finite
+        and parameter_bounds_pass
+        and damping_row_control_pass
+        and (
+            distinct_solver_acceptance_specs
+            or maximum_solver_linearized_violation <= base.LINEAR_CONSTRAINT_TOLERANCE
+        )
+    )
 
 
 @torch.no_grad()
@@ -800,22 +875,29 @@ def main() -> int:
                 json.dumps({"stage": "differentiating_correction_constraints"}),
                 flush=True,
             )
-            specs = correction_constraint_specs(
+            solver_specs = correction_constraint_specs(
                 registered_source_training,
                 registered_update8_training,
                 starting_metrics,
+                endpoint_common_margin=SOLVER_ENDPOINT_COMMON_INTERIOR_MARGIN,
+            )
+            acceptance_specs = correction_constraint_specs(
+                registered_source_training,
+                registered_update8_training,
+                starting_metrics,
+                endpoint_common_margin=ENDPOINT_COMMON_INTERIOR_MARGIN,
             )
             rows = base.constraint_gradient_rows(
                 student,
                 train_factorial,
                 train_attitude,
                 scales,
-                specs,
+                solver_specs,
                 device=device,
             )
             damping_index = next(
                 index
-                for index, spec in enumerate(specs)
+                for index, spec in enumerate(solver_specs)
                 if spec["name"] == "damping.step_25.retention"
             )
             optimizer.zero_grad(set_to_none=True)
@@ -834,6 +916,55 @@ def main() -> int:
                 rows[damping_index], reference_damping_row
             )
             optimizer.zero_grad(set_to_none=True)
+            if USE_AUTHORITATIVE_ENDPOINT_DAMPING_ROW:
+                rows[damping_index] = reference_damping_row
+
+            if DIRECTIONAL_FINITE_DIFFERENCE_REQUIRED:
+                probe_parameters, probe_displacement, probe_idempotence = (
+                    install_authoritative_trial(
+                        student,
+                        starting_parameters,
+                        update8_parameters,
+                        scale=DIRECTIONAL_FINITE_DIFFERENCE_PROBE_FRACTION,
+                    )
+                )
+                probe_bounds = parameter_bounds_report(probe_parameters)
+                probe_metrics, _ = endpoint.evaluate(
+                    student,
+                    train_factorial,
+                    train_attitude,
+                    scales,
+                    endpoint_scale=endpoint_scale,
+                    device=device,
+                )
+                joint._load_parameters(student, starting_parameters)
+                probe_starting_restored = all(
+                    torch.equal(getattr(student, name).detach(), starting_parameters[name])
+                    for name in joint.PARAMETER_FAMILIES
+                )
+                damping_directional_finite_difference = directional_finite_difference_report(
+                    reference_damping_row,
+                    probe_displacement,
+                    starting_endpoint_damping_nrmse=starting_metrics["endpoint_damping_nrmse"],
+                    probe_endpoint_damping_nrmse=probe_metrics["endpoint_damping_nrmse"],
+                    canonicalization_pass=probe_idempotence["pass"],
+                    parameter_bounds_pass=probe_bounds["pass"],
+                    starting_restored_exactly=probe_starting_restored,
+                )
+                damping_directional_finite_difference.update(
+                    {
+                        "probe_metrics": probe_metrics,
+                        "probe_parameter_bounds": probe_bounds,
+                        "probe_canonical_parameter_idempotence": probe_idempotence,
+                    }
+                )
+                damping_row_control = damping_directional_finite_difference
+            else:
+                damping_directional_finite_difference = {
+                    "required": False,
+                    "pass": None,
+                }
+                damping_row_control = damping_gradient_agreement
 
             print(
                 json.dumps({"stage": "solving_single_minimum_norm_correction"}),
@@ -841,37 +972,76 @@ def main() -> int:
             )
             zero = {name: torch.zeros_like(value) for name, value in starting_parameters.items()}
             proposed_correction, projection = bounded.bound_aware_project_inequality_displacement(
-                zero, rows, specs, starting_parameters["edge_magnitude"]
+                zero, rows, solver_specs, starting_parameters["edge_magnitude"]
             )
             corrected_parameters, effective_correction, correction_canonicalization = (
                 canonical.materialize_authoritative_candidate(
                     student, starting_parameters, proposed_correction
                 )
             )
-            full_linearized = linearized_constraint_violations(specs, rows, effective_correction)
-            maximum_full_linearized, full_linearized_finite = maximum_linearized_violation(
-                full_linearized
+            full_solver_linearized = linearized_constraint_violations(
+                solver_specs, rows, effective_correction
+            )
+            maximum_full_solver_linearized, full_solver_linearized_finite = (
+                maximum_linearized_violation(full_solver_linearized)
+            )
+            full_acceptance_linearized = linearized_constraint_violations(
+                acceptance_specs, rows, effective_correction
+            )
+            maximum_full_acceptance_linearized, full_acceptance_linearized_finite = (
+                maximum_linearized_violation(full_acceptance_linearized)
             )
             full_bounds = parameter_bounds_report(corrected_parameters)
-            correction_projection_pass = bool(
-                projection["pass"]
-                and correction_canonicalization["pass"]
-                and full_linearized_finite
-                and maximum_full_linearized <= base.LINEAR_CONSTRAINT_TOLERANCE
-                and full_bounds["pass"]
+            correction_projection_pass = correction_projection_preplay_pass(
+                projection_pass=projection["pass"],
+                canonicalization_pass=correction_canonicalization["pass"],
+                solver_linearized_finite=full_solver_linearized_finite,
+                maximum_solver_linearized_violation=(maximum_full_solver_linearized),
+                acceptance_linearized_finite=full_acceptance_linearized_finite,
+                parameter_bounds_pass=full_bounds["pass"],
+                damping_row_control_pass=damping_row_control["pass"],
+                distinct_solver_acceptance_specs=(USE_DISTINCT_SOLVER_ACCEPTANCE_SPECS),
             )
             correction = {
                 "attempted": True,
                 "skip_reason": None,
-                "constraint_specs": specs,
-                "active_rpy_rows": [spec["name"] for spec in specs if spec["kind"] == "attitude"],
+                "solver_constraint_specs": solver_specs,
+                "acceptance_constraint_specs": acceptance_specs,
+                "active_rpy_rows": [
+                    spec["name"] for spec in solver_specs if spec["kind"] == "attitude"
+                ],
                 "endpoint_damping_gradient_agreement": damping_gradient_agreement,
+                "endpoint_damping_gradient_agreement_is_diagnostic_only": (
+                    USE_AUTHORITATIVE_ENDPOINT_DAMPING_ROW
+                ),
+                "endpoint_damping_row_source": (
+                    "dedicated accumulated endpoint-damping objective"
+                    if USE_AUTHORITATIVE_ENDPOINT_DAMPING_ROW
+                    else "multi-loss constraint Jacobian"
+                ),
+                "endpoint_damping_directional_finite_difference": (
+                    damping_directional_finite_difference
+                ),
+                "endpoint_damping_row_control": damping_row_control,
                 "zero_reference_displacement": True,
                 "projection": projection,
                 "authoritative_parameter_canonicalization": (correction_canonicalization),
-                "effective_full_correction_linearized_violations": full_linearized,
-                "effective_full_correction_linearized_violations_finite": (full_linearized_finite),
-                "maximum_effective_full_correction_linearized_violation": (maximum_full_linearized),
+                "effective_full_correction_solver_linearized_violations": (full_solver_linearized),
+                "effective_full_correction_solver_linearized_violations_finite": (
+                    full_solver_linearized_finite
+                ),
+                "maximum_effective_full_correction_solver_linearized_violation": (
+                    maximum_full_solver_linearized
+                ),
+                "effective_full_correction_acceptance_linearized_violations": (
+                    full_acceptance_linearized
+                ),
+                "effective_full_correction_acceptance_linearized_violations_finite": (
+                    full_acceptance_linearized_finite
+                ),
+                "maximum_effective_full_correction_acceptance_linearized_violation": (
+                    maximum_full_acceptance_linearized
+                ),
                 "effective_full_correction_parameter_bounds": full_bounds,
                 "pass_before_nonlinear_replay": correction_projection_pass,
                 "single_solve_completed": True,
@@ -886,7 +1056,9 @@ def main() -> int:
                     corrected_parameters,
                     scale=scale,
                 )
-                linearized = linearized_constraint_violations(specs, rows, actual_displacement)
+                linearized = linearized_constraint_violations(
+                    acceptance_specs, rows, actual_displacement
+                )
                 maximum_linearized, linearized_finite = maximum_linearized_violation(linearized)
                 bounds = parameter_bounds_report(actual_parameters)
                 metrics, _ = endpoint.evaluate(
@@ -920,11 +1092,7 @@ def main() -> int:
                         },
                     }
                 )
-                if (
-                    correction_projection_pass
-                    and damping_gradient_agreement["pass"]
-                    and decision["pass"]
-                ):
+                if correction_projection_pass and damping_row_control["pass"] and decision["pass"]:
                     selected_scale = scale
                     selected_metrics = metrics
                     break
@@ -933,6 +1101,10 @@ def main() -> int:
                 "attempted": False,
                 "skip_reason": "reconstructed update-9 controls failed",
                 "endpoint_damping_gradient_agreement": {
+                    "pass": False,
+                    "reason": "correction was not differentiated",
+                },
+                "endpoint_damping_row_control": {
                     "pass": False,
                     "reason": "correction was not differentiated",
                 },
@@ -978,7 +1150,7 @@ def main() -> int:
         and reconstructed_proposal["proposal_reproduction"]["pass"]
         and reconstructed_proposal["starting_metrics_reproduction"]["pass"]
         and starting_archive["reload_matches_parameter_tensor_sha256"]
-        and correction["endpoint_damping_gradient_agreement"]["pass"]
+        and correction["endpoint_damping_row_control"]["pass"]
         and parameters_restored
         and optimizer_restored
         and resume_unchanged
