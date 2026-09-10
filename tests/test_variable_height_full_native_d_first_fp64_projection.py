@@ -68,7 +68,36 @@ def test_fp64_dual_solver_reports_primary_and_independent_solutions() -> None:
     assert coefficients == pytest.approx(torch.tensor([1.0], dtype=torch.float64))
     assert report["pass"] is True
     assert report["normalized_kkt"]["pass"] is True
-    assert report["independent_slsqp"]["used_for_candidate"] is False
+    assert report["independent_nnls"]["pass"] is True
+
+
+def test_independent_nnls_compares_primal_effect_for_nonunique_duals() -> None:
+    gram = np.ones((2, 2), dtype=np.float64)
+    violation = np.ones(2, dtype=np.float64)
+    primary_dual = np.array([0.5, 0.5], dtype=np.float64)
+
+    report = fp64._independent_nnls_report(gram, violation, primary_dual)
+
+    assert report["pass"] is True
+    assert report["rank"] == 1
+    assert report["gram_induced_primal_relative_distance_from_primary"] == pytest.approx(
+        0.0, abs=1e-12
+    )
+    assert report["dual_coefficients_compared_directly"] is False
+
+
+def test_independent_nnls_handles_nullspace_linear_term_via_supports() -> None:
+    gram = np.ones((2, 2), dtype=np.float64)
+    violation = np.array([2.0, 1.0], dtype=np.float64)
+    primary_dual = np.array([2.0, 0.0], dtype=np.float64)
+
+    report = fp64._independent_nnls_report(gram, violation, primary_dual)
+
+    assert report["violation_outside_retained_eigenspace_l2"] > 0.0
+    assert report["normalized_kkt"]["pass"] is True
+    assert report["independent_dual_objective"] == pytest.approx(-2.0)
+    assert report["gram_induced_primal_relative_distance_from_primary"] == pytest.approx(0.0)
+    assert report["pass"] is True
 
 
 def test_fp64_projector_solves_toy_halfspace_in_double_precision(monkeypatch) -> None:

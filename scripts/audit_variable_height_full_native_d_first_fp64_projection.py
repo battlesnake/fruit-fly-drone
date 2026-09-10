@@ -14,7 +14,7 @@ from typing import Any
 
 import numpy as np
 import torch
-from scipy.optimize import minimize
+from scipy.optimize import minimize, nnls
 from torch import Tensor
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -44,6 +44,8 @@ NORMALIZED_KKT_RESIDUAL_LIMIT = 1.0e-8
 INDEPENDENT_SLSQP_FTOL = 1.0e-12
 MAXIMUM_SOLVER_ITERATIONS = 10_000
 MAXIMUM_ACTIVE_SET_ROUNDS = bounded.MAXIMUM_ACTIVE_SET_ROUNDS
+INDEPENDENT_PRIMAL_RELATIVE_DISTANCE_LIMIT = 1.0e-6
+INDEPENDENT_OBJECTIVE_RELATIVE_DIFFERENCE_LIMIT = 1.0e-8
 
 
 def parse_args() -> argparse.Namespace:
@@ -225,6 +227,106 @@ def _rank_report(normalized_gram: np.ndarray) -> dict[str, Any]:
     }
 
 
+def _independent_nnls_report(
+    normalized_gram: np.ndarray,
+    normalized_violation: np.ndarray,
+    primary_dual: np.ndarray,
+) -> dict[str, Any]:
+    symmetric = 0.5 * (normalized_gram + normalized_gram.T)
+    eigenvalues, eigenvectors = np.linalg.eigh(symmetric)
+    largest = float(np.max(np.abs(eigenvalues), initial=0.0))
+    cutoff = RANK_RELATIVE_EIGENVALUE_CUTOFF * largest
+    retained = eigenvalues > cutoff
+    basis = eigenvectors[:, retained]
+    outside = normalized_violation - basis @ (basis.T @ normalized_violation)
+    dimension = len(normalized_violation)
+    candidates: list[dict[str, Any]] = []
+    for support_mask in range(1 << dimension):
+        support = np.array(
+            [index for index in range(dimension) if support_mask & (1 << index)],
+            dtype=np.int64,
+        )
+        dual = np.zeros(dimension, dtype=np.float64)
+        if support.size:
+            support_gram = symmetric[np.ix_(support, support)]
+            support_violation = normalized_violation[support]
+            support_dual, stationarity_residual = nnls(
+                support_gram,
+                support_violation,
+                maxiter=MAXIMUM_SOLVER_ITERATIONS,
+            )
+            dual[support] = support_dual
+        else:
+            stationarity_residual = float(np.linalg.norm(normalized_violation))
+        kkt = _projected_gradient_report(symmetric, normalized_violation, dual)
+        if np.all(np.isfinite(dual)) and kkt["pass"]:
+            objective = float(0.5 * dual @ symmetric @ dual - normalized_violation @ dual)
+            candidates.append(
+                {
+                    "dual": dual,
+                    "objective": objective,
+                    "kkt": kkt,
+                    "support_mask": support_mask,
+                    "support_size": int(support.size),
+                    "stationarity_residual_norm": float(stationarity_residual),
+                }
+            )
+    selected = min(candidates, key=lambda candidate: candidate["objective"], default=None)
+    if selected is None:
+        independent_dual = np.zeros(dimension, dtype=np.float64)
+        independent_objective = math.inf
+        kkt = _projected_gradient_report(symmetric, normalized_violation, independent_dual)
+        selected_support_mask = None
+        selected_support_size = None
+        stationarity_residual_norm = None
+    else:
+        independent_dual = selected["dual"]
+        independent_objective = selected["objective"]
+        kkt = selected["kkt"]
+        selected_support_mask = selected["support_mask"]
+        selected_support_size = selected["support_size"]
+        stationarity_residual_norm = selected["stationarity_residual_norm"]
+    delta = independent_dual - primary_dual
+    primal_distance_squared = max(0.0, float(delta @ symmetric @ delta))
+    primary_norm_squared = max(0.0, float(primary_dual @ symmetric @ primary_dual))
+    relative_primal_distance = math.sqrt(primal_distance_squared) / max(
+        math.sqrt(primary_norm_squared), 1.0e-30
+    )
+    primary_objective = float(
+        0.5 * primary_dual @ symmetric @ primary_dual - normalized_violation @ primary_dual
+    )
+    relative_objective_difference = abs(independent_objective - primary_objective) / max(
+        1.0, abs(primary_objective)
+    )
+    return {
+        "pass": bool(
+            selected is not None
+            and kkt["pass"]
+            and relative_primal_distance <= INDEPENDENT_PRIMAL_RELATIVE_DISTANCE_LIMIT
+            and relative_objective_difference <= INDEPENDENT_OBJECTIVE_RELATIVE_DIFFERENCE_LIMIT
+        ),
+        "solver": "exhaustive active-support Lawson-Hanson nonnegative least squares",
+        "rank": int(retained.sum()),
+        "supports_examined": 1 << dimension,
+        "kkt_feasible_supports": len(candidates),
+        "selected_support_mask": selected_support_mask,
+        "selected_support_size": selected_support_size,
+        "selected_stationarity_residual_norm": stationarity_residual_norm,
+        "violation_outside_retained_eigenspace_l2": float(np.linalg.norm(outside)),
+        "normalized_kkt": kkt,
+        "gram_induced_primal_relative_distance_from_primary": (relative_primal_distance),
+        "gram_induced_primal_relative_distance_limit": (INDEPENDENT_PRIMAL_RELATIVE_DISTANCE_LIMIT),
+        "primary_dual_objective": primary_objective,
+        "independent_dual_objective": independent_objective,
+        "dual_objective_relative_difference": relative_objective_difference,
+        "dual_objective_relative_difference_limit": (
+            INDEPENDENT_OBJECTIVE_RELATIVE_DIFFERENCE_LIMIT
+        ),
+        "dual_coefficients_compared_directly": False,
+        "used_for_candidate": False,
+    }
+
+
 def solve_dual_fp64(
     gram: Tensor,
     violation: Tensor,
@@ -288,6 +390,9 @@ def solve_dual_fp64(
             normalized_gram, normalized_violation, result.x
         ),
         "normalized_gram": _rank_report(normalized_gram),
+        "independent_nnls": _independent_nnls_report(
+            normalized_gram, normalized_violation, result.x
+        ),
         "independent_slsqp": {
             "solver_success": bool(independent.success),
             "solver_message": str(independent.message),
