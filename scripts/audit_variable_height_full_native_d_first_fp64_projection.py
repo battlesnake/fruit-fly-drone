@@ -518,6 +518,22 @@ def production_projection(
     return authoritative, projection
 
 
+def install_fp64_trial(
+    student: ConnectomeController,
+    current_parameters: dict[str, Tensor],
+    authoritative_parameters: dict[str, Tensor],
+    *,
+    scale: float,
+) -> tuple[dict[str, Tensor], dict[str, Tensor], dict[str, Any]]:
+    """Install an explicit audit candidate without canonical module globals."""
+    return audit.install_authoritative_trial(
+        student,
+        current_parameters,
+        authoritative_parameters,
+        scale=scale,
+    )
+
+
 def main() -> int:
     args = parse_args()
     validate_args(args)
@@ -716,10 +732,10 @@ def main() -> int:
         linearized = audit.linearized_constraint_violations(specs, rows, effective)
         maximum_linearized, linearized_finite = audit.maximum_linearized_violation(linearized)
         derivative = canonical._dot_float64(raw_gradients, effective)
-        canonical.install_trial(
+        _, actual_fd, fd_idempotence = install_fp64_trial(
             student,
             current_parameters,
-            {name: value.to(current_parameters[name].dtype) for name, value in effective.items()},
+            corrected_parameters,
             scale=joint.FINITE_DIFFERENCE_SCALE,
         )
         finite_difference_metrics, _ = endpoint.evaluate(
@@ -730,10 +746,6 @@ def main() -> int:
             endpoint_scale=endpoint_scale,
             device=device,
         )
-        actual_fd = {
-            name: getattr(student, name).detach().double() - current_parameters[name].double()
-            for name in joint.PARAMETER_FAMILIES
-        }
         fd_derivative = canonical._dot_float64(raw_gradients, actual_fd) / (
             joint.FINITE_DIFFERENCE_SCALE
         )
@@ -752,30 +764,25 @@ def main() -> int:
                 and fd_derivative < 0.0
                 and fd_actual < 0.0
                 and fd_relative_error <= joint.FINITE_DIFFERENCE_RELATIVE_ERROR_LIMIT
+                and fd_idempotence["pass"]
             ),
             "scale": joint.FINITE_DIFFERENCE_SCALE,
             "autograd_directional_derivative": fd_derivative,
             "complete_replay_finite_difference": fd_actual,
             "relative_error": fd_relative_error,
             "relative_error_limit": joint.FINITE_DIFFERENCE_RELATIVE_ERROR_LIMIT,
+            "canonical_parameter_idempotence": fd_idempotence,
         }
         selected_scale = None
         selected_metrics = None
         trials = []
         for scale in base.BACKTRACK_SCALES:
-            canonical.install_trial(
+            _, actual, trial_idempotence = install_fp64_trial(
                 student,
                 current_parameters,
-                {
-                    name: value.to(current_parameters[name].dtype)
-                    for name, value in effective.items()
-                },
+                corrected_parameters,
                 scale=scale,
             )
-            actual = {
-                name: getattr(student, name).detach().double() - current_parameters[name].double()
-                for name in joint.PARAMETER_FAMILIES
-            }
             metrics, _ = endpoint.evaluate(
                 student,
                 train_factorial,
@@ -791,7 +798,14 @@ def main() -> int:
                 metrics,
                 damping_directional_derivative=trial_derivative,
             )
-            trials.append({"scale": scale, "metrics": metrics, "decision": decision})
+            trials.append(
+                {
+                    "scale": scale,
+                    "metrics": metrics,
+                    "decision": decision,
+                    "canonical_parameter_idempotence": trial_idempotence,
+                }
+            )
             if decision["pass"]:
                 selected_scale = scale
                 selected_metrics = metrics

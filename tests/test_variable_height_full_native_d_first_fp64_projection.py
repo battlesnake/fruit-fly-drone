@@ -6,11 +6,24 @@ from pathlib import Path
 import numpy as np
 import pytest
 import torch
+from torch import nn
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 import audit_variable_height_full_native_d_first_fp64_projection as fp64  # noqa: E402
+
+
+class TinyController(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.edge_magnitude = nn.Parameter(torch.tensor([0.5, 8.0]))
+        self.bias = nn.Parameter(torch.tensor([1.0]))
+        self.raw_time_constant = nn.Parameter(torch.tensor([-3.0]))
+
+    def project_parameters(self) -> None:
+        with torch.no_grad():
+            self.edge_magnitude.clamp_(0.0, 8.0)
 
 
 def test_projected_gradient_kkt_accepts_bound_and_positive_coordinates() -> None:
@@ -84,6 +97,29 @@ def test_fp64_projector_solves_toy_halfspace_in_double_precision(monkeypatch) ->
     assert projected["edge_magnitude"] == pytest.approx(torch.tensor([1.0], dtype=torch.float64))
     assert report["pass"] is True
     assert report["maximum_linearized_violation_after"] <= 1.0e-6
+
+
+def test_explicit_fp64_trial_does_not_require_canonical_module_globals(monkeypatch) -> None:
+    controller = TinyController()
+    current = {
+        name: getattr(controller, name).detach().clone()
+        for name in ("edge_magnitude", "bias", "raw_time_constant")
+    }
+    candidate = {
+        "edge_magnitude": torch.tensor([0.25, 7.5]),
+        "bias": torch.tensor([1.5]),
+        "raw_time_constant": torch.tensor([-2.5]),
+    }
+    monkeypatch.setattr(fp64.canonical, "_AUTHORITATIVE_BASE", None)
+    monkeypatch.setattr(fp64.canonical, "_AUTHORITATIVE_CANDIDATE", None)
+
+    parameters, displacement, idempotence = fp64.install_fp64_trial(
+        controller, current, candidate, scale=0.5
+    )
+
+    assert parameters["edge_magnitude"] == pytest.approx(torch.tensor([0.375, 7.75]))
+    assert displacement["bias"] == pytest.approx(torch.tensor([0.25], dtype=torch.float64))
+    assert idempotence["pass"] is True
 
 
 def test_protocol_changes_only_projection_arithmetic_and_retains_original_gates() -> None:
