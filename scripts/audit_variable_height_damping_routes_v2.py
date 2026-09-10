@@ -87,22 +87,26 @@ def screen_candidates(
 ) -> tuple[str | None, dict[str, dict[str, Any]]]:
     reports = {}
     for label, direction in candidates.items():
-        predicted = linearized_common_native(direction, rows, residual)
-        rms = float(predicted.square().mean().sqrt())
-        maximum = float(predicted.abs().max())
+        predicted_source = linearized_common_native(direction, rows, residual)
+        current_source = 0.05 * residual
+        predicted_step = predicted_source - current_source
+        step_rms = float(predicted_step.square().mean().sqrt())
+        source_rms_value = float(predicted_source.square().mean().sqrt())
+        maximum = float(predicted_source.abs().max())
         derivative = float(
             sum((gradient[name] * direction[name]).sum() for name in v1.MASK_FAMILIES)
         )
         admissible = (
-            rms <= per_update_rms
-            and rms <= source_rms
+            step_rms <= per_update_rms
+            and source_rms_value <= source_rms
             and maximum <= maximum_absolute
             and derivative < 0.0
         )
         reports[label] = {
             "first_order_loss_derivative": derivative,
-            "linearized_common_rms_native_units": rms,
-            "linearized_common_max_absolute_native_units": maximum,
+            "linearized_step_common_rms_native_units": step_rms,
+            "linearized_source_common_rms_native_units": source_rms_value,
+            "linearized_source_common_max_absolute_native_units": maximum,
             "family_rms": v1.masked_family_rms(direction),
             "admissible": admissible,
         }

@@ -355,3 +355,23 @@ sanity direction passed separately. Parameters were restored exactly, and dampin
 still wrong-signed after this single step, so this is authorization for the bounded run,
 not a controller result. See
 [`artifacts/variable-height-native-damping-route-bounded-preflight-v1/`](../artifacts/variable-height-native-damping-route-bounded-preflight-v1/).
+
+The authorized v1 training run is resumable and capped at 50 attempted updates. Each
+attempt averages gradients from two independently seeded balanced eight-pair motion
+banks. It constructs the same inequality-screened direction family, then accepts a
+backtracked step only if **each** of two separate fixed guard banks improves by at least
+`1e-4` NRMSE and complete zero-state height/common, legacy and dynamic R/P/Y replay
+passes. Nonfinite metrics or parameter displacements reject the step. The
+selected-family step cap remains `2e-5`, the selected source-metric radius remains
+`5e-4`, and every common-output bound from the v2 preflight remains unchanged. Five
+consecutive rejected attempts stop the run.
+
+Attempt 25 uses 64 fixed held-out milestone pairs (seed offset `+60000`). Unless their
+motion NRMSE has fallen at least 25% from the unchanged source, training stops even if
+every tiny step was locally valid. Terminal qualification uses a disjoint 64-pair cohort
+(seed offset `+70000`): a candidate may advance to the small nominal-mass closed-loop
+hover test only with at least 90% correct damping sign, teacher-aligned gain 0.5-1.5 and
+every preservation gate still passing. Atomic resume state includes the complete
+protocol and terminal decisions, preventing a restart from changing or bypassing gates.
+The run's endpoint remains explicitly nonpromotional; only subsequent closed-loop
+evidence can justify replacing the source.

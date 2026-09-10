@@ -72,3 +72,30 @@ def test_screen_selects_best_admissible_descent() -> None:
     assert selected == "safe_fast"
     assert reports["safe_fast"]["admissible"] is True
     assert reports["unsafe"]["admissible"] is False
+
+
+def test_screen_distinguishes_step_change_from_source_drift() -> None:
+    gradient = {"edge_magnitude": torch.tensor((-1.0,)), "bias": torch.tensor((0.0,))}
+    candidates = {
+        "candidate": {
+            "edge_magnitude": torch.tensor((0.01,)),
+            "bias": torch.tensor((0.0,)),
+        }
+    }
+    rows = [{"edge_magnitude": torch.tensor((1.0,)), "bias": torch.tensor((0.0,))}]
+
+    selected, reports = screen_candidates(
+        candidates,
+        gradient,
+        rows,
+        torch.tensor((0.02,)),
+        per_update_rms=0.0006,
+        source_rms=0.002,
+        maximum_absolute=0.002,
+    )
+
+    assert selected == "candidate"
+    assert reports["candidate"]["linearized_step_common_rms_native_units"] == pytest.approx(0.0005)
+    assert reports["candidate"]["linearized_source_common_rms_native_units"] == pytest.approx(
+        0.0015
+    )
