@@ -1182,3 +1182,65 @@ implementation; it does not retroactively accept update 21. A failure characteri
 numerical route only, especially because zero displacement remains feasible for the
 original preservation-plus-box constraints and the monotonic active-set heuristic may add
 restrictions of its own.
+
+Result: this audit failed its frozen production-reproduction control. The registered
+production projection had stopped abnormally in active-set round two, whereas the newly
+reconstructed production inputs completed round three and passed; proposal metrics still
+matched within the existing numeric tolerances. This is evidence of solver-status
+sensitivity across slightly different GPU reconstructions, not nondeterminism on identical
+inputs. The failed control is not removed after observing it, so the audit does not
+authorize an FP64 fitting implementation.
+
+On this audit's one frozen tensor set, genuine FP64 projection nevertheless gave a useful
+diagnostic. It completed three rounds with 5,524 fixed edges. All three 10-row normalized
+Gram matrices had rank 8 and nullity 2. Primary L-BFGS-B and independent SLSQP reported
+success; maximum original-unit primal violation was `5.31e-11` and maximum normalized
+primary KKT residual was `3.04e-10`. Canonical idempotence, bounds, the post-materialized
+linear gate at `1.30e-7`, negative D direction, and the scale-1/16 finite difference with
+0.103% disagreement all passed. No ordinary nonlinear scale passed: scale 1/32 improved D
+by 0.001130 but missed only endpoint C25's unchanged outer limit by about `1.30e-5`.
+Repair was prohibited in this audit. Everything was restored exactly and no candidate,
+development/fresh result, closed-loop run or promotion resulted. See
+[`artifacts/variable-height-full-native-d-first-fp64-projection-audit-v1/`](../artifacts/variable-height-full-native-d-first-fp64-projection-audit-v1/).
+
+Preserve that control failure and run one **frozen-input FP64 projection qualification**;
+do not try to reproduce the historical `ABNORMAL` status again. From the same hash-locked
+update-20 state, generate the raw update-21 Adam displacement, ordered constraint rows and
+specifications, current parameters/bounds, and endpoint-D gradient exactly once. Before
+any solve, persist all actual tensors—not only their hashes—to one ignored CPU tensor
+archive; record its file and semantic hashes and reload it for the numerical trials. The
+single reconstructed Adam transaction must advance every counter exactly once and be
+restored at the end.
+
+Run the complete genuine-FP64 active-set projection three times from an empty active set,
+each time using fresh clones reloaded from that exact archive and retaining the same
+eight-round bound. The production projector may also consume a clone, but its status is
+diagnostic only. Each FP64 run must independently satisfy L-BFGS-B success, original-unit
+primal violation at most `1e-6`, normalized projected-gradient residual at most `1e-8`,
+native box bounds and active-set convergence. Dependent rows permit nonunique dual
+multipliers, so compare primary **primal** results: require pairwise learning-rate-scaled
+displacement difference divided by `max(1, displacement norm)` at most `1e-10`, and dual
+objective relative difference at most `1e-12`; do not gate on dual coefficients, iteration
+counts or historical status strings.
+
+Replace the prior SLSQP status comparison with one independent nonnegative least-squares
+solution of each small FP64 dual QP. Form its least-squares factor from the normalized
+Gram eigendecomposition using the frozen relative rank cutoff `1e-12`. Report the
+violation component outside the retained eigenspace. Compare the independent and primary
+solutions by the Gram-induced primal correction distance, normalized by the primary
+correction norm, and by relative dual objective; require at most `1e-6` and `1e-8`
+respectively. These compare the unique primal effect rather than a nonunique dual vector.
+
+Canonicalize the first repeated FP64 result once and require the unchanged `1e-7`
+idempotence, native bounds, `1e-6` post-materialized linear gate, negative endpoint-D
+direction and scale-1/16 finite-difference controls. Do not require an ordinary nonlinear
+candidate to pass and do not invoke repair: this audit qualifies only the numerical
+projection implementation, not update 21. The prior ordinary replay already established
+that the scale-1/16 candidate is in the separately tested C25-only repair case.
+
+Restore parameters and full Adam state exactly, leave every source and failed-audit file
+byte-for-byte unchanged, and use no development/fresh data, retained candidate, closed-loop
+simulation or promotion. A pass authorizes only a separately registered one-step
+FP64-projected-plus-existing-guard-band-corrected audit. If identical-input FP64
+qualification fails, pause this numerical integration route without changing the actor,
+sensors, runtime state or preservation thresholds.
