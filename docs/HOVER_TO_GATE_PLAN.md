@@ -202,3 +202,22 @@ training-support contrast by at least 10% and a separate development-height matr
 least 5%, while marker-flight RMSE remains within 5% of source with no new ground or
 invalid events. Passing establishes only safe local plasticity; it does not promote a
 hover controller or consume the final held-out evidence.
+
+That projected-Adam test is complete and rejected. Its preflight confirmed that the
+Jacobian projection works: ordinary capped Adam broke five functional guards, whereas a
+projected half step passed complete replay. During the registered run, 13 of 24 proposals
+were accepted before five consecutive rejections stopped it. The fixed-bank contrast
+NRMSE improved only 0.110%, from 0.738584 to 0.737772, while the source-family radius
+reached `9.987e-5` of `1e-4`. No controller was promoted. See
+[`artifacts/variable-height-projected-trust-region-v1/`](../artifacts/variable-height-projected-trust-region-v1/).
+
+The next and final local-optimization diagnostic replaces minibatch Adam proposals with
+a fixed, style/amplitude-balanced contrast gradient. It solves a small constrained
+descent problem whose span contains that gradient, the common-output Jacobian rows and
+the displacement from source, so source/step radii participate in direction selection
+rather than merely rejecting outward proposals afterward. It keeps every v3 functional
+limit and the same 25-attempt, 10% training-support and 5% development gates. A cheap
+preflight at the source and v3 boundary must show a measurable feasible contrast direction
+before training. Failure ends this local constrained family and triggers the already
+documented responsibility-based native-anatomy/teacher-handoff tracks; it is not evidence
+against visual information or native recurrence.
