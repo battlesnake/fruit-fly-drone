@@ -103,6 +103,15 @@ This reframes the next control problem: preserve the demonstrated visual height 
 then add a native fast vertical-motion estimate and damping path without adding mass or
 external history.
 
+The first full-connectome follow-up now makes that separation concrete. With 320x200 RGB
+vision it failed complete hover, but a dynamic-prefix paired learner acquired the correct
+marker-to-throttle response on marker heights excluded from training. A paired-mean
+intervention reduced that response to 33.4% when applied to `vnc_intrinsic` neurons and
+did not reduce it when applied to `vnc_sensory` neurons. Thus intrinsic VNC recurrence is
+already causally involved, while local sensory/proprioceptive use is not. Absolute
+collective and velocity damping remain unsolved. The complete result and anti-shortcut
+design are in [the full visual-hover experiment](VISUAL_HOVER.md).
+
 ### Visual-only is reasonable; the present visual bottleneck may not be
 
 A remote human acro pilot also receives no vehicle IMU stream. The aircraft gyro closes

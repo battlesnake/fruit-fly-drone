@@ -176,3 +176,24 @@ def test_privileged_throttle_pool_bias_is_batch_specific() -> None:
     )
 
     assert motor[0, 3] > motor[1, 3]
+
+
+def test_fixed_retinal_spectral_weights_map_rgb_without_a_learned_adapter() -> None:
+    controller = ConnectomeController(
+        Path(__file__).resolve().parents[1] / "artifacts" / "gate-v1" / "connectome.npz"
+    )
+    weights = torch.zeros(len(controller.visual_nodes), 3)
+    weights[0::3, 0] = 1.0
+    weights[1::3, 1] = 1.0
+    weights[2::3, 2] = 1.0
+    controller.visual_channel_weights = weights
+    image = torch.zeros(1, 3, 19, 23)
+    image[:, 0] = 0.2
+    image[:, 1] = 0.5
+    image[:, 2] = 0.8
+
+    retina = controller.sample_retina(image)
+
+    assert torch.allclose(retina[:, 0::3], torch.full_like(retina[:, 0::3], 0.2))
+    assert torch.allclose(retina[:, 1::3], torch.full_like(retina[:, 1::3], 0.5))
+    assert torch.allclose(retina[:, 2::3], torch.full_like(retina[:, 2::3], 0.8))

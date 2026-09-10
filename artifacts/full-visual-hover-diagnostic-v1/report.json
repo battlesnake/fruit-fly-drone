@@ -1,0 +1,82 @@
+{
+  "artifact_schema_version": 1,
+  "status": "paired causal response passed; closed-loop hover failed",
+  "source": {
+    "dataset": "MaleCNS v1.0",
+    "license": "CC BY 4.0",
+    "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665",
+    "source_checkpoint_sha256": "b2e7c4a95e5f73b763bd614d816caa2ae2a2ce8f41e1e1acce63bbff41caf9bb",
+    "paired_checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572"
+  },
+  "actor": {
+    "connectome_nodes": 165122,
+    "connectome_edges": 2749407,
+    "mapped_photoreceptors": 2197,
+    "camera": {
+      "width": 320,
+      "height": 200,
+      "horizontal_fov_degrees": 125.0
+    },
+    "policy_hz": 50,
+    "physics_hz": 100,
+    "inputs": [
+      "linear RGB FPV",
+      "estimated roll/pitch",
+      "native recurrent state"
+    ],
+    "excluded_inputs": [
+      "accelerometer",
+      "mass",
+      "hover thrust",
+      "external history"
+    ]
+  },
+  "rtx_5080_benchmark": {
+    "batch_1_inference_neural_steps_per_second": 274.46,
+    "batch_4_inference_neural_steps_per_second": 319.55,
+    "batch_4_inference_camera_frames_per_second": 1278.0,
+    "batch_16_inference_camera_frames_per_second": 2861.0,
+    "batch_4_forward_backward_neural_steps_per_second": 77.7,
+    "batch_4_forward_backward_peak_cuda_gb": 3.013
+  },
+  "initial_closed_loop": {
+    "episodes": 24,
+    "success_rate": 0.0416666679,
+    "altitude_rmse_final_5s_mean_m": 0.6830519438,
+    "ground_contact_rate": 0.5,
+    "frozen_visual_success_rate": 0.0416666679,
+    "hover_throttle_mass_correlation": 0.066202119,
+    "passed": false
+  },
+  "paired_dynamic_marker_response": {
+    "training_height_bands_metres": [[0.6, 0.85], [1.15, 1.4]],
+    "held_out_height_band_metres": [0.9, 1.1],
+    "marker_step_metres": 0.2,
+    "pairs": 64,
+    "contrast_nrmse": 0.1337458789,
+    "correct_sign_rate": 1.0,
+    "response_slope": 0.9644898176,
+    "predicted_contrast_rms": 0.0836329013,
+    "desired_contrast_rms": 0.0859475434,
+    "passed": true
+  },
+  "closed_loop_marker_step": {
+    "episodes": 32,
+    "ground_contact_rate": 0.0,
+    "tilt_rms_mean_degrees": 4.1913094521,
+    "response_ratio_mean": 1.0247656107,
+    "live_final_target_error_mean_absolute_m": 0.503013134,
+    "passed": false
+  },
+  "vnc": {
+    "vnc_nodes": 20350,
+    "nonmotor_vnc_nodes": 19642,
+    "baseline_throttle_motor_contrast": 0.0786555409,
+    "paired_contrast_clamp_residual_fraction": {
+      "all_nonmotor_vnc": 0.3342599883,
+      "vnc_intrinsic": 0.3342334655,
+      "vnc_sensory": 1.051093079
+    },
+    "interpretation": "VNC intrinsic state is causal for the fixed paired marker response; FeCO feedback and a closed-loop flight benefit are not yet demonstrated."
+  }
+}

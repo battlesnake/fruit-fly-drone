@@ -193,8 +193,8 @@ class ConnectomeController(nn.Module):
         edge_count = graph["edge_count"].astype(np.float32)
         edge_sign = graph["edge_sign"].astype(np.float32)
         visual_nodes = graph["visual_node_indices"]
-        visual_hex = graph["visual_hex"].astype(np.float32)
-        visual_eye = graph["visual_eye"]
+        visual_grid = graph.get("visual_grid")
+        visual_channel_weights = graph.get("visual_channel_weights")
         attitude_nodes = graph["attitude_node_indices"]
         attitude_channels = graph["attitude_channels"]
         acceleration_nodes = graph.get("acceleration_node_indices", np.empty(0, dtype=np.int64))
@@ -244,7 +244,33 @@ class ConnectomeController(nn.Module):
         )
         self.register_buffer("pool_offsets", torch.from_numpy(pool_offsets))
         self.register_buffer("pool_indices", torch.from_numpy(pool_indices))
-        self.register_buffer("visual_grid", self._make_visual_grid(visual_hex, visual_eye))
+        if visual_grid is None:
+            visual_hex = graph["visual_hex"].astype(np.float32)
+            visual_eye = graph["visual_eye"]
+            visual_grid_tensor = self._make_visual_grid(visual_hex, visual_eye)
+        else:
+            visual_grid_array = np.asarray(visual_grid, dtype=np.float32)
+            if visual_grid_array.shape != (len(visual_nodes), 2):
+                raise ValueError("visual_grid must have shape (visual nodes, 2)")
+            if not np.all(np.isfinite(visual_grid_array)) or np.any(
+                np.abs(visual_grid_array) > 1.0
+            ):
+                raise ValueError("visual_grid values must be finite and lie in [-1, 1]")
+            visual_grid_tensor = torch.from_numpy(visual_grid_array).reshape(
+                1, len(visual_nodes), 1, 2
+            )
+        self.register_buffer("visual_grid", visual_grid_tensor)
+        if visual_channel_weights is None:
+            channel_weights = np.empty((0, 3), dtype=np.float32)
+        else:
+            channel_weights = np.asarray(visual_channel_weights, dtype=np.float32)
+            if channel_weights.shape != (len(visual_nodes), 3):
+                raise ValueError("visual_channel_weights must have shape (visual nodes, 3)")
+        # Reconstruct the fixed spectral transduction from the graph.  Keeping it out of
+        # checkpoints preserves strict loading of the existing monochrome artifacts.
+        self.register_buffer(
+            "visual_channel_weights", torch.from_numpy(channel_weights), persistent=False
+        )
 
         # MaleCNS weights are synapse counts, not physiological strengths.  The mask and
         # transmitter-sign hypothesis stay fixed while nonnegative magnitudes are learned.
@@ -284,18 +310,41 @@ class ConnectomeController(nn.Module):
         return torch.zeros(batch, self.n_nodes, device=device, dtype=dtype)
 
     def sample_retina(self, image: Tensor) -> Tensor:
+        if image.ndim == 3:
+            camera_channels = image[:, None]
+        elif image.ndim == 4:
+            camera_channels = image
+        else:
+            raise ValueError("camera image must have shape (B,H,W) or (B,C,H,W)")
         if self.retinal_receptive_field > 1:
-            image = functional.avg_pool2d(
-                image[:, None],
+            camera_channels = functional.avg_pool2d(
+                camera_channels,
                 self.retinal_receptive_field,
                 stride=1,
                 padding=self.retinal_receptive_field // 2,
-            )[:, 0]
-        grid = self.visual_grid.expand(image.shape[0], -1, -1, -1)
+            )
+        grid = self.visual_grid.expand(camera_channels.shape[0], -1, -1, -1)
         sampled = functional.grid_sample(
-            image[:, None], grid, mode="bilinear", padding_mode="zeros", align_corners=True
+            camera_channels,
+            grid,
+            mode="bilinear",
+            padding_mode="zeros",
+            align_corners=True,
         )
-        return sampled[:, 0, :, 0]
+        sampled = sampled[..., 0].transpose(1, 2)
+        if sampled.shape[2] == 1:
+            return sampled[:, :, 0]
+        if self.visual_channel_weights.numel():
+            if sampled.shape[2] != self.visual_channel_weights.shape[1]:
+                raise ValueError("camera channels do not match the graph spectral mapping")
+            return (sampled * self.visual_channel_weights[None]).sum(dim=2)
+        if sampled.shape[2] == 3:
+            # A legacy monochrome graph can still inspect an RGB scene through a declared
+            # fixed linear luminance conversion.  New photoreceptor graphs carry a
+            # per-neuron spectral map and do not use this fallback.
+            luminance = sampled.new_tensor((0.2126, 0.7152, 0.0722))
+            return (sampled * luminance).sum(dim=2)
+        raise ValueError("a graph spectral mapping is required for non-RGB camera input")
 
     @property
     def uses_accelerometer(self) -> bool:
