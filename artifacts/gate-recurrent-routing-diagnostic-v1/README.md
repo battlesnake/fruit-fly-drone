@@ -23,11 +23,12 @@ The protected prefix remained close to source at 0.000604 RMSE. The run therefor
 at the preregistered midpoint. Magnitudes were not ceiling-limited: the maximum selected
 value was 3.03 under the legal limit of 8.
 
-This is a development-generalization failure for this one-layer training protocol, not a
-fresh held-out replay or flight failure. Neither of those stages ran. The result also does
-not show that native recurrence is absent: recurrence was active and differentiable, but
-the small fixed-history training set was fit much better than its validation partition.
-No magnitude was compiled, merged, or promoted, and the source controller is unchanged.
+This is a failed midpoint continuation gate, not a fresh held-out replay or flight
+failure; neither later stage ran. The logged minibatch normalized MSE and validation
+worst-group NRMSE are different statistics, so their headline values alone do not
+establish a train/validation generalization gap. A separate frozen-checkpoint audit is
+needed to compare like with like. The result also does not show that native recurrence is
+absent. No magnitude was compiled, merged, or promoted, and the source is unchanged.
 
 The complete protocol and metrics are in [`report.json`](report.json), the exact ordered
 mask and signs are in [`preregistered-mask.json`](preregistered-mask.json), and the stopped

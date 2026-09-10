@@ -298,8 +298,9 @@ neural states. It replayed complete sensory histories from zero while varying 88
 path edges into the throttle-return layer and its 37 motor-readout edges, with fixed signs.
 The gradient audit and source parity passed, and training error fell sharply, but the
 reserved development partition reached only 0.608 worst-group NRMSE and 20.5% aggregate
-improvement at the update-100 stop gate. It stopped before fresh replay or flight. This
-exposes a train/validation generalization problem, not a lack of recurrence or an output
+improvement at the update-100 stop gate. It stopped before fresh replay or flight. Because
+the logged training and validation headlines are different statistics, this establishes
+a failed continuation gate—not yet a train/validation gap, lack of recurrence, or output
 ceiling. See the
 [`recurrent-routing diagnostic`](artifacts/gate-recurrent-routing-diagnostic-v1/).
 

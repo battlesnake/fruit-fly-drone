@@ -570,9 +570,10 @@ from 0.944 to 0.101 by update 80. At the update-100 reserved-development gate, h
 worst-group NRMSE was 0.608 against the 0.50 continuation limit and aggregate improvement
 was only 20.5%; prefix motor RMSE remained safe at 0.000604. The run stopped before fresh
 held-out replay or assisted flight. The selected magnitudes were not ceiling-limited,
-with a maximum of 3.03 under the bound of 8. This identifies a generalization failure in
-the one-layer optimizer/data protocol, not missing native recurrence or a closed-loop
-flight result. No magnitude was compiled or promoted; see
+with a maximum of 3.03 under the bound of 8. This identifies a failed one-layer
+continuation gate, not by itself a generalization gap, missing native recurrence, or a
+closed-loop flight result: logged minibatch MSE and validation worst-group NRMSE are not
+directly comparable. No magnitude was compiled or promoted; see
 [`gate-recurrent-routing-diagnostic-v1`](../artifacts/gate-recurrent-routing-diagnostic-v1/).
 
 ## Reproduction
