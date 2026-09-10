@@ -874,3 +874,34 @@ fallback checkpoint. Even a pass does not promote the fit; it only authorizes a
 nominal-mass native closed-loop hover comparison against the source, including
 frozen-vision controls. The source's large absolute C error means successful damping
 fitting alone is not evidence of calibrated collective or stable hover.
+
+Result: the fitting preflight stopped before update one. The eight-row dual QP converged,
+left maximum linearized violation `1.50e-7`, and retained 74.1% of the endpoint-D descent.
+The later edge [0, 8] clamp changed that direction enough to create post-bound linearized
+MSE violations of 0.006976 for endpoint C and 0.000179 for step-20 P, so the frozen
+post-bound projection gate failed. The actual scale-0.0625 replay was nevertheless safe,
+improved endpoint-D NRMSE by 0.002529, and agreed with its derivative within 0.15%. This
+supports a bound-aware projection correction but cannot pass the current preflight after
+the fact. No update, resume state, development candidate, qualification or closed-loop
+test resulted; parameters were restored exactly. See
+[`artifacts/variable-height-full-native-d-first-fitting-preflight-v1/`](../artifacts/variable-height-full-native-d-first-fitting-preflight-v1/).
+
+Repeat the same fitting protocol as a separately identified bound-aware run; preserve
+the failed preflight above. Change only the inequality projection's handling of edge
+bounds. Begin with no fixed coordinates. After each half-space solve, add every edge
+whose proposed magnitude crosses [0, 8] to a monotonically growing active set and fix its
+displacement to the actual boundary displacement, `0 - current` or `8 - current`—not
+zero unless the edge already occupies that boundary. On every re-solve, remove those
+coordinates from the free-coordinate metric and Gram matrix and add their complete
+`J_bound * delta_bound` contribution to each constraint residual. Continue from the
+original Adam proposal on all still-free coordinates for at most eight active-set rounds.
+
+The active-set method is a bounded feasibility heuristic, not a claim of finding the
+exact box-constrained optimum, because activated edges are never released. The preflight
+passes only if no edge remains out of bounds, every final post-bound linear inequality is
+within `1e-6`, a subsequent controller bound projection changes the displacement by at
+most `1e-7`, and the existing damping derivative, scale-0.0625 finite-difference,
+nonlinear replay, C/P/RPY, identity and restoration gates all pass. Failure at eight
+rounds means this solver failed, not that no feasible damping direction exists. If the
+preflight passes, continue directly into the otherwise unchanged frozen D-first fitting
+and qualification protocol; do not change any threshold, data or actor input.
