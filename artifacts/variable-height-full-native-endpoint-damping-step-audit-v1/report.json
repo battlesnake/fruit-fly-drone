@@ -1,0 +1,68 @@
+{
+  "actor_contract_unchanged": true,
+  "baseline_training": {
+    "common_nrmse": 2.5334899,
+    "endpoint_damping_correct_sign_fraction": 0.0,
+    "endpoint_damping_nrmse": 1.4584004,
+    "endpoint_damping_teacher_aligned_gain": -0.4329679,
+    "height_nrmse": 0.5933032
+  },
+  "bounded_d_first_fitting_authorized": false,
+  "cache_integrity": {
+    "all_persisted_file_and_tensor_hashes_match": true,
+    "development_attitude_tensor_sha256": "0f28df2e589cc2c081d05794a1bf962fce09a5895fd61e5b6ae87ddbd2e0b6ac",
+    "development_factorial_tensor_sha256": "50cc64ff87baf720175ce483500cb4bf1c53d53f7cb5905333284698c706cb5e",
+    "manifest_sha256": "a3aa57d103158adc571734a49182df2fbf04852089532bf9f88631c9bac92060",
+    "training_attitude_tensor_sha256": "2293ba902703f48c602f8074fb3965efd7922f8571a3cb8913266970cdd3f072",
+    "training_factorial_tensor_sha256": "55e4a3199b0a3da9b221f6a34619954a1cda91297344fa13854b454507760a78"
+  },
+  "classification": "no_training_feasible_endpoint_damping_scale",
+  "controls_pass": true,
+  "development_model_evaluations": 0,
+  "directional_derivative": {
+    "autograd": -0.1588669,
+    "finite_difference": -0.1592479,
+    "pass": true,
+    "relative_error": 0.0023926,
+    "scale": 0.0625
+  },
+  "endpoint_damping_scale_motor_units": 0.0218298,
+  "experiment": "variable-height-full-native-endpoint-damping-step-audit-v1",
+  "full_report_sha256": "b8191ccff3e9ee4afd048627c79c7e2f988b1ec3437ba13ab1916cf0e28930aa",
+  "implementation_commit": "16b6b171ebb36de42a5b97b8e669308846e25472",
+  "parameters_restored_exactly": true,
+  "pass": false,
+  "promoted": false,
+  "protocol_commit": "87ef766d4b90919c30d952ab0c8316a652a1fdce",
+  "source_replay_max_absolute_difference": 0.0000000596,
+  "training_scale_trials": [
+    {
+      "common_nrmse_increase": 0.1692741,
+      "endpoint_damping_nrmse_improvement": 0.0551568,
+      "pass": false,
+      "pitch_nrmse": 0.0225949,
+      "scale": 1.0
+    },
+    {
+      "common_nrmse_increase": 0.0925696,
+      "endpoint_damping_nrmse_improvement": 0.0275850,
+      "pass": false,
+      "pitch_nrmse": 0.0112289,
+      "scale": 0.5
+    },
+    {
+      "common_nrmse_increase": 0.0484049,
+      "endpoint_damping_nrmse_improvement": 0.0137426,
+      "pass": false,
+      "pitch_nrmse": 0.0055673,
+      "scale": 0.25
+    },
+    {
+      "common_nrmse_increase": 0.0247083,
+      "endpoint_damping_nrmse_improvement": 0.0068496,
+      "pass": false,
+      "pitch_nrmse": 0.0027686,
+      "scale": 0.125
+    }
+  ]
+}

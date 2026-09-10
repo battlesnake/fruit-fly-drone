@@ -769,3 +769,42 @@ separately preregistered bounded D-first fitting diagnostic. It is not a damping
 hover or flight claim. If the direction learns damping but fails RPY preservation, the
 next justified diagnostic is an RPY-output-Jacobian-constrained displacement. If it fits
 training but not development, projection would not address the demonstrated failure.
+
+Result: all cache, identity, replay, teacher/foreleg, finite-difference and restoration
+controls passed. Endpoint-D-only descent was clear and approximately linear: from a
+source NRMSE of 1.45840, scales 1, 1/2, 1/4 and 1/8 improved it by 0.05516, 0.02759,
+0.01374 and 0.00685. Even the full step kept roll/pitch/yaw source NRMSE at
+0.01447/0.02259/0.00349, so RPY interference was not the limiting factor. No scale met
+the C/P preservation gates. At scale 1/8, P passed, but aggregate C worsened by 0.02471
+and its step-20/25 values worsened by 0.02483/0.03891, beyond 0.02. Thus the experiment
+found a useful local damping gradient coupled primarily to common collective response.
+It selected no candidate and consequently performed no development model evaluation.
+No parameters were retained, no D-first fitting was authorized, and no closed-loop test
+ran. See
+[`artifacts/variable-height-full-native-endpoint-damping-step-audit-v1/`](../artifacts/variable-height-full-native-endpoint-damping-step-audit-v1/).
+
+Before adding a Jacobian projection, perform one separately registered **small-step
+extension** on the same immutable caches and damping-directed update. The nearly linear
+training response predicts that an ordinary smaller step may satisfy the existing C/P
+limits while retaining a damping improvement above the registered floor. Preserve the
+failed original-grid verdict. Recreate the original bound-projected Adam displacement
+without changing its objective or optimizer and require its baseline endpoint-D NRMSE,
+full-scale endpoint result, directional derivative and parameter-family RMS values to
+reproduce the frozen report within relative tolerance `1e-3` and absolute tolerance
+`1e-7`. Persist that regenerated displacement, hash it, reload it, and use those exact
+tensors thereafter.
+
+Replay only scales 1/16 and 1/32 on the original training bank, in descending order.
+Select the largest scale that improves endpoint-D NRMSE by at least 0.001 while passing
+the identical aggregate and per-horizon C/P, RPY, finite-state and motor-bound gates.
+If neither passes, stop and next preregister a C/P-output-Jacobian-constrained damping
+direction; do not add RPY constraints because RPY is not the observed limiter. If one
+passes, evaluate only that selection on the still-unexamined development outputs with
+the identical gates and no smaller-scale fallback after development failure. Restore
+all parameters bit-exactly and retain no endpoint.
+
+A pass demonstrates only a locally feasible damping improvement, not independent C/D
+control or sustained learnability. It authorizes a separately preregistered bounded
+D-first fitting diagnostic whose cumulative C/P preservation is always measured against
+the original source, so repeated individually safe steps cannot silently consume the
+entire tolerance. No direct closed-loop or promotion claim follows.
