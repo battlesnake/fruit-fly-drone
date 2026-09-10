@@ -1,0 +1,113 @@
+{
+  "classification": "initial_mixed_curriculum_rejected_at_first_gate",
+  "compiled_or_promoted": false,
+  "credit_assignment": "current-policy student actions created detached next observations; gradients flowed only through native connectome recurrence inside each 25-step window",
+  "device": "cuda",
+  "elapsed_seconds": 367.21200653500273,
+  "experiment": "variable-height-hover-bounded-v1",
+  "final_fresh_evaluation": {
+    "attitude_recovery": {
+      "altitude_rmse_mean_m": 0.5312718152999878,
+      "episodes": 64,
+      "ground_contact_rate": 0.0,
+      "invalid_flight_rate": 0.0,
+      "success_rate": 0.0,
+      "tilt_rms_mean_degrees": 5.3336944580078125
+    },
+    "genuine_held_out_pair": {
+      "contrast_nrmse": 0.7892331480979919,
+      "correct_sign_rate": 0.71875,
+      "pairs": 64,
+      "pass": false,
+      "response_slope": 0.3836843967437744
+    },
+    "legacy_pair": {
+      "contrast_nrmse": 0.13374827802181244,
+      "correct_sign_rate": 1.0,
+      "pairs": 64,
+      "pass": true,
+      "response_slope": 0.9242925643920898
+    },
+    "marker_steps": {
+      "altitude_rmse_mean_m": 0.4736662209033966,
+      "altitude_rmse_p95_m": 0.6060447692871094,
+      "downward_success_rate": 0.0,
+      "episodes": 256,
+      "frozen_paired_response_slope": -0.09865224361419678,
+      "ground_contact_rate": 0.0,
+      "invalid_flight_rate": 0.0,
+      "live_paired_response_slope": 1.085257649421692,
+      "pass": false,
+      "settling_time_median_seconds": null,
+      "success_rate": 0.0,
+      "sustained_saturation_rate": 0.0,
+      "tilt_rms_mean_degrees": 3.9154300689697266,
+      "upward_success_rate": 0.0,
+      "vertical_speed_rms_mean_mps": 0.06176866218447685
+    }
+  },
+  "goal_passed": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665",
+  "lesson_counts_requested": {
+    "attitude_recovery": 50,
+    "closed_loop": 100,
+    "paired_marker": 50
+  },
+  "lesson_cycle": [
+    "closed_loop",
+    "paired_marker",
+    "closed_loop",
+    "attitude_recovery"
+  ],
+  "policy_hz": 50,
+  "protocol": {
+    "camera": {
+      "height": 200,
+      "horizontal_fov_degrees": 125.0,
+      "linear_rgb": true,
+      "width": 320
+    },
+    "held_out_absolute_marker_band_metres": [
+      0.9,
+      1.1
+    ],
+    "training_absolute_marker_bands_metres": [
+      [
+        0.55,
+        0.85
+      ],
+      [
+        1.15,
+        1.45
+      ]
+    ],
+    "wall_floor_style_split": "matching families in training; opposite families in evaluation"
+  },
+  "seed": 113,
+  "selected_checkpoint_sha256": "4bdeac33144b01848dd4aa5636c0e955ae70475729dc128a26f44588462f6d4e",
+  "selected_update": 0,
+  "source_checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+  "stop_reason": "legacy paired-marker retention failed",
+  "update_0_development": {
+    "genuine_pair_contrast_nrmse": 0.7887368202209473,
+    "legacy_pair_contrast_nrmse": 0.0726398378610611,
+    "legacy_pair_pass": true,
+    "marker_altitude_rmse_mean_m": 0.47152185440063477,
+    "marker_ground_contact_rate": 0.0,
+    "marker_invalid_flight_rate": 0.0,
+    "marker_success_rate": 0.0
+  },
+  "update_50_development": {
+    "attitude_recovery_success_rate": 0.25,
+    "genuine_pair_contrast_nrmse": 0.7019587159156799,
+    "legacy_pair_contrast_nrmse": 0.2668059468269348,
+    "legacy_pair_pass": false,
+    "marker_altitude_rmse_mean_m": 0.611365020275116,
+    "marker_ground_contact_rate": 0.171875,
+    "marker_invalid_flight_rate": 0.1875,
+    "marker_success_rate": 0.0
+  },
+  "updates_completed": 50,
+  "updates_requested": 200
+}

@@ -158,3 +158,25 @@ splits, acceptance decisions and hashes, is committed under `artifacts/`. Large 
 are committed only when required for a reproducible promoted milestone and must use Git
 LFS. MaleCNS-derived artifacts retain the CC BY 4.0 attribution and transformation
 notice described in [`data/README.md`](../data/README.md).
+
+## Execution log
+
+As of 2026-09-10, the 320×200 renderer, independent marker/camera sampling,
+training-only teacher, detached physical DAgger rollout, native recurrent windows and
+promotion suites are implemented. The initial mixed curriculum was rejected at update
+50: it worsened marker-step hover and crossed the legacy-response safety threshold. See
+[`artifacts/variable-height-hover-bounded-v1/`](../artifacts/variable-height-hover-bounded-v1/).
+
+Two response-preserving bridge variants were then tested from the unchanged source. V1
+reserved opposite wall/floor style combinations and failed to improve their response.
+V2 balanced all four style combinations and added fixed training-support and fresh-height
+matrices. At update 25, v2 improved training support only 3.57% while closed-loop altitude
+RMSE regressed 27.4%, so its safety gate stopped training. Neither candidate was promoted;
+the original source remains the selected controller. See
+[`bridge-v1`](../artifacts/variable-height-visual-response-bridge-v1/) and
+[`bridge-v2`](../artifacts/variable-height-visual-response-bridge-v2/).
+
+The next bounded step is a lesson-gradient and visual-signal propagation audit at the
+source and rejected update-25 checkpoint. It will determine whether the bottleneck is
+multi-objective gradient conflict, weak propagation of marker pixels through the native
+graph, or loss calibration before another optimizer run is authorized.

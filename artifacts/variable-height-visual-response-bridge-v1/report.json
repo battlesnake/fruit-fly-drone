@@ -1,0 +1,46 @@
+{
+  "classification": "matched_style_scene_bridge_rejected_at_update_25",
+  "compiled_or_promoted": false,
+  "device": "cuda",
+  "elapsed_seconds": 234.3649083489945,
+  "experiment": "variable-height-visual-response-bridge-v1",
+  "goal_passed": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665",
+  "lessons_per_accumulated_update": [
+    "random_scene_small_pair",
+    "random_scene_medium_pair",
+    "legal_cross_band_source_pair",
+    "dynamic_source_replay"
+  ],
+  "policy_hz": 50,
+  "seed": 211,
+  "selected_update": 0,
+  "source_checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+  "stop_reason": "absolute-height RMSE regressed by more than five percent",
+  "training_claim": "all rendered training markers, including prefixes, remained in [0.55, 0.85] or [1.15, 1.45] metres",
+  "update_0": {
+    "attitude_tilt_rms_degrees": 4.694319725036621,
+    "genuine_pair_contrast_nrmse": 0.7882853150367737,
+    "genuine_pair_correct_sign_rate": 0.609375,
+    "genuine_pair_response_slope": 0.45725369453430176,
+    "legacy_pair_contrast_nrmse": 0.09476219862699509,
+    "legacy_pair_pass": true,
+    "marker_altitude_rmse_mean_m": 0.47264012694358826,
+    "marker_ground_contact_rate": 0.0,
+    "marker_invalid_flight_rate": 0.0
+  },
+  "update_25": {
+    "attitude_tilt_rms_degrees": 5.0275092124938965,
+    "genuine_pair_contrast_nrmse": 0.7890187501907349,
+    "genuine_pair_correct_sign_rate": 0.609375,
+    "genuine_pair_response_slope": 0.4268449544906616,
+    "legacy_pair_contrast_nrmse": 0.10655905306339264,
+    "legacy_pair_pass": true,
+    "marker_altitude_rmse_mean_m": 0.5515581965446472,
+    "marker_ground_contact_rate": 0.0,
+    "marker_invalid_flight_rate": 0.0
+  },
+  "updates_completed": 25,
+  "updates_requested": 100
+}

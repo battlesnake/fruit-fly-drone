@@ -1,0 +1,55 @@
+{
+  "classification": "all_style_scene_bridge_rejected_at_update_25",
+  "compiled_or_promoted": false,
+  "device": "cuda",
+  "elapsed_seconds": 258.1022574219969,
+  "experiment": "variable-height-visual-response-bridge-v2",
+  "goal_passed": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665",
+  "lessons_per_accumulated_update": [
+    "random_scene_small_pair",
+    "random_scene_medium_pair",
+    "legal_cross_band_source_pair",
+    "dynamic_source_replay"
+  ],
+  "policy_hz": 50,
+  "scene_coverage": "all_four_wall_floor_style_combinations_balanced",
+  "seed": 211,
+  "selected_update": 0,
+  "source_checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+  "stop_reason": "absolute-height RMSE regressed by more than five percent",
+  "training_claim": "all rendered training markers, including prefixes, remained in [0.55, 0.85] or [1.15, 1.45] metres",
+  "update_0": {
+    "fresh_height_pair_matrix_mean_nrmse": 0.8042748048901558,
+    "genuine_pair_contrast_nrmse": 0.7882853150367737,
+    "legacy_pair_contrast_nrmse": 0.09476224333047867,
+    "legacy_pair_pass": true,
+    "marker_altitude_rmse_mean_m": 0.4726400673389435,
+    "marker_ground_contact_rate": 0.0,
+    "marker_invalid_flight_rate": 0.0,
+    "training_support_pair_matrix_mean_nrmse": 0.7742660790681839
+  },
+  "update_25": {
+    "attitude_tilt_rms_degrees": 4.749537944793701,
+    "fresh_height_pair_matrix_mean_nrmse": 0.7994860708713531,
+    "fresh_height_pair_matrix_nrmse_improvement_fraction": 0.005953,
+    "genuine_pair_contrast_nrmse": 0.7823761701583862,
+    "genuine_pair_nrmse_improvement_fraction": 0.007496200634045547,
+    "legacy_pair_contrast_nrmse": 0.09285777807235718,
+    "legacy_pair_pass": true,
+    "marker_altitude_rmse_mean_m": 0.6019821166992188,
+    "marker_ground_contact_rate": 0.0,
+    "marker_invalid_flight_rate": 0.0,
+    "training_support_improvement_by_style": {
+      "wall_0_floor_0": 0.03933948476261695,
+      "wall_0_floor_1": 0.03504609561886063,
+      "wall_1_floor_0": 0.03041988018870556,
+      "wall_1_floor_1": 0.0384101508154715
+    },
+    "training_support_pair_matrix_mean_nrmse": 0.7466201037168503,
+    "training_support_pair_nrmse_improvement_fraction": 0.03570603969194297
+  },
+  "updates_completed": 25,
+  "updates_requested": 100
+}
