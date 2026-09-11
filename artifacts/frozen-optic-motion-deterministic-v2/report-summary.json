@@ -1,0 +1,57 @@
+{
+  "experiment": "frozen-t4t5-optic-motion-deterministic-confirmation-v2",
+  "protocol_commit": "800c762",
+  "implementation_commit": "def023d",
+  "full_report_sha256": "11305380a565651c25f7d0b8e0a564b42bddc1e457b7e7b575fb3839583e5af8",
+  "replay_gate_sha256": "4a0ef62e29c45ab207edf76a5c5e44a1c66a64369211ce3783454aab5a98afc3",
+  "classification": "frozen_optic_motion_module_validly_uncommissioned",
+  "passed": false,
+  "fresh_blind_validation": false,
+  "source_restored": true,
+  "execution_controls_pass": true,
+  "scientific_gate_valid": true,
+  "deterministic_replay": {
+    "fresh_processes": 4,
+    "response_tensor_sha256": "a1180375cb7825639c86d8793e510a40dc03972f13b60b44c9af374932d36204",
+    "all_response_tensor_hashes_exact": true,
+    "all_evaluation_metadata_hashes_exact": true,
+    "all_runtime_hashes_exact": true,
+    "numerical_noise_maximum_absolute": 0.0
+  },
+  "numerical_K32_vs_K64": {
+    "pass": true,
+    "selected_activity_rms_difference": 0.003491123439744115,
+    "opponent_rms_difference": 0.0000028829119855799945,
+    "terminal_motor_rms_difference": 0.00034072104608640075
+  },
+  "tuning": {
+    "motion_window_evidence_pass": false,
+    "post_offset_retention_pass": false,
+    "moving_opponent_rms": 0.00021014401863794774,
+    "stationary_opponent_rms": 0.0012860727729275823,
+    "stationary_to_moving_ratio": 6.119958975103295,
+    "reverse_sign_inversion_fraction": 0.96875,
+    "integrated_vertical_sign_fractions": {
+      "T4_ON_upward": 0.8125,
+      "T4_ON_downward": 0.125,
+      "T5_OFF_upward": 0.0625,
+      "T5_OFF_downward": 0.875
+    },
+    "median_dsi_active": {
+      "T4c": -0.0544501356780529,
+      "T4d": 0.04865840822458267,
+      "T5c": 0.12436174601316452,
+      "T5d": -0.11294790357351303
+    }
+  },
+  "pair_mean_intervention": {
+    "activity_preservation_maximum_absolute_error": 1.1920928955078125e-7,
+    "throttle_contrast_residual_ratio": 0.8789252489456704
+  },
+  "motion_output_routing_preregistration_authorized": false,
+  "local_motion_commissioning_preregistration_authorized": true,
+  "training_execution_authorized": false,
+  "candidate_retained": false,
+  "hover_or_gate_flight_authorized": false,
+  "promotion_authorized": false
+}

@@ -3234,3 +3234,31 @@ then run the unchanged primary, reverse and pair-mean conditions once. Apply the
 rules exactly; do not use `-001` to change or select anything. A valid frozen-module failure may
 authorize only drafting a separately preregistered, type-shared local T4/T5 commissioning run.
 Any later learning must use genuinely untouched evaluation stimuli.
+
+### Terminal deterministic optic-motion confirmation `-002`
+
+All three independent preflight processes and the distinct main process produced the same
+complete CPU response-tree SHA-256,
+`a1180375cb7825639c86d8793e510a40dc03972f13b60b44c9af374932d36204`. Their runtime and stable
+metadata hashes also matched, and every exclusive phase claim and terminal sidecar validated.
+K32 versus K64 passed again: selected activity RMS was `0.003491`, opponent RMS was `2.883e-6`,
+and terminal-motor RMS was `0.000341`. All source, endpoint and finiteness controls passed.
+
+The frozen module is therefore validly **uncommissioned** under the unchanged rules. Integrated
+T4 ON correct-sign fractions were `0.8125` upward and `0.125` downward; T5 OFF fractions were
+`0.0625` upward and `0.875` downward. Median active-cell DSIs were `-0.0545`, `0.0487`, `0.1244`
+and `-0.1129` for T4c/T4d/T5c/T5d, all below `0.3`. Stationary opponent RMS was `6.120` times
+moving opponent RMS. This is dominated by polarity/static-layout or adaptation bias rather than
+a globally reversed direction code: swapping c/d cannot repair both directions. The `0.96875`
+literal-reversal score is weak counterevidence because reversal also swaps the T4/T5 ON/OFF
+readout.
+
+Pair-mean intervention preserved T4/T5 emitted activity to `1.192e-7`, strongly attenuated many
+immediate LPTC contrasts, but left `0.8789` of native throttle contrast. That establishes pathway
+transmission, not correct motion computation or principal responsibility for anti-damping.
+
+The report authorizes only preregistering a separate local, type-shared T4/T5 commissioning
+experiment. It does not authorize training execution, output routing, candidate retention,
+hover, gate flight or promotion. The full report SHA-256 is
+`11305380a565651c25f7d0b8e0a564b42bddc1e457b7e7b575fb3839583e5af8`; see
+[`artifacts/frozen-optic-motion-deterministic-v2/`](../artifacts/frozen-optic-motion-deterministic-v2/).
