@@ -3753,8 +3753,11 @@ tracked report, in its registered `gain`, `bias_offset`, `tau_ratio` order. Requ
 with the complete report. Do not rerun SLSQP, optimize a replacement direction, flip its sign or
 select coordinates. Independently require finite values, unit norm within `1e-8`, tangent
 feasibility at every active parameter bound, and normalized directional derivatives no greater
-than `-0.09` for the full objective and each of `ON_down`, `ON_up`, `OFF_down` and `OFF_up`. A
-mismatch is a control failure, not a negative scientific result.
+than `-0.09` for the full objective and each of `ON_down`, `ON_up`, `OFF_down` and `OFF_up`, where
+the normalized derivative is exactly `g dot d / ||g||_2`. The previously reported full-objective
+value `-0.093697` is the unnormalized dot product; its normalized value is about `-0.41563`. Use
+the frozen vector verbatim after checking its norm; do not renormalize it. A mismatch is a control
+failure, not a negative scientific result.
 
 Use raw Euclidean reference displacement length `0.03152330128027931`, equal to the recorded
 full-size whole-bank Adam displacement norm. Evaluate fixed multipliers `1`, `0.5`, `0.25` and
@@ -3783,3 +3786,10 @@ lengths but does not prove anatomical impossibility. A control failure has no sc
 interpretation. No outcome authorizes resuming the closed Adam trainer, changing the objective,
 opening held-out data, retaining a module, motion-to-DN/VNC routing, hover, gate flight or
 promotion.
+
+Any nonfinite parameter, Adam moment, response, metric, displacement or derivative, or any input
+hash, optimizer-counter, per-trial restoration or final-restoration failure, invalidates the
+entire audit even if another trial met the scientific discriminator. Authorization requires all
+four trials to complete and every terminal control to pass. A scientific pass demonstrates only
+finite-step training-loss leverage; it is not commissioned direction selectivity or evidence of
+hover capability.
