@@ -1,0 +1,73 @@
+{
+  "actor": {
+    "external_gate_index_or_pass_input": false,
+    "external_history_or_state_machine": false,
+    "inputs": [
+      "320x200 linear RGB at 125 degree HFOV",
+      "roll",
+      "pitch"
+    ],
+    "uninterrupted_state": [
+      "165122-neuron MaleCNS recurrence",
+      "forelegs",
+      "virtual sticks",
+      "aircraft"
+    ]
+  },
+  "candidate": {
+    "both_gate_passes": 13,
+    "episodes": 64,
+    "first_gate_passes": 58,
+    "ground_contacts": 0,
+    "invalid_flights": 0,
+    "negative_course_both_gate_passes": 4,
+    "paired_both_gate_passes": 3,
+    "positive_course_both_gate_passes": 9
+  },
+  "checkpoint": {
+    "git_storage": "ignored exploratory run; use Git LFS if promoted",
+    "local_path": "runs/gate/pragmatic-two-gate-aligned-roll-path-001/best-controller.pt",
+    "sha256": "e099fb4f87a81ea7565d0c6bc693a3d236ef27b06df003d23dccd2ea5efa1099",
+    "size_mib_approx": 77,
+    "stage": "teacher_paths",
+    "update": 75
+  },
+  "course": {
+    "gate_roles": [
+      "current green",
+      "next red",
+      "passed black"
+    ],
+    "layout": "aligned",
+    "mirrored_pairs": 32,
+    "second_gate_spacing_metres": [
+      3.8,
+      4.2
+    ]
+  },
+  "evaluation": {
+    "fresh_relative_to_training_and_selection": true,
+    "seed": 630983,
+    "seconds": 22.0,
+    "vision_warmup_seconds": 0.2
+  },
+  "experiment": "pragmatic-full-native-two-gate-roll-path-v1",
+  "purpose": "rapid behavioral proof of concept; not a formal promotion run",
+  "source": {
+    "both_gate_passes": 9,
+    "episodes": 64,
+    "first_gate_passes": 56,
+    "ground_contacts": 0,
+    "invalid_flights": 0,
+    "negative_course_both_gate_passes": 2,
+    "paired_both_gate_passes": 1,
+    "positive_course_both_gate_passes": 7
+  },
+  "training": {
+    "bias_and_time_constant_max_absolute_change": 0.0,
+    "maximum_selected_edge_change": 0.005932588130235672,
+    "selected_anatomical_edges": 19286,
+    "selected_edges_changed": 19186,
+    "unselected_edge_max_absolute_change": 0.0
+  }
+}

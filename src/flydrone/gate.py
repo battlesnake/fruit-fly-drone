@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import torch
@@ -201,15 +202,52 @@ def render_annular_gate_rgb(
     gate_config: GateConfig = DEFAULT_GATE_CONFIG,
     gate_colour: tuple[float, float, float] = (0.08, 0.86, 0.66),
 ) -> Tensor:
-    """Render a coloured annulus, a world-fixed grey floor, and a black background.
+    """Render one coloured annulus in the ordinary RGB gate world."""
+
+    current = torch.zeros(
+        state.position.shape[0],
+        device=state.position.device,
+        dtype=torch.long,
+    )
+    return render_annular_gates_rgb(
+        state,
+        (gate,),
+        current_gate_index=current,
+        camera=camera,
+        gate_config=gate_config,
+        role_colours=(gate_colour,),
+    )
+
+
+def render_annular_gates_rgb(
+    state: QuadState,
+    gates: Sequence[AnnularGate],
+    *,
+    current_gate_index: Tensor,
+    camera: CameraSpec = DEFAULT_VISUAL_CAMERA,
+    gate_config: GateConfig = DEFAULT_GATE_CONFIG,
+    role_colours: tuple[tuple[float, float, float], ...] = (
+        (0.08, 0.86, 0.66),
+        (0.92, 0.22, 0.08),
+        (0.22, 0.38, 0.92),
+    ),
+) -> Tensor:
+    """Render role-coloured gates, a world-fixed grey floor, and black background.
 
     The result is ordinary linear RGB camera data with shape ``(B, 3, H, W)``.
     It contains no gate mask, bearing, range, optical flow, or other decoded task
     feature.  Texture is fixed in world coordinates, so motion in the image is caused
-    only by motion of the camera.
+    only by motion of the camera. Passed gates are black, the current gate uses the
+    first colour, and subsequent gates use the remaining fixed colour sequence.
     """
 
+    if not gates:
+        raise ValueError("at least one gate is required")
+    if not role_colours:
+        raise ValueError("at least one non-passed gate colour is required")
     batch = state.position.shape[0]
+    if current_gate_index.shape != (batch,):
+        raise ValueError("current_gate_index must have shape (batch,)")
     rays_body = make_pinhole_rays(
         camera,
         device=state.position.device,
@@ -246,34 +284,44 @@ def render_annular_gate_rgb(
         dtype=state.position.dtype,
     )
     image = torch.where(floor_valid[..., None], floor_rgb, image)
+    infinity = torch.full_like(floor_time, float("inf"))
+    nearest_surface = torch.where(floor_valid, floor_time, infinity)
+    colour_table = state.position.new_tensor(role_colours)
 
-    normal = gate.normal[:, None, None, :]
-    plane_numerator = ((gate.center[:, None, None, :] - origin) * normal).sum(dim=-1)
-    plane_denominator = (rays_world * normal).sum(dim=-1)
-    safe_denominator = torch.where(
-        plane_denominator.abs() > 1.0e-4,
-        plane_denominator,
-        torch.ones_like(plane_denominator),
-    )
-    plane_time = plane_numerator / safe_denominator
-    plane_valid = (plane_denominator.abs() > 1.0e-4) & (plane_time > 0.0)
-    hit = origin + plane_time[..., None] * rays_world
-    hit_offset = hit - gate.center[:, None, None, :]
-    gate_lateral = (hit_offset * gate.lateral[:, None, None, :]).sum(dim=-1)
-    gate_vertical = hit_offset[..., 2]
-    radial = torch.sqrt(gate_lateral.square() + gate_vertical.square() + 1.0e-8)
-    outer = torch.sigmoid((gate_config.outer_radius - radial) / gate_config.edge_softness)
-    inner = torch.sigmoid((radial - gate_config.inner_radius) / gate_config.edge_softness)
-    annulus_alpha = outer * inner
-    gate_visible = plane_valid & (~floor_valid | (plane_time < floor_time))
-    annulus_alpha = annulus_alpha * gate_visible
+    for gate_number, gate in enumerate(gates):
+        if gate.center.shape != (batch, 3) or gate.yaw.shape != (batch,):
+            raise ValueError("each gate must contain one centre and yaw per batch item")
+        normal = gate.normal[:, None, None, :]
+        plane_numerator = ((gate.center[:, None, None, :] - origin) * normal).sum(dim=-1)
+        plane_denominator = (rays_world * normal).sum(dim=-1)
+        safe_denominator = torch.where(
+            plane_denominator.abs() > 1.0e-4,
+            plane_denominator,
+            torch.ones_like(plane_denominator),
+        )
+        plane_time = plane_numerator / safe_denominator
+        plane_valid = (plane_denominator.abs() > 1.0e-4) & (plane_time > 0.0)
+        hit = origin + plane_time[..., None] * rays_world
+        hit_offset = hit - gate.center[:, None, None, :]
+        gate_lateral = (hit_offset * gate.lateral[:, None, None, :]).sum(dim=-1)
+        gate_vertical = hit_offset[..., 2]
+        radial = torch.sqrt(gate_lateral.square() + gate_vertical.square() + 1.0e-8)
+        outer = torch.sigmoid((gate_config.outer_radius - radial) / gate_config.edge_softness)
+        inner = torch.sigmoid((radial - gate_config.inner_radius) / gate_config.edge_softness)
+        annulus_alpha = outer * inner
+        gate_visible = plane_valid & (plane_time < nearest_surface)
+        annulus_alpha = annulus_alpha * gate_visible
 
-    # A small top/bottom paint cue makes pose observable without breaking the left/right
-    # mirror symmetry needed by the paired steering curriculum.
-    paint = 0.82 + 0.18 * torch.sigmoid(gate_vertical / 0.06)
-    colour = state.position.new_tensor(gate_colour)
-    gate_rgb = paint[..., None] * colour
-    image = image * (1.0 - annulus_alpha[..., None]) + gate_rgb * annulus_alpha[..., None]
+        # A small top/bottom paint cue makes pose observable without breaking the
+        # left/right mirror symmetry needed by the paired steering curriculum.
+        paint = 0.82 + 0.18 * torch.sigmoid(gate_vertical / 0.06)
+        role = gate_number - current_gate_index
+        colour_index = role.clamp(0, len(role_colours) - 1)
+        colour = colour_table[colour_index]
+        colour = torch.where((role >= 0)[:, None], colour, torch.zeros_like(colour))
+        gate_rgb = paint[..., None] * colour[:, None, None, :]
+        image = image * (1.0 - annulus_alpha[..., None]) + gate_rgb * annulus_alpha[..., None]
+        nearest_surface = torch.where(annulus_alpha > 1.0e-3, plane_time, nearest_surface)
     return image.clamp(0.0, 1.0).permute(0, 3, 1, 2)
 
 

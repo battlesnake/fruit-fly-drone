@@ -41,14 +41,18 @@ network can visibly steer a quadcopter through physical apertures on either side
 [`hover record`](../artifacts/pragmatic-full-native-hover-v1/) and
 [`gate record`](../artifacts/pragmatic-full-native-gate-v1/).
 
-The next feasibility experiment is a two-gate course, not a certification expansion of
-the one-gate result. It must preserve neural, foreleg and aircraft state across both
-crossings. The passed gate becomes black, the current gate uses the already learned target
-colour, and the next gate uses one fixed secondary colour. Only the renderer/task owns the
-colour-role transition; the actor receives no gate index, waypoint or pass bit. Begin with
-generous spacing and modest alternating offsets, mirror whole courses, try the frozen
-single-gate actor zero-shot, then continue the same anatomical-path training while mixing
-single-gate replay if needed.
+The first two-gate feasibility experiment is also complete. It preserves neural, foreleg
+and aircraft state across both crossings; the passed gate becomes black, current gate
+green, and next gate red. Only the renderer/task owns that transition. On 64 fresh mirrored
+aligned courses, the zero-shot actor cleared both gates 9 times and a short anatomical-path
+adaptation cleared both 13 times, including three complete mirrored pairs. There were no
+ground contacts or invalid flights. This establishes possibility, not reliability; see the
+[`two-gate record`](../artifacts/pragmatic-full-native-two-gate-v1/).
+
+Next improve aligned gate-two tracking without sacrificing the now 58/64 first-gate pass
+rate, then enable the implemented shallow S-turn. Continue to mix the single-gate task and
+select on both first-gate retention and paired two-gate completion. Do not add a gate index,
+waypoint, pass bit or external memory to the actor.
 
 ## Fixed actor boundary
 

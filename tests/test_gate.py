@@ -13,6 +13,7 @@ from flydrone.gate import (
     initial_gate_geometry,
     render_annular_gate,
     render_annular_gate_rgb,
+    render_annular_gates_rgb,
     sample_annular_gates,
     teacher_gate_rc,
 )
@@ -103,6 +104,35 @@ def test_rgb_gate_camera_contains_coloured_gate_and_textured_floor() -> None:
     assert image[1].max() > 0.7  # green gate
     assert image[:, -1].std() > 0.002  # textured grey floor
     assert image[:, 0].max() < 0.01  # black background above the horizon
+
+
+def test_multi_gate_rgb_roles_recolour_after_a_pass() -> None:
+    quad = DifferentiableQuad()
+    state = quad.initial_state(1, device=torch.device("cpu"), dtype=torch.float32)
+    state.position[:, 2] = 1.1
+    gates = (
+        AnnularGate(center=torch.tensor([[3.0, -0.8, 1.1]]), yaw=torch.zeros(1)),
+        AnnularGate(center=torch.tensor([[4.0, 0.8, 1.1]]), yaw=torch.zeros(1)),
+    )
+    camera = CameraSpec(width=100, height=60, horizontal_fov_degrees=125.0)
+
+    before = render_annular_gates_rgb(
+        state,
+        gates,
+        current_gate_index=torch.tensor([0]),
+        camera=camera,
+    )[0]
+    after = render_annular_gates_rgb(
+        state,
+        gates,
+        current_gate_index=torch.tensor([1]),
+        camera=camera,
+    )[0]
+
+    assert before[0].max() > 0.7  # red next-gate role is visible
+    assert after[0].max() < 0.4  # passed gate is dark; current gate is green
+    assert after[1].max() > 0.7
+    assert not torch.allclose(before, after)
 
 
 def test_fixed_l1_receptive_fields_see_every_strict_launch_gate() -> None:

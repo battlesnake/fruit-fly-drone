@@ -48,7 +48,7 @@ machine. It is deliberately not committed as an ordinary Git object; if promoted
 it must be added with Git LFS and the MaleCNS CC BY 4.0 attribution and transformation
 notice described in [`data/README.md`](../../data/README.md).
 
-The next behavior-first test keeps neural, aircraft and foreleg state uninterrupted across
-two gates. The just-passed gate goes dark, the current gate takes the learned target colour,
-and the following gate takes a fixed secondary colour. Gate identity and course progress
-remain simulator/rendering state and are never actor inputs.
+That next behavior-first test now works at low reliability: the uninterrupted actor clears
+two aligned, role-coloured gates in 13/64 fresh flights. See the
+[`two-gate record`](../pragmatic-full-native-two-gate-v1/). Gate identity and course
+progress remain simulator/rendering state and are never actor inputs.

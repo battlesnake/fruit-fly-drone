@@ -31,6 +31,12 @@ the feasibility needed to proceed directly to a continuous two-gate experiment. 
 details and limitations are in the
 [`pragmatic full-network gate record`](../artifacts/pragmatic-full-native-gate-v1/).
 
+An immediate follow-up also completed two aligned role-coloured gates without resetting
+the brain, forelegs, sticks or aircraft. A short adaptation raised fresh completion from
+9/64 to 13/64 flights and from one to three complete mirrored pairs. This is a low-reliability
+sequence proof, documented separately in the
+[`pragmatic two-gate record`](../artifacts/pragmatic-full-native-two-gate-v1/).
+
 ## Task and acceptance boundary
 
 Every evaluation flight starts on the grey floor against a black background.  The bright

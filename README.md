@@ -129,9 +129,10 @@ teacher shaped existing photoreceptor-to-roll-motor pathways; deployment remains
 inside the recurrent connectome and both virtual forelegs. See the compact
 [`pragmatic full-network gate record`](artifacts/pragmatic-full-native-gate-v1/).
 
-The immediate next experiment is two gates with uninterrupted brain, foreleg and aircraft
-state. Simulator bookkeeping only changes their visible roles: passed gate dark, current
-gate the learned target colour, and following gate a fixed secondary colour.
+The first continuous sequence now works as well. On 64 fresh mirrored flights, a short
+two-gate adaptation cleared both aligned gates 13 times and completed both members of three
+mirrored pairs, with no state reset, crash, or gate-index input. This is only a 20.3% early
+proof; see the [`two-gate record`](artifacts/pragmatic-full-native-two-gate-v1/).
 
 ### Compact annular-gate controller: working checkpoint, milestone not yet passed
 
