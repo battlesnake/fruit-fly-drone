@@ -3262,3 +3262,100 @@ experiment. It does not authorize training execution, output routing, candidate 
 hover, gate flight or promotion. The full report SHA-256 is
 `11305380a565651c25f7d0b8e0a564b42bddc1e457b7e7b575fb3839583e5af8`; see
 [`artifacts/frozen-optic-motion-deterministic-v2/`](../artifacts/frozen-optic-motion-deterministic-v2/).
+
+### Preregistered vertical T4/T5 local-commissioning route
+
+Commission the vertical ON/OFF motion detector before changing LPTCs, descending neurons, VNC or
+foreleg outputs. The valid frozen result is dominated by direction-even polarity/static bias;
+training downstream now could conceal that defect. T4's established feed-forward inputs include
+Mi1, Tm3, Mi4 and Mi9
+([Takemura et al.](https://elifesciences.org/articles/24394)); T5's four major columnar inputs are
+Tm1, Tm2, Tm4 and Tm9
+([Shinomiya et al.](https://www.sciencedirect.com/science/article/pii/S0960982214003431)). This
+stage is the visual equivalent of commissioning a velocity estimate before tuning the feedback
+controller that combines velocity damping with marker-height error.
+
+Lock the original `paired-dynamic-001` source, full graph and official annotations at their
+existing hashes, plus deterministic report
+`11305380a565651c25f7d0b8e0a564b42bddc1e457b7e7b575fb3839583e5af8`. Train only the 26,781
+existing canonical external edges into T4c, T4d, T5c and T5d (422,224 source synapses). The sorted
+edge-index SHA-256 is `38145c1032f1f8533f1e238cf6625d83b2e6651ffa163826a96f5e9e1aa808c1`.
+Order 16 groups as Mi1/Mi4/Mi9/Tm3 into T4c, the same into T4d, then Tm1/Tm2/Tm4/Tm9 into T5c
+and the same into T5d; the sorted `(edge index, group index)` SHA-256 is
+`4ed47bbb3fe9e5f97d20b94b9ad21fd94c646ce32baecac6fb89bce995cde527`. Fixed transmitter signs
+are `+,-,-,+` for each T4 target and `+,+,+,+` for each T5 target.
+
+Add one bilateral, column-shared magnitude multiplier per group, one shared bias offset per target
+subtype, and one shared physical-tau multiplier per target subtype: 24 trainable scalars total.
+The 6,827 target nodes have sorted index SHA-256
+`5abd5dba0452da06b7439f88cd726cac524a271d912cd012fec3c026c65f7145`, body-ID SHA-256
+`6cd9debc539446d73b4a86cf63d171d58e14736358ebb7ffb06841b526c3286c`, and sorted
+`(node index, subtype index)` SHA-256
+`1447b05b32cd08c033a5988c6850e102d9ff4ac208dbad8e24a1be0687f29db9`. Parameterize gains in
+`[0.25,4]` with source identity at one, bias offsets in `[-0.25,0.25]` with identity at zero, and
+tau ratios in `[0.5,2]` with identity at one before applying the native 10-250 ms bounds. Preserve
+each anatomical weight within its group and every transmitter sign. Freeze untyped and all other
+afferents, intra-T4/T5 edges, T4a/b and T5a/b, retinal sampling, every downstream parameter and
+all motor readouts. Add no neuron, decoder, flow input, history buffer or external state machine.
+
+Before any outcome-bearing work, implement and commit a no-response manifest that regenerates
+these groups and the stimulus specifications and hard-codes their hashes. Use PCG64 seeds
+`481101`, `481211` and `481307` for 96 training, 48 development and 128 acceptance
+opposite-direction pairs. Training contains 48 polarity-preserving single edges (ON/OFF x speeds
+1/2/4/6 pixels per frame x six phases) and 48 translated band-limited textures (four speeds x 12
+realizations). Development uses 24 edges (ON/OFF x speeds 1/4/6 x four disjoint phases) and 24
+textures (three speeds x eight new realizations). Acceptance uses 64 edges (ON/OFF x speeds
+1/2/3/4 x eight new phases) and 64 textures (four speeds x 16 new realizations); speed three is
+an interpolation holdout. Keep the 25-frame prefix, 16 motion frames, common terminal frame,
+matched stationary branches, literal reversals, 320x200 linear pixels, 125-degree HFOV, zero
+attitude and K32 deterministic CNS clock. The exposed `-002` bank is diagnostic only and must
+never be used for fitting, checkpoint selection or acceptance. Commit acceptance specifications
+but do not render or evaluate their pixels until development has passed.
+
+For each pathway and integrated/terminal window, let `O_up` and `O_down` be the
+stationary-subtracted c-d anatomical opponents, then define `D=(O_up-O_down)/2` and
+`B=(O_up+O_down)/2`. Freeze each normalization from the source training response with an absolute
+floor of `1e-3`; candidate activity cannot shrink its own denominator. Penalize a squared hinge
+below normalized `D=0.3`, squared normalized bias `B`, stationary c-d contrast, and an equal-weight
+per-cell preferred-versus-null DSI hinge below `0.3`. Add an activity hinge below the fixed source
+floor so silence cannot win. For mixed textures, apply direction losses independently to both T4
+and T5. Average integrated and post-offset-retention losses equally, add literal-reversal
+consistency at weight `0.25`, activity-floor loss at `0.25`, and identity-centred parameter
+regularization at `1e-3`. Direction and speed labels exist only in this training loss; no native
+output or aircraft quantity appears in it.
+
+Run the complete 165,122-node recurrent graph; do not teacher-force or cache a source boundary
+around T4/T5. Recompute the current candidate's prefix, preserve native recurrent state through
+the sequence, and backpropagate through the complete 16-frame motion window. Per-frame activation
+checkpointing and one-pair microbatch accumulation are memory mechanisms, not external neural
+state. Use balanced four-pair effective batches, deterministic K32, gradient-norm clipping at
+`1.0`, and beta1-zero Adam (`betas=(0,0.99)`, `eps=1e-8`) with learning rates `0.02`, `0.01` and
+`0.01` for gains, biases and taus. At each update try fixed multipliers `1, 0.5, 0.25, 0.125` in
+order from the same parameter/optimizer snapshot and accept the first finite step that does not
+increase its fixed minibatch loss. A rejected ladder consumes the update and changes nothing.
+
+First run a disposable one-update preflight, with no retained candidate and no development or
+acceptance rendering. Require exact zero-parameter identity against the source on a frozen
+eight-pair K32 subset; central finite differences with step `1e-3` for one gain, bias and tau from
+each ON/OFF pathway must have finite nonzero signal and symmetric relative gradient error at most
+`0.02`; the accepted training step must improve its fixed minibatch by at least `0.1%`; complete
+source identity must be restored; and CUDA peak reserved memory must not exceed 14 GiB. Only a
+separately committed passing preflight may authorize training execution.
+
+Training is capped at 100 accepted-or-rejected updates. At update 25, stop unless source-normalized
+training loss has improved at least 25% and every ON/OFF x direction stratum improved or already
+passes. Evaluate development only at updates 25, 50 and 100, after the candidate passes the same
+K32-versus-K64 `0.005` activity/opponent/motor limits. Prefer a snapshot passing every development
+gate; otherwise choose the smallest worst-stratum error only for reporting, not acceptance. Do not
+extend the budget, enlarge the mask or tune thresholds after failure.
+
+Open acceptance once, and only if a development snapshot passes the original sign, DSI, active
+fraction, stationary-ratio and reversal gates. Acceptance additionally requires at least 90%
+correct vertical direction separately in T4 and T5 on novel textures, including the untrained
+speed. Repeat the pair-mean intervention and report downstream/native-motor effects, but do not
+require throttle improvement or tonic-throttle preservation in this isolated module test. A pass
+may retain only a **vertical-motion-module research checkpoint**. It cannot authorize hover or
+gate flight; the next step would separately preregister existing motion-output-to-DN/VNC routing
+for visual vertical-velocity damping. A failure bounds this 24-parameter shared afferent model,
+not fly motion vision generally; the affine retinal map and single-compartment rate cells remain
+explicit limitations.
