@@ -3637,3 +3637,66 @@ qualification did not run, and development and acceptance data remained unopened
 retained, so motion routing, hover and gate flight remain unauthorized. The next admissible step
 is a separately preregistered, training-only failure-mechanism audit; the failed run does not
 authorize extending the update budget or relaxing a gate.
+
+### Proposal-25 gradient-attribution audit protocol
+
+Before any further training, run one disposable FP32 audit against the exact stopped proposal-25
+state. Lock the failed run's report, start marker, state, source-response cache and cache metadata
+by file hash. Also lock the original trainer and registered stimulus manifest. Require the state to
+contain exactly 25 accepted proposals, zero rejected proposals, Adam step 25 for all three
+parameter groups, the proposal-25 mandatory failure, no development access and no retained
+candidate. Use only the existing 96 training pairs and their batch-specific frozen source
+normalizations. Reproduce the archived proposal-25 full loss, every loss component and every
+directional stratum to absolute tolerance `1e-6`; a mismatch is a control failure, not a negative
+scientific result. Do not render, load or inspect development or acceptance stimuli. Write an
+exclusive started marker before neural evaluation and fail closed after an interrupted start.
+
+At the archived parameters, replay all 24 balanced batches through the complete recurrent graph.
+Accumulate the exact equal-batch mean gradient of the registered loss and separate gradients for
+the `ON_down`, `ON_up`, `OFF_down` and `OFF_up` hinge losses, each averaged over its own 24 edge
+cases and two windows without texture dilution. Clip the accumulated total gradient once, never
+the individual minibatch gradients. Report the unclipped norm, the 4x4
+directional-stratum gradient dot-product and cosine matrices, every minibatch's cosine with the
+whole-bank loss gradient, and signed derivatives of the full loss, each minibatch loss and every
+directional stratum along each trial's actual post-bound, Adam-preconditioned parameter
+displacement. A negative signed derivative predicts local improvement. Report gradient geometry
+in the unweighted Euclidean metric of the raw 24-parameter vector, together with active bounds;
+any common-descent assessment must restrict directions to the feasible tangent cone at those
+bounds and remains a local diagnostic, not proof of global objective compatibility. Do not select
+or train with a replacement optimizer in this audit.
+
+Separately report normalized direction `D=(O_up-O_down)/2` and common bias
+`B=(O_up+O_down)/2` for source and archived candidate, grouped by T4/T5 pathway, integrated versus
+terminal window and training speed. Include the two normalized directional branches and normalized
+opponent activity so bias removal, direction-selectivity growth and response suppression can be
+distinguished. Report every registered loss component at source and proposal 25.
+
+From the same archived parameter and optimizer snapshots, form one full-bank Adam proposal. Test
+all fixed learning-rate multipliers `1`, `0.5`, `0.25` and `0.125`; each trial starts from the same
+snapshots, uses the same clipped whole-bank gradient, increments every Adam counter exactly once,
+is projected through the original parameter bounds, and is evaluated against the whole training
+bank. A trial passes only if all values are finite, total loss decreases by at least 0.1%, the
+maximum of the four directional-stratum losses decreases by at least 1%, and no individual
+stratum increases by more than `1e-4` absolute, all relative to the archived proposal-25
+controller rather than the original source. Report each materialized parameter displacement,
+active parameter bounds and exact Adam-counter transition `25` to `26`. Evaluate the entire ladder
+even after a pass and identify the first passing multiplier in fixed order, never a retrospectively
+best multiplier.
+
+Restore parameters and Adam counters to 25 after every trial and restore parameters, optimizer and
+the unchanged source exactly again at exit. Require finite archived metrics, gradients, Adam
+moments, displacements and trial metrics.
+Retain no candidate or optimizer state. A passing trial authorizes only a separately preregistered
+larger-effective-batch training experiment, with compute accounted for explicitly. If every trial
+fails, use the measured common-descent geometry to choose between an explicit minimax/constrained
+objective and revising the loss priorities; do not default to PCGrad, relax the original gates,
+open held-out data, route motion outputs, attempt hover or promote anything.
+
+The audit's locked failed-run files are: report
+`53925b64c412bc0b50d3483bfd0120076205e362dc3bb214fecfce7fce370ca9`, start marker
+`01f0fb8a8b72503ace45425a57a30c198eb06d1e9365c4f4c2970c6114198eb7`, state
+`943b1c850511fc5bcf1efc8e7038b443391932bb508957f22a977f9822ae044c`, source responses
+`407ab59dcf1597a838f49eaf2b98ac9893e3edd837fe2764ec05b99559368509`, and source-cache metadata
+`cc83094035c70c74145764d81e201d1f31c6422459634e4a5a8f41988482eb34`. The registered manifest is
+`1403c552b371378a59b9cd9830d06ce144f336c7adf05d5061fd385dfc5dbb88`; the original trainer is
+`9ba1ad42625cb52c5c24be538ff328e3f35746645a6d9a70db5e0959e2eff727`.
