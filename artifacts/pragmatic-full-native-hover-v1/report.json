@@ -1,0 +1,93 @@
+{
+  "actor": {
+    "accelerometer_used": false,
+    "external_history_used": false,
+    "inputs": [
+      "320x200 linear RGB at 125 degree HFOV",
+      "roll",
+      "pitch"
+    ],
+    "outputs": [
+      "roll",
+      "pitch",
+      "yaw",
+      "throttle"
+    ],
+    "state": "native recurrence of the 165122-neuron MaleCNS graph",
+    "teacher_action_used": false
+  },
+  "candidate": {
+    "ground_contact_cases": 0,
+    "height_rmse_mean_metres": 0.13836877048015594,
+    "height_rmse_p95_metres": 0.42534753680229187,
+    "invalid_cases": 0,
+    "strict_success_fraction": 0.390625,
+    "strict_successes": 50,
+    "tilt_rms_mean_degrees": 3.5980730056762695,
+    "vertical_speed_rms_mean_mps": 0.08038756996393204
+  },
+  "case_manifest": {
+    "camera_height_range_metres": [
+      0.6629831790924072,
+      1.3436812162399292
+    ],
+    "cases": 128,
+    "final_marker_range_metres": [
+      0.575410783290863,
+      1.4497392177581787
+    ],
+    "seed": 550983,
+    "sha256": "d8f62a97a2b1a5cc4dbb2fe27b31be5592c43b9e116fb0f8b7bb589183934e9a",
+    "split_counts": {
+      "held_out_combination": 64,
+      "held_out_marker": 64
+    }
+  },
+  "checkpoint": {
+    "committed": false,
+    "path": "runs/variable-height-hover/pragmatic-motor-es-001/controller.pt",
+    "reason": "exploratory 105 MB checkpoint; use Git LFS only if promoted",
+    "sha256": "d31eeb70441a1ab3d5610dfb76084732d69294ce0324b7cbbb214a524455ab7b"
+  },
+  "classification": "pragmatic_full_native_hover_improved_not_promoted",
+  "evaluation": {
+    "airborne_initialization": true,
+    "nominal_mass": true,
+    "seconds": 6.0,
+    "strict_height_rmse_limit_metres": 0.1,
+    "strict_tilt_rms_limit_degrees": 5.0,
+    "strict_vertical_speed_rms_limit_mps": 0.1
+  },
+  "frozen_vision": {
+    "ground_contact_cases": 6,
+    "height_rmse_mean_metres": 0.3753562867641449,
+    "invalid_cases": 6,
+    "strict_success_fraction": 0.0625,
+    "strict_successes": 8,
+    "tilt_rms_mean_degrees": 3.0640320777893066,
+    "vertical_speed_rms_mean_mps": 0.16587558388710022
+  },
+  "full_evaluation_report": {
+    "path": "runs/variable-height-hover/pragmatic-full-native-128-001/report.json",
+    "sha256": "ca9573a1ea3587f78da52958774160c087f1a5673586ab648f13c5a4fca3cee0"
+  },
+  "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665",
+  "search": {
+    "antithetic_directions": 4,
+    "generations": 20,
+    "method": "ranked antithetic evolution strategy over native motor-pool biases and signed incoming-edge gains",
+    "parameter_count": 24,
+    "report_path": "runs/variable-height-hover/pragmatic-motor-es-001/report.json",
+    "report_sha256": "8ac156d202675b7fb5f82d00582510c0b8b6518f12dca2379d98615826bd3eb8",
+    "selected_generation": 20,
+    "selected_vector_sha256": "bc166204574abcb9574b9077bf90660606e2378ada3e51c88dc4b4e5d04c36a6"
+  },
+  "source": {
+    "ground_contact_cases": 0,
+    "height_rmse_mean_metres": 0.6487634778022766,
+    "strict_success_fraction": 0.0,
+    "strict_successes": 0,
+    "tilt_rms_mean_degrees": 3.905932903289795,
+    "vertical_speed_rms_mean_mps": 0.10317640751600266
+  }
+}

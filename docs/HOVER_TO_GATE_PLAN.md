@@ -3883,3 +3883,24 @@ preregistered common-descent trainer. It is not new evidence for motion coding a
 authorize altering loss/anatomy, opening held-out data, retaining a module, routing motion,
 hover, gate flight or promotion. If no size passes, constrained training remains unauthorized and
 the result only informs a separately preregistered smaller execution block or implementation fix.
+
+### Behavior-first hover checkpoint
+
+The certification-heavy grouped execution experiment was stopped after its size-2 CUDA path
+became computationally impractical. The completed size-1 observation was not promoted and all 21
+frozen on-disk inputs were independently rechecked. Following the project decision to establish
+behavior before perfect reproducibility, work returned directly to closed-loop flight.
+
+A 20-generation antithetic evolution strategy then tuned 24 shared bias/gain quantities at the
+existing front-leg motor pools of the stopped update-50 full-network candidate. The values were
+compiled into native graph parameters. On 128 new airborne marker-step/impulse cases, the actor
+achieved 50 strict hovers, 0.138 m mean height RMSE, 0.080 m/s vertical-speed RMS, 3.60-degree tilt
+RMS, and no ground contacts or invalid states. Frozen vision achieved 8 strict hovers, 0.375 m
+height RMSE, and six ground/invalid cases. All four axes were native; the actor retained only RGB,
+roll, pitch, and its MaleCNS state.
+
+This result is a practical hover proof, not Goal 1 promotion: it starts airborne and only 39.1%
+meet the strict 0.10 m per-case height limit. The compact result is in
+[`artifacts/pragmatic-full-native-hover-v1/`](../artifacts/pragmatic-full-native-hover-v1/).
+The next behavior-first step is direct full-network gate transfer; exact reruns and broader
+acceptance return after a controller can reliably traverse the gate.

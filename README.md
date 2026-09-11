@@ -63,7 +63,7 @@ current quantitative results are in the [hover milestone](docs/HOVER_MILESTONE.m
 
 ## Current results
 
-### Full-connectome visual hover: causal response passed, flight not yet passed
+### Full-connectome visual hover: behavior-first prototype now flies
 
 The current headless stack uses a 320x200 RGB camera at 125° horizontal FOV and all
 165,122 traced MaleCNS neurons. It directly drives 2,197 retinotopically mapped
@@ -79,11 +79,14 @@ contrast to 33.4%, showing causal VNC participation rather than merely an output
 The plus/minus 0.20 m steps make final marker ranges overlap; the next protocol reserves
 genuinely unseen marker heights and marker/pose combinations.
 
-Full hover is not solved. A closed-loop step test kept 32/32 nominal-mass episodes
-airborne and moved in the right direction, but ended with 0.503 m mean absolute target
-error. Absolute collective calibration and visual vertical damping are now the limiting
-problems. See the [full visual-hover experiment](docs/VISUAL_HOVER.md) for the exact
-controls, results and next curriculum.
+The first strict milestone is not yet solved, but a behavior-first follow-up now provides
+useful all-native hover. A 24-parameter motor-interface evolution search was compiled into
+the existing graph. On 128 new six-second airborne cases it held 50 cases within the strict
+10 cm height criterion, averaged 0.138 m height RMSE and 3.60 degrees tilt RMS, and had no
+ground contacts or invalid flights. Freezing vision reduced strict success from 39.1% to
+6.25% and increased height RMSE to 0.375 m. This is a prototype rather than a promoted
+checkpoint; see the
+[`pragmatic full-network hover record`](artifacts/pragmatic-full-native-hover-v1/).
 
 ### Visual hover: milestone passed
 

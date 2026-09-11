@@ -789,10 +789,13 @@ def _evaluate_hover_slice(
     cases: dict[str, Any],
     *,
     teacher_all_axes: bool,
+    native_all_axes: bool = False,
     frozen_vision: bool,
     device: torch.device,
     config: HoverConfig,
 ) -> dict[str, Tensor]:
+    if teacher_all_axes and native_all_axes:
+        raise ValueError("teacher_all_axes and native_all_axes are mutually exclusive")
     batch = len(cases["initial_marker"])
     state = _state_from_dict(cases["initial_state"], device=device)
     stick_state = _stick_from_dict(cases["initial_stick"], device=device)
@@ -842,7 +845,11 @@ def _evaluate_hover_slice(
             )
             native_motor, neural = controller(image, state.euler[:, :2], neural)
             maximum_motor = torch.maximum(maximum_motor, native_motor.abs().amax(dim=1))
-            physical_motor = merge_teacher_attitude_native_throttle(teacher_motor, native_motor)
+            physical_motor = (
+                native_motor
+                if native_all_axes
+                else merge_teacher_attitude_native_throttle(teacher_motor, native_motor)
+            )
         state, stick_state, _ = hover_train.advance_physics(
             quad,
             sticks,
@@ -891,6 +898,7 @@ def evaluate_hover_cases(
     cases: dict[str, Any],
     *,
     teacher_all_axes: bool,
+    native_all_axes: bool = False,
     frozen_vision: bool,
     device: torch.device,
     config: HoverConfig,
@@ -903,6 +911,7 @@ def evaluate_hover_cases(
             controller,
             _slice_cases(cases, indices),
             teacher_all_axes=teacher_all_axes,
+            native_all_axes=native_all_axes,
             frozen_vision=frozen_vision,
             device=device,
             config=config,
@@ -927,6 +936,7 @@ def evaluate_hover_cases(
         "maximum_native_motor_absolute": float(merged["maximum_native_motor"].max()),
         "all_metrics_finite": bool(finite),
         "teacher_all_axes": teacher_all_axes,
+        "native_all_axes": native_all_axes,
         "frozen_vision": frozen_vision,
         "all_frozen_frames_captured": bool(merged["frozen_frame_captured"].all())
         if frozen_vision
