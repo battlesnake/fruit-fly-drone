@@ -2739,3 +2739,32 @@ the empty optimizer at termination and retain no candidate. A pass has the same 
 meaning: it authorizes preregistration, not execution, of bounded last-hop fitting. Failure
 closes this direct last-hop route and moves upstream. No result authorizes hover, gate flight
 or promotion.
+
+Result: the corrected repeat passed every scalar, archive, functional, mask, bound, endpoint,
+finiteness and restoration control, then established a nontrivial safe trust region. The old
+scale-1 replay reproduced within `9.24e-7` maximum absolute difference and preserved its
+original failure below the `0.001` progress floor. The canonical CPU archive reloaded
+bit-exactly; its physical SHA-256 is
+`08564d6a1bf330b2e06015f93942da969ebdfe3becb5d51996c30a86a8cd57b2` and its semantic
+SHA-256 is `5aab7ce8d2dd9b833fbe095478167e87afa108a4aab8a26660afee8baacc393d`.
+
+Scale 16 improved fixed-prefix and zero-state full-prefix NRMSE by `0.009560` in each replay,
+but it was rejected because source-relative pair-common throttle drift reached `0.006773`
+RMS, above the frozen `0.005` limit. Its `0.008624` maximum drift, RPY drift, motor bounds,
+native parameter bounds and exact outside-mask identity all passed. This identifies the
+actual active constraint rather than a lack of descent.
+
+Scale 8 was then selected. It improved fixed-prefix and full-prefix NRMSE by `0.004801` and
+`0.004800`, respectively, while pair-common throttle drift remained `0.003412` RMS and
+`0.004342` maximum. Maximum absolute motor output was `0.434785`; RPY changes remained at
+float32 noise scale. Two incoming-edge magnitudes reached their lower bound, no edge reached
+the upper bound, and every parameter outside the registered 493-edge/seven-motor-node mask
+remained exact.
+
+No candidate or optimizer was retained, and source plus empty optimizer were restored. This
+result authorizes a separately preregistered source-restarted bounded last-hop fitting run
+using the complete declared line-search ladder and the same source-relative preservation
+constraints. It does not authorize that fitting to execute, nor hover, gate flight or
+promotion. The full report SHA-256 is
+`cd65d0d77fe88af1335d7b6baf1b57cf1b95c9e22bfa7962324dbc80cfc99d73`;
+see [`artifacts/variable-height-rk4-readout-trust-region-canonical-v1/`](../artifacts/variable-height-rk4-readout-trust-region-canonical-v1/).

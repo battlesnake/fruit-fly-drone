@@ -1,0 +1,51 @@
+{
+  "all_reproduction_controls_pass": true,
+  "canonical_archive": {
+    "cpu_reload_bit_exact": true,
+    "physical_sha256": "08564d6a1bf330b2e06015f93942da969ebdfe3becb5d51996c30a86a8cd57b2",
+    "semantic_sha256": "5aab7ce8d2dd9b833fbe095478167e87afa108a4aab8a26660afee8baacc393d"
+  },
+  "classification": "canonical_direct_readout_trust_region_exists",
+  "full_report_sha256": "cd65d0d77fe88af1335d7b6baf1b57cf1b95c9e22bfa7962324dbc80cfc99d73",
+  "implementation_commit": "ae2f2c5",
+  "pass": true,
+  "protocol_commit": "3d8d1d9",
+  "readout_mask": {
+    "edge_count": 493,
+    "edge_indices_sha256": "4978758242ecfc9e53e859e077c098821e5747027a96f2945d3020e65ef81f3d",
+    "node_count": 7,
+    "node_indices_sha256": "69c46d204b312950eb04e4538d5802031803e301d5b28dc45e8adb2d35487831"
+  },
+  "reproduction": {
+    "maximum_scalar_absolute_difference": 7.152557373046875e-7,
+    "maximum_scale_one_absolute_difference": 9.238719940185547e-7,
+    "scale_one_original_failure_preserved": true,
+    "tolerance": 0.00002
+  },
+  "selected_candidate_retained": false,
+  "selected_scale": 8.0,
+  "terminal_optimizer_restored": true,
+  "terminal_source_restored": true,
+  "training_execution_authorized": false,
+  "trust_region_candidates": [
+    {
+      "failure": "pair-common throttle RMS drift exceeded 0.005",
+      "fixed_nrmse_improvement": 0.009560227394104004,
+      "full_nrmse_improvement": 0.009559869766235352,
+      "maximum_motor_absolute": 0.43738505244255066,
+      "pair_common_throttle_drift_maximum_absolute": 0.008624285459518433,
+      "pair_common_throttle_drift_rms": 0.006773447152227163,
+      "pass": false,
+      "scale": 16.0
+    },
+    {
+      "fixed_nrmse_improvement": 0.004800558090209961,
+      "full_nrmse_improvement": 0.004800200462341309,
+      "maximum_motor_absolute": 0.43478500843048096,
+      "pair_common_throttle_drift_maximum_absolute": 0.004341572523117065,
+      "pair_common_throttle_drift_rms": 0.0034124418161809444,
+      "pass": true,
+      "scale": 8.0
+    }
+  ]
+}
