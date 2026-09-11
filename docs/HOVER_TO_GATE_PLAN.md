@@ -3494,6 +3494,66 @@ unopened, and peak CUDA reserved memory was 9.4375 GiB. The full report SHA-256 
 This authorizes the separately bounded 100-update commissioning run in production FP32, but not
 hover, gate flight or promotion.
 
+Freeze the remaining execution details for that bounded run before implementation. Order the 96
+training cases into 24 balanced batches. For each speed in manifest order `[1,2,4,6]` and each
+edge phase `0..5`, one batch contains the matching ON edge, matching OFF edge, and texture
+realizations `2*phase` and `2*phase+1` at that speed. Updates cycle these 24 batches in that exact
+speed-major, phase-minor order, starting at speed 1/phase 0. This covers every registered training
+case exactly once per 24-update cycle without drawing a new random schedule. Render and cache only
+the registered training pixels at startup. Evaluate the source once for all 96 cases and their
+literal reversals; form each batch's immutable source normalizations from that cache. Hash both
+normal/reverse pixel and source-response tensor trees.
+
+Persist beta1-zero Adam state across accepted updates. At each of 100 proposal indices, compute a
+fresh full-graph checkpointed gradient for its fixed batch, clip the joint norm to 1.0, and try
+multipliers `[1,0.5,0.25,0.125]` from the same parameter and optimizer snapshot. Accept the first
+finite fixed-batch loss no greater than its pre-update loss; preserve that trial's optimizer state.
+If every trial fails, restore both states exactly, record one rejected proposal, and advance the
+proposal counter. Bounds and all learning rates remain those already registered. Atomically save
+parameters, optimizer, counters, hashes and history after every proposal so a reboot resumes the
+next proposal without repeating a proposal or a held-out evaluation.
+
+Define the fixed full-training evaluation as the equal mean of the same loss over all 24 batches.
+Also report four edge direction strata: ON-down, ON-up, OFF-down and OFF-up. A stratum value is the
+mean squared registered direction-margin hinge across its six phases, four speeds and both
+integrated/terminal windows, using the batch's frozen source scale and the corresponding T4 or T5
+c-minus-d opponent. At proposal 25 require full-training loss at most 75% of its identity baseline,
+and require every stratum either to have zero hinge or be strictly smaller than its identity
+baseline. Failure is terminal and does not open development.
+
+At proposals 25, 50 and 100, first compare the candidate at K32 and K64 on frozen training indices
+`[0,1,24,25,48,49,60,61]`, normal and literal-reverse histories. Measure RMS differences in
+terminal moving selected-cell activity, terminal c-minus-d opponents and terminal native motor
+outputs; each must be at most `0.005`. A failed scheduled numerical gate is terminal and does not
+open development. Persist a scheduled-candidate snapshot and a `development_started` marker before
+rendering any development pixel, making interruption fail closed rather than retrying that
+checkpoint.
+
+For a numerically qualified scheduled candidate, render the complete 48-pair development split
+once, retaining an immutable source-response cache for later scheduled candidates. Apply the
+original qualification gates to both integrated and terminal windows: at least 90% correct signs
+separately for each T4/T5 pathway and up/down branch; median DSI at least 0.3 and active fraction at
+least 0.5 for T4c, T4d, T5c and T5d; integrated stationary-to-moving opponent RMS at most 0.1; and
+at least 90% literal-reversal sign inversion. Use the original `1e-6` absolute activity/noise
+floor. Also report source-normalized development loss with source references formed over the
+complete development split.
+
+After proposal 100, select among development-gate-passing snapshots by smallest development loss,
+breaking exact ties by earlier proposal. If none passes, report only the snapshot with smallest
+maximum normalized gate shortfall, then smaller development loss and earlier proposal; do not open
+acceptance or retain it as a module. Open all 128 acceptance pixels exactly once only for the
+selected passing snapshot. Reapply every development gate. In addition, on the 32 novel texture
+cases at untrained speed 3 require at least 90% correct direction separately for T4 and T5, up and
+down, in both integrated and terminal windows.
+
+Repeat the T4/T5 pair-mean intervention on that acceptance evaluation and report downstream target
+and native motor effects as a diagnostic only; throttle change and tonic-throttle preservation are
+not gates. Only a fully passing acceptance may retain the 24-parameter vertical-motion-module
+checkpoint. The terminal artifact must include source/candidate hashes, complete proposal and
+scheduled-evaluation histories, pixel/cache hashes, memory telemetry, and exact restoration of the
+unchanged source. It authorizes only a later preregistration of visual-motion-to-DN/VNC damping,
+never hover, gate flight or promotion directly.
+
 For each pathway and integrated/terminal window, let `O_up` and `O_down` be the
 stationary-subtracted c-d anatomical opponents, then define `D=(O_up-O_down)/2` and
 `B=(O_up+O_down)/2`. Freeze each normalization from the source training response with an absolute
