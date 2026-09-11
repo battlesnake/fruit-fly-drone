@@ -2416,3 +2416,62 @@ is a source-restarted temporal-credit/time-constant diagnostic, not a post-hoc r
 the noise threshold or continuation of the response-erasure endpoint. The full report
 SHA-256 is `ad0f4f0524be5f9a769b74d890d8f8b6925ba25921bb283ac52b8089ddc22c5c`;
 see [`artifacts/variable-height-native-throttle-motion-only-v1/`](../artifacts/variable-height-native-throttle-motion-only-v1/).
+
+### Preregistered native neural-integration-rate audit
+
+Before changing biological time constants or fitting another controller, test whether the
+current discrete implementation itself creates the observed phase lag. The camera and flight-
+command rates are 50 Hz, but the current actor also executes only one synchronous whole-graph
+state update per camera frame. Consequently every connectome edge has at least one 20 ms
+discrete delay, even though the initialized membrane time constant is about 21.38 ms and a
+real recurrent circuit evolves continuously between camera samples. A multi-hop visual path
+can therefore behave as an artificially delayed proportional controller. Internal CNS
+integration is distinct from adding actor inputs, external memory or a faster flight command.
+
+This is a source-only, no-learning numerical audit. Hash-lock the stopped motion-only report
+and resume at `ad0f4f0524be5f9a769b74d890d8f8b6925ba25921bb283ac52b8089ddc22c5c` and
+`04c4b4e0b598f37c3808a7740bad0160c2826d20584149c841694696d1d0e28d`, and require its
+training-bank hash `0887ead1e9eef7755c47b51967f55bbde0e7203b17e76ea9f50456e97ca530fc`.
+Load the original `paired-dynamic-001` controller, not accepted update 17. Reuse the exact
+opened 24-pair bank and its frozen `0.043661270290613174` teacher-contrast scale. Generate no
+new seed, case, development bank, trajectory or optimizer state.
+
+Render and persist one immutable input cache from that bank: its 25-frame neutral prefix and
+each complete opposite-motion image sequence, roll/pitch input and teacher target. Record a
+semantic cache hash and require bit-identical terminal images within every pair. Every audit
+condition consumes this same cache in the same case order. K=1 must reproduce the stopped
+source's NRMSE `1.031749290796319`, aligned gain `-0.030875112861394882`, prediction RMS
+`0.002292240969836712` and exact endpoint-image result within `2e-5` absolute error before
+any other condition is interpreted.
+
+Evaluate internal substep counts `K = 1, 2, 4, 8, 16`. For condition K, instantiate the
+unchanged source controller with neural integration step `1/(50K)` seconds. Hold each 50 Hz
+RGB and roll/pitch observation constant for K successive native recurrent updates, then emit
+only the final native motor output for that camera frame. Advance no aircraft or external
+state during substeps. Physical observations and prospective stick commands remain 50 Hz;
+only integration of the fly's own 165,122-neuron recurrent state changes. Parameters,
+topology, transmitter signs, sensory mappings, time constants and front-leg pools remain
+bit-identical across conditions.
+
+For every K, report all 24 predicted and teacher throttle contrasts; correct-sign fraction,
+aligned gain, NRMSE and prediction RMS overall and by 15/20/25-frame horizon; all four motor-
+axis ranges/RMS; pair-common throttle; recurrent/output finiteness; and endpoint identity.
+Also record wall time and native recurrent updates so performance cost is explicit. Do not
+choose K by its damping score.
+
+Choose a numerically adequate rate only by adjacent refinement. For each K in `1, 2, 4, 8`,
+compare its 24-value contrast vector and all 48 four-axis terminal motor outputs with 2K.
+The K-to-2K refinement passes when contrast RMS difference divided by the frozen teacher
+scale is at most 0.01, raw terminal-motor RMS difference is at most 0.005, all states and
+outputs are finite and both conditions retain exact paired endpoints. The selected rate is
+the smallest K whose adjacent refinement passes. If none through K=8 passes, this audit
+selects no rate; a higher-order or more finely referenced solver must be separately declared.
+
+The selected K, if any, is a numerical-fidelity result, not a behaviorally best checkpoint.
+If K=1 is already adequate, reject integration coarseness as the explanation and proceed to
+a separately preregistered time-constant/temporal-credit experiment. If only K>1 is adequate,
+future training may use that fixed internal rate, subject to its own preregistration, even if
+the unchanged source remains wrong-signed. A corrected source sign would be encouraging but
+does not itself authorize training, hover or promotion. Restore/hash-verify the source after
+every condition and at termination; retain no altered controller. This audit cannot authorize
+assisted hover, native attitude, gate flight or promotion.
