@@ -10,6 +10,7 @@ import torch
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
+import audit_vertical_motion_derivative_ladder as ladder  # noqa: E402
 import preflight_vertical_motion_commissioning as preflight  # noqa: E402
 import preflight_vertical_motion_commissioning_v2 as preflight_v2  # noqa: E402
 import preregister_vertical_motion_commissioning as registration  # noqa: E402
@@ -167,3 +168,20 @@ def test_v2_changes_only_tau_arithmetic_protocol() -> None:
     assert v2_protocol["scientific_or_threshold_changes_from_v1"] == []
     assert v2_protocol["finite_difference"]["central_step"] == 1.0e-3
     assert v2_protocol["finite_difference"]["symmetric_relative_error_maximum"] == 0.02
+
+
+def test_derivative_ladder_uses_adjacent_resolved_scales() -> None:
+    assert ladder.STEPS == (0.008, 0.004, 0.002, 0.001, 0.0005, 0.00025)
+    rows = [{"step": step, "pass": step in (0.004, 0.002)} for step in ladder.STEPS]
+
+    qualification = ladder.qualify_probe(rows)
+
+    assert qualification["pass"] is True
+    assert qualification["passing_adjacent_step_pairs"] == [[0.004, 0.002]]
+
+
+def test_resolution_floor_never_collapses_below_eight_float32_ulps() -> None:
+    result = ladder.loss_resolution_floor([1.0, 1.0, 1.0])
+
+    assert result["repeat_range"] == 0.0
+    assert result["loss_resolution_floor"] == 8.0 * float(np.spacing(np.float32(1.0)))

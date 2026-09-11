@@ -3414,6 +3414,12 @@ minibatch improvement, exact restoration and the original 14 GiB peak-reserved l
 pass authorizes the separately bounded 100-update training run; any failure stops without another
 implementation change. Do not use or render development/acceptance and do not retain a candidate.
 
+The derivative-ladder implementation SHA-256 is
+`63cc275905060cd08032e3e4519f2e2268ee5873a8fb009e6e212b9baa5560a8`, its terminal checker is
+`010c01fe7f2ff0a1e79130a909a1b50b29740e44fc4a760352146a0d2fb18bb3`, and its AIRA runner is
+`add5d4134e7b4651d09dc7e477235cc50674a65849996373c66818dd2eb3a0b0`. Commit them before the
+one-shot ladder run.
+
 For each pathway and integrated/terminal window, let `O_up` and `O_down` be the
 stationary-subtracted c-d anatomical opponents, then define `D=(O_up-O_down)/2` and
 `B=(O_up+O_down)/2`. Freeze each normalization from the source training response with an absolute
