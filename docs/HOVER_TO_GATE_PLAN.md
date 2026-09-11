@@ -3509,9 +3509,12 @@ fresh full-graph checkpointed gradient for its fixed batch, clip the joint norm 
 multipliers `[1,0.5,0.25,0.125]` from the same parameter and optimizer snapshot. Accept the first
 finite fixed-batch loss no greater than its pre-update loss; preserve that trial's optimizer state.
 If every trial fails, restore both states exactly, record one rejected proposal, and advance the
-proposal counter. Bounds and all learning rates remain those already registered. Atomically save
-parameters, optimizer, counters, hashes and history after every proposal so a reboot resumes the
-next proposal without repeating a proposal or a held-out evaluation.
+proposal counter. Bounds and all learning rates remain those already registered. Hold a
+process-lifetime exclusive lock on the output directory. Atomically mark each proposal in flight
+before computing it, then save parameters, optimizer, counters, hashes and history after every
+proposal. A reboot resumes only after a completely recorded proposal; an in-flight proposal is a
+terminal interruption and is never repeated. Held-out evaluations retain the same fail-closed
+started markers.
 
 Define the fixed full-training evaluation as the equal mean of the same loss over all 24 batches.
 Also report four edge direction strata: ON-down, ON-up, OFF-down and OFF-up. A stratum value is the
@@ -3530,21 +3533,28 @@ rendering any development pixel, making interruption fail closed rather than ret
 checkpoint.
 
 For a numerically qualified scheduled candidate, render the complete 48-pair development split
-once, retaining an immutable source-response cache for later scheduled candidates. Apply the
-original qualification gates to both integrated and terminal windows: at least 90% correct signs
-separately for each T4/T5 pathway and up/down branch; median DSI at least 0.3 and active fraction at
-least 0.5 for T4c, T4d, T5c and T5d; integrated stationary-to-moving opponent RMS at most 0.1; and
-at least 90% literal-reversal sign inversion. Use the original `1e-6` absolute activity/noise
-floor. Also report source-normalized development loss with source references formed over the
-complete development split.
+once, retaining an immutable source-response cache for later scheduled candidates. Preserve the
+original qualification definitions: require at least 90% correct signs separately in both the
+integrated and terminal windows for each T4/T5 pathway and up/down branch; compute the median DSI
+and active-fraction gates from the integrated response only; and compute stationary-to-moving RMS
+and literal-reversal sign inversion from the integrated response only. Median DSI must be at least
+0.3 and active fraction at least 0.5 for T4c, T4d, T5c and T5d; stationary-to-moving opponent RMS
+must be at most 0.1; and literal-reversal sign inversion must be at least 90%. Use the original
+`1e-6` absolute activity/noise floor. Also report source-normalized development loss with source
+references formed over the complete development split.
 
-After proposal 100, select among development-gate-passing snapshots by smallest development loss,
-breaking exact ties by earlier proposal. If none passes, report only the snapshot with smallest
-maximum normalized gate shortfall, then smaller development loss and earlier proposal; do not open
-acceptance or retain it as a module. Open all 128 acceptance pixels exactly once only for the
-selected passing snapshot. Reapply every development gate. In addition, on the 32 novel texture
-cases at untrained speed 3 require at least 90% correct direction separately for T4 and T5, up and
-down, in both integrated and terminal windows.
+After proposal 100, first require exactly 100 recorded proposals with matching accepted/rejected
+and Adam counters, exact completed training/numerical/development event sets `{25,50,100}`, a
+passing proposal-25 gate, three passing numerical gates, and finite parameters, optimizer state
+and evaluation metrics. Only then select among development-gate-passing snapshots by smallest
+development loss, breaking exact ties by earlier proposal. If none passes, report only the snapshot
+with smallest maximum normalized gate shortfall, then smaller development loss and earlier
+proposal; do not open acceptance or retain it as a module. Open all 128 acceptance pixels exactly
+once only for the selected passing snapshot. Reapply every development gate. In addition, on the
+complete set of 64 novel texture pairs require at least 90% correct direction separately for T4
+and T5, up and down, in both integrated and terminal windows. Retain the same gate separately on
+the 16-pair untrained-speed-3 subset (32 up/down directional branches), so performance at trained
+speeds cannot mask failure at the interpolation holdout.
 
 Repeat the T4/T5 pair-mean intervention on that acceptance evaluation and report downstream target
 and native motor effects as a diagnostic only; throttle change and tonic-throttle preservation are
