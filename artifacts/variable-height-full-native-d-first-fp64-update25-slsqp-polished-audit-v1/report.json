@@ -1,0 +1,60 @@
+{
+  "actor_candidate_materialized": false,
+  "actor_instantiated": false,
+  "all_locked_inputs_unchanged": true,
+  "classification": "slsqp_support_polished_reference_qualified",
+  "closed_loop_hover_run": false,
+  "continuation_authorized": true,
+  "development_or_fresh_data_used": false,
+  "experiment": "variable-height-full-native-d-first-fp64-update25-slsqp-polished-audit-v1",
+  "full_report_sha256": "9abe6a4b433927e6136395dbe7abec869bce8daccd5b03284fc91cb076f0e075",
+  "gradients_metrics_or_adam_regenerated": false,
+  "implementation_commit": "e2966ab",
+  "pass": true,
+  "polished_reference": {
+    "maximum_dual_objective_relative_difference": 1.9764396058265697e-16,
+    "maximum_gram_induced_primal_relative_distance": 4.2188578621318486e-16,
+    "maximum_normalized_kkt_residual": 3.448160476370683e-17,
+    "maximum_original_unit_primal_violation": 2.8118783343411557e-16,
+    "primary_support_consulted": false,
+    "solve_count_per_round": 1,
+    "support_full_rank_every_round": true,
+    "support_mask_every_round": 840,
+    "support_size_every_round": 4
+  },
+  "promoted": false,
+  "protocol_commit": "3340c27",
+  "repeat_control": {
+    "active_and_fixed_set_paths_exact": true,
+    "complete_primal_objective_relative_differences": [0.0, 0.0, 0.0],
+    "learning_rate_scaled_primal_relative_distances": [0.0, 0.0, 0.0],
+    "pass": true,
+    "repeats": 3
+  },
+  "rounds": [
+    {
+      "fixed_edges_before": 0,
+      "newly_fixed_edges": 5506,
+      "polished_normalized_kkt_residual": 1.1554474087820312e-17,
+      "polished_original_unit_primal_violation": 2.8118783343411557e-16,
+      "round": 1
+    },
+    {
+      "fixed_edges_before": 5506,
+      "newly_fixed_edges": 15,
+      "polished_normalized_kkt_residual": 3.448160476370683e-17,
+      "polished_original_unit_primal_violation": 1.7184604433895245e-17,
+      "round": 2
+    },
+    {
+      "fixed_edges_before": 5521,
+      "newly_fixed_edges": 0,
+      "polished_normalized_kkt_residual": 2.514253351487059e-17,
+      "polished_original_unit_primal_violation": 7.914675859144182e-18,
+      "round": 3
+    }
+  ],
+  "state_retained": false,
+  "total_fixed_edges": 5521,
+  "maximum_box_violation": 0.0
+}

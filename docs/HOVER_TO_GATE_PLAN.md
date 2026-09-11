@@ -1674,3 +1674,82 @@ route; do not rotate to another reference or relax a threshold. A pass qualifies
 revised frozen-input numerical reference and permits a separately preregistered update-24
 continuation. It does not retroactively pass either failed run, install update 25, authorize
 hover, alter the total-update-50 gate or permit promotion.
+
+Result: the SLSQP-support-polished reference audit passed. Three fresh reloads of the
+existing frozen update-25 archive followed identical three-round active-set paths: 5,506
+edges fixed in round 1, 15 more in round 2, and convergence with 5,521 fixed edges and zero
+box violation in round 3. Pairwise learning-rate-scaled primal and objective differences
+were all exactly zero.
+
+Unchanged SLSQP selected support mask 840 from its own coefficients in every round. The
+single fixed FP64 SVD solve found that four-coordinate support full rank each time. Against
+the unchanged exhaustive primary, maximum Gram-induced primal distance was `4.22e-16` and
+maximum objective relative difference was `1.98e-16`. Polished normalized KKT residuals
+were at most `3.45e-17`, and polished original-unit primal violations were at most
+`2.81e-16`. All locked inputs and the archive remained unchanged. The full report SHA-256
+is `9abe6a4b433927e6136395dbe7abec869bce8daccd5b03284fc91cb076f0e075`.
+
+No fly controller was instantiated, no candidate materialized, no metrics, gradients or
+Adam state regenerated, no state retained, no development/fresh data used, and no hover or
+promotion occurred. The pass qualifies only the polished numerical reference. See
+[`artifacts/variable-height-full-native-d-first-fp64-update25-slsqp-polished-audit-v1/`](../artifacts/variable-height-full-native-d-first-fp64-update25-slsqp-polished-audit-v1/).
+
+Proceed with one new **frozen-update-25 polished-reference corrected continuation to total
+update 50**. Do not alter or resume the stopped snapshot continuation. Hash-lock its report
+and accepted-update-24 resume, the failed exhaustive audit's producer report and frozen
+update-25 archive, and the passing SLSQP-support-polished report (SHA-256
+`9abe6a4b433927e6136395dbe7abec869bce8daccd5b03284fc91cb076f0e075`), in addition to
+the graph, checkpoint and immutable cache manifest.
+
+Create a new crash-safe resume by copying exact accepted update 24, removing only the
+recorded rejected update-25 history entry, retaining development history only through
+total update 20, and setting the new protocol active. Before attempting update 25, require
+the loaded controller and Adam semantic hashes to equal
+`299dae786c06b5a64b9d9d29a9e365697ea5a36333caac5eb7c1b3ea2ffbaeed` and
+`5213d7ee914c97e402bc1108b6c4fcc7be385b952388981865d388ba3fc8574f`, and reproduce the
+source and accepted-update-24 training metric trees under the established tolerance.
+
+For update 25 only, load the frozen constraint specifications, rows, endpoint-D gradient,
+raw displacement and pending optimizer-after state directly from the qualified archive.
+Require every archive semantic hash, exact equality of its current parameters and
+optimizer-before state to accepted update 24, and the original one-step counter transaction
+from 24 to 25. Do not regenerate its constraints or gradient, call Adam again, or use
+development. Recompute the qualified exhaustive-primary plus SLSQP-support-polished
+three-round projection from the frozen inputs. Require all registered per-round gates, the
+exact projected-displacement SHA-256
+`56cf914132ffd85356d3c28fcccc1416e409ee9ed122e770820bffa4fcaeea44`, and complete
+projection primal objective `18712.47294252837` within the existing `1e-12` relative
+tolerance.
+
+Materialize the authoritative update-25 proposal exactly once and require native bounds,
+canonical idempotence, post-materialization linear violation at most `1e-6`, a negative
+endpoint-D direction, and exact archived Adam accounting. Before nonlinear selection, run
+the existing scale-1/16 directional finite-difference check on the fixed training bank and
+require its existing sign, minimum-change, relative-error, idempotence and bound gates.
+This checks the full projected direction; it does not require scale 1/16 itself to pass
+nonlinear preservation.
+
+Then run the unchanged ordinary scales in descending order. Only the unchanged scale-1/16
+C25-only case may enter the existing nonlinear repair with its current eligibility,
+authoritative D row, finite-difference probe, fixed Jacobian and correction scales. Do not
+require any recomputed repair tensor to equal a tensor produced in another process. Accept
+update 25 only if every numerical, nonlinear, preservation and optimizer gate passes;
+otherwise restore exact update 24, persist a stopped resume and do not retry. Treat the
+loaded optimizer-after state as the archived pending update-25 transaction, not as a newly
+executed optimizer step. If accepted, persist the selected controller tensors and Adam
+state immediately so interruption never requires reconstructing update 25.
+
+From update 26 onward, generate each fixed-training proposal's constraints, native gradient
+and single Adam transaction exactly once. Use the same exhaustive primary with the
+qualified SLSQP-only support threshold and one-shot FP64 SVD polish in every active-set
+round. Require all primary, polished-reference, active-set, canonical, bound, linear,
+direction and transaction controls before the unchanged ordinary-then-eligible-repair
+selection. Any failure restores the pre-update transaction and stops without retry.
+
+Keep the existing scheduled development checks at total updates 30, 40 and 50, including
+the crash-safe rollback of controller, Adam, training metrics and accepted count on failed
+preservation. Keep the first-terminal fresh qualification path and the original mandatory
+total-update-50 gate requiring at least 25% source-relative endpoint-D improvement on both
+training and development. A failed mandatory gate closes the route without hover; no
+closed-loop run or promotion is permitted without fresh qualification. All resumes,
+checkpoints and large archives remain ignored; commit only compact reports.
