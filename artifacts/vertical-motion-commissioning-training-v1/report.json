@@ -1,0 +1,70 @@
+{
+  "artifact_kind": "compact_terminal_summary",
+  "classification": "vertical_motion_training_mandatory_gate_failed",
+  "passed": false,
+  "protocol_commit": "05f4a2e",
+  "implementation_commit": "cc6082411ddc5b15b00750f43c283dccfcd05953",
+  "implementation_file_sha256": "9ba1ad42625cb52c5c24be538ff328e3f35746645a6d9a70db5e0959e2eff727",
+  "full_report_path": "runs/optic-motion/vertical-motion-commissioning-training-001/report.json",
+  "full_report_file_sha256": "53925b64c412bc0b50d3483bfd0120076205e362dc3bb214fecfce7fce370ca9",
+  "full_start_path": "runs/optic-motion/vertical-motion-commissioning-training-001/start.json",
+  "full_start_file_sha256": "01f0fb8a8b72503ace45425a57a30c198eb06d1e9365c4f4c2970c6114198eb7",
+  "full_state_path": "runs/optic-motion/vertical-motion-commissioning-training-001/state.pt",
+  "full_state_file_sha256": "943b1c850511fc5bcf1efc8e7038b443391932bb508957f22a977f9822ae044c",
+  "training_pixels_semantic_sha256": "d7b668926ac9419890d90e0615e84a1aca6eef2e29a9a55634a0158e425678a9",
+  "training_source_cache": {
+    "cases": 96,
+    "file_sha256": "407ab59dcf1597a838f49eaf2b98ac9893e3edd837fe2764ec05b99559368509",
+    "semantic_sha256": "0920384f89e62adc1d62f125648402796008ec26f6b9bd36ea915d885085bab9"
+  },
+  "proposals": {
+    "completed": 25,
+    "accepted": 25,
+    "rejected": 0,
+    "accepted_multipliers": [1.0],
+    "all_baselines_and_gradients_finite": true,
+    "local_improvement_fraction_minimum": 0.009379858542038688,
+    "local_improvement_fraction_mean": 0.056502282891674936,
+    "local_improvement_fraction_maximum": 0.17587984859647976
+  },
+  "mandatory_training_gate": {
+    "pass": false,
+    "baseline_loss": 0.804610642294089,
+    "candidate_loss": 0.4765322543680668,
+    "loss_limit": 0.6034579817205667,
+    "improvement_fraction": 0.4077480096343394,
+    "components": {
+      "activity": {"baseline": 0.0, "candidate": 0.005404495769956459},
+      "bias": {"baseline": 0.10046332407121857, "candidate": 0.03691300633363426},
+      "direction": {"baseline": 0.1198035879060626, "candidate": 0.1043281905973951},
+      "dsi": {"baseline": 0.3137784966578086, "candidate": 0.28600355548163253},
+      "regularization": {"baseline": 0.0, "candidate": 0.030909184366464615},
+      "reverse": {"baseline": 0.2089039764056603, "candidate": 0.1418873149280747},
+      "stationary": {"baseline": 0.21833925352742276, "candidate": 0.012433633897065496}
+    },
+    "edge_direction_strata": {
+      "OFF_down": {"baseline": 0.08744613531127736, "candidate": 0.10165473464570596, "pass": false},
+      "OFF_up": {"baseline": 0.27638919740760076, "candidate": 0.20854884549044073, "pass": true},
+      "ON_down": {"baseline": 0.773213837450991, "candidate": 0.20187378497560834, "pass": true},
+      "ON_up": {"baseline": 0.04892671971477588, "candidate": 0.1636830817393881, "pass": false}
+    }
+  },
+  "terminal_parameter_values_diagnostic_only": {
+    "gain": [0.8036277294158936, 0.8157495856285095, 0.9370609521865845, 0.9467930793762207, 1.125207543373108, 0.9530353546142578, 0.8183119893074036, 1.111181616783142, 1.1908823251724243, 1.1067341566085815, 1.1246553659439087, 0.8735634088516235, 0.9212564826011658, 0.9010351896286011, 0.9533042907714844, 0.88416588306427],
+    "bias_offset": [0.06281211972236633, 0.14732682704925537, -0.07301391661167145, -0.042109694331884384],
+    "tau_ratio": [1.068340539932251, 1.1240140199661255, 1.0478707551956177, 1.0718653202056885]
+  },
+  "scheduled_evaluation_started": [25],
+  "numerical_gate_run": false,
+  "development_started": false,
+  "acceptance_started": false,
+  "candidate_retained": false,
+  "source_state_sha256_before": "8bd3417704779172b34ef79579464485ff94c6377441e65eb630838b2c7e70c3",
+  "source_state_sha256_after": "8bd3417704779172b34ef79579464485ff94c6377441e65eb630838b2c7e70c3",
+  "source_restored": true,
+  "cuda_peak_reserved_gibibytes": 2.8046875,
+  "cuda_peak_reserved_memory_pass": true,
+  "motion_to_DN_VNC_routing_preregistration_authorized": false,
+  "hover_or_gate_flight_authorized": false,
+  "promotion_authorized": false
+}

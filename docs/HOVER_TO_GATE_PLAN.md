@@ -3620,3 +3620,20 @@ commit `05f4a2e` and must be committed before the one-shot run. The pre-run veri
 410 repository tests. A training-only CUDA smoke replay on the first balanced batch accepted
 multiplier 1.0, advanced each Adam counter exactly once, preserved the source connectome exactly,
 and reserved 2.7617 GiB peak VRAM; it rendered no development or acceptance stimulus.
+
+### Vertical-motion commissioning v1 result
+
+The one-shot production run under implementation commit `cc60824` stopped as specified at the
+proposal-25 mandatory whole-training-bank gate. All 25 proposals were accepted at multiplier 1.0
+and none was rejected. Full-bank loss improved from `0.804611` to `0.476532` (40.77%), exceeding
+the aggregate threshold, while the separately protected direction strata split: `ON_down`
+improved from `0.773214` to `0.201874` and `OFF_up` from `0.276389` to `0.208549`, but `ON_up`
+worsened from `0.048927` to `0.163683` and `OFF_down` from `0.087446` to `0.101655`. The resulting
+classification is `vertical_motion_training_mandatory_gate_failed`; the complete report SHA-256
+is `53925b64c412bc0b50d3483bfd0120076205e362dc3bb214fecfce7fce370ca9`.
+
+The source state was restored byte-for-byte, peak CUDA reserved memory was 2.805 GiB, numerical
+qualification did not run, and development and acceptance data remained unopened. No module was
+retained, so motion routing, hover and gate flight remain unauthorized. The next admissible step
+is a separately preregistered, training-only failure-mechanism audit; the failed run does not
+authorize extending the update budget or relaxing a gate.
