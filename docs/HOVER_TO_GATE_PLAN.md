@@ -3324,6 +3324,23 @@ between splits. No pixels or neural responses were produced. This commits the ac
 specifications while leaving acceptance pixels sealed, and authorizes only implementing and
 running the disposable preflight below.
 
+The disposable preflight implementation further freezes identity cases
+`[0,1,24,25,48,49,60,61]`, and the balanced four-pair derivative/update minibatch
+`[0,24,48,60]` (ON edge, OFF edge and two mixed textures). Its DSI surrogate averages
+preferred/null responses across represented cases before scoring each cell. Stationary loss
+matches the source audit by penalizing the difference between stationary branches, rather than
+forcing tonic c/d equality. Reversal uses an independent opposite-sign margin and its own frozen
+source scale, not cross-pathway amplitude matching. Activity targets are
+`min(source amplitude,1e-3)` with normalization `max(source amplitude,1e-3)`, so silence cannot
+win without requiring source-weak cells to be raised to the floor. Averaging is cells within
+subtype, subtypes within pathway, pathways within pair, pairs within window, then equal
+integrated/terminal windows. The reusable implementation SHA-256 is
+`94ad1374994ba79d2739fd96c58a67764bbd797e52e2351fd2ad66aea3300b60`, the one-shot driver is
+`ba5d8eb75d868de5a9ee565b3217e15e5d45ee2f9473212b259e9c79f860b340`, the checker is
+`6013375d09dd4f9236e86e350df0a5970ee82a99429834ea0242949579283f8f`, and the AIRA/WSL2 runner
+is `88da56310ce9689cd347c31584901f78407308ff337d647f44451e42611cd16f`. This implementation must
+be committed before its one-shot execution; it does not itself authorize training.
+
 For each pathway and integrated/terminal window, let `O_up` and `O_down` be the
 stationary-subtracted c-d anatomical opponents, then define `D=(O_up-O_down)/2` and
 `B=(O_up+O_down)/2`. Freeze each normalization from the source training response with an absolute
