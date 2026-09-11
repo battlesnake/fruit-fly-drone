@@ -3165,3 +3165,65 @@ motion-task optimization confined to type-shared T4/T5 afferent magnitudes, bias
 constants while preserving retinotopy, ON/OFF pathways, direction subtypes and all downstream
 parameters. A numerical or annotation failure stops before learning. This audit cannot authorize
 hover, gate flight, candidate retention or promotion.
+
+### Terminal frozen optic-motion audit `-001`: duplicate-control stop
+
+The source-only run completed all fixed measurements under AIRA confinement in 90.48 seconds.
+K32 versus K64 passed: selected-cell activity RMS difference was `0.003491`, anatomical-opponent
+RMS difference was `2.881e-6`, and terminal-motor RMS difference was `0.000341`, each below its
+registered `0.005` limit. Inputs and common endpoints were exact, every state/output remained
+finite, and the original source was restored exactly.
+
+The exact duplicate K32 replay nevertheless differed by up to `1.252e-6`; CUDA `index_add`
+atomics were not running in deterministic mode. The preregistration required bit equality, so
+this is a numerical/control stop. The full report's broad
+`frozen_optic_motion_module_uncommissioned` label must not be read as a scientific qualification
+decision. It authorizes neither output routing nor local motion training. No candidate exists and
+no hover or gate evaluation was opened.
+
+For completeness, the already-fixed descriptive measurements were weak: the stationary/moving
+opponent RMS ratio was `6.120`, all integrated vertical sign strata missed `0.9`, and active-cell
+median DSI ranged from `-0.112` to `0.122`, below `0.3`. Reversal reached `0.90625`. The pair-mean
+T4/T5 intervention strongly attenuated many immediate visual targets but left `0.8789` of the
+native throttle contrast. These exposed values cannot rescue the failed control or be used to
+change the bank, anatomy, signs or thresholds. The full report SHA-256 is
+`fc4d503b0e91dae11f35f4602a4fc7a47eb1b000c4424694340ff740a180b6d3`; the compact record is in
+[`artifacts/frozen-optic-motion-audit-v1/`](../artifacts/frozen-optic-motion-audit-v1/).
+
+RK4-M2 and RK4-M4 also failed the registered selected-cell agreement limit (`0.02080` RMS versus
+K64 for both), even though their terminal motor differences stayed below `0.0032`. Keep K32 for
+the corrected brain-level replay; do not select a faster solver from native motor agreement.
+
+### Preregistered deterministic optic-motion confirmation `-002`
+
+Run exactly one corrected confirmation because PyTorch's deterministic CUDA implementation
+supports `index_add`, the nondeterministic operation implicated by `-001`. This is not a fresh
+blind validation: the `-001` response values have been exposed. It may only restore the original
+permission to preregister a separate local commissioning experiment if the unchanged frozen
+module fails validly. It cannot authorize training execution, candidate retention, hover, gate
+flight or promotion.
+
+Lock the `-001` report SHA-256 at
+`fc4d503b0e91dae11f35f4602a4fc7a47eb1b000c4424694340ff740a180b6d3`, its rendered stimulus
+SHA-256 at `b48c639212fb4664eb12bc4db52e9535d3288a1aafbc657d081008510f2d9325`, and the v1 audit
+implementation SHA-256 at
+`b835020bcff7b3cfc20603a745c081ff805208f60c0b5a032a7c34194e1d299d`. Retain every original
+graph/checkpoint/annotation/tau-report hash, body cohort, input, stimulus, anatomical readout,
+sign convention, threshold and causal intervention unchanged. Freeze block size at eight and
+the runtime to PyTorch `2.12.0.dev20260408+cu128`, CUDA `12.8`, cuDNN `92000`, RTX 5080 and driver
+`616.56` under the existing WSL2 environment.
+
+Before CUDA initialization, set `CUBLAS_WORKSPACE_CONFIG=:4096:8`, enable
+`torch.use_deterministic_algorithms(True, warn_only=False)`, disable cuDNN benchmarking, require
+deterministic cuDNN, and disable TF32 for cuDNN and CUDA matmul. Run the fixed eight-pair K32
+subset in three separate fresh processes. Move every response tensor to CPU and hash the complete
+nested tensor tree with the repository's semantic SHA-256 routine. Require all three hashes,
+source hashes, rendered hashes and compact evaluation metadata to be bit-identical. Any warning,
+unsupported operation or mismatch stops before the full bank and authorizes nothing.
+
+If the three-process replay passes, evaluate the same subset once more in the main fresh process
+and require its tensor-tree hash to match. Recheck the original K32-versus-K64 three-limit gate,
+then run the unchanged primary, reverse and pair-mean conditions once. Apply the original decision
+rules exactly; do not use `-001` to change or select anything. A valid frozen-module failure may
+authorize only drafting a separately preregistered, type-shared local T4/T5 commissioning run.
+Any later learning must use genuinely untouched evaluation stimuli.

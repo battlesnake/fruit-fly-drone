@@ -1,0 +1,52 @@
+{
+  "experiment": "frozen-t4t5-optic-motion-audit-v1",
+  "protocol_commit": "753a7cd",
+  "implementation_commit": "dec53bc",
+  "full_report_sha256": "fc4d503b0e91dae11f35f4602a4fc7a47eb1b000c4424694340ff740a180b6d3",
+  "classification_in_full_report": "frozen_optic_motion_module_uncommissioned",
+  "procedural_interpretation": "duplicate_control_failed",
+  "passed": false,
+  "source_restored": true,
+  "execution_controls_pass": true,
+  "numerical_K32_vs_K64": {
+    "pass": true,
+    "selected_activity_rms_difference": 0.003490978619083762,
+    "opponent_rms_difference": 0.0000028806564387195976,
+    "terminal_motor_rms_difference": 0.0003407081530895084
+  },
+  "rk4_selected_activity_rms_difference_vs_K64": {
+    "M2": 0.020795587450265884,
+    "M4": 0.020803840830922127
+  },
+  "duplicate_control": {
+    "pass": false,
+    "maximum_absolute_difference": 0.0000012516975402832031
+  },
+  "descriptive_only_after_control_failure": {
+    "moving_opponent_rms": 0.00021013733930885792,
+    "stationary_opponent_rms": 0.0012860741699114442,
+    "stationary_to_moving_ratio": 6.12016014926878,
+    "reverse_sign_inversion_fraction": 0.90625,
+    "integrated_vertical_sign_fractions": {
+      "T4_ON_upward": 0.8125,
+      "T4_ON_downward": 0.125,
+      "T5_OFF_upward": 0.0625,
+      "T5_OFF_downward": 0.875
+    },
+    "median_dsi_active": {
+      "T4c": -0.053409360349178314,
+      "T4d": 0.04637530818581581,
+      "T5c": 0.12215985357761383,
+      "T5d": -0.112099789083004
+    },
+    "pair_mean_intervention": {
+      "activity_preservation_maximum_absolute_error": 1.1920928955078125e-7,
+      "throttle_contrast_residual_ratio": 0.878925458830813
+    }
+  },
+  "motion_output_routing_preregistration_authorized": false,
+  "local_motion_commissioning_preregistration_authorized": false,
+  "candidate_retained": false,
+  "hover_or_gate_flight_authorized": false,
+  "promotion_authorized": false
+}
