@@ -13,4 +13,4 @@ cd "$repo_root"
 exec aira confine --memory-reserve 4G --memory-max 28G -- \
   .venv/bin/python \
   scripts/audit_variable_height_rk4_premotor_tau.py \
-  --output-dir runs/variable-height-hover/native-rk4-premotor-tau-preflight-001 "$@"
+  --output-dir runs/variable-height-hover/native-rk4-premotor-tau-preflight-002 "$@"

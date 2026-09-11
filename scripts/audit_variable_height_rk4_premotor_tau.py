@@ -33,8 +33,17 @@ from flydrone.connectome_data import (  # noqa: E402
 )
 from flydrone.hover import ConnectomeController, HoverConfig  # noqa: E402
 
-EXPERIMENT = "variable-height-rk4-premotor-tau-preflight-v1"
-PROTOCOL_COMMIT = "393bbfb"
+EXPERIMENT = "variable-height-rk4-premotor-tau-preflight-v2"
+PROTOCOL_COMMIT = "c318a1f"
+EXPECTED_FAILED_REPORT_SHA256 = (
+    "a2b29f4879313f1763f8f10dbbb524fad3c34d05ea5042debbc799b85c5a637f"
+)
+EXPECTED_DIRECTION_FILE_SHA256 = (
+    "ee2fa3b6b6944addef112544a7ffa7453b4bb8e5ab7ff98b2f3ab21997b5f085"
+)
+EXPECTED_DIRECTION_SEMANTIC_SHA256 = (
+    "ad34ae1a8e7bd1a295b23d3bab494b9c16714821e5558907492b3da1a19b063e"
+)
 EXPECTED_CAPACITY_REPORT_SHA256 = (
     "7f0dbd25aff387a67ec992e2ea7468c7c9c7b74e7d569914565f99665501b09c"
 )
@@ -97,6 +106,18 @@ def parse_args() -> argparse.Namespace:
         / "runs/variable-height-hover/native-rk4-readout-capacity-001/report.json",
     )
     parser.add_argument(
+        "--failed-report",
+        type=Path,
+        default=REPO_ROOT
+        / "runs/variable-height-hover/native-rk4-premotor-tau-preflight-001/report.json",
+    )
+    parser.add_argument(
+        "--direction-archive",
+        type=Path,
+        default=REPO_ROOT
+        / "runs/variable-height-hover/native-rk4-premotor-tau-preflight-001/direction.pt",
+    )
+    parser.add_argument(
         "--cache-manifests",
         type=Path,
         default=REPO_ROOT
@@ -129,7 +150,7 @@ def parse_args() -> argparse.Namespace:
         "--output-dir",
         type=Path,
         default=REPO_ROOT
-        / "runs/variable-height-hover/native-rk4-premotor-tau-preflight-001",
+        / "runs/variable-height-hover/native-rk4-premotor-tau-preflight-002",
     )
     parser.add_argument("--device", default="cuda")
     return parser.parse_args()
@@ -139,6 +160,14 @@ def protocol_manifest() -> dict[str, Any]:
     return {
         "experiment": EXPERIMENT,
         "protocol_commit": PROTOCOL_COMMIT,
+        "corrected_replay": {
+            "failed_report_sha256": EXPECTED_FAILED_REPORT_SHA256,
+            "direction_file_sha256": EXPECTED_DIRECTION_FILE_SHA256,
+            "direction_semantic_sha256": EXPECTED_DIRECTION_SEMANTIC_SHA256,
+            "only_scientific_path_fix": (
+                "derive maximum motor magnitude from combined terminal outputs"
+            ),
+        },
         "locked_reports": {
             "readout_capacity": EXPECTED_CAPACITY_REPORT_SHA256,
             "older_upstream_preflight": EXPECTED_UPSTREAM_PREFLIGHT_SHA256,
@@ -208,6 +237,8 @@ def validate_inputs(
         args.graph: assisted.EXPECTED_GRAPH_SHA256,
         args.checkpoint: assisted.EXPECTED_CHECKPOINT_SHA256,
         args.capacity_report: EXPECTED_CAPACITY_REPORT_SHA256,
+        args.failed_report: EXPECTED_FAILED_REPORT_SHA256,
+        args.direction_archive: EXPECTED_DIRECTION_FILE_SHA256,
         args.cache_manifests: EXPECTED_CACHE_MANIFESTS_SHA256,
         args.source_references: EXPECTED_SOURCE_REFERENCES_SHA256,
         args.upstream_preflight_report: EXPECTED_UPSTREAM_PREFLIGHT_SHA256,
@@ -227,6 +258,21 @@ def validate_inputs(
         or capacity_report.get("development") is not None
     ):
         raise SystemExit("capacity report is not the registered last-hop boundary stop")
+    with args.failed_report.open() as stream:
+        failed_report = json.load(stream)
+    if (
+        failed_report.get("classification") != "premotor_tau_exception_failed_closed"
+        or failed_report.get("passed")
+        or failed_report.get("exception", {}).get("type") != "KeyError"
+        or failed_report.get("exception", {}).get("message")
+        != "'maximum_motor_absolute'"
+        or failed_report.get("selected_scale") is not None
+        or failed_report.get("development") is not None
+        or not failed_report.get("source_state_restored")
+    ):
+        raise SystemExit("the locked premotor-tau failure is not the registered harness stop")
+    if (args.failed_report.parent / "development-started.json").exists():
+        raise SystemExit("the failed premotor-tau run unexpectedly opened development")
     with args.cache_manifests.open() as stream:
         manifests = json.load(stream)
     if [item["seed"] for item in manifests] != list(capacity.TRAINING_SEEDS):
@@ -386,7 +432,7 @@ def state_sha256(state: dict[str, Tensor]) -> str:
 
 
 def direction_path(args: argparse.Namespace) -> Path:
-    return args.output_dir / "direction.pt"
+    return args.direction_archive
 
 
 def _direction_payload_hash(payload: dict[str, Any]) -> str:
@@ -518,25 +564,14 @@ def load_or_create_direction(
     device: torch.device,
 ) -> dict[str, Any]:
     path = direction_path(args)
-    if path.is_file():
-        payload = torch.load(path, map_location="cpu", weights_only=True)
-    else:
-        print(json.dumps({"stage": "build_tau_direction"}), flush=True)
-        payload = build_direction_payload(
-            controller,
-            args,
-            manifests,
-            node_indices,
-            source_sha256=source_sha256,
-            device=device,
-        )
-        assisted._atomic_torch_save(payload, path)
-        payload = torch.load(path, map_location="cpu", weights_only=True)
+    if not path.is_file() or file_sha256(path) != EXPECTED_DIRECTION_FILE_SHA256:
+        raise SystemExit("the locked premotor-tau direction archive is missing or changed")
+    payload = torch.load(path, map_location="cpu", weights_only=True)
     if payload.get("semantic_sha256") != _direction_payload_hash(payload):
         raise SystemExit("premotor-tau direction archive semantic hash mismatch")
     if (
-        payload.get("experiment") != EXPERIMENT
-        or payload.get("protocol_commit") != PROTOCOL_COMMIT
+        payload.get("experiment") != "variable-height-rk4-premotor-tau-preflight-v1"
+        or payload.get("protocol_commit") != "393bbfb"
         or payload.get("source_state_sha256") != source_sha256
         or payload.get("node_indices_sha256") != EXPECTED_NODE_INDICES_SHA256
         or not torch.equal(
@@ -544,6 +579,8 @@ def load_or_create_direction(
         )
     ):
         raise SystemExit("premotor-tau direction archive protocol mismatch")
+    if payload.get("semantic_sha256") != EXPECTED_DIRECTION_SEMANTIC_SHA256:
+        raise SystemExit("premotor-tau direction archive differs from corrected preregistration")
     controls = payload.get("gradient_controls", {})
     required_controls = (
         controls.get("edge_and_bias_gradients_absent"),
@@ -656,6 +693,13 @@ def prefixes_from_direction(payload: dict[str, Any]) -> dict[int, Tensor]:
     return {int(seed): value for seed, value in payload["prefix_states"].items()}
 
 
+def maximum_motor_absolute(summary: dict[str, Any]) -> float:
+    outputs = torch.as_tensor(summary["terminal_motor_outputs"])
+    if outputs.numel() == 0 or not bool(torch.isfinite(outputs).all()):
+        return math.inf
+    return float(outputs.abs().max())
+
+
 def candidate_decision(
     *,
     fixed: dict[str, Any],
@@ -702,7 +746,7 @@ def candidate_decision(
             reasons.append(f"{label} metrics were nonfinite")
         if summary["endpoint_image_difference_max"] != 0.0:
             reasons.append(f"{label} paired endpoint images differed")
-        if summary["maximum_motor_absolute"] > 1.0:
+        if maximum_motor_absolute(summary) > 1.0:
             reasons.append(f"{label} motor output left [-1,1]")
     return {
         "pass": not reasons,
@@ -710,6 +754,8 @@ def candidate_decision(
         "fixed_nrmse_improvement": fixed_improvement,
         "full_nrmse_improvement": full_improvement,
         "all_block_preservation_pass": all(item["pass"] for item in preservation),
+        "fixed_maximum_motor_absolute": maximum_motor_absolute(fixed),
+        "full_maximum_motor_absolute": maximum_motor_absolute(full),
     }
 
 
@@ -1067,6 +1113,7 @@ def write_report(args: argparse.Namespace, report: dict[str, Any]) -> None:
 
 def execute_audit(
     controller: ConnectomeController,
+    outcome: dict[str, Any],
     args: argparse.Namespace,
     manifests: list[dict[str, Any]],
     references: dict[str, Any],
@@ -1084,6 +1131,7 @@ def execute_audit(
         source_sha256=source_sha,
         device=device,
     )
+    outcome["direction"] = direction
     prefixes = prefixes_from_direction(direction)
     source_fixed = direction["source_fixed_replays"][0]
     controller.load_state_dict(source_state, strict=True)
@@ -1098,8 +1146,9 @@ def execute_audit(
         node_indices,
         device=device,
     )
+    outcome["derivative"] = derivative
 
-    trials: list[dict[str, Any]] = []
+    trials: list[dict[str, Any]] = outcome["trials"]
     selected_scale: float | None = None
     selected_state: dict[str, Tensor] | None = None
     selected_trial: dict[str, Any] | None = None
@@ -1136,6 +1185,8 @@ def execute_audit(
                 selected_scale = scale
                 selected_state = candidate_state
                 selected_trial = trial
+                outcome["selected_scale"] = selected_scale
+                outcome["selected_state"] = selected_state
                 break
         if selected_state is None or selected_trial is None:
             classification = "premotor_tau_no_bounded_training_candidate"
@@ -1149,6 +1200,7 @@ def execute_audit(
                 selected_trial["full_blocks"],
                 device=device,
             )
+            outcome["solver_check"] = solver_check
             if not solver_check["source_all_blocks_pass"]:
                 classification = "premotor_tau_source_solver_requalification_failed"
             elif not solver_check["candidate_all_blocks_pass"]:
@@ -1162,22 +1214,26 @@ def execute_audit(
                     candidate_sha256=state_sha256(selected_state),
                     device=device,
                 )
+                outcome["development"] = development
                 if development["decision"]["pass"]:
                     classification = "bounded_premotor_tau_route_validated"
                     passed = True
                 else:
                     classification = "premotor_tau_development_gate_failed"
-    return {
-        "direction": direction,
-        "derivative": derivative,
-        "trials": trials,
-        "selected_scale": selected_scale,
-        "selected_state": selected_state,
-        "solver_check": solver_check,
-        "development": development,
-        "classification": classification,
-        "passed": passed,
-    }
+    outcome.update(
+        {
+            "direction": direction,
+            "derivative": derivative,
+            "trials": trials,
+            "selected_scale": selected_scale,
+            "selected_state": selected_state,
+            "solver_check": solver_check,
+            "development": development,
+            "classification": classification,
+            "passed": passed,
+        }
+    )
+    return outcome
 
 
 def main() -> int:
@@ -1224,6 +1280,7 @@ def main() -> int:
     try:
         outcome = execute_audit(
             controller,
+            outcome,
             args,
             manifests,
             references,

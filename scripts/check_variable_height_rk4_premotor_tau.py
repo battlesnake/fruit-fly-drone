@@ -21,7 +21,7 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         nargs="?",
         default=REPO_ROOT
-        / "runs/variable-height-hover/native-rk4-premotor-tau-preflight-001/report.json",
+        / "runs/variable-height-hover/native-rk4-premotor-tau-preflight-002/report.json",
     )
     return parser.parse_args()
 

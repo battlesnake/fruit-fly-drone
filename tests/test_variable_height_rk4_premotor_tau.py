@@ -17,7 +17,10 @@ import audit_variable_height_rk4_premotor_tau as audit  # noqa: E402
 def test_protocol_freezes_tau_mask_solver_and_held_out_order() -> None:
     protocol = audit.protocol_manifest()
 
-    assert protocol["protocol_commit"] == "393bbfb"
+    assert protocol["protocol_commit"] == "c318a1f"
+    assert protocol["corrected_replay"]["failed_report_sha256"] == (
+        audit.EXPECTED_FAILED_REPORT_SHA256
+    )
     assert protocol["mask"]["raw_time_constants_only"] is True
     assert protocol["mask"]["selected_nonmotor_nodes"] == 883
     assert protocol["physical_tau_direction"]["source_ratio_range"] == [0.8, 1.25]
@@ -73,6 +76,12 @@ def test_directional_agreement_uses_actual_raw_displacement() -> None:
 
     assert result["predicted_objective_change"] == pytest.approx(-0.05)
     assert result["pass"] is True
+
+
+def test_combined_motor_bound_is_derived_from_terminal_outputs() -> None:
+    assert audit.maximum_motor_absolute(
+        {"terminal_motor_outputs": [[[0.0, -0.25, 0.5, -0.75]]]}
+    ) == pytest.approx(0.75)
 
 
 def test_development_rejects_tiny_over_tolerance_horizon_regression() -> None:
