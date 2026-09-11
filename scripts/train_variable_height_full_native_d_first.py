@@ -37,6 +37,7 @@ DEVELOPMENT_INTERVAL = 10
 MANDATORY_GATE_UPDATE = 50
 MANDATORY_D_IMPROVEMENT_FRACTION = 0.25
 DEVELOPMENT_PRESERVATION_REQUIRED = False
+DEVELOPMENT_FAILURE_ROLLBACK_REQUIRED = False
 PERSIST_NUMERICAL_EXCEPTIONS_AS_STOPPED = False
 TRAIN_TERMINAL_D_NRMSE = 0.20
 DEVELOPMENT_TERMINAL_D_NRMSE = 0.30
@@ -157,6 +158,9 @@ def protocol_manifest() -> dict[str, Any]:
         "maximum_accepted_updates": MAXIMUM_ACCEPTED_UPDATES,
         "development_interval_accepted_updates": DEVELOPMENT_INTERVAL,
         "development_preservation_failure_is_terminal": (DEVELOPMENT_PRESERVATION_REQUIRED),
+        "development_preservation_failure_rolls_back_transaction": (
+            DEVELOPMENT_FAILURE_ROLLBACK_REQUIRED
+        ),
         "numerical_exceptions_persist_stopped_resume": (PERSIST_NUMERICAL_EXCEPTIONS_AS_STOPPED),
         "mandatory_update_50_gate": {
             "endpoint_damping_nrmse_improvement_fraction_both_banks": (
@@ -768,6 +772,7 @@ def save_resume(
     preflight: dict[str, Any],
     run_state: str = "active",
     qualification: dict[str, Any] | None = None,
+    development_rollback: dict[str, Any] | None = None,
 ) -> None:
     atomic_torch_save(
         {
@@ -782,6 +787,7 @@ def save_resume(
             "preflight": preflight,
             "run_state": run_state,
             "qualification": qualification,
+            "development_rollback": development_rollback,
         },
         path,
     )
@@ -865,8 +871,51 @@ def load_resume(
         {
             "run_state": str(payload.get("run_state", "active")),
             "qualification": payload.get("qualification"),
+            "development_rollback": payload.get("development_rollback"),
         },
     )
+
+
+def restore_development_transaction(
+    student: ConnectomeController,
+    optimizer: torch.optim.Optimizer,
+    history: list[dict[str, Any]],
+    rollback: dict[str, Any] | None,
+    *,
+    attempted_update: int,
+) -> tuple[int, dict[str, Any]]:
+    """Restore the pre-update controller, Adam state, metrics, and accepted count."""
+    if not isinstance(rollback, dict):
+        raise RuntimeError("pending development state lacks its rollback transaction")
+    accepted_before = rollback.get("accepted_updates_before")
+    history_length_before = rollback.get("history_length_before")
+    parameters = rollback.get("parameters")
+    optimizer_state = rollback.get("optimizer")
+    training_metrics = rollback.get("training_metrics")
+    if (
+        rollback.get("attempted_update") != attempted_update
+        or accepted_before != attempted_update - 1
+        or not isinstance(history_length_before, int)
+        or history_length_before < 0
+        or len(history) != history_length_before + 1
+        or not isinstance(parameters, dict)
+        or set(parameters) != set(joint.PARAMETER_FAMILIES)
+        or not isinstance(optimizer_state, dict)
+        or not isinstance(training_metrics, dict)
+    ):
+        raise RuntimeError("pending development rollback transaction is inconsistent")
+    entry = history[-1]
+    if int(entry.get("update", -1)) != attempted_update or not entry.get("accepted", False):
+        raise RuntimeError("pending development history does not match its rollback transaction")
+
+    joint._load_parameters(student, parameters)
+    optimizer.load_state_dict(optimizer_state)
+    optimizer.zero_grad(set_to_none=True)
+    entry["accepted"] = False
+    entry["accepted_before_development"] = True
+    entry["rolled_back_after_development_preservation_failure"] = True
+    entry["stop_reason"] = "scheduled development preservation failed"
+    return int(accepted_before), copy.deepcopy(training_metrics)
 
 
 def _aggregate_nrmse(metrics: list[dict[str, Any]], path: tuple[str, ...]) -> float:
@@ -1139,7 +1188,11 @@ def main() -> int:
     history: list[dict[str, Any]] = []
     development_history: list[dict[str, Any]] = []
     resumed_preflight = None
-    resume_metadata: dict[str, Any] = {"run_state": "active", "qualification": None}
+    resume_metadata: dict[str, Any] = {
+        "run_state": "active",
+        "qualification": None,
+        "development_rollback": None,
+    }
     if resumed:
         (
             accepted_updates,
@@ -1153,6 +1206,7 @@ def main() -> int:
             optimizer,
             source_checkpoint_sha256=checkpoint_sha256,
         )
+    development_rollback = resume_metadata.get("development_rollback")
     current_training, _ = endpoint.evaluate(
         student,
         train_factorial,
@@ -1256,6 +1310,8 @@ def main() -> int:
     terminal_checkpoint = None
 
     def run_scheduled_development() -> tuple[str | None, Path | None]:
+        nonlocal accepted_updates, current_training, development_rollback
+        attempted_update = accepted_updates
         development_metrics, _ = endpoint.evaluate(
             student,
             development_factorial,
@@ -1281,15 +1337,53 @@ def main() -> int:
             source_development,
             development_metrics,
         )
-        development_history.append(
-            {
-                "update": accepted_updates,
-                "metrics": development_metrics,
-                "preservation": preservation,
-                "mandatory_update_50_gate": mandatory,
-                "terminal": terminal,
-            }
-        )
+        development_entry = {
+            "update": attempted_update,
+            "metrics": development_metrics,
+            "preservation": preservation,
+            "mandatory_update_50_gate": mandatory,
+            "terminal": terminal,
+        }
+        development_history.append(development_entry)
+        outcome = development_outcome_stop_reason(preservation, mandatory, terminal)
+        if DEVELOPMENT_FAILURE_ROLLBACK_REQUIRED and not preservation["pass"]:
+            accepted_updates, current_training = restore_development_transaction(
+                student,
+                optimizer,
+                history,
+                development_rollback,
+                attempted_update=attempted_update,
+            )
+            development_entry["rolled_back"] = True
+            development_entry["accepted_updates_after_rollback"] = accepted_updates
+            development_rollback = None
+            save_resume(
+                resume_path,
+                student,
+                optimizer,
+                source_checkpoint_sha256=checkpoint_sha256,
+                accepted_updates=accepted_updates,
+                history=history,
+                development_history=development_history,
+                preflight=preflight,
+                run_state="stopped",
+            )
+            print(
+                json.dumps(
+                    {
+                        "progress": "development",
+                        "update": attempted_update,
+                        "accepted_updates_after_rollback": accepted_updates,
+                        "endpoint_damping_nrmse": development_metrics["endpoint_damping_nrmse"],
+                        "preservation_pass": False,
+                        "mandatory_gate_pass": mandatory["pass"] if mandatory else None,
+                        "terminal_pass": terminal["pass"],
+                        "rolled_back": True,
+                    }
+                ),
+                flush=True,
+            )
+            return "scheduled development preservation failed", None
         checkpoint = None
         if terminal["pass"]:
             checkpoint = args.output_dir / "nonpromotional-terminal.pt"
@@ -1304,7 +1398,7 @@ def main() -> int:
                 },
                 checkpoint,
             )
-        outcome = development_outcome_stop_reason(preservation, mandatory, terminal)
+        development_rollback = None
         save_resume(
             resume_path,
             student,
@@ -1378,6 +1472,7 @@ def main() -> int:
         update_number = accepted_updates + 1
         base = joint._copy_parameters(student)
         optimizer_before = copy.deepcopy(optimizer.state_dict())
+        training_before = copy.deepcopy(current_training)
         try:
             displacement, raw_gradients, projection = make_projected_proposal(
                 student,
@@ -1522,6 +1617,14 @@ def main() -> int:
                 preflight=preflight,
             )
             continue
+        development_rollback = {
+            "attempted_update": accepted_updates,
+            "accepted_updates_before": accepted_updates - 1,
+            "parameters": base,
+            "optimizer": optimizer_before,
+            "training_metrics": training_before,
+            "history_length_before": len(history) - 1,
+        }
         save_resume(
             resume_path,
             student,
@@ -1532,6 +1635,7 @@ def main() -> int:
             development_history=development_history,
             preflight=preflight,
             run_state="development_pending",
+            development_rollback=development_rollback,
         )
         stop_reason, terminal_checkpoint = run_scheduled_development()
         if stop_reason is not None:
