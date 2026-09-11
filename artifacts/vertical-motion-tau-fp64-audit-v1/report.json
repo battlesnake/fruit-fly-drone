@@ -1,0 +1,91 @@
+{
+  "artifact_kind": "compact_terminal_summary",
+  "candidate_retained": false,
+  "classification": "vertical_motion_tau_fp64_audit_passed",
+  "cross_precision": {
+    "pass": true,
+    "probes": {
+      "T4c_tau": {
+        "fp32_analytic_gradient": 0.020206790417432785,
+        "fp64_analytic_gradient": 0.020204647137487004,
+        "symmetric_relative_error": 0.00010606731210179597
+      },
+      "T5c_tau": {
+        "fp32_analytic_gradient": -0.12225273251533508,
+        "fp64_analytic_gradient": -0.12225448396717799,
+        "symmetric_relative_error": 0.000014326278972105528
+      }
+    }
+  },
+  "cuda_peak_reserved_gibibytes": 9.4375,
+  "cuda_peak_reserved_memory_pass": true,
+  "development_or_acceptance_pixels_rendered": false,
+  "fixed_state_one_step": {
+    "pass": true,
+    "probes": {
+      "T4c_tau": {
+        "autograd_derivative": 0.014146491091028638,
+        "explicit_derivative": 0.014146491091028642,
+        "node_index": 5617,
+        "symmetric_relative_error": 2.4525141461785195e-16
+      },
+      "T5c_tau": {
+        "autograd_derivative": 0.014118348585047253,
+        "explicit_derivative": 0.014118348585047256,
+        "node_index": 14916,
+        "symmetric_relative_error": 2.457402812413986e-16
+      }
+    }
+  },
+  "fp32_reproduction_pass": true,
+  "fp64_identity": {
+    "maximum_absolute_difference": 0.0,
+    "pass": true,
+    "response_semantic_sha256": "e601c9f60f9a74f29b42812ee7260ee37173d56fff88257e9e066814b68e046b"
+  },
+  "fp64_loss_resolution_floor": 8.881784197001252e-16,
+  "fp64_tau_ladder": {
+    "pass": true,
+    "probes": {
+      "T4c_tau": {
+        "analytic_gradient": 0.020204647137487004,
+        "rows": [
+          {"central_finite_difference": 0.020204842931977034, "step": 0.008, "symmetric_relative_error": 0.00000969047325385997},
+          {"central_finite_difference": 0.020204827756734028, "step": 0.004, "symmetric_relative_error": 0.000008939410382447736},
+          {"central_finite_difference": 0.020204748145374856, "step": 0.002, "symmetric_relative_error": 0.000004999215388664303},
+          {"central_finite_difference": 0.020204693104542974, "step": 0.001, "symmetric_relative_error": 0.0000022750682592792915}
+        ]
+      },
+      "T5c_tau": {
+        "analytic_gradient": -0.12225448396717799,
+        "rows": [
+          {"central_finite_difference": -0.12225509297331116, "step": 0.008, "symmetric_relative_error": 0.000004981437732895811},
+          {"central_finite_difference": -0.12225458443439186, "step": 0.004, "symmetric_relative_error": 8.217868829418844e-07},
+          {"central_finite_difference": -0.12225449037794867, "step": 0.002, "symmetric_relative_error": 5.2437915845719304e-08},
+          {"central_finite_difference": -0.1222544815546245, "step": 0.001, "symmetric_relative_error": 1.9733865065955636e-08}
+        ]
+      }
+    }
+  },
+  "frozen_source_normalizations_semantic_sha256": "796cf8f0488edff30dd34bf556268b4faac6ad5564244a1ce9b13cfcb131e475",
+  "full_report_file_sha256": "e460f079f5a3225d2eb582d57f9c742a588c009ce35c7ff23885a0d61cabe9fc",
+  "full_report_path": "runs/optic-motion/vertical-motion-tau-fp64-001/report.json",
+  "full_start_file_sha256": "1f15e358bf1e6591104d2b0ddf5c81ec6d8dc6a8dc69ee6173efb31a76546c47",
+  "full_start_path": "runs/optic-motion/vertical-motion-tau-fp64-001/start.json",
+  "hover_or_gate_flight_authorized": false,
+  "implementation_commit": "f3a62022bb54a43d22e0a037e99ccd0da72f5685",
+  "one_update": {
+    "accepted_multiplier": 1.0,
+    "baseline_loss": 0.996317982673645,
+    "improvement_fraction": 0.1819154408241194,
+    "loss": 0.8150723576545715,
+    "minimum_improvement_fraction": 0.001,
+    "pass": true
+  },
+  "passed": true,
+  "reference_promotion_roundtrip_maximum_absolute_difference": 0.0,
+  "rendered_training_identity_subset_float32_sha256": "c04bb10318cd3b0620c9a71abf7a7420afe166a0eff2cf1d1d154d9a41440576",
+  "source_and_local_identity_restored": true,
+  "training_execution_authorized": true,
+  "wall_time_seconds": 1070.3352052759874
+}

@@ -3481,6 +3481,19 @@ The independent FP64 controller SHA-256 is
 `06fb39e45fc5e0cbe3d5baa652326df5762e784d5561084d55b1450ce222d5c0`. Commit these files
 before the one-shot FP64 audit.
 
+The one-shot FP64 audit ran under implementation commit `f3a6202` and passed every gate. Exact
+FP64 source/candidate identity held. The FP32 versus FP64 analytic relative errors were 0.0106%
+for T4c tau and 0.00143% for T5c tau. Both FP64 probes passed at all four scales; their worst
+finite-difference relative errors were 0.000969% and 0.000498%, respectively. The fixed-state
+closed-form checks agreed to about `2.46e-16`. The conditional production FP32 Adam step accepted
+multiplier 1.0 and reduced fixed-minibatch loss from `0.996318` to `0.815072` (18.19%). Source and
+local identity were restored, no candidate was retained, development/acceptance remained
+unopened, and peak CUDA reserved memory was 9.4375 GiB. The full report SHA-256 is
+`e460f079f5a3225d2eb582d57f9c742a588c009ce35c7ff23885a0d61cabe9fc`; see
+[`artifacts/vertical-motion-tau-fp64-audit-v1/`](../artifacts/vertical-motion-tau-fp64-audit-v1/).
+This authorizes the separately bounded 100-update commissioning run in production FP32, but not
+hover, gate flight or promotion.
+
 For each pathway and integrated/terminal window, let `O_up` and `O_down` be the
 stationary-subtracted c-d anatomical opponents, then define `D=(O_up-O_down)/2` and
 `B=(O_up+O_down)/2`. Freeze each normalization from the source training response with an absolute
