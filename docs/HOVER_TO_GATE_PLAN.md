@@ -2500,3 +2500,51 @@ branch, the next numerical step is a separately preregistered finer reference or
 solver, not selecting K=16 because its behavior or cost looks convenient. The full report
 SHA-256 is `ded09b91a114d08039d5334a937e36812b69ba55183634ae4bd21ed9864baff7`;
 see [`artifacts/variable-height-neural-integration-rate-audit-v1/`](../artifacts/variable-height-neural-integration-rate-audit-v1/).
+
+### Preregistered continuous-CNS solver extension
+
+Complete the numerical-fidelity branch without treating the increasingly wrong-signed
+behavior as a selection signal. Hash-lock the terminal neural-rate report at
+`ded09b91a114d08039d5334a937e36812b69ba55183634ae4bd21ed9864baff7`, its original
+motion report/resume inputs, and the immutable RGB cache at physical SHA-256
+`68ea98cc60a8969eb38c1bc62db698bb232ddb6ddaebac426a850ee31596ecb8` and semantic SHA-256
+`43a576a2abc01283a7b5a72560e3c9ff921bfaaf3e5a481ac6715019843f7d0e`. Reuse the cached
+24 cases, order, roll/pitch observations, targets and frozen `0.043661270290613174` scale.
+Do not render, generate, reorder or optimize anything, and load the original
+`paired-dynamic-001` source afresh for every condition.
+
+First extend the exponential-Euler reference used by the completed audit. Evaluate K=32 and
+compare its 24 throttle contrasts and 48 four-axis terminal outputs to the hash-locked K=16
+result. Apply the same two limits: contrast RMS difference divided by the frozen teacher
+scale at most `0.01`, terminal-motor RMS difference at most `0.005`, with finite state and
+outputs, exact cached endpoints and exact source restoration. If K=16→32 passes, define K=32
+as the fine reference and K=16 as an adequate exponential-Euler candidate. If it fails,
+evaluate K=64 and apply the same test to K=32→64. A pass defines K=64 as the fine reference
+and K=32 as the adequate candidate. If that also fails, stop with no reference or solver;
+do not relax thresholds or inspect behavior to continue.
+
+The continuous state equation represented by the substep limit is
+`ds/dt = (5*tanh((R(tanh(s)) + b + u)/5) - s)/tau`, where `R`, `b`, `u` and `tau` are the
+unchanged signed connectome recurrence, bias, cached sensory drive and native time constants.
+Using the established fine exponential-Euler condition as the only reference, evaluate
+classical fourth-order Runge-Kutta with one, two and four equal integration steps per 20 ms
+camera frame (`RK4-M=1,2,4`, requiring 4, 8 and 16 recurrent graph evaluations). Hold the
+sensory drive fixed within a camera frame; RK stage values are numerical intermediates, not
+actor memory or inputs. Emit the native motor-pool readout only from the final state.
+
+Compare every RK4 candidate directly with the fine reference using the same normalized-
+contrast and raw terminal-motor limits, finiteness, endpoint and source-identity requirements.
+Report all metrics required by the original audit for every newly evaluated condition,
+including per-horizon results, all-axis ranges/RMS, pair-common throttle, wall time and both
+solver steps and recurrent graph evaluations. Select the passing candidate with the fewest
+graph evaluations per camera frame from the adequate coarse exponential-Euler condition and
+the three RK4 candidates. On an evaluation-count tie, retain exponential Euler because it is
+the already implemented update. Behavior scores, damping sign and runtime cannot select the
+solver.
+
+A selected solver establishes only a numerically adequate and computationally declared way
+to evolve the unchanged native recurrent state at a 50 Hz sensor/action boundary. It may be
+used by a separately preregistered temporal-credit/time-constant training experiment. It
+does not authorize that training to execute, and it cannot authorize hover, gate flight or
+promotion. A stronger wrong-signed converged response is diagnostically useful but is not a
+failure of the numerical audit and must not be tuned away here.
