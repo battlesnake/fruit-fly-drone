@@ -2925,8 +2925,9 @@ by bisection on a scalar multiplier and componentwise clipping until its selecte
 1 ms and no cell changes by more than 2 ms. Candidate scales multiply that same unit direction,
 so the 4 ms RMS candidate has an 8 ms per-cell maximum and every smaller candidate has the
 proportional cap. Materialize each candidate by changing physical tau, requiring it to remain
-strictly inside the controller's native 10–250 ms interval, and performing one float32 inverse-
-logit conversion. Report requested and actual RMS, maximum per-cell tau change, tau endpoints
+within `[0.8,1.25]` times that cell's source tau as well as strictly inside the controller's
+native 10–250 ms interval, and performing one float32 inverse-logit conversion. Report
+requested and actual RMS, maximum per-cell tau change, ratio-bound activations, tau endpoints
 and raw-parameter displacement. No Adam moments, edge/bias update, source-distance repair or
 output-Jacobian projection is used in this restored one-step preflight.
 
@@ -2951,11 +2952,13 @@ endpoints, finite recurrence/outputs/metrics, motor outputs in `[-1,1]`, physica
 inside 10–250 ms, exact non-tau parameters, and exact unselected time constants. Do not try an
 unregistered scale or combine candidates.
 
-Before development, compare that one training-selected candidate's RK4-M1 outputs with K=32
-exponential Euler on all four fixed training blocks. Require normalized throttle-contrast RMS
-difference at most `0.01`, raw terminal-motor RMS difference at most `0.005`, and all existing
-identity, endpoint and finiteness controls. This requalifies the solver after changing tau;
-the source-only RK4 result cannot be assumed to transfer to a temporally modified controller.
+Before development, compare both the unchanged source and that one training-selected
+candidate's RK4-M1 outputs with K=32 exponential Euler on all four fixed training blocks.
+Require normalized throttle-contrast RMS difference at most `0.01`, raw terminal-motor RMS
+difference at most `0.005`, and all existing identity, endpoint and finiteness controls in
+every block. This extends the original one-block source control and requalifies the solver
+after changing tau; the source-only RK4 result cannot be assumed to transfer to a temporally
+modified controller.
 
 Only a candidate passing that fine-solver check may open the still-unrendered held-out-style
 development blocks at seeds `460991` and `460992`. Evaluate that one candidate once against
