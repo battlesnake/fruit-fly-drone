@@ -3868,6 +3868,16 @@ repeat, terminate with no selected size and no authorization; do not fall back t
 smaller size. Any shared input-hash, source, optimizer or final-restoration failure invalidates the
 entire preflight even if one or more individual sizes otherwise passed.
 
+A CUDA out-of-memory exception attributable to one tested size is a failure of that size, not a
+shared equivalence failure. Record it explicitly and continue the fixed ladder only after the
+outer evaluation transaction has restored and re-verified the archived parameters, Adam state
+and counters, and frozen source; clear the CUDA cache and require a successful synchronization
+before the next size. If restoration, source verification, cache recovery or synchronization
+fails, invalidate the entire preflight. An out-of-memory size cannot be selected, but a smaller
+passing size remains eligible for the required repeat. The repeat rule remains fail closed: an
+out-of-memory or other failure while repeating the largest otherwise-passing size produces no
+selection and does not fall back to another size.
+
 A terminal pass authorizes only freezing the selected grouped execution path in a separately
 preregistered common-descent trainer. It is not new evidence for motion coding and does not
 authorize altering loss/anatomy, opening held-out data, retaining a module, routing motion,
