@@ -3732,3 +3732,54 @@ however, a specific frozen witness worth testing causally. The next admissible a
 separately preregistered finite-step audit along that exact vector. This result does not authorize
 rewriting the loss, expanding anatomy, resuming the closed trainer, opening held-out data, routing
 motion outputs, hover, gate flight or promotion.
+
+### Frozen-witness finite-step audit protocol
+
+Before changing the objective, optimizer or anatomy, run one disposable training-only causal
+audit of the exact unit vector recorded by the proposal-25 gradient-attribution result. Lock the
+complete attribution report at
+`451d71b7752b4b6f25b210b8ae6b2c790cb507c3b50ac56fbf436327cb6ebe3a`, its started marker at
+`fd2a173c5050167152efa2787287d0d6c9c3c03b5df8e6a04e565fde7de3764a`, and the tracked compact
+report at `bb8fd60da7006b7e8b5b11c231e04f44337bc958b72e9c9b9b4a769322ebc609`. Also recheck every
+archive, manifest, trainer and source-cache hash locked by that report. Load the exact archived
+proposal-25 parameters and untouched Adam state. Reproduce its loss and four strata to absolute
+tolerance `1e-6`; require proposal 25, 25 accepted and zero rejected updates, Adam step 25 in all
+three groups, the original mandatory-gate failure, no retained controller and no development or
+acceptance access. Write an exclusive started marker before neural evaluation and fail closed
+after an interrupted start.
+
+Read the 24 values only from `gradient_attribution.common_descent.unit_direction` in the locked
+tracked report, in its registered `gain`, `bias_offset`, `tau_ratio` order. Require exact equality
+with the complete report. Do not rerun SLSQP, optimize a replacement direction, flip its sign or
+select coordinates. Independently require finite values, unit norm within `1e-8`, tangent
+feasibility at every active parameter bound, and normalized directional derivatives no greater
+than `-0.09` for the full objective and each of `ON_down`, `ON_up`, `OFF_down` and `OFF_up`. A
+mismatch is a control failure, not a negative scientific result.
+
+Use raw Euclidean reference displacement length `0.03152330128027931`, equal to the recorded
+full-size whole-bank Adam displacement norm. Evaluate fixed multipliers `1`, `0.5`, `0.25` and
+`0.125` in that order, and evaluate all four even after a pass. Each trial starts from the same
+archived proposal-25 parameters, adds `reference_length * multiplier * unit_direction`, and is
+materialized through the original parameter bounds. Report the intended and actual vectors and
+norms, projection difference, active bounds and signed derivatives of the archived full and four
+stratum gradients along the actual displacement. Require all five actual-displacement derivatives
+to be strictly negative. The optimizer must not be stepped or modified; its semantic hash and all
+Adam counters must remain exactly unchanged at 25. Restore parameters and optimizer after every
+trial.
+
+Evaluate each materialized trial on the complete unchanged 24-batch, 96-pair training bank with
+the archived batch-specific source normalizations. Apply the unchanged discriminator relative to
+proposal 25: finite values, total loss reduction of at least 0.1%, maximum stratum loss reduction
+of at least 1%, and no individual stratum increase above `1e-4` absolute. Select only the first
+passing multiplier in fixed order for reporting, never a retrospective best. Do not render, load
+or inspect development or acceptance stimuli. Restore the source, archived parameters and
+optimizer exactly at exit, retain no candidate, and independently check the terminal report.
+
+If a trial passes, classify the audit as `frozen_witness_finite_step_supported`; that authorizes
+only separately preregistering common-descent or constrained training within the same 24
+parameters. If all trials fail despite valid controls, classify it as
+`frozen_witness_finite_step_no_useful_leverage`; this bounds the local witness at the tested
+lengths but does not prove anatomical impossibility. A control failure has no scientific
+interpretation. No outcome authorizes resuming the closed Adam trainer, changing the objective,
+opening held-out data, retaining a module, motion-to-DN/VNC routing, hover, gate flight or
+promotion.
