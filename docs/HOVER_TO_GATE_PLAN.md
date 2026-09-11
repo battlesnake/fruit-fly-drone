@@ -2006,3 +2006,50 @@ No midpoint or final data were generated, no assisted-hover claim was tested, an
 attitude reintegration, full-native hover, gate flight or promotion was authorized. The full
 report SHA-256 is `ca1562b8764174ac804185104eeb365fa2826241c7f292430d0a81700c177a34`;
 see [`artifacts/variable-height-native-throttle-assisted-v1/`](../artifacts/variable-height-native-throttle-assisted-v1/).
+
+### Preregistered accepted-18 optimizer attribution audit
+
+Run one restored, training-only audit to determine whether Adam's first-moment inertia caused
+the finite non-descent stop. Hash-lock the stopped report and resume above, accepted-18
+controller hash `05cb3e44f66c8f19e6cc147c617a6496e8023edd9c97f07be99e0bd1859a46f8`,
+optimizer hash `5b9df11d8396df8808af3fab1b916fa9d1b0a1b88031df2439e917152b52da0e`,
+block-one teacher-history hash
+`69993c6de95bfc150b4f2277a53c93da7aa2b6a94c9932d9f76c2893af3d1f62`, and
+motion-bank hash `089bbb8cc72980ca6321f9919227cad5bda1a746041e64426a29455090be6fbd`.
+Use only the exact failed attempt-20 sample, whose persisted sample-spec hash is
+`0042747f8c2430f4024b69c0234aec4eb601c9b2524f90e144bfe6baefa7b175`.
+Do not generate or inspect midpoint, final or other fresh data.
+
+Reload accepted update 18 and its exact Adam state, reconstruct the same zero-state prefixes
+and detached burn-ins, and generate the sampled objective gradient once. First reproduce the
+reported finite current fixed-burn objective, full-prefix objective and original-Adam
+materialized direction within `2e-5` absolute error. Compare that original transaction with
+one counterfactual Adam transaction using `betas=(0, 0.999)`: retain the accepted-18 step
+counters and second moments, while the next β1=0 update replaces rather than accumulates the
+first moment. For each direction, report total and per-parameter-family `grad(J) dot
+displacement` both before native bounds/canonicalization and after authoritative scale-one
+materialization. This separates first-moment inertia from clipping and boundary effects.
+
+For the β1=0 direction only, run the unchanged scale-1/16 fixed-burn finite difference and
+require a negative measured and autograd direction, at least `1e-8` absolute measured change,
+at most 20% relative error, finite recurrent states/outputs, native bounds and canonical
+idempotence. Then test the unchanged scales 1, 1/2, 1/4, 1/8, 1/16 and 1/32 in descending
+order on the exact same frozen sample. Require at least one scale to improve both the fixed-
+burn and independent zero-state full-prefix objectives by `1e-4`. This audit selects nothing:
+restore and hash-verify the exact controller and optimizer regardless of outcome, and retain
+no candidate or optimizer state.
+
+As descriptive training-only evidence, evaluate the original source and accepted-18
+controller uniformly over all eligible frames of the frozen block-one teacher histories and
+all 24 frozen motion pairs. Report teacher-target throttle error, accepted-18 source-output
+drift normalized by the frozen dense denominator, and motion sign, gain and NRMSE overall and
+by history length. These measurements are not generalization or hover evidence and are not
+an alternate checkpoint selection.
+
+The audit passes only if every identity/reproduction/restoration control passes, original
+Adam remains a positive-direction proposal, and β1=0 passes its direction, finite-difference
+and ordinary-scale gates. A pass authorizes only preregistration of a new run restarted from
+the original source with `betas=(0, 0.999)` and otherwise unchanged curriculum, learning
+rates, backtracks, budgets, midpoint/final seeds and gates. It does not authorize resuming
+accepted update 18, evaluating its unopened data, assisted hover, native attitude
+reintegration, gate flight or promotion. Failure closes this optimizer route.
