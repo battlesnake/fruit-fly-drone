@@ -1,0 +1,48 @@
+{
+  "accepted_updates": [
+    {
+      "full_nrmse": 1.2464920282363892,
+      "full_nrmse_improvement_from_current": 0.005066037178039551,
+      "scale": 8.0
+    },
+    {
+      "full_nrmse": 1.245232343673706,
+      "full_nrmse_improvement_from_current": 0.0012598037719726562,
+      "scale": 2.0
+    }
+  ],
+  "classification": "readout_capacity_constraint_boundary_stop",
+  "development_generated": false,
+  "full_report_sha256": "7f0dbd25aff387a67ec992e2ea7468c7c9c7b74e7d569914565f99665501b09c",
+  "implementation_commit": "4362cb6",
+  "pass": false,
+  "protocol_commit": "3cda916",
+  "qualification_generated": false,
+  "source": {
+    "correct_sign_fraction": 0.0,
+    "nrmse": 1.2515579462051392,
+    "teacher_aligned_gain": -0.23820921778678894
+  },
+  "stop_attempt": {
+    "directional_derivative": -0.0014282506203297622,
+    "numerical_controls_pass": true,
+    "scale_1": {
+      "full_nrmse_improvement": 0.0006287097930908203,
+      "maximum_block_common_throttle_rms": 0.004732403438538313,
+      "preservation_pass": true,
+      "progress_pass": false
+    },
+    "scale_2": {
+      "full_nrmse_improvement": 0.0012570619583129883,
+      "maximum_block_common_throttle_rms": 0.005151024088263512,
+      "preservation_pass": false,
+      "progress_pass": true
+    }
+  },
+  "terminal": {
+    "correct_sign_fraction": 0.0,
+    "nrmse": 1.2452322244644165,
+    "source_absolute_nrmse_improvement": 0.006325721740722656,
+    "teacher_aligned_gain": -0.23247265815734863
+  }
+}

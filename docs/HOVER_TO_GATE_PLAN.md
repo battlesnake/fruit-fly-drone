@@ -2859,3 +2859,34 @@ collective/height control before closed-loop hover. A constraint-boundary stop c
 unchanged last-hop family and moves the optimization responsibility upstream; it must not
 trigger a relaxed common-throttle limit. No result here directly authorizes hover, gate flight
 or promotion.
+
+Result: the capacity fit stopped cleanly at the registered constraint boundary after two
+accepted updates. Attempt 1 selected scale 8 and attempt 2 selected scale 2. Both used valid
+masked gradients, adjacent above-noise derivative agreement and actual detached-prefix plus
+zero-state replay over all 96 training pairs. The accepted full-prefix NRMSE values were
+`1.246492` and `1.245232`, versus source `1.251558`.
+
+Attempt 3 still had a finite descent direction (`-0.00142825`) and passed its derivative
+control at adjacent scales 1/16 and 1/32. Scale 2 improved detached-prefix and zero-state
+NRMSE by `0.0012572` and `0.0012571`, but source-relative pair-common throttle RMS drift was
+`0.005151`, `0.005046` and `0.005053` on three blocks, just over the fixed `0.005` limit.
+Scale 1 passed every preservation gate on every block, with common drift `0.004560–0.004732`
+RMS, but its `0.000629` improvement missed the fixed `0.001` progress floor. Every smaller
+scale also remained safe and proportionally sub-threshold. Thus no scale could be accepted
+without changing a preregistered condition.
+
+This is the intended discriminating result: the last-hop optimizer did not fail numerically
+and its useful direction did not disappear; cumulative damping progress collided with the
+collective-output responsibility of the same motor interface. Overall correct damping sign
+remained 0/96. Teacher-aligned gain moved only from `-0.238209` at source to `-0.232473`, and
+NRMSE improved by `0.006326`; the readout remained anti-damping rather than crossing zero.
+
+The accepted update-2 controller and optimizer are retained only as ignored audit/resume
+state. The rejected attempt-3 transaction was restored exactly. Development and qualification
+caches were never generated or opened. This closes the unchanged 493-edge/seven-node last-hop
+family under the fixed collective-preservation contract and moves the learning responsibility
+upstream into native recurrent routing; it does not justify relaxing the common-throttle limit
+or adding external state. No hover, gate flight, collective-restoration training or promotion
+was authorized. The full report SHA-256 is
+`7f0dbd25aff387a67ec992e2ea7468c7c9c7b74e7d569914565f99665501b09c`;
+see [`artifacts/variable-height-rk4-readout-capacity-v1/`](../artifacts/variable-height-rk4-readout-capacity-v1/).
