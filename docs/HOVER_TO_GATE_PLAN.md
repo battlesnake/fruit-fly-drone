@@ -3611,3 +3611,12 @@ gate flight; the next step would separately preregister existing motion-output-t
 for visual vertical-velocity damping. A failure bounds this 24-parameter shared afferent model,
 not fly motion vision generally; the affine retinal map and single-compartment rate cells remain
 explicit limitations.
+
+The bounded production-FP32 trainer SHA-256 is
+`9ba1ad42625cb52c5c24be538ff328e3f35746645a6d9a70db5e0959e2eff727`, its terminal checker is
+`0c61c1ca3333efc15e833febe3734ee212c2e1e6be90b19655fc6df2fdcff6ad`, and its AIRA runner is
+`420be82c08a59dbc7b59dbc7a9717ec4cd4f5b14cb06ee0737384dba3a2888c2`. These implement protocol
+commit `05f4a2e` and must be committed before the one-shot run. The pre-run verification passed all
+410 repository tests. A training-only CUDA smoke replay on the first balanced batch accepted
+multiplier 1.0, advanced each Adam counter exactly once, preserved the source connectome exactly,
+and reserved 2.7617 GiB peak VRAM; it rendered no development or acceptance stimulus.

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import copy
 import sys
 from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 import torch
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
@@ -15,8 +17,60 @@ import audit_vertical_motion_tau_fp64 as tau_fp64  # noqa: E402
 import preflight_vertical_motion_commissioning as preflight  # noqa: E402
 import preflight_vertical_motion_commissioning_v2 as preflight_v2  # noqa: E402
 import preregister_vertical_motion_commissioning as registration  # noqa: E402
+import train_vertical_motion_commissioning as training  # noqa: E402
 import vertical_motion_commissioning as commissioning  # noqa: E402
 import vertical_motion_commissioning_fp64 as commissioning_fp64  # noqa: E402
+
+
+class _TinyController(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.gain = torch.nn.Parameter(torch.tensor([1.0, 0.5]))
+        self.bias_offset = torch.nn.Parameter(torch.tensor([0.1, -0.2]))
+        self.tau_ratio = torch.nn.Parameter(torch.tensor([1.0, 1.1]))
+
+    def parameter_values(self) -> dict[str, torch.Tensor]:
+        return {
+            name: getattr(self, name).detach().cpu().clone()
+            for name in ("gain", "bias_offset", "tau_ratio")
+        }
+
+    def load_parameter_values(self, values: dict[str, torch.Tensor]) -> None:
+        with torch.no_grad():
+            for name, value in values.items():
+                getattr(self, name).copy_(value)
+
+    def project_parameters(self) -> None:
+        return None
+
+
+def _seed_optimizer(controller: _TinyController) -> torch.optim.Adam:
+    optimizer = training.make_optimizer(controller)
+    for parameter in controller.parameters():
+        parameter.grad = torch.ones_like(parameter)
+    optimizer.step()
+    optimizer.zero_grad(set_to_none=True)
+    for group, learning_rate in zip(optimizer.param_groups, (0.003, 0.004, 0.005), strict=True):
+        group["lr"] = learning_rate
+    return optimizer
+
+
+def _assert_nested_equal(first: object, second: object) -> None:
+    if isinstance(first, torch.Tensor):
+        assert isinstance(second, torch.Tensor)
+        assert torch.equal(first, second)
+    elif isinstance(first, dict):
+        assert isinstance(second, dict)
+        assert first.keys() == second.keys()
+        for key in first:
+            _assert_nested_equal(first[key], second[key])
+    elif isinstance(first, (list, tuple)):
+        assert isinstance(second, type(first))
+        assert len(first) == len(second)
+        for left, right in zip(first, second, strict=True):
+            _assert_nested_equal(left, right)
+    else:
+        assert first == second
 
 
 def _training_specs() -> list[dict]:
@@ -244,3 +298,273 @@ def test_fp64_fixed_state_tau_derivative_matches_closed_form() -> None:
     assert result["clamp_inactive"] is True
     assert result["sign_matches"] is True
     assert result["symmetric_relative_error"] <= tau_fp64.ONE_STEP_RELATIVE_ERROR_LIMIT
+
+
+def test_training_batches_are_balanced_deterministic_partitions() -> None:
+    manifest = commissioning.load_registered_manifest(
+        registration.REPO_ROOT / "artifacts/vertical-motion-commissioning-manifest-v1/manifest.json"
+    )
+    expected = {
+        "training": (24, (0, 24, 48, 49), (23, 47, 94, 95)),
+        "development": (12, (0, 12, 24, 25), (11, 23, 46, 47)),
+        "acceptance": (32, (0, 32, 64, 65), (31, 63, 126, 127)),
+    }
+    for split, (count, first, last) in expected.items():
+        specs = manifest["stimuli"]["splits"][split]["specs"]
+        batches = training.balanced_batches(specs, split=split)
+
+        assert len(batches) == count
+        assert batches[0] == first
+        assert batches[-1] == last
+        assert sorted(case for batch in batches for case in batch) == list(range(len(specs)))
+
+
+def test_mandatory_training_gate_requires_loss_and_all_strata() -> None:
+    baseline = {"loss": 1.0}
+    passing = {"loss": 0.75}
+    baseline_strata = {name: 1.0 for name in ("ON_down", "ON_up", "OFF_down", "OFF_up")}
+    improved_strata = {name: 0.9 for name in baseline_strata}
+
+    assert training.mandatory_training_decision(
+        baseline, passing, baseline_strata, improved_strata
+    )["pass"]
+
+    unimproved = dict(improved_strata)
+    unimproved["OFF_up"] = 1.0
+    assert not training.mandatory_training_decision(baseline, passing, baseline_strata, unimproved)[
+        "pass"
+    ]
+    assert not training.mandatory_training_decision(
+        baseline, {"loss": 0.750001}, baseline_strata, improved_strata
+    )["pass"]
+
+
+def test_qualification_edges_cannot_be_masked_by_textures() -> None:
+    specs = [
+        {"family": "polarity_preserving_edge", "polarity": "ON"},
+        {"family": "polarity_preserving_edge", "polarity": "OFF"},
+        {"family": "band_limited_texture", "polarity": "mixed"},
+        {"family": "band_limited_texture", "polarity": "mixed"},
+    ]
+    anatomy = {"target_subtypes": np.arange(4, dtype=np.int64)}
+    correct = torch.tensor([[0.0, 1.0, 0.0, 1.0], [1.0, 0.0, 1.0, 0.0]])
+    wrong = -correct
+
+    def response(values: torch.Tensor) -> dict[str, torch.Tensor]:
+        return {
+            "integrated_response": values.clone(),
+            "integrated_static": torch.zeros_like(values),
+            "terminal_response": values.clone(),
+            "terminal_static": torch.zeros_like(values),
+            "terminal_motor": torch.zeros(4, 4),
+        }
+
+    normal = {case: response(wrong if case < 2 else correct) for case in range(4)}
+    reverse = {case: response(-normal[case]["integrated_response"]) for case in range(4)}
+
+    result = training.qualification_metrics(specs, {"normal": normal, "reverse": reverse}, anatomy)
+
+    for window in commissioning.WINDOWS:
+        assert result["vertical_sign"][window]["T4"]["cases"] == 1
+        assert result["vertical_sign"][window]["T5"]["cases"] == 1
+        assert result["vertical_sign"][window]["T4"]["down_correct_fraction"] == 0.0
+        assert result["vertical_sign"][window]["T5"]["up_correct_fraction"] == 0.0
+
+
+def test_speed_three_texture_pass_cannot_mask_other_acceptance_textures() -> None:
+    specs = [
+        {
+            "family": "band_limited_texture",
+            "polarity": "mixed",
+            "speed_pixels_per_frame": speed,
+        }
+        for speed in (1, 3)
+    ]
+    anatomy = {"target_subtypes": np.arange(4, dtype=np.int64)}
+    correct = torch.tensor([[0.0, 1.0, 0.0, 1.0], [1.0, 0.0, 1.0, 0.0]])
+    wrong = -correct
+
+    def response(values: torch.Tensor) -> dict[str, torch.Tensor]:
+        return {
+            "integrated_response": values.clone(),
+            "integrated_static": torch.zeros_like(values),
+            "terminal_response": values.clone(),
+            "terminal_static": torch.zeros_like(values),
+            "terminal_motor": torch.zeros(4, 4),
+        }
+
+    bank = {
+        "normal": {0: response(wrong), 1: response(correct)},
+        "reverse": {0: response(-wrong), 1: response(-correct)},
+    }
+
+    assert training.novel_texture_speed_metrics(specs, bank, anatomy)["pass"] is True
+    assert training.texture_direction_metrics(specs, bank, anatomy)["pass"] is False
+
+
+def test_optimizer_replay_exception_restores_parameters_and_adam(monkeypatch) -> None:
+    controller = _TinyController()
+    optimizer = _seed_optimizer(controller)
+    parameters_before = controller.parameter_values()
+    optimizer_before = copy.deepcopy(optimizer.state_dict())
+    calls = 0
+
+    def failing_loss(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls > 1:
+            raise RuntimeError("injected replay failure")
+        loss = sum(parameter.square().sum() for parameter in controller.parameters())
+        return loss, {"synthetic": loss * 0.0}
+
+    monkeypatch.setattr(training, "batch_loss", failing_loss)
+    with pytest.raises(RuntimeError, match="injected replay failure"):
+        training.optimizer_proposal(
+            controller,
+            optimizer,
+            [],
+            {},
+            {},
+            (0, 1, 2, 3),
+            {},
+            device=torch.device("cpu"),
+        )
+
+    _assert_nested_equal(controller.parameter_values(), parameters_before)
+    _assert_nested_equal(optimizer.state_dict(), optimizer_before)
+
+
+def test_rejected_proposal_restores_scaled_learning_rates_and_adam(monkeypatch) -> None:
+    controller = _TinyController()
+    optimizer = _seed_optimizer(controller)
+    parameters_before = controller.parameter_values()
+    optimizer_before = copy.deepcopy(optimizer.state_dict())
+    calls = 0
+
+    def worsening_loss(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        differentiable = sum(parameter.square().sum() for parameter in controller.parameters())
+        if calls == 1:
+            loss = differentiable
+        else:
+            loss = differentiable * 0.0 + 1.0e6
+        return loss, {"synthetic": loss * 0.0}
+
+    monkeypatch.setattr(training, "batch_loss", worsening_loss)
+    report = training.optimizer_proposal(
+        controller,
+        optimizer,
+        [],
+        {},
+        {},
+        (0, 1, 2, 3),
+        {},
+        device=torch.device("cpu"),
+    )
+
+    assert report["accepted"] is False
+    assert report["optimizer_steps_before"] == report["optimizer_steps_after"]
+    _assert_nested_equal(controller.parameter_values(), parameters_before)
+    _assert_nested_equal(optimizer.state_dict(), optimizer_before)
+
+
+def test_accepted_proposal_advances_each_adam_counter_once(monkeypatch) -> None:
+    controller = _TinyController()
+    optimizer = _seed_optimizer(controller)
+    calls = 0
+
+    def improving_loss(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        differentiable = sum(parameter.square().sum() for parameter in controller.parameters())
+        loss = differentiable if calls == 1 else differentiable * 0.0
+        return loss, {"synthetic": loss * 0.0}
+
+    monkeypatch.setattr(training, "batch_loss", improving_loss)
+    report = training.optimizer_proposal(
+        controller,
+        optimizer,
+        [],
+        {},
+        {},
+        (0, 1, 2, 3),
+        {},
+        device=torch.device("cpu"),
+    )
+
+    assert report["accepted"] is True
+    assert all(
+        report["optimizer_steps_after"][name] == report["optimizer_steps_before"][name] + 1
+        for name in report["optimizer_steps_before"]
+    )
+
+
+def test_resume_interruptions_fail_closed_without_retry() -> None:
+    state = {
+        "proposal_in_flight": 7,
+        "scheduled_evaluation_started": [],
+        "development_started": [],
+        "development_history": [],
+    }
+    assert training.resume_interruption(state)[1] == "vertical_motion_training_proposal_interrupted"
+
+    state["proposal_in_flight"] = None
+    state["scheduled_evaluation_started"] = [25]
+    assert (
+        training.resume_interruption(state)[1]
+        == "vertical_motion_training_scheduled_evaluation_interrupted"
+    )
+
+    state["development_started"] = [25]
+    assert (
+        training.resume_interruption(state)[1] == "vertical_motion_training_development_interrupted"
+    )
+
+
+def test_output_directory_lock_rejects_concurrent_owner(tmp_path) -> None:
+    first = training.acquire_run_lock(tmp_path)
+    try:
+        with pytest.raises(SystemExit, match="another vertical-motion training process"):
+            training.acquire_run_lock(tmp_path)
+    finally:
+        first.close()
+
+
+def test_acceptance_requires_all_exact_scheduled_events() -> None:
+    history = [
+        {"proposal": proposal, "finite_gradients": True}
+        for proposal in range(1, training.MAX_PROPOSALS + 1)
+    ]
+    scheduled = list(training.SCHEDULED_EVALUATIONS)
+    evaluations = [
+        {
+            "proposal": proposal,
+            "loss": 1.0,
+            "numerical": {"pass": True, "rms": 0.0},
+            **({"mandatory_decision": {"pass": True}} if proposal == 25 else {}),
+        }
+        for proposal in scheduled
+    ]
+    development = [
+        {"proposal": proposal, "loss": {"loss": 1.0}, "qualification": {"pass": False}}
+        for proposal in scheduled
+    ]
+    state = {
+        "proposal_completed": training.MAX_PROPOSALS,
+        "proposal_in_flight": None,
+        "accepted_proposals": 80,
+        "rejected_proposals": 20,
+        "proposal_history": history,
+        "scheduled_evaluation_started": scheduled,
+        "training_evaluations": evaluations,
+        "development_started": scheduled,
+        "development_history": development,
+    }
+
+    assert training.acceptance_prerequisite_errors(state) == []
+
+    state["training_evaluations"] = [item for item in evaluations if item["proposal"] != 50]
+    errors = training.acceptance_prerequisite_errors(state)
+    assert any("training evaluations" in error for error in errors)
+    assert any("numerical gates" in error for error in errors)
