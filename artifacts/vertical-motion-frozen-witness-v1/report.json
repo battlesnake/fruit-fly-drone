@@ -1,0 +1,135 @@
+{
+  "artifact_kind": "compact_terminal_summary",
+  "experiment": "vertical-t4t5-frozen-witness-finite-step-v1",
+  "classification": "frozen_witness_finite_step_supported",
+  "audit_completed": true,
+  "finite_step_supported": true,
+  "first_passing_multiplier": 1.0,
+  "protocol_commit": "66185dc",
+  "implementation_commit": "ac01277410933be14bf9bcc582aefedf058cbee2",
+  "implementation_file_sha256": "62b07aeff4b4adb639a74141088e0899ada3b4135f64e7edf3235179a2f89dd3",
+  "checker_file_sha256": "b07da81061cbe86910d75652d3e89c8621ec9587c037951aab53a9a23dcaff41",
+  "runner_file_sha256": "31592bc472a7fc777ba1116a5795824e91766a2ffff5249bbb3fa4f5dc54712d",
+  "full_report_path": "runs/optic-motion/vertical-motion-frozen-witness-001/report.json",
+  "full_report_file_sha256": "556bb5cf3f3f42427492b20d7daa47682ab399efa64541dbc79b03db8d13e879",
+  "full_started_path": "runs/optic-motion/vertical-motion-frozen-witness-001/started.json",
+  "full_started_file_sha256": "666c5aca899ec8849555df43ff3898747bc55e63fe33b7a7df1ca2848ca44141",
+  "locked_attribution_report_sha256": "451d71b7752b4b6f25b210b8ae6b2c790cb507c3b50ac56fbf436327cb6ebe3a",
+  "baseline": {
+    "loss": 0.4765322543680668,
+    "strata": {
+      "ON_down": 0.20187378497560834,
+      "ON_up": 0.1636830817393881,
+      "OFF_down": 0.10165473464570596,
+      "OFF_up": 0.20854884549044073
+    }
+  },
+  "witness_control": {
+    "pass": true,
+    "direction_norm": 1.0000000001144944,
+    "direction_norm_error": 1.1449441394972837e-10,
+    "unit_norm_tolerance": 1e-8,
+    "active_bounds": false,
+    "active_bound_tangent_pass": true,
+    "gradient_reproduction_maximum_absolute_difference": 0.0,
+    "normalized_directional_derivatives": {
+      "full": -0.41563149307973873,
+      "ON_down": -0.09460810172500839,
+      "ON_up": -0.09460810172500815,
+      "OFF_down": -0.0946081017250082,
+      "OFF_up": -0.09460810172500843
+    },
+    "raw_directional_derivatives": {
+      "full": -0.0936967193278927,
+      "ON_down": -0.08944476579676701,
+      "ON_up": -0.10185854162080904,
+      "OFF_down": -0.11782416794834234,
+      "OFF_up": -0.15723207523034116
+    }
+  },
+  "reference_displacement_norm": 0.03152330128027931,
+  "trials": [
+    {
+      "multiplier": 1.0,
+      "actual_displacement_norm": 0.03152329525837133,
+      "projection_difference_norm": 9.88982181416943e-8,
+      "loss": 0.47534099593758583,
+      "total_loss_improvement_fraction": 0.002499848477330657,
+      "strata": {
+        "ON_down": 0.19889797948144405,
+        "ON_up": 0.16079177517773738,
+        "OFF_down": 0.09844172055549431,
+        "OFF_up": 0.20374344118560353
+      },
+      "maximum_stratum_improvement_fraction": 0.023042104565654198,
+      "all_strata_improved": true,
+      "pass": true
+    },
+    {
+      "multiplier": 0.5,
+      "actual_displacement_norm": 0.01576164362618537,
+      "projection_difference_norm": 1.255857647236726e-7,
+      "loss": 0.47546810408433277,
+      "total_loss_improvement_fraction": 0.002233112814462476,
+      "strata": {
+        "ON_down": 0.2004340108433098,
+        "ON_up": 0.16214696203436083,
+        "OFF_down": 0.09992857613671428,
+        "OFF_up": 0.2060969959323605
+      },
+      "maximum_stratum_improvement_fraction": 0.011756716045654697,
+      "all_strata_improved": true,
+      "pass": true
+    },
+    {
+      "multiplier": 0.25,
+      "actual_displacement_norm": 0.007880854879286242,
+      "projection_difference_norm": 1.2024824001550558e-7,
+      "loss": 0.47589477772514027,
+      "total_loss_improvement_fraction": 0.0013377408078533496,
+      "strata": {
+        "ON_down": 0.20116280591128088,
+        "ON_up": 0.162896592868492,
+        "OFF_down": 0.10075918555499659,
+        "OFF_up": 0.20731626241467893
+      },
+      "maximum_stratum_improvement_fraction": 0.005910284820149211,
+      "all_strata_improved": true,
+      "pass": false
+    },
+    {
+      "multiplier": 0.125,
+      "actual_displacement_norm": 0.00394040302699216,
+      "projection_difference_norm": 1.1782391529688089e-7,
+      "loss": 0.47618816047906876,
+      "total_loss_improvement_fraction": 0.000722078906189335,
+      "strata": {
+        "ON_down": 0.2015199022419741,
+        "ON_up": 0.16328577166132163,
+        "OFF_down": 0.10119862152307253,
+        "OFF_up": 0.20793122363587221
+      },
+      "maximum_stratum_improvement_fraction": 0.002961521331446651,
+      "all_strata_improved": true,
+      "pass": false
+    }
+  ],
+  "controls": {
+    "all_four_multipliers_evaluated": true,
+    "all_values_finite": true,
+    "all_actual_directional_derivatives_negative": true,
+    "all_trials_used_same_archived_start": true,
+    "optimizer_stepped_or_modified": false,
+    "adam_counters_before_and_after": 25,
+    "archived_state_restored": true,
+    "source_restored": true,
+    "development_or_acceptance_opened": false,
+    "candidate_or_optimizer_retained": false,
+    "cuda_peak_reserved_gibibytes": 2.826171875
+  },
+  "authority": {
+    "constrained_training_preregistration_authorized": true,
+    "closed_training_run_may_resume": false,
+    "motion_routing_hover_gate_or_promotion_authorized": false
+  }
+}

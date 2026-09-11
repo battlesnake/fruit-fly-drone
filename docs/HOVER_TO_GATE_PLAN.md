@@ -3793,3 +3793,30 @@ entire audit even if another trial met the scientific discriminator. Authorizati
 four trials to complete and every terminal control to pass. A scientific pass demonstrates only
 finite-step training-loss leverage; it is not commissioned direction selectivity or evidence of
 hover capability.
+
+### Frozen-witness finite-step audit result
+
+The causal audit under implementation commit `ac01277` completed and its independent terminal
+checker passed. The complete report SHA-256 is
+`556bb5cf3f3f42427492b20d7daa47682ab399efa64541dbc79b03db8d13e879`; the tracked compact result
+is in
+[`artifacts/vertical-motion-frozen-witness-v1/`](../artifacts/vertical-motion-frozen-witness-v1/).
+It reproduced the frozen full and four stratum gradients exactly. The verbatim witness had norm
+`1.0000000001`, no active bounds, normalized derivatives `-0.41563` for the full objective and
+approximately `-0.09461` for each stratum, and passed every registered qualification control.
+
+All four materialized directions improved total loss and every individual stratum. Multiplier
+`1.0` reduced loss from `0.476532` to `0.475341`, reduced the worst stratum from `0.208549` to
+`0.203743` (2.30%), and passed. Multiplier `0.5` also passed, reaching loss `0.475468` and worst
+stratum `0.206097` (1.18% better). Multipliers `0.25` and `0.125` preserved the all-improvement
+sign pattern but missed the registered effect-size thresholds. The classification is
+`frozen_witness_finite_step_supported`, with first passing multiplier `1.0` by fixed order.
+
+All four trials began from the same proposal-25 archive. The optimizer was never stepped or
+modified, every Adam counter remained at 25, the archived controller, optimizer and source were
+restored exactly, no bounds were hit, all values were finite, development and acceptance remained
+sealed, and no candidate was retained. This establishes useful finite-step common-descent leverage
+within the existing 24 parameters: increasing batch size alone is not the answer, but anatomy
+expansion is not yet justified either. The result authorizes only separately preregistering
+constrained/common-descent training in this parameterization. It does not yet commission a visual
+vertical-motion module or authorize routing, hover, gate flight or promotion.
