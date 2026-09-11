@@ -1987,3 +1987,22 @@ the nearly saturated source-R/P/Y preservation rows from the vertical-learning e
 It does not assert that those rows destroyed the old gradient: the polished projection
 retained essentially all J descent. It also does not close Track A's native timescale and
 multi-terminal temporal-credit questions, or the later controlled FeCO test.
+
+Result: the teacher-attitude-assisted native-throttle run stopped safely at attempted update
+20 with accepted update 18 retained. The 64-case teacher positive control passed at 100%
+hover success, its foreleg motion control had the correct sign for all 24 pairs, and every
+paired endpoint image was exactly equal. The source controller was wrong-signed on all 24
+training motion pairs, with teacher-aligned gain `-0.029651`.
+
+Eighteen updates were accepted; attempt 8 was one ordinary restored rejection. Attempt 20
+had finite gradients, recurrent states, outputs and objectives, and its one pending Adam
+transaction advanced all three counters from 18 to 19. The materialized proposal nevertheless
+had positive current-objective direction, `grad(J) dot displacement = +0.961656`, so the
+mandatory direction control failed before finite difference or ordinary scale selection.
+Controller and Adam were restored, including the exact pre-attempt optimizer hash and counters
+of 18. The run is closed and must not be resumed.
+
+No midpoint or final data were generated, no assisted-hover claim was tested, and no native
+attitude reintegration, full-native hover, gate flight or promotion was authorized. The full
+report SHA-256 is `ca1562b8764174ac804185104eeb365fa2826241c7f292430d0a81700c177a34`;
+see [`artifacts/variable-height-native-throttle-assisted-v1/`](../artifacts/variable-height-native-throttle-assisted-v1/).

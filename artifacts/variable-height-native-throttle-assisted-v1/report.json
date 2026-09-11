@@ -1,0 +1,89 @@
+{
+  "accepted_scale_counts": {
+    "0.0625": 1,
+    "0.125": 1,
+    "0.25": 1,
+    "0.5": 7,
+    "1.0": 8
+  },
+  "accepted_updates": 18,
+  "actor_contract_unchanged": true,
+  "attempted_updates": 20,
+  "classification": "fatal_numerical_control_failure",
+  "fatal_attempt": {
+    "adam_counters_after_pending_transaction": [
+      19.0,
+      19.0,
+      19.0
+    ],
+    "adam_counters_before": [
+      18.0,
+      18.0,
+      18.0
+    ],
+    "adam_transaction_pass": true,
+    "attempt": 20,
+    "current_fixed_burn_in_objective": 1.8617453575134277,
+    "current_full_prefix_objective": 1.8617474809288979,
+    "directional_derivative": 0.9616560092539606,
+    "finite_difference_run": false,
+    "gradient_norm_before_clipping": 182.3511199951172,
+    "gradients_finite": true,
+    "motion_endpoint_image_difference_max": 0.0,
+    "ordinary_trials_run": 0,
+    "reason": "authoritative proposal was not a finite descent direction",
+    "recurrent_states_and_outputs_finite": true,
+    "target_accepted_update": 19
+  },
+  "final_evaluation_started": false,
+  "final_parameter_family_rms_from_source": {
+    "bias": 0.00032254934194497764,
+    "edge_magnitude": 0.0003073675907216966,
+    "raw_time_constant": 0.0000030346097901201574
+  },
+  "full_native_hover_authorized": false,
+  "full_report_sha256": "ca1562b8764174ac804185104eeb365fa2826241c7f292430d0a81700c177a34",
+  "gate_flight_authorized": false,
+  "implementation_commit": "b11efa3",
+  "locked_inputs": {
+    "checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+    "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665"
+  },
+  "midpoint_evaluation_started": false,
+  "native_attitude_reintegration_authorized": false,
+  "objective_scales": {
+    "dense": 0.013762206770479679,
+    "motion": 0.04366247355937958,
+    "nominal_hover_motor_drive": 0.35242146253585815
+  },
+  "ordinary_rejected_attempts": [
+    8
+  ],
+  "pass": false,
+  "preflight": {
+    "motion_endpoint_images_exact": true,
+    "pass": true,
+    "source_motion_correct_sign_fraction": 0.0,
+    "source_motion_nrmse": 1.030300259590149,
+    "source_motion_teacher_aligned_gain": -0.029651034623384476,
+    "teacher_hover_success_fraction": 1.0,
+    "teacher_motion_correct_sign_fraction": 1.0,
+    "teacher_motion_maximum_rc_error": 0.0010695457458496094
+  },
+  "promoted": false,
+  "protocol_commit": "6d2c8c2",
+  "restoration": {
+    "controller_parameter_sha256": "05cb3e44f66c8f19e6cc147c617a6496e8023edd9c97f07be99e0bd1859a46f8",
+    "optimizer_hash_equals_fatal_attempt_pre_transaction": true,
+    "optimizer_sha256": "5b9df11d8396df8808af3fab1b916fa9d1b0a1b88031df2439e917152b52da0e",
+    "optimizer_step_counters": [
+      18.0,
+      18.0,
+      18.0
+    ],
+    "resume_sha256": "46d2d9314b347f9d62168ca5aadbc9538f8889e9d82503095b0488af71d48d68",
+    "run_state": "stopped"
+  },
+  "status": "nonpromotional_teacher_attitude_assisted_native_throttle",
+  "stop_reason": "a mandatory gradient, transaction, direction or finite-difference control failed"
+}
