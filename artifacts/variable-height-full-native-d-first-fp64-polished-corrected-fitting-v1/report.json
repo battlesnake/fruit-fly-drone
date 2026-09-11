@@ -1,0 +1,93 @@
+{
+  "accepted_updates": 29,
+  "attempted_update": 30,
+  "classification": "no_terminal_checkpoint",
+  "closed_loop_hover_authorized": false,
+  "experiment": "variable-height-full-native-d-first-fp64-polished-corrected-fitting-v1",
+  "final_training": {
+    "endpoint_common_step_25_nrmse": 1.683785319328308,
+    "endpoint_damping_correct_sign_fraction": 0.0,
+    "endpoint_damping_nrmse": 1.342397928237915,
+    "endpoint_damping_source_relative_improvement_fraction": 0.07954064861819726,
+    "endpoint_damping_teacher_aligned_gain": -0.32804086804389954,
+    "height_step_20_nrmse": 0.29744336009025574
+  },
+  "full_report_sha256": "48dedef889546a84916e04052ae7d6207bc6368159327e90025236b32455a3f7",
+  "implementation_commit": "95e027f",
+  "locked_inputs_unchanged": true,
+  "new_development_evaluations": 0,
+  "pass": false,
+  "promoted": false,
+  "protocol_commit": "d1e5c82",
+  "resume": {
+    "accepted_updates": 29,
+    "controller_semantic_sha256": "d3507ca47eb79942e205b109e6b0a8a65a167f8d878f3847ae1ee35ca438155a",
+    "file_sha256": "da345e8fe39411ebe2f3cb0ce49b3f1939ee5f2fd942e1a7be6856f2e4ac9563",
+    "optimizer_semantic_sha256": "cfe356950b0316f3fd4ebd88661bb1374a8dc48cda69e0024be92f784213a804",
+    "optimizer_step_counters": [29.0],
+    "rejected_update_30_transaction_restored": true,
+    "run_state": "stopped",
+    "size_bytes": 105255575
+  },
+  "stop_reason": "deterministic constrained proposal had no acceptable scale",
+  "update_25": {
+    "acceptance_kind": "repaired",
+    "accepted_correction_scale": 1.0,
+    "accepted_proposal_scale": 0.0625,
+    "archive_controller_and_optimizer_exact": true,
+    "directional_finite_difference_pass": true,
+    "fresh_proposal_inputs_generated": false,
+    "new_adam_step_called": false,
+    "optimizer_after_sha256": "44646023930bf6734c2bfffd23c71a81c6a5e7ae089e9655cc1789d1a73575e0",
+    "optimizer_transaction_pass": true,
+    "projected_displacement_sha256": "56cf914132ffd85356d3c28fcccc1416e409ee9ed122e770820bffa4fcaeea44",
+    "projection_objective": 18712.47294252837,
+    "projection_reproduction_pass": true,
+    "training_endpoint_damping_nrmse": 1.346885323524475
+  },
+  "updates_26_through_29": [
+    {
+      "acceptance_kind": "ordinary",
+      "endpoint_damping_nrmse": 1.3457632064819336,
+      "scale": 0.03125,
+      "update": 26
+    },
+    {
+      "acceptance_kind": "ordinary",
+      "endpoint_damping_nrmse": 1.3446412086486816,
+      "scale": 0.03125,
+      "update": 27
+    },
+    {
+      "acceptance_kind": "ordinary",
+      "endpoint_damping_nrmse": 1.3435198068618774,
+      "scale": 0.03125,
+      "update": 28
+    },
+    {
+      "acceptance_kind": "ordinary",
+      "endpoint_damping_nrmse": 1.342397928237915,
+      "scale": 0.03125,
+      "update": 29
+    }
+  ],
+  "update_30_rejection": {
+    "all_projection_and_optimizer_controls_pass": true,
+    "maximum_post_materialization_linear_violation": 1.248489378062839e-7,
+    "projected_damping_directional_derivative": -0.09623090479021648,
+    "scale_1_over_32": {
+      "endpoint_common_limit_excess": 3.12137603759588e-5,
+      "endpoint_common_nrmse": 1.6838213205337524,
+      "endpoint_damping_improvement": 0.00112152099609375,
+      "endpoint_damping_nrmse": 1.3412764072418213,
+      "only_failure": "common.step_25 source plus 0.02"
+    },
+    "scale_1_over_16_repair_eligibility": {
+      "endpoint_common_limit_excess": 0.00014136314392089844,
+      "endpoint_damping_improvement": 0.002245783805847168,
+      "height_step_20_limit_excess": 1.947879791242002e-6,
+      "pass": false,
+      "reason": "height.step_20 preservation failed"
+    }
+  }
+}

@@ -1753,3 +1753,72 @@ total-update-50 gate requiring at least 25% source-relative endpoint-D improveme
 training and development. A failed mandatory gate closes the route without hover; no
 closed-loop run or promotion is permitted without fresh qualification. All resumes,
 checkpoints and large archives remain ignored; commit only compact reports.
+
+Result: the polished continuation stopped safely at attempted update 30 with accepted update
+29 retained. Frozen update 25 reproduced the registered displacement hash and objective
+exactly, passed its full directional finite-difference and transaction controls, and was
+accepted by the existing C25-only repair at proposal scale 1/16 and correction scale 1.
+Updates 26 through 29 passed ordinarily at scale 1/32. Training endpoint-D NRMSE reached
+`1.34239793`, a `7.95%` improvement relative to the original source, but endpoint-D sign
+fraction remained zero and teacher-aligned gain remained negative (`-0.32804`).
+
+Update 30's projection, post-materialization and one-step Adam controls passed. No nonlinear
+scale passed: scale 1/32 missed only endpoint C25 by `3.12e-5`, while the scale-1/16 repair
+was ineligible because P20 exceeded its source-plus-0.02 limit by `1.95e-6`. The rejected
+controller and Adam transaction were restored exactly. There was no new development,
+terminal checkpoint, fresh qualification, hover or promotion. The complete report SHA-256
+is `48dedef889546a84916e04052ae7d6207bc6368159327e90025236b32455a3f7`; see
+[`artifacts/variable-height-full-native-d-first-fp64-polished-corrected-fitting-v1/`](../artifacts/variable-height-full-native-d-first-fp64-polished-corrected-fitting-v1/).
+This closes the source-preserving local-repair family. The narrow P20 miss does not establish
+infeasibility or insufficient neural recurrence, and update 29 is not promoted.
+
+The next bounded diagnostic is one **joint teacher-learning C/P/D experiment** from the
+original native source, not from update 29. Retain the connectome topology, signs, input
+mapping, recurrence, foreleg outputs, immutable training/development caches, opened native
+parameter families, learning rates and global gradient cap. Initialize a fresh Adam state
+and accepted-update counter at zero; do not import an optimizer transaction from any prior
+fit. Before training, freeze each denominator from the original source on the fixed training
+bank and minimize
+
+\[
+J=\frac{1}{3}\sum_{k\in\{C,P,D\}}
+\frac{\operatorname{MSE}_k}{\max(\operatorname{MSE}_{k,\mathrm{source}},0.25^2)}.
+\]
+
+Use the existing normalized component errors. C and P each average scenes and the three
+supervision horizons with equal weight; D remains endpoint-only. Report interaction
+separately but do not add it to this objective. This experiment tests joint learning without
+intermediate source ceilings. Because the objective also changes, it is not an isolated
+causal test of the ceilings alone.
+
+Remove the intermediate C/P source-ceiling projection rows and nonlinear source-ceiling
+selection gates. Replace every endpoint-D-only descent, directional finite-difference and
+per-step `0.001` D-improvement test with the corresponding test of J. For each attempt,
+generate the J gradient once and execute exactly one fresh Adam transaction. Require the
+authoritative materialized direction to have negative `grad(J) dot displacement`, the
+existing scale-1/16 complete-replay finite difference to show the same negative sign within
+the existing relative-error tolerance, and an accepted trial to reduce actual J from the
+current candidate by at least `1e-4`. D may temporarily worsen before a milestone.
+
+Retain only the existing activated RPY rows in the numerical projection, along with the
+finite-state, actuator-output, native-bound, canonical-idempotence and transaction controls.
+Use the qualified polished FP64 projection when an RPY row is active. With zero active RPY
+rows, projection is the identity raw proposal before authoritative native-bound
+materialization. Disable the C25 nonlinear repair entirely: every selected candidate is an
+ordinary trial. Keep the established backtracking grid and numerical tolerances; do not add
+smaller scales or tune the objective after seeing results. Selection uses the fixed training
+bank only. Failure of a numerical control or absence of an admissible scale restores the
+exact pre-attempt controller and Adam state, persists a stopped resume and is not retried.
+
+Allow at most 50 accepted updates. At update 25, stop unless endpoint-D improves by at least
+15% relative to the original source and aggregate C and P are each no worse than source. At
+update 50, require endpoint-D improvement of at least 25%, correctly signed endpoint damping
+on at least 50% of training scenes, and C and P at every horizon no worse than source. Only a
+candidate passing all update-50 training gates receives one development evaluation, where
+the same D-improvement, sign, per-horizon C/P, RPY, validity and output gates apply. Any
+failure closes this fixed objective configuration with no retrospective weight adjustment or
+alternate checkpoint selection. Persist each milestone decision before continuing. Persist
+`development_started` before the sole development evaluation; an interruption closes the
+run and cannot authorize another candidate, selection or development retry. A pass
+authorizes only a subsequent learning experiment; it does not authorize hover, gate flight
+or promotion.
