@@ -3221,6 +3221,13 @@ nested tensor tree with the repository's semantic SHA-256 routine. Require all t
 source hashes, rendered hashes and compact evaluation metadata to be bit-identical. Any warning,
 unsupported operation or mismatch stops before the full bank and authorizes nothing.
 
+Set `PYTHONWARNINGS=error`. Before configuration or CUDA initialization, every replay and the main
+confirmation must create its own exclusive, fsynced phase claim containing a random process nonce
+and PID. Require distinct resolved report paths and distinct process identities. A normal result
+gets a terminal sidecar bound to the claim and report hashes; an exception gets a failed terminal
+sidecar, while a hard interruption leaves the exclusive claim behind. Refuse all reuse of any
+claimed phase. Hash the actual imported v1 audit module, not merely a configurable archive path.
+
 If the three-process replay passes, evaluate the same subset once more in the main fresh process
 and require its tensor-tree hash to match. Recheck the original K32-versus-K64 three-limit gate,
 then run the unchanged primary, reverse and pair-mean conditions once. Apply the original decision
