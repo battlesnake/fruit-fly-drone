@@ -1837,3 +1837,153 @@ counters of 25. No development data, closed-loop hover or gate flight were evalu
 no controller was promoted. The failed endpoint is audit-only and must not be continued.
 See
 [`artifacts/variable-height-full-native-joint-teacher-learning-v1/`](../artifacts/variable-height-full-native-joint-teacher-learning-v1/).
+
+### Preregistered teacher-attitude-assisted native-throttle curriculum
+
+The next experiment changes the training responsibility boundary rather than extending
+the failed endpoint or merely increasing D's weight. It is the first bounded use of Track
+B from [`CONTROL_ARCHITECTURE.md`](CONTROL_ARCHITECTURE.md). Restart from the original
+native source with fresh Adam and accepted-update counter zero. Keep the full graph,
+transmitter signs, RGB and roll/pitch mappings, native recurrence, front-leg motor pools,
+foreleg/stick plant, parameter families, learning rates, gradient cap and native parameter
+bounds unchanged. Do not load the failed joint endpoint or its optimizer.
+
+During this diagnostic only, the analytical teacher supplies roll, pitch and yaw motor
+commands while the native fly supplies throttle. Combine those four motor commands before
+the actual foreleg/stick dynamics; do not inject RC commands after the sticks. The fly still
+computes all four outputs but receives no teacher action, phase, target height, velocity,
+impulse, position, timer or external recurrent state. Remove source-relative R/P/Y output
+constraints because those axes do not control the training plant. Report their drift, but
+do not claim this is full-native hover. Arm/disarm remains with the episode supervisor.
+
+Before optimization, run a fixed 64-case positive control in which the same analytical
+teacher supplies all four axes through the foreleg/stick plant. It must succeed in at least
+95% of cases under the exact assisted-hover success definition below. This is an end-to-end
+dynamic control, not merely a settled command-conversion check. Failure stops before any
+gradient or final-data use.
+
+Training is nominal-mass and uses 50 Hz policy frames with 100 Hz plant integration. Sample
+marker height, starting camera height, wall range, texture phases/gains and illumination
+within the declared training split. Balance stationary markers and unannounced plus/minus
+0.20 m marker steps, plus no impulse and unannounced plus/minus 0.15 or 0.30 m/s
+vertical-velocity impulses. Up-steps are restricted to 0.55-0.65 m before and 0.75-0.85 m
+after the step; down-steps are 1.35-1.45 m before and 1.15-1.25 m after it. Match their
+camera-height family to the marker family while sampling continuous camera height
+independently inside that band. Thus every training command segment remains outside the
+held-out 0.90-1.10 m marker band and the held-out family combinations, although marker-step
+sign is necessarily associated with low/high family in this training support. Randomize
+event time independently of scene and continuous height. Do not apply a supervised loss
+until two new RGB frames have followed an impulse. Store physical state trajectories and
+renderer nuisance variables, not privileged actor features; render ordinary 320x200 linear
+RGB again during learning.
+
+Every collected or evaluated episode is six seconds after an airborne, hover-stick-settled
+initialization. Initial vertical speed is sign-balanced with magnitude sampled uniformly in
+0-0.20 m/s. Exactly half of cases have no marker step, one quarter step up and one quarter
+step down. Independently, half have no impulse and one quarter each have positive or negative
+impulses; nonzero magnitudes balance 0.15 and 0.30 m/s. Marker-step time is uniform in
+1.0-2.0 seconds and impulse time in 2.0-3.0 seconds. Training blocks contain 16 teacher
+histories and, where enabled, 16 student histories. A learning update draws eight dense
+histories—eight teacher cases in block one, then four of each history type—and eight paired
+motion examples. Selection and 25-frame window positions follow the persisted optimizer RNG.
+
+Each recurrent training example starts from native zero state. Replay its preceding RGB and
+roll/pitch frames without gradient to reconstruct the fly's own state, detach that burn-in
+state, then differentiate a 25-policy-step window. Freeze the same detached burn-in tensor
+for the gradient, directional finite difference and ordinary scale trials of that update;
+those numerical checks must not silently differentiate through a parameter-dependent
+prefix. Separately, a selected candidate must replay the sampled histories again from zero
+and pass the actual full-prefix objective gate. Plant transitions and trajectory collection
+are detached; never backpropagate through the long aircraft rollout. Teacher-history
+trajectories use teacher throttle as well as teacher attitude. Student-history trajectories
+use teacher attitude and the current frozen fly throttle. The first 25 accepted updates use
+teacher histories only. Updates 26-100 use an equal teacher-history/student-history mixture.
+Regenerate and freeze both trajectory banks before updates 26, 51 and 76, so the later three
+blocks are bounded DAgger rather than one permanently off-policy dataset.
+
+Minimize the equal average of two losses. The dense term is native throttle-motor MSE to the
+analytical teacher at every eligible differentiated frame, normalized by the frozen RMS of
+the teacher's correction about nominal hover motor drive, floored at 0.01 motor units. The
+motion term is paired throttle-contrast MSE on histories whose terminal RGB and roll/pitch
+are exactly equal but whose preceding vertical motion is opposite, normalized by frozen
+teacher-contrast RMS with the same floor. This term is evaluated at multiple registered
+terminal history lengths, not only the old 25-step endpoint. Teacher state and simulator
+state provide labels only; no decoded value is fed to the actor.
+
+Freeze both denominators from block one's teacher and motion banks before update one and use
+them for the entire run. Paired-motion examples balance terminal history lengths 15, 20 and
+25 policy steps, with a common zero-state visual prefix and smooth mirrored camera histories
+that end at identical pose, RGB and roll/pitch. The target is the teacher's signed throttle
+contrast at that endpoint. The implementation must verify exact endpoint equality and the
+teacher/foreleg sign convention before allowing a gradient. The four training motion banks
+use only training wall/floor style pairings, height-error amplitudes 0.05 and 0.10 m, and
+vertical-speed amplitudes 0.15 and 0.30 m/s. The midpoint bank uses the same amplitudes with
+held-out wall/floor pairings. The final bank uses held-out pairings and new height-error
+amplitudes 0.075 and 0.125 m with speed amplitudes 0.20 and 0.35 m/s.
+
+For each attempted update, generate this objective's gradient once and execute exactly one
+Adam transaction. Require finite gradients, recurrent state and outputs; native bounds;
+canonical idempotence; a negative authoritative objective direction; and a fixed-burn-in
+scale-1/16 finite difference with matching sign and at most 20% relative error. The gradient,
+finite difference and scale trials use exactly the same frozen eight dense examples, eight
+motion examples, window positions, detached burn-in tensors, eligibility masks, weights and
+denominators; this sampled-minibatch objective is not called the whole block objective. Test
+the unchanged scales 1, 1/2, 1/4, 1/8, 1/16 and 1/32 in descending order. A scale is accepted
+only if both its fixed-burn-in sampled objective and its separate zero-state full-prefix
+replay of those same sampled examples improve over their respective current-controller
+values by at least `1e-4`. There is no projection, nonlinear repair, alternate objective,
+smaller scale or second optimizer call.
+
+A nonfinite value, invalid transaction, failed direction or failed finite-difference control
+is fatal and stops immediately after exact controller/Adam restoration. A finite proposal
+for which no ordinary scale passes is an ordinary rejected attempt; restore controller and
+Adam, persist the already-advanced sampling RNG, and stop after five consecutive ordinary
+rejections. Thus a resume neither retries a consumed minibatch nor silently converts a
+numerical failure into backtracking. Persist controller, optimizer, RNG, current frozen banks
+and counters atomically.
+
+The budget is 100 accepted updates and at most 125 attempted updates. At update 50, evaluate
+exactly one fixed 64-case development bank and a separate 64-pair equal-endpoint motion bank.
+Continue only with at least 50% assisted-hover success and at least 50% correctly signed
+motion pairs. Do not tune from this result. There is no update-25 evaluation and no
+alternate-checkpoint selection.
+
+Only accepted update 100 may consume the 128-case final bank and 128-pair final motion bank.
+An assisted-hover episode succeeds only if it has no ground contact or invalid state and,
+over its final two seconds, height RMSE is at most 0.10 m, vertical-speed RMS is at most
+0.10 m/s and roll/pitch tilt RMS is at most 5 degrees. Require at least 90% success, at least
+90% correct motion-response sign and teacher-aligned motion gain in 0.5-1.5. On the exact
+same cases, keep legal roll/pitch live but freeze RGB at a target-aware frame. For marker-step
+cases, use the first frame rendering the new marker position before the resulting action can
+move the plant. For stationary-marker cases, freeze at 1.5 seconds; this precedes every
+possible impulse. The paired live-minus-frozen success difference must have a 95% bootstrap
+lower bound above zero.
+
+For the 64-case positive-control and midpoint banks, split 32 cases over the two training
+marker-height families, 16 over the unseen absolute marker band and 16 over the unseen
+marker/camera-family combinations. The final bank uses 64 unseen-absolute-marker and 64
+unseen-combination cases. Every bank balances the event strata above and samples fresh
+continuous heights and renderer nuisances. The final motion bank uses held-out style
+combinations and trajectory amplitudes not used by the four training motion banks.
+For unseen-absolute-marker step cases, the pre-step marker lies in a training band and the
+post-step target lies in 0.90-1.10 m; stationary cases remain in that held-out band. For
+unseen-combination cases, every stationary or stepped marker segment remains in its training
+marker family while the camera starts in the opposite family. No acceptance bank silently
+relabels a training-support step as held out.
+
+Use seed `380983` for the teacher positive control and `410983` for optimizer-side sampling.
+The four frozen blocks use teacher-history seeds `381983`, `382983`, `383983`, `384983`;
+blocks two through four use student-history seeds `392983`, `393983`, `394983`; and their
+paired-motion seeds are `401983`, `402983`, `403983`, `404983`. Midpoint assisted-hover and
+motion seeds are `420983` and `420984`. Once-only final assisted-hover and motion seeds are
+`430983` and `430984`, with `440983` for paired bootstrap resampling. The frozen-vision
+control reuses the exact final cases rather than sampling another bank. Report all concrete
+seed assignments. Final data remain unopened unless update 100 is reached. A pass authorizes
+only a separately preregistered reintegration/handoff of native attitude axes. It does not
+promote a hover controller or authorize gate training.
+
+This curriculum tests continuous feedback on the states the controller visits and removes
+the nearly saturated source-R/P/Y preservation rows from the vertical-learning experiment.
+It does not assert that those rows destroyed the old gradient: the polished projection
+retained essentially all J descent. It also does not close Track A's native timescale and
+multi-terminal temporal-credit questions, or the later controlled FeCO test.
