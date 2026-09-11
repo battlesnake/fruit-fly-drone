@@ -36,6 +36,8 @@ MAXIMUM_ACCEPTED_UPDATES = 200
 DEVELOPMENT_INTERVAL = 10
 MANDATORY_GATE_UPDATE = 50
 MANDATORY_D_IMPROVEMENT_FRACTION = 0.25
+DEVELOPMENT_PRESERVATION_REQUIRED = False
+PERSIST_NUMERICAL_EXCEPTIONS_AS_STOPPED = False
 TRAIN_TERMINAL_D_NRMSE = 0.20
 DEVELOPMENT_TERMINAL_D_NRMSE = 0.30
 TERMINAL_SIGN_FRACTION = 0.90
@@ -72,8 +74,7 @@ def parse_args() -> argparse.Namespace:
         "--source-audit-dir",
         type=Path,
         default=(
-            REPO_ROOT
-            / "runs/variable-height-hover/full-native-endpoint-damping-step-audit-001"
+            REPO_ROOT / "runs/variable-height-hover/full-native-endpoint-damping-step-audit-001"
         ),
     )
     parser.add_argument(
@@ -155,6 +156,8 @@ def protocol_manifest() -> dict[str, Any]:
         "stop_immediately_after_one_rejected_deterministic_proposal": True,
         "maximum_accepted_updates": MAXIMUM_ACCEPTED_UPDATES,
         "development_interval_accepted_updates": DEVELOPMENT_INTERVAL,
+        "development_preservation_failure_is_terminal": (DEVELOPMENT_PRESERVATION_REQUIRED),
+        "numerical_exceptions_persist_stopped_resume": (PERSIST_NUMERICAL_EXCEPTIONS_AS_STOPPED),
         "mandatory_update_50_gate": {
             "endpoint_damping_nrmse_improvement_fraction_both_banks": (
                 MANDATORY_D_IMPROVEMENT_FRACTION
@@ -164,9 +167,7 @@ def protocol_manifest() -> dict[str, Any]:
         "terminal": {
             "first_scheduled_qualifying_checkpoint_only": True,
             "training_endpoint_damping_nrmse_maximum": TRAIN_TERMINAL_D_NRMSE,
-            "development_endpoint_damping_nrmse_maximum": (
-                DEVELOPMENT_TERMINAL_D_NRMSE
-            ),
+            "development_endpoint_damping_nrmse_maximum": (DEVELOPMENT_TERMINAL_D_NRMSE),
             "correct_sign_fraction_minimum_both_banks": TERMINAL_SIGN_FRACTION,
             "teacher_aligned_gain_range_both_banks": list(TERMINAL_GAIN_RANGE),
             "all_preservation_gates": True,
@@ -175,9 +176,7 @@ def protocol_manifest() -> dict[str, Any]:
             "factorial_seeds": list(QUALIFICATION_FACTORIAL_SEEDS),
             "attitude_seeds": list(QUALIFICATION_ATTITUDE_SEEDS),
             "scenes_per_streamed_bank": QUALIFICATION_SCENES_PER_BANK,
-            "total_scenes": (
-                len(QUALIFICATION_FACTORIAL_SEEDS) * QUALIFICATION_SCENES_PER_BANK
-            ),
+            "total_scenes": (len(QUALIFICATION_FACTORIAL_SEEDS) * QUALIFICATION_SCENES_PER_BANK),
             "generated_only_after_terminal_development_pass": True,
             "candidate_fallback": False,
             "endpoint_damping_nrmse_maximum": DEVELOPMENT_TERMINAL_D_NRMSE,
@@ -211,9 +210,7 @@ def constraint_specs(
         )
         for horizon_index, horizon in enumerate(joint.SUPERVISION_STEPS):
             source_value = source_metrics["by_supervision_step_nrmse"][str(horizon)][component]
-            current_value = current_metrics["by_supervision_step_nrmse"][str(horizon)][
-                component
-            ]
+            current_value = current_metrics["by_supervision_step_nrmse"][str(horizon)][component]
             specs.append(
                 {
                     "name": f"{component}.step_{horizon}",
@@ -241,14 +238,9 @@ def constraint_specs(
     return specs
 
 
-def _empty_gradient_rows(
-    controller: ConnectomeController, count: int
-) -> list[dict[str, Tensor]]:
+def _empty_gradient_rows(controller: ConnectomeController, count: int) -> list[dict[str, Tensor]]:
     return [
-        {
-            name: torch.zeros_like(getattr(controller, name))
-            for name in joint.PARAMETER_FAMILIES
-        }
+        {name: torch.zeros_like(getattr(controller, name)) for name in joint.PARAMETER_FAMILIES}
         for _ in range(count)
     ]
 
@@ -324,8 +316,7 @@ def constraint_gradient_rows(
         target = attitude_cache.source_motor[scene_index, label_indices, :3].to(device)
         per_axis_mse = ((prediction - target) / rpy_scales).square().mean(dim=0)
         losses = [
-            per_axis_mse[specs[index]["axis_index"]] / attitude_scenes
-            for index in attitude_indices
+            per_axis_mse[specs[index]["axis_index"]] / attitude_scenes for index in attitude_indices
         ]
         _accumulate_gradients(rows, attitude_indices, losses, parameters)
     return rows
@@ -353,8 +344,7 @@ def project_inequality_displacement(
         for column_index in range(row_index + 1):
             other = rows[column_index]
             value = sum(
-                (PARAMETER_LEARNING_RATES[name] ** 2)
-                * (row[name] * other[name]).sum()
+                (PARAMETER_LEARNING_RATES[name] ** 2) * (row[name] * other[name]).sum()
                 for name in joint.PARAMETER_FAMILIES
             )
             gram[row_index, column_index] = value.double()
@@ -377,9 +367,7 @@ def project_inequality_displacement(
             "linearized_violation_before": violation_before.tolist(),
         }
     active_indices = active.nonzero(as_tuple=False)[:, 0]
-    normalized_gram = gram[active][:, active] / (
-        row_norm[active, None] * row_norm[None, active]
-    )
+    normalized_gram = gram[active][:, active] / (row_norm[active, None] * row_norm[None, active])
     normalized_violation = violation_before[active] / row_norm[active]
     gram_numpy = normalized_gram.detach().cpu().numpy()
     violation_numpy = normalized_violation.detach().cpu().numpy()
@@ -430,9 +418,7 @@ def project_inequality_displacement(
         "solver_message": str(result.message),
         "solver_iterations": int(result.nit),
         "constraint_names": [spec["name"] for spec in specs],
-        "active_rpy_rows": [
-            spec["name"] for spec in specs if spec["kind"] == "attitude"
-        ],
+        "active_rpy_rows": [spec["name"] for spec in specs if spec["kind"] == "attitude"],
         "linearized_violation_before": violation_before.tolist(),
         "linearized_violation_after": linearized_after.tolist(),
         "maximum_linearized_violation_after": maximum_violation,
@@ -441,9 +427,7 @@ def project_inequality_displacement(
     }
 
 
-def preservation_decision(
-    source: dict[str, Any], candidate: dict[str, Any]
-) -> dict[str, Any]:
+def preservation_decision(source: dict[str, Any], candidate: dict[str, Any]) -> dict[str, Any]:
     reasons = []
     for component in ("common", "height"):
         if (
@@ -504,10 +488,7 @@ def damping_directional_derivative(
 ) -> float:
     return float(
         sum(
-            (
-                gradients[name].double()
-                * (displacement[name].double() / scale)
-            ).sum()
+            (gradients[name].double() * (displacement[name].double() / scale)).sum()
             for name in joint.PARAMETER_FAMILIES
         )
     )
@@ -549,9 +530,7 @@ def mandatory_gate_decision(
         ("training", source_training, training),
         ("development", source_development, development),
     ):
-        fraction = 1.0 - candidate["endpoint_damping_nrmse"] / source[
-            "endpoint_damping_nrmse"
-        ]
+        fraction = 1.0 - candidate["endpoint_damping_nrmse"] / source["endpoint_damping_nrmse"]
         improvements[label] = fraction
         if fraction < MANDATORY_D_IMPROVEMENT_FRACTION:
             reasons.append(f"{label} endpoint damping NRMSE improvement was below 25%")
@@ -599,9 +578,7 @@ def make_projected_proposal(
     projected, projection = project_inequality_displacement(raw_displacement, rows, specs)
     step_audit.set_displacement(student, base, projected, scale=1.0)
     bounded_parameters = joint._copy_parameters(student)
-    bounded = {
-        name: bounded_parameters[name] - base[name] for name in joint.PARAMETER_FAMILIES
-    }
+    bounded = {name: bounded_parameters[name] - base[name] for name in joint.PARAMETER_FAMILIES}
     bounded_linearized = [
         spec["current_mse"]
         - spec["limit_mse"]
@@ -731,20 +708,35 @@ def resumed_stop_state(
     """Recover a previously persisted terminal condition without advancing training."""
     if history:
         last = history[-1]
-        if (
-            not last.get("accepted", False)
-            and int(last.get("update", -1)) == accepted_updates + 1
-        ):
+        if not last.get("accepted", False) and int(last.get("update", -1)) == accepted_updates + 1:
             return str(last.get("stop_reason", "deterministic proposal was rejected")), False
     if development_history:
         last = development_history[-1]
         if int(last.get("update", -1)) == accepted_updates:
+            if DEVELOPMENT_PRESERVATION_REQUIRED and not last.get("preservation", {}).get(
+                "pass", False
+            ):
+                return "scheduled development preservation failed", False
             mandatory = last.get("mandatory_update_50_gate")
             if mandatory is not None and not mandatory.get("pass", False):
                 return "mandatory update-50 gate failed", False
             if last.get("terminal", {}).get("pass", False):
                 return "first scheduled terminal checkpoint qualified", True
     return None, False
+
+
+def development_outcome_stop_reason(
+    preservation: dict[str, Any],
+    mandatory: dict[str, Any] | None,
+    terminal: dict[str, Any],
+) -> str | None:
+    if DEVELOPMENT_PRESERVATION_REQUIRED and not preservation["pass"]:
+        return "scheduled development preservation failed"
+    if mandatory is not None and not mandatory["pass"]:
+        return "mandatory update-50 gate failed"
+    if terminal["pass"]:
+        return "first scheduled terminal checkpoint qualified"
+    return None
 
 
 def install_trial(
@@ -754,9 +746,7 @@ def install_trial(
     *,
     scale: float,
 ) -> dict[str, float]:
-    return step_audit.set_displacement(
-        controller, source, displacement, scale=scale
-    )
+    return step_audit.set_displacement(controller, source, displacement, scale=scale)
 
 
 def atomic_torch_save(payload: dict[str, Any], path: Path) -> None:
@@ -794,6 +784,52 @@ def save_resume(
             "qualification": qualification,
         },
         path,
+    )
+
+
+def restore_and_persist_numerical_exception(
+    student: ConnectomeController,
+    optimizer: torch.optim.Optimizer,
+    parameters: dict[str, Tensor],
+    optimizer_state: dict[str, Any],
+    error: Exception,
+    *,
+    stage: str,
+    update_number: int,
+    resume_path: Path,
+    source_checkpoint_sha256: str,
+    accepted_updates: int,
+    history: list[dict[str, Any]],
+    development_history: list[dict[str, Any]],
+    preflight: dict[str, Any],
+    projection: dict[str, Any] | None = None,
+) -> None:
+    joint._load_parameters(student, parameters)
+    optimizer.load_state_dict(optimizer_state)
+    optimizer.zero_grad(set_to_none=True)
+    if not PERSIST_NUMERICAL_EXCEPTIONS_AS_STOPPED:
+        return
+    entry = {
+        "update": update_number,
+        "accepted": False,
+        "stop_reason": f"numerical exception during {stage}",
+        "exception_type": type(error).__name__,
+        "exception_message": str(error),
+        "trials": [],
+    }
+    if projection is not None:
+        entry["projection"] = projection
+    history.append(entry)
+    save_resume(
+        resume_path,
+        student,
+        optimizer,
+        source_checkpoint_sha256=source_checkpoint_sha256,
+        accepted_updates=accepted_updates,
+        history=history,
+        development_history=development_history,
+        preflight=preflight,
+        run_state="stopped",
     )
 
 
@@ -889,9 +925,7 @@ def aggregate_streamed_metrics(
     }
 
 
-def qualification_decision(
-    source: dict[str, Any], candidate: dict[str, Any]
-) -> dict[str, Any]:
+def qualification_decision(source: dict[str, Any], candidate: dict[str, Any]) -> dict[str, Any]:
     preservation = preservation_decision(source, candidate)
     reasons = list(preservation["reasons"])
     if candidate["endpoint_damping_nrmse"] > DEVELOPMENT_TERMINAL_D_NRMSE:
@@ -1220,9 +1254,95 @@ def main() -> int:
 
     stop_reason = None
     terminal_checkpoint = None
+
+    def run_scheduled_development() -> tuple[str | None, Path | None]:
+        development_metrics, _ = endpoint.evaluate(
+            student,
+            development_factorial,
+            development_attitude,
+            scales,
+            endpoint_scale=endpoint_scale,
+            device=device,
+        )
+        preservation = preservation_decision(source_development, development_metrics)
+        mandatory = (
+            mandatory_gate_decision(
+                source_training,
+                current_training,
+                source_development,
+                development_metrics,
+            )
+            if accepted_updates == MANDATORY_GATE_UPDATE
+            else None
+        )
+        terminal = terminal_decision(
+            source_training,
+            current_training,
+            source_development,
+            development_metrics,
+        )
+        development_history.append(
+            {
+                "update": accepted_updates,
+                "metrics": development_metrics,
+                "preservation": preservation,
+                "mandatory_update_50_gate": mandatory,
+                "terminal": terminal,
+            }
+        )
+        checkpoint = None
+        if terminal["pass"]:
+            checkpoint = args.output_dir / "nonpromotional-terminal.pt"
+            atomic_torch_save(
+                {
+                    "experiment": EXPERIMENT,
+                    "protocol_commit": PROTOCOL_COMMIT,
+                    "source_checkpoint_sha256": checkpoint_sha256,
+                    "graph_sha256": graph_sha256,
+                    "accepted_updates": accepted_updates,
+                    "controller": student.state_dict(),
+                },
+                checkpoint,
+            )
+        outcome = development_outcome_stop_reason(preservation, mandatory, terminal)
+        save_resume(
+            resume_path,
+            student,
+            optimizer,
+            source_checkpoint_sha256=checkpoint_sha256,
+            accepted_updates=accepted_updates,
+            history=history,
+            development_history=development_history,
+            preflight=preflight,
+            run_state=(
+                "terminal_pending_qualification"
+                if terminal["pass"]
+                else "stopped"
+                if outcome is not None
+                else "active"
+            ),
+        )
+        print(
+            json.dumps(
+                {
+                    "progress": "development",
+                    "update": accepted_updates,
+                    "endpoint_damping_nrmse": development_metrics["endpoint_damping_nrmse"],
+                    "preservation_pass": preservation["pass"],
+                    "mandatory_gate_pass": mandatory["pass"] if mandatory else None,
+                    "terminal_pass": terminal["pass"],
+                }
+            ),
+            flush=True,
+        )
+        return outcome, checkpoint
+
     if not preflight["pass"]:
         stop_reason = "constrained proposal preflight failed"
-    elif resumed and resume_metadata["run_state"] != "active":
+    elif resumed and resume_metadata["run_state"] not in (
+        "active",
+        "development_pending",
+    ):
         stop_reason, resume_has_terminal = resumed_stop_state(
             accepted_updates, history, development_history
         )
@@ -1248,21 +1368,45 @@ def main() -> int:
                     },
                     terminal_checkpoint,
                 )
+    if stop_reason is None and resumed and resume_metadata["run_state"] == "development_pending":
+        if accepted_updates % DEVELOPMENT_INTERVAL != 0 or any(
+            int(entry.get("update", -1)) == accepted_updates for entry in development_history
+        ):
+            raise SystemExit("pending-development resume has inconsistent history")
+        stop_reason, terminal_checkpoint = run_scheduled_development()
     while stop_reason is None and accepted_updates < MAXIMUM_ACCEPTED_UPDATES:
         update_number = accepted_updates + 1
         base = joint._copy_parameters(student)
         optimizer_before = copy.deepcopy(optimizer.state_dict())
-        displacement, raw_gradients, projection = make_projected_proposal(
-            student,
-            optimizer,
-            source_training,
-            current_training,
-            train_factorial,
-            train_attitude,
-            scales,
-            endpoint_scale,
-            device=device,
-        )
+        try:
+            displacement, raw_gradients, projection = make_projected_proposal(
+                student,
+                optimizer,
+                source_training,
+                current_training,
+                train_factorial,
+                train_attitude,
+                scales,
+                endpoint_scale,
+                device=device,
+            )
+        except Exception as error:
+            restore_and_persist_numerical_exception(
+                student,
+                optimizer,
+                base,
+                optimizer_before,
+                error,
+                stage="proposal",
+                update_number=update_number,
+                resume_path=resume_path,
+                source_checkpoint_sha256=checkpoint_sha256,
+                accepted_updates=accepted_updates,
+                history=history,
+                development_history=development_history,
+                preflight=preflight,
+            )
+            raise
         if not projection["pass_after_parameter_bounds"]:
             joint._load_parameters(student, base)
             optimizer.load_state_dict(optimizer_before)
@@ -1288,19 +1432,38 @@ def main() -> int:
                 run_state="stopped",
             )
             break
-        selected_scale, selected_metrics, trials = find_safe_trial(
-            student,
-            base,
-            displacement,
-            raw_gradients,
-            source_training,
-            current_training,
-            train_factorial,
-            train_attitude,
-            scales,
-            endpoint_scale,
-            device=device,
-        )
+        try:
+            selected_scale, selected_metrics, trials = find_safe_trial(
+                student,
+                base,
+                displacement,
+                raw_gradients,
+                source_training,
+                current_training,
+                train_factorial,
+                train_attitude,
+                scales,
+                endpoint_scale,
+                device=device,
+            )
+        except Exception as error:
+            restore_and_persist_numerical_exception(
+                student,
+                optimizer,
+                base,
+                optimizer_before,
+                error,
+                stage="candidate selection",
+                update_number=update_number,
+                resume_path=resume_path,
+                source_checkpoint_sha256=checkpoint_sha256,
+                accepted_updates=accepted_updates,
+                history=history,
+                development_history=development_history,
+                preflight=preflight,
+                projection=projection,
+            )
+            raise
         trial_metadata = accepted_trial_metadata(selected_scale, trials)
         entry = {
             "update": update_number,
@@ -1336,9 +1499,7 @@ def main() -> int:
                     "update": accepted_updates,
                     "scale": selected_scale,
                     **trial_metadata,
-                    "training_endpoint_damping_nrmse": current_training[
-                        "endpoint_damping_nrmse"
-                    ],
+                    "training_endpoint_damping_nrmse": current_training["endpoint_damping_nrmse"],
                     "training_endpoint_damping_sign": current_training[
                         "endpoint_damping_correct_sign_fraction"
                     ],
@@ -1361,52 +1522,6 @@ def main() -> int:
                 preflight=preflight,
             )
             continue
-        development_metrics, _ = endpoint.evaluate(
-            student,
-            development_factorial,
-            development_attitude,
-            scales,
-            endpoint_scale=endpoint_scale,
-            device=device,
-        )
-        preservation = preservation_decision(source_development, development_metrics)
-        mandatory = (
-            mandatory_gate_decision(
-                source_training,
-                current_training,
-                source_development,
-                development_metrics,
-            )
-            if accepted_updates == MANDATORY_GATE_UPDATE
-            else None
-        )
-        terminal = terminal_decision(
-            source_training,
-            current_training,
-            source_development,
-            development_metrics,
-        )
-        development_entry = {
-            "update": accepted_updates,
-            "metrics": development_metrics,
-            "preservation": preservation,
-            "mandatory_update_50_gate": mandatory,
-            "terminal": terminal,
-        }
-        development_history.append(development_entry)
-        if terminal["pass"]:
-            terminal_checkpoint = args.output_dir / "nonpromotional-terminal.pt"
-            atomic_torch_save(
-                {
-                    "experiment": EXPERIMENT,
-                    "protocol_commit": PROTOCOL_COMMIT,
-                    "source_checkpoint_sha256": checkpoint_sha256,
-                    "graph_sha256": graph_sha256,
-                    "accepted_updates": accepted_updates,
-                    "controller": student.state_dict(),
-                },
-                terminal_checkpoint,
-            )
         save_resume(
             resume_path,
             student,
@@ -1416,34 +1531,10 @@ def main() -> int:
             history=history,
             development_history=development_history,
             preflight=preflight,
-            run_state=(
-                "terminal_pending_qualification"
-                if terminal["pass"]
-                else (
-                    "stopped"
-                    if mandatory is not None and not mandatory["pass"]
-                    else "active"
-                )
-            ),
+            run_state="development_pending",
         )
-        print(
-            json.dumps(
-                {
-                    "progress": "development",
-                    "update": accepted_updates,
-                    "endpoint_damping_nrmse": development_metrics["endpoint_damping_nrmse"],
-                    "preservation_pass": preservation["pass"],
-                    "mandatory_gate_pass": mandatory["pass"] if mandatory else None,
-                    "terminal_pass": terminal["pass"],
-                }
-            ),
-            flush=True,
-        )
-        if mandatory is not None and not mandatory["pass"]:
-            stop_reason = "mandatory update-50 gate failed"
-            break
-        if terminal["pass"]:
-            stop_reason = "first scheduled terminal checkpoint qualified"
+        stop_reason, terminal_checkpoint = run_scheduled_development()
+        if stop_reason is not None:
             break
     if stop_reason is None:
         stop_reason = "maximum accepted-update budget reached without terminal qualification"
