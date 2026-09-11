@@ -1279,6 +1279,9 @@ def motion_example(
         "target": target_contrast.detach(),
         "horizon": horizon,
         "endpoint_image_difference_max": endpoint_difference,
+        "maximum_motor_absolute": float(output.detach().abs().max()),
+        "motor_outputs": output.detach(),
+        "throttle_pair_mean": output[:, 3].detach().mean().reshape(()),
         "recurrent_state_finite": recurrent_state_finite,
         "actor_output_finite": actor_output_finite,
     }
