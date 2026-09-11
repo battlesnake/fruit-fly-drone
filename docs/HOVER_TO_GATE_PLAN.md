@@ -2282,13 +2282,105 @@ The accepted-step record exposes objective dominance rather than a derivative de
 the 50 sampled accepted candidates, fixed-burn dense-loss improvement summed to `125.304640`
 while motion-loss improvement summed to only `0.006764`; 21 accepted candidates actually
 worsened their sampled motion loss. Full-prefix selection showed the same imbalance. These
-within-step sums are not a shared-bank learning curve, but they demonstrate that equal scalar
-weights did not provide equal optimization pressure: static/common throttle imitation
-overwhelmed the weak recurrent motion contrast. This does not show inadequate fly recurrence;
-the next experiment must first make visual damping a genuine optimization responsibility,
-then reintroduce collective/height calibration rather than repeating this mixed loss.
+within-step sums are not a shared-bank learning curve, but they demonstrate a severe selection
+imbalance consistent with static/common throttle imitation overwhelming a much weaker
+recurrent motion contrast. They do not by themselves prove that this imbalance caused the
+terminal failure. This does not show inadequate fly recurrence; the next experiment must
+first make visual damping a genuine optimization responsibility, then reintroduce
+collective/height calibration rather than repeating this mixed loss.
 
 Final data were never generated or opened. No native-attitude reintegration, full-native
 hover, gate flight or promotion was authorized. The full report SHA-256 is
 `549259e08db3dd1dc43afda0ea85b76f86fac115a5a28bb0aca6700dbccb9ed9`; see
 [`artifacts/variable-height-native-throttle-assisted-beta1-zero-ladder-v1/`](../artifacts/variable-height-native-throttle-assisted-beta1-zero-ladder-v1/).
+
+### Preregistered assisted native-throttle motion-only learnability curriculum
+
+The next experiment tests the specific optimization-priority diagnosis; it does not resume
+or tune the stopped update-50 controller. Restart from the original `paired-dynamic-001`
+checkpoint with fresh Adam, beta values `(0, 0.999)` and accepted-update counter zero. Keep
+the full graph, transmitter signs, 320x200 RGB and roll/pitch actor inputs, native MaleCNS
+recurrence, front-leg motor outputs, parameter families, learning rates, gradient cap,
+parameter bounds and projection unchanged. Add no velocity, accelerometer, target height,
+phase, timer, decoded feature, external state or engineered history.
+
+Optimize only the existing normalized equal-endpoint paired-motion contrast loss. There is
+no dense imitation term, source-output anchor, height/common constraint or physical rollout
+in this learnability experiment. This is deliberately not a larger arbitrary weight on D:
+visual damping is the sole optimization responsibility. Common throttle, height response,
+all four raw motor outputs and source-relative output drift are recorded but do not select a
+candidate. The result cannot establish hover even if it passes.
+
+This diagnostic changes both objective composition and motion sampling: it removes dense
+teaching and replaces stochastic eight-pair samples with an exact complete bank. It therefore
+tests whether that combined learning setup can expose native damping learnability; it cannot
+uniquely attribute a pass or failure to loss competition versus sampling variance.
+
+Generate one fixed 24-pair training bank at seed `450991`. Construct the exact full factorial
+of marker-error magnitude 0.05/0.10 m, marker-error sign minus/plus, endpoint vertical-speed
+magnitude 0.15/0.30 m/s and history length 15/20/25 policy frames, then apply one persisted
+seeded permutation. Thus every combination occurs exactly once and every horizon contains
+eight pairs. Use ordinary training wall/floor style combinations. Each pair starts with the
+unchanged 25-frame neutral zero-state prefix, follows the existing smooth mirrored return
+history and ends with bit-identical pose, RGB and roll/pitch under opposite signed endpoint
+motion. The analytical teacher supplies only the target throttle contrast; it never supplies
+an actor input or physical action.
+
+Before the source replay, freeze the single normalization denominator as the RMS analytical-
+teacher contrast over all 24 training pairs, floored at `0.01` motor units. Reuse that exact
+scalar for every gradient, replay, derivative probe, ordinary candidate, milestone and
+development evaluation. Never recompute it from candidate outputs or development targets.
+
+Retain the existing motion trajectory for causal comparability. Its smooth-return function
+has the declared continuous endpoint derivative but includes a fixed 5.5 cm excursion, so
+the sampled last-frame displacement need not have exactly the labelled velocity magnitude.
+Before optimization, report the finite-difference last-frame velocity/label ratio for every
+case and require only finite values and matching nonzero sign; do not conceal or post-hoc
+correct the magnitude mismatch. Also require finite source recurrence and outputs, exact
+endpoint-image equality, a finite nonzero teacher target in every pair, and the established
+teacher-to-foreleg sign control.
+
+Every update uses all 24 training pairs in the same persisted order. Reconstruct each shared
+neutral prefix from native zero state without gradient, detach it, differentiate every frame
+of the 15-, 20- or 25-frame mirrored response, and accumulate the exact equally weighted
+whole-bank loss before one Adam transaction. There is no case sampling RNG, minibatch
+selection or bank regeneration. For candidate acceptance, independently replay all 24 cases
+from zero state so an update must improve both its frozen-burn objective and its actual
+full-prefix objective by at least `1e-4`.
+
+Use the qualified derivative protocol unchanged: evaluate three identical current-objective
+replays, define replay noise as their maximum pairwise difference, and test the pending
+materialized direction at `1/16`, `1/32`, `1/64`, `1/128`, `1/256`, `1/512` until the first
+two adjacent above-noise probes agree with the negative predicted derivative within 20%.
+Those probes remain diagnostic and cannot select or supply an update. Then try the unchanged
+ordinary scales `1`, `1/2`, `1/4`, `1/8`, `1/16`, `1/32` in descending order. Require finite
+states, outputs, gradients and reports, a valid one-step Adam transaction, native bounds,
+canonical idempotence and exact restoration on every rejected or terminal attempt. A finite
+no-scale result stops on its first occurrence: because the bank, order, controller and Adam
+state are fixed, retrying would reproduce the same proposal and risk selecting replay noise.
+A failed direction, derivative ladder, transaction, bound, canonical or numerical control is
+fatal.
+
+Allow at most 100 accepted and 100 attempted updates. At accepted update 25, evaluate the
+unchanged complete training bank and stop unless NRMSE has improved at least 25% relative to
+its frozen source value and at least 50% of all pairs have the correct sign. Persist this
+decision; there is no alternate-checkpoint selection. Continue only on a pass.
+
+At update 100, require at least 90% correct sign overall and within each horizon, and require
+teacher-aligned gain in 0.5-1.5 overall and within each horizon. Also require motion NRMSE to
+have improved at least 50% relative to source, exact endpoint images, finite recurrence and
+outputs, and legal motor bounds. Only a passing update-100 training result may generate the
+single disjoint 24-pair bank at seed `460991`. That bank uses the same exact factorial
+amplitudes and horizons but a separate permutation and held-out wall/floor style
+combinations. It must independently pass the same sign, per-horizon gain, 50%-relative-NRMSE,
+endpoint-equality, finiteness and output-bound gates relative to its own source replay.
+
+The development result is first-terminal-checkpoint-only: record that evaluation has started
+before generating it, never try another checkpoint or seed, and do not train from it. A pass
+shows only that the present native visual/recurrent circuit can learn the required damping
+sign when damping is its actual optimization priority. It authorizes a separately
+preregistered staged teacher-attitude-assisted curriculum that preserves learned damping
+while restoring collective and height calibration. A failure at update 25, update 100 or
+development instead sends work to a temporal-credit/time-constant experiment, not a repeat
+with a post-hoc loss weight. Neither outcome authorizes native-attitude reintegration,
+full-native hover, gate flight or promotion.
