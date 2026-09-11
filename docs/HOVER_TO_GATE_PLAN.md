@@ -3367,6 +3367,22 @@ Require exact v2 identity again. Do not render development/acceptance, retain a 
 authorize training unless every original gate passes. This is an arithmetic-conditioning
 correction, not a post-result threshold change.
 
+If this direct-state v2 still fails the unchanged derivative gate, do not make another immediate
+training attempt. Preregister a diagnostic step ladder at
+`[0.008,0.004,0.002,0.001,0.0005,0.00025]`, recording total and component losses and requiring
+each probe to pass at two adjacent resolved steps with the same 2% limit. This distinguishes
+float32 resolution from the first-order truncation that can arise when many activity hinges sit
+exactly at their boundary. Persistent disagreement across resolved scales would then require an
+independent FP64 check. This fallback preserves the advisor's conditioning analysis without
+weakening v2 or retroactively passing v1.
+
+The v2 direct-state implementation SHA-256 is
+`babf62f81674da8c6bbe14460812c4d02929502c050eace45050733acf9d35cc`, its one-shot driver is
+`2bb4919e6cc00cd35775211fe361d05778acdbfa459abf2bd0bccc6c953119b3`, its checker is
+`a1d8f2b4d38248a0112aed40e2306ab6186628259a23f1b327c9423b69dcd04e`, and its AIRA runner is
+`b0e60b02d68e48e088d430a2105b24b5a406af865657b5c9275a62a42f7d31d3`. Commit these files
+before the v2 one-shot execution.
+
 For each pathway and integrated/terminal window, let `O_up` and `O_down` be the
 stationary-subtracted c-d anatomical opponents, then define `D=(O_up-O_down)/2` and
 `B=(O_up+O_down)/2`. Freeze each normalization from the source training response with an absolute

@@ -11,6 +11,7 @@ SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 import preflight_vertical_motion_commissioning as preflight  # noqa: E402
+import preflight_vertical_motion_commissioning_v2 as preflight_v2  # noqa: E402
 import preregister_vertical_motion_commissioning as registration  # noqa: E402
 import vertical_motion_commissioning as commissioning  # noqa: E402
 
@@ -142,3 +143,27 @@ def test_registered_loss_accepts_balanced_pathway_shapes() -> None:
     assert float(components["stationary"]) == 0.0
     assert float(components["direction"]) == 0.0
     assert float(components["reverse"]) == 0.0
+
+
+def test_v2_changes_only_tau_arithmetic_protocol() -> None:
+    v1_protocol = preflight.protocol_manifest()
+    v2_protocol = preflight_v2.protocol_manifest()
+
+    ignored = {
+        "experiment",
+        "protocol_commit",
+        "locked_v1_report_sha256",
+        "locked_v1_classification",
+        "numerical_correction",
+        "scientific_or_threshold_changes_from_v1",
+        "v1_frozen_source_normalizations_sha256_required",
+        "v1_rendered_training_subset_sha256_required",
+    }
+    assert {key: value for key, value in v2_protocol.items() if key not in ignored} == {
+        key: value
+        for key, value in v1_protocol.items()
+        if key not in {"experiment", "protocol_commit"}
+    }
+    assert v2_protocol["scientific_or_threshold_changes_from_v1"] == []
+    assert v2_protocol["finite_difference"]["central_step"] == 1.0e-3
+    assert v2_protocol["finite_difference"]["symmetric_relative_error_maximum"] == 0.02
