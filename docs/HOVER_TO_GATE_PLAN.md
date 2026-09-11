@@ -2572,3 +2572,63 @@ This result authorizes naming RK4-M=1 in a separately preregistered training exp
 does not authorize training execution, hover, gate flight or promotion. The full report
 SHA-256 is `daeb4c000b3421a2d1d4d22890ccb900f654f1587748d035d88c4f884cff85a7`;
 see [`artifacts/variable-height-continuous-cns-solver-v1/`](../artifacts/variable-height-continuous-cns-solver-v1/).
+
+### Preregistered RK4 throttle-motor readout step audit
+
+Test the control-responsibility hypothesis implied by the representation audit: keep the
+visual/recurrent estimator fixed and adapt only its existing anatomical interface to the
+throttle foreleg motors. Hash-lock the passing solver report at
+`daeb4c000b3421a2d1d4d22890ccb900f654f1587748d035d88c4f884cff85a7`, the original
+source checkpoint, stopped motion report/resume, and the immutable RGB cache at its recorded
+physical and semantic hashes. Reuse all 24 cases, source-relative outputs, order and frozen
+teacher scale. Generate no new scene, seed, trajectory, label or optimizer sample.
+
+Use selected `RK4-M=1`: one classical fourth-order step over each 20 ms camera interval,
+with four recurrent graph evaluations and one final native motor-pool readout. The actor still
+receives only cached RGB and roll/pitch and retains only its MaleCNS state. No decoded motion,
+external history, velocity, accelerometer, controller state or assistance is introduced.
+
+The deterministic mask contains every existing edge whose postsynaptic node belongs to either
+throttle antagonist output pool, plus the bias and raw time constant of each such motor node.
+It contains 493 edge magnitudes and seven motor nodes. The sorted int64 edge-index SHA-256 is
+`4978758242ecfc9e53e859e077c098821e5747027a96f2945d3020e65ef81f3d`; the node-index
+SHA-256 is `69c46d204b312950eb04e4538d5802031803e301d5b28dc45e8adb2d35487831`,
+and the corresponding body-ID SHA-256 is
+`bcdbf3f61b91b16dd7b6792b5622bb990d234fa97d326ba1180df0dd39a24752`.
+All other edge magnitudes, biases and time constants remain bit-identical to source. Existing
+topology and transmitter signs remain fixed, edge magnitudes stay in `[0,8]`, and no new
+readout parameter is added.
+
+Compute one complete 24-pair endpoint-motion gradient from the source. Each case uses a
+source-computed, detached 25-frame neutral prefix followed by a fully differentiated cached
+response under RK4. The only objective is the frozen-scale squared error of native throttle
+contrast; pair-common throttle and RPY outputs are preservation measurements, not weighted
+losses. Accumulate the exact mean gradient in fixed bank order. Apply a fresh one-step Adam
+transaction with `betas=(0,0.999)`, edge and bias learning rate `1e-4`, raw-time-constant
+learning rate `1e-6`, epsilon `1e-8`, and global gradient-norm cap 1.0. Zero every gradient
+outside the declared mask before clipping and require every unmasked parameter to remain
+bit-identical.
+
+Replay the fixed-burn objective three times; use the first value as authoritative and the
+others only to measure maximum pairwise numerical noise. The bound-projected full proposal
+must be finite and have negative raw-gradient directional derivative. On scale `1/16`, require
+the measured and predicted derivatives to be below `-1e-8`, symmetric relative error at most
+20%, and absolute objective change greater than `max(1e-8,10*replay_noise)`. This probe is a
+numerical control and cannot select the ordinary step.
+
+Evaluate the joint proposal at fixed ordinary scales `1, 1/2, 1/4, 1/8, 1/16, 1/32` in
+descending order using both the detached source prefixes and complete zero-state prefixes.
+Select the first scale that improves NRMSE by at least `0.001` in both evaluations, keeps
+source-relative pair-common throttle drift at most `0.005` RMS and `0.01` maximum absolute,
+keeps source-relative roll, pitch and yaw terminal-output drift at most `0.005` RMS and `0.01`
+maximum absolute per axis, and retains finite recurrence/metrics, exact endpoints and outputs
+within `[-1,1]`. Candidate comparisons use the same source output tensors, not regenerated
+source runs. Report edge-, bias- and time-constant-only scale-1 replays as diagnostics, but
+they cannot be selected or combined post hoc.
+
+Restore and hash-verify the source after every replay and at termination; retain no candidate
+or optimizer. A pass establishes only one safe local readout-directed step on the opened bank
+and authorizes preregistration of a bounded last-hop fitting run with disjoint development and
+qualification cohorts. Failure closes this exact last-hop/optimizer route and sends work to
+an upstream native-routing or direct constrained-readout design. Neither outcome authorizes
+training execution, closed-loop hover, gate flight or promotion.
