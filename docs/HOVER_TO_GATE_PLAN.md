@@ -2475,3 +2475,28 @@ the unchanged source remains wrong-signed. A corrected source sign would be enco
 does not itself authorize training, hover or promotion. Restore/hash-verify the source after
 every condition and at termination; retain no altered controller. This audit cannot authorize
 assisted hover, native attitude, gate flight or promotion.
+
+Result: the source-only audit completed with exact source restoration and finite recurrence,
+outputs and metrics at every rate, but selected no numerically adequate K. The immutable
+721 MiB input cache had bit-identical opposite-motion endpoint images. K=1 reproduced the
+earlier source NRMSE, aligned gain and prediction RMS within `4.23e-8`, `4.10e-8` and
+`8.15e-9`, respectively, passing the registered `2e-5` control.
+
+The normalized contrast-vector RMS changes for K=1→2, 2→4, 4→8 and 8→16 were `0.115923`,
+`0.068393`, `0.035531` and `0.015952`; all exceeded the `0.01` convergence limit. Four-axis
+terminal-motor RMS changes were `0.017457`, `0.006837`, `0.004326` and `0.002647`, so the
+last two passed their independent `0.005` limit. K=8→16 was therefore close but remained
+nonconverged on the registered contrast criterion, and no rate was selected.
+
+Descriptively, increasing internal rate strengthened rather than corrected the native
+wrong-signed response. Correct-sign fraction remained 0/24 throughout. Aligned gain moved
+from `-0.030875` at K=1 to `-0.114593`, `-0.168809`, `-0.197870` and `-0.210812`; NRMSE
+worsened from `1.031749` to `1.224188`. This suggests—but does not yet numerically establish—
+that the unchanged circuit's more continuous-time response is more strongly anti-damping.
+It rules out treating K=2, 4, 8 or 16 as a post-hoc behavior fix.
+
+No training execution, hover, gate flight or promotion was authorized. Per the registered
+branch, the next numerical step is a separately preregistered finer reference or higher-order
+solver, not selecting K=16 because its behavior or cost looks convenient. The full report
+SHA-256 is `ded09b91a114d08039d5334a937e36812b69ba55183634ae4bd21ed9864baff7`;
+see [`artifacts/variable-height-neural-integration-rate-audit-v1/`](../artifacts/variable-height-neural-integration-rate-audit-v1/).

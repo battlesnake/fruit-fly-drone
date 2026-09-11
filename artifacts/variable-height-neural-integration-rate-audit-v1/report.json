@@ -1,0 +1,103 @@
+{
+  "classification": "no_numerically_adequate_rate",
+  "conditions": {
+    "1": {
+      "by_horizon_nrmse": {"15": 1.0012123584747314, "20": 1.016109585762024, "25": 1.0763896703720093},
+      "correct_sign_fraction": 0.0,
+      "native_branch_state_updates": 1560,
+      "neural_dt_seconds": 0.02,
+      "nrmse": 1.0317492485046387,
+      "pair_common_throttle_rms": 0.38563185930252075,
+      "prediction_rms_motor_units": 0.002292232820764184,
+      "source_loaded_and_restored_exactly": true,
+      "teacher_aligned_gain": -0.0308750718832016,
+      "wall_time_seconds": 0.6692433520074701
+    },
+    "2": {
+      "by_horizon_nrmse": {"15": 1.020637035369873, "20": 1.09915030002594, "25": 1.2331945896148682},
+      "correct_sign_fraction": 0.0,
+      "native_branch_state_updates": 3120,
+      "neural_dt_seconds": 0.01,
+      "nrmse": 1.1211007833480835,
+      "pair_common_throttle_rms": 0.375543475151062,
+      "prediction_rms_motor_units": 0.007264177314937115,
+      "source_loaded_and_restored_exactly": true,
+      "teacher_aligned_gain": -0.11459290981292725,
+      "wall_time_seconds": 0.8665492110012565
+    },
+    "4": {
+      "by_horizon_nrmse": {"15": 1.0495408773422241, "20": 1.1639074087142944, "25": 1.310325026512146},
+      "correct_sign_fraction": 0.0,
+      "native_branch_state_updates": 6240,
+      "neural_dt_seconds": 0.005,
+      "nrmse": 1.179430365562439,
+      "pair_common_throttle_rms": 0.38034525513648987,
+      "prediction_rms_motor_units": 0.010092979297041893,
+      "source_loaded_and_restored_exactly": true,
+      "teacher_aligned_gain": -0.1688092052936554,
+      "wall_time_seconds": 1.6317169270041632
+    },
+    "8": {
+      "by_horizon_nrmse": {"15": 1.070696234703064, "20": 1.1995419263839722, "25": 1.345504641532898},
+      "correct_sign_fraction": 0.0,
+      "native_branch_state_updates": 12480,
+      "neural_dt_seconds": 0.0025,
+      "nrmse": 1.2104647159576416,
+      "pair_common_throttle_rms": 0.3858594298362732,
+      "prediction_rms_motor_units": 0.011509014293551445,
+      "source_loaded_and_restored_exactly": true,
+      "teacher_aligned_gain": -0.1978703886270523,
+      "wall_time_seconds": 2.888164133008104
+    },
+    "16": {
+      "by_horizon_nrmse": {"15": 1.0820152759552002, "20": 1.2156553268432617, "25": 1.359165906906128},
+      "correct_sign_fraction": 0.0,
+      "native_branch_state_updates": 24960,
+      "neural_dt_seconds": 0.00125,
+      "nrmse": 1.2241877317428589,
+      "pair_common_throttle_rms": 0.3885132372379303,
+      "prediction_rms_motor_units": 0.012116385623812675,
+      "source_loaded_and_restored_exactly": true,
+      "teacher_aligned_gain": -0.21081216633319855,
+      "wall_time_seconds": 6.118616563995602
+    }
+  },
+  "correct_sign_fraction_all_conditions": 0.0,
+  "full_report_sha256": "ded09b91a114d08039d5334a937e36812b69ba55183634ae4bd21ed9864baff7",
+  "gate_flight_authorized": false,
+  "hover_authorized": false,
+  "implementation_commit": "e7971df",
+  "input_cache": {
+    "bytes": 755720085,
+    "endpoint_image_difference_max": 0.0,
+    "file_sha256": "68ea98cc60a8969eb38c1bc62db698bb232ddb6ddaebac426a850ee31596ecb8",
+    "semantic_sha256": "43a576a2abc01283a7b5a72560e3c9ff921bfaaf3e5a481ac6715019843f7d0e"
+  },
+  "k1_reproduction": {
+    "nrmse_absolute_difference": 4.2291680379946683e-8,
+    "pass": true,
+    "prediction_rms_absolute_difference": 8.149072527885437e-9,
+    "teacher_aligned_gain_absolute_difference": 4.0978193283081055e-8,
+    "tolerance": 2e-5
+  },
+  "locked_inputs": {
+    "checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+    "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665",
+    "motion_bank_sha256": "0887ead1e9eef7755c47b51967f55bbde0e7203b17e76ea9f50456e97ca530fc",
+    "motion_report_sha256": "ad0f4f0524be5f9a769b74d890d8f8b6925ba25921bb283ac52b8089ddc22c5c",
+    "motion_resume_sha256": "04c4b4e0b598f37c3808a7740bad0160c2826d20584149c841694696d1d0e28d",
+    "source_controller_semantic_sha256": "46bb7dccebf4947eb885f2abe9b384388e229bdd075b5142fcd1cb369e721b07"
+  },
+  "numerical_refinements": [
+    {"coarse": 1, "contrast_rms_over_teacher_scale": 0.11592287955340874, "fine": 2, "motor_rms": 0.017457047167635905, "pass": false},
+    {"coarse": 2, "contrast_rms_over_teacher_scale": 0.06839254441907253, "fine": 4, "motor_rms": 0.006836836582179119, "pass": false},
+    {"coarse": 4, "contrast_rms_over_teacher_scale": 0.03553065468637835, "fine": 8, "motor_rms": 0.004325804344826357, "pass": false},
+    {"coarse": 8, "contrast_rms_over_teacher_scale": 0.01595185457025563, "fine": 16, "motor_rms": 0.0026471381419432244, "pass": false}
+  ],
+  "pass": false,
+  "promotion_authorized": false,
+  "protocol_commit": "e0d07a9",
+  "selected_substeps": null,
+  "start_marker_sha256": "1e051a7385778bc3426d60744b00737e8593b4434529768b98391f229f8e2457",
+  "training_execution_authorized": false
+}
