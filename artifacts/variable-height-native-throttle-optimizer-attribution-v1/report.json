@@ -1,0 +1,73 @@
+{
+  "accepted_18_training_only": {
+    "dense_teacher_target_nrmse": 4.887594699859619,
+    "dense_teacher_target_rmse": 0.06726408749818802,
+    "dense_teacher_target_rmse_improvement_percent": 15.827417747893783,
+    "motion_correct_sign_fraction": 0.0,
+    "motion_nrmse": 1.0250253677368164,
+    "motion_teacher_aligned_gain": -0.024601789191365242,
+    "source_throttle_drift_nrmse": 3.1990892367810453
+  },
+  "assisted_hover_authorized": false,
+  "audit_start_marker_sha256": "c7eb9ac5bc1a0eddf164cec04d90655a11c91a9a453a3cca3d87d9c400656e0d",
+  "audit_started_before_computation": true,
+  "beta1_zero": {
+    "finite_difference": {
+      "autograd_directional_derivative": -5.662610064879202,
+      "measured_directional_derivative": -5.075395584106445,
+      "measured_objective_change": -0.31721222400665283,
+      "pass": true,
+      "relative_error": 0.10370032088467385,
+      "scale": 0.0625
+    },
+    "first_moment_replaced_exactly": true,
+    "materialized_direction": -5.662634133781241,
+    "ordinary_selected_scale_for_audit_only": 0.5,
+    "scale_half_fixed_burn_in_improvement": 0.5585231781005859,
+    "scale_half_full_prefix_improvement": 0.49458068422973156,
+    "second_moment_retained_and_updated": true,
+    "unprojected_direction": -5.672788710598294
+  },
+  "candidate_or_optimizer_retained": false,
+  "classification": "beta1_zero_optimizer_route_qualified",
+  "counterfactual_optimizer_counters": {
+    "after": [
+      19.0,
+      19.0,
+      19.0
+    ],
+    "before": [
+      18.0,
+      18.0,
+      18.0
+    ],
+    "pass": true
+  },
+  "experiment": "variable-height-native-throttle-optimizer-attribution-v1",
+  "full_report_sha256": "cc4f66e168e4b6f2b1f7157c87584c24bfbfbf5eca579d8abdd4c3b13f53030c",
+  "gate_flight_authorized": false,
+  "implementation_commit": "f09a869",
+  "midpoint_or_final_data_opened": false,
+  "native_attitude_reintegration_authorized": false,
+  "new_beta1_zero_preregistration_authorized": true,
+  "original_adam": {
+    "materialized_direction": 0.9616569120748663,
+    "reported_direction_absolute_difference": 9.028209057015957e-07,
+    "unprojected_direction": 1.0114304848121802
+  },
+  "pass": true,
+  "promoted": false,
+  "protocol_commit": "cecdafe",
+  "restoration": {
+    "controller_sha256": "05cb3e44f66c8f19e6cc147c617a6496e8023edd9c97f07be99e0bd1859a46f8",
+    "optimizer_sha256": "5b9df11d8396df8808af3fab1b916fa9d1b0a1b88031df2439e917152b52da0e",
+    "pass": true
+  },
+  "source_training_only": {
+    "dense_teacher_target_nrmse": 5.806634902954102,
+    "dense_teacher_target_rmse": 0.07991211116313934,
+    "motion_correct_sign_fraction": 0.0,
+    "motion_nrmse": 1.0302997827529907,
+    "motion_teacher_aligned_gain": -0.029650582000613213
+  }
+}

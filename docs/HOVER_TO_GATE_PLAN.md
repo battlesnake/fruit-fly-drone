@@ -2053,3 +2053,54 @@ the original source with `betas=(0, 0.999)` and otherwise unchanged curriculum, 
 rates, backtracks, budgets, midpoint/final seeds and gates. It does not authorize resuming
 accepted update 18, evaluating its unopened data, assisted hover, native attitude
 reintegration, gate flight or promotion. Failure closes this optimizer route.
+
+Result: the attribution audit passed. It reproduced original Adam's materialized direction at
+`+0.961657` and changed it to `-5.662634` with β1=0 while retaining the accepted-18 second
+moments and exact 18-to-19 counter transition. The β1=0 scale-1/16 finite difference had
+10.370% relative error and reduced the fixed objective by `0.317212`. Scale 1/2 passed both
+objective gates, improving fixed-burn and zero-state full-prefix objectives by `0.558523` and
+`0.494581`. Controller and optimizer hashes were restored exactly and no candidate was
+retained.
+
+Descriptively, accepted update 18 reduced frozen teacher-history throttle RMSE by 15.83%, from
+`0.079912` to `0.067264`. Motion NRMSE improved only 0.51%, from `1.030300` to `1.025025`,
+and all 24 training pairs remained wrong-signed. This is training-only evidence and does not
+establish hover. No midpoint or final data were opened. The full report SHA-256 is
+`cc4f66e168e4b6f2b1f7157c87584c24bfbfbf5eca579d8abdd4c3b13f53030c`; see
+[`artifacts/variable-height-native-throttle-optimizer-attribution-v1/`](../artifacts/variable-height-native-throttle-optimizer-attribution-v1/).
+
+### Preregistered source-restarted β1=0 assisted-throttle curriculum
+
+Run one new teacher-attitude-assisted native-throttle experiment from the unchanged original
+visual-hover source—not accepted update 18. Incorporate every actor, simulator, case-support,
+teacher/student-history, paired-motion, detached-burn-in, objective, backtracking, numerical,
+budget, midpoint, final, frozen-vision, bootstrap and interpretation rule from the curriculum
+registered above. Change exactly one fitting choice: fresh Adam uses `betas=(0, 0.999)` rather
+than `(0.9, 0.999)`. Both first and second moments start empty at the original source; β1=0
+removes cross-update first-moment inertia while retaining Adam's within-run second-moment
+coordinate scaling. Keep the same parameter families, gradient-norm cap and learning rates.
+
+Reuse positive-control seed `380983`, training-history seeds `381983` through `384983`, student-
+history seeds `392983` through `394983`, paired-motion seeds `401983` through `404983`, and
+optimizer-sampling seed `410983` to make the optimizer change causally comparable. The update-
+50 evaluation seeds `420983` and `420984`, update-100 seeds `430983` and `430984`, and bootstrap
+seed `440983` remain valid because the stopped predecessor never generated those data. Do not
+replace, preview or tune against them.
+
+Record optimizer betas in every protocol manifest and resume, and reject a resume whose
+param-group betas do not match `(0, 0.999)`. Retain the exact finite raw-gradient, recurrent-
+state/output, bounds, canonical, one-transaction counter, materialized negative-direction and
+scale-1/16 finite-difference controls. Test the same ordinary scales and require both fixed-
+burn and zero-state full-prefix improvement by `1e-4`. Any numerical failure is terminal; a
+finite no-scale proposal is an ordinary rejection, with the same five-consecutive and 125-
+attempt limits. Preserve the same crash-atomic midpoint, final and terminal transitions.
+
+Before opening formal seeds, run one complete disposable integration update using only the
+existing `990983`, `990984` and `990985` nonformal seeds with β1=0, including CPU-canonical
+resume round-trip validation. Then execute the formal run once at
+`runs/variable-height-hover/native-throttle-assisted-beta1-zero-001`. The unchanged update-50
+gate requires at least 50% assisted-hover success and 50% correctly signed motion pairs. The
+unchanged update-100 gate requires at least 90% assisted-hover success, 90% correct motion sign,
+motion gain 0.5-1.5 and a positive 95% live-minus-frozen bootstrap lower bound. A pass still
+authorizes only a separately preregistered native-attitude reintegration experiment; it does
+not itself promote a full-native hover controller or authorize gate training.
