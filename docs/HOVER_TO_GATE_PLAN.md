@@ -3820,3 +3820,56 @@ within the existing 24 parameters: increasing batch size alone is not the answer
 expansion is not yet justified either. The result authorizes only separately preregistering
 constrained/common-descent training in this parameterization. It does not yet commission a visual
 vertical-motion module or authorize routing, hover, gate flight or promotion.
+
+### Grouped CUDA execution-equivalence preflight protocol
+
+Before implementing constrained training, qualify a faster execution path on the exact archived
+proposal-25 state. Lock the frozen-witness full report at
+`556bb5cf3f3f42427492b20d7daa47682ab399efa64541dbc79b03db8d13e879`, its started marker at
+`666c5aca899ec8849555df43ff3898747bc55e63fe33b7a7df1ca2848ca44141`, its tracked compact report
+at `482a03071937994dc92872c345de0ae71eafd8120ca0d7ac686a9a49ba8382af`, and every upstream input
+hash transitively locked there. Use only the existing 96-pair training bank, source-frozen
+normalizations, proposal-25 parameters and original 24-parameter objective. Do not access
+development or acceptance data, update parameters or optimizer state, rerun a direction solver,
+or retain a candidate. Write an exclusive started marker before neural evaluation and fail closed
+after interruption.
+
+Implement recurrent evaluation that batches independent case/polarity trajectories on CUDA while
+preserving each trajectory's four moving/stationary branches, neutral prefix, frame count, CNS
+substeps and FP32 state evolution. Test fixed grouped-gradient sizes `1`, `2` and `4` in order,
+where the size counts contiguous original four-case balanced batches and all 24 original batches
+are evaluated for every size. Within a group, calculate each original batch's references,
+nonlinear components, total loss and four direction-stratum objectives separately, then average
+those original objectives before differentiation. Never pool cases before calculating source
+normalization, DSI, hinge, activity, bias, stationary or reversal terms. Accumulate group gradients
+with their exact original-batch-count weights.
+
+For every size, compare grouped total loss, every component and each stratum with the locked
+sequential proposal-25 result to absolute tolerance `1e-6`. Compare the full gradient and all four
+stratum gradients with maximum coordinate difference at most `1e-6` and relative L2 error at most
+`1e-4`. Separately build a complete proposal-25 response bank using case blocks of `4`, `8` and
+`16`, respectively. Compare every response tensor against one sequential response bank generated
+in this preflight to maximum absolute tolerance `1e-6`, and require derived loss/components/strata
+to match both the sequential bank and locked result to `1e-6`.
+
+For each size, materialize the already frozen multiplier-`1.0` witness from the same proposal-25
+archive and evaluate it through that size's batched response path. Require finite parameters,
+responses, metrics and derivatives; the same scientific pass decision; and loss, every component
+and every stratum within `1e-6` of the locked witness trial. Restore the proposal-25 parameters,
+untouched Adam state at counter 25 and source exactly after every evaluation and at exit.
+
+Repeat the largest otherwise-passing size once and require all losses, components, strata,
+responses and gradients to reproduce within the same absolute tolerances. Record wall-clock time,
+cases per second and CUDA peak reserved memory for each size; memory must not exceed 14 GiB. A
+size passes only if every equivalence, determinism, finite, memory, hash and restoration control
+passes. Evaluate all three sizes and select the largest passing size; no retrospective scientific
+threshold or objective change is permitted. If that largest otherwise-passing size fails its
+repeat, terminate with no selected size and no authorization; do not fall back to an un-repeated
+smaller size. Any shared input-hash, source, optimizer or final-restoration failure invalidates the
+entire preflight even if one or more individual sizes otherwise passed.
+
+A terminal pass authorizes only freezing the selected grouped execution path in a separately
+preregistered common-descent trainer. It is not new evidence for motion coding and does not
+authorize altering loss/anatomy, opening held-out data, retaining a module, routing motion,
+hover, gate flight or promotion. If no size passes, constrained training remains unauthorized and
+the result only informs a separately preregistered smaller execution block or implementation fix.
