@@ -11,10 +11,12 @@ SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 import audit_vertical_motion_derivative_ladder as ladder  # noqa: E402
+import audit_vertical_motion_tau_fp64 as tau_fp64  # noqa: E402
 import preflight_vertical_motion_commissioning as preflight  # noqa: E402
 import preflight_vertical_motion_commissioning_v2 as preflight_v2  # noqa: E402
 import preregister_vertical_motion_commissioning as registration  # noqa: E402
 import vertical_motion_commissioning as commissioning  # noqa: E402
+import vertical_motion_commissioning_fp64 as commissioning_fp64  # noqa: E402
 
 
 def _training_specs() -> list[dict]:
@@ -185,3 +187,60 @@ def test_resolution_floor_never_collapses_below_eight_float32_ulps() -> None:
 
     assert result["repeat_range"] == 0.0
     assert result["loss_resolution_floor"] == 8.0 * float(np.spacing(np.float32(1.0)))
+
+
+def test_fp64_tau_protocol_is_narrow_disposable_and_training_only() -> None:
+    protocol = tau_fp64.protocol_manifest()
+
+    assert tau_fp64.PROBES == (("T4c_tau", 0), ("T5c_tau", 2))
+    assert tau_fp64.STEPS == (0.008, 0.004, 0.002, 0.001)
+    assert (
+        protocol["precision_reference"]["sensory_recurrence_state_alpha_response_and_loss_dtype"]
+        == "float64"
+    )
+    assert protocol["development_or_acceptance_specs_used"] is False
+    assert protocol["development_or_acceptance_pixels_rendered"] is False
+    assert protocol["candidate_retained"] is False
+    assert protocol["hover_gate_or_promotion_authorized"] is False
+
+
+def test_fp64_resolution_floor_uses_float64_ulps() -> None:
+    result = tau_fp64.loss_resolution_floor([1.0, 1.0, 1.0])
+
+    assert result["repeat_range"] == 0.0
+    assert result["loss_resolution_floor"] == 8.0 * float(np.spacing(np.float64(1.0)))
+
+
+def test_fp64_tau_qualification_requires_adjacent_steps() -> None:
+    rows = [{"step": step, "pass": step in (0.004, 0.002)} for step in tau_fp64.STEPS]
+
+    qualification = tau_fp64.qualify_probe(rows)
+
+    assert qualification["pass"] is True
+    assert qualification["passing_adjacent_step_pairs"] == [[0.004, 0.002]]
+
+
+def test_fp64_reference_promotion_roundtrips_exactly() -> None:
+    source = {
+        "floating": torch.tensor([0.1, -0.25], dtype=torch.float32),
+        "indices": torch.tensor([1, 3], dtype=torch.int64),
+        "nested": [torch.tensor(0.001, dtype=torch.float32), "fixed"],
+    }
+
+    promoted = commissioning_fp64.promote_tree_fp64(source)
+
+    assert promoted["floating"].dtype == torch.float64
+    assert promoted["indices"].dtype == torch.int64
+    assert commissioning_fp64.promotion_roundtrip_maximum_difference(source, promoted) == 0.0
+
+
+def test_fp64_fixed_state_tau_derivative_matches_closed_form() -> None:
+    result = commissioning_fp64.fixed_state_tau_derivative(
+        torch.tensor([0.021], dtype=torch.float64),
+        1.0 / 1600.0,
+    )
+
+    assert result["finite_nonzero"] is True
+    assert result["clamp_inactive"] is True
+    assert result["sign_matches"] is True
+    assert result["symmetric_relative_error"] <= tau_fp64.ONE_STEP_RELATIVE_ERROR_LIMIT

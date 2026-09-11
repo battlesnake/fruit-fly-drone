@@ -3474,6 +3474,13 @@ Adam/backtracking test using the already computed production gradients and requi
 authorize the already bounded 100-update training protocol; it does not itself authorize hover,
 gate flight or promotion.
 
+The independent FP64 controller SHA-256 is
+`f1ca8750ce441dc2ad7533b1188e5cae640443e550d16564cab8c106a32bb756`, the audit is
+`3cea145844f1ffb09bcad2c6764605adf3b7503dd779f5ca742598abb70a350a`, its terminal checker is
+`593f6a5de04153a83551f95efe20f9efe5e85f2e233eb8fef4dcd319b6c99bde`, and its AIRA runner is
+`06fb39e45fc5e0cbe3d5baa652326df5762e784d5561084d55b1450ce222d5c0`. Commit these files
+before the one-shot FP64 audit.
+
 For each pathway and integrated/terminal window, let `O_up` and `O_down` be the
 stationary-subtracted c-d anatomical opponents, then define `D=(O_up-O_down)/2` and
 `B=(O_up+O_down)/2`. Freeze each normalization from the source training response with an absolute
