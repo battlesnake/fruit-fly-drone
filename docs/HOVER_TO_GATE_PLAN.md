@@ -2632,3 +2632,25 @@ and authorizes preregistration of a bounded last-hop fitting run with disjoint d
 qualification cohorts. Failure closes this exact last-hop/optimizer route and sends work to
 an upstream native-routing or direct constrained-readout design. Neither outcome authorizes
 training execution, closed-loop hover, gate flight or promotion.
+
+Result: the audit passed every numerical, identity, mask, bound, endpoint, finiteness and
+restoration control but selected no step. The full masked Adam proposal was a valid descent
+direction (`-0.001430`), and its scale-1/16 measured and predicted changes agreed to 4.41%
+above the replay-noise threshold. All gradients and parameter changes outside the 493-edge,
+seven-neuron mask were exactly zero.
+
+Scale 1 improved detached-prefix and zero-state full-prefix NRMSE by `0.000602`, short of the
+registered `0.001` floor. That was its only failure. Pair-common throttle drift was just
+`0.000428` RMS and `0.000544` maximum, and RPY drift remained at float32 noise scale. Smaller
+steps gave nearly proportional, still sub-threshold improvements. The family-only diagnostics
+assigned `0.000591` improvement to incoming edge magnitudes, `0.0000106` to motor bias, and
+no measurable improvement to the registered motor-time-constant step.
+
+This does not establish a harmful last-hop coupling: the mask had substantial safety headroom
+but the exact Adam scaling was too weak for the preregistered useful-progress claim. The
+failed scale is not retroactively accepted. Per the frozen branch, the next justified test is
+a separately declared direct constraint-aware readout displacement or upstream routing, not
+this exact optimizer repeated. No fitting, hover, gate flight or promotion was authorized.
+The full report SHA-256 is
+`508c54ebb00aa8419e66e540bbc7ca45bd0d254858e76eab590cc4f39dc878f7`;
+see [`artifacts/variable-height-rk4-throttle-readout-step-v1/`](../artifacts/variable-height-rk4-throttle-readout-step-v1/).

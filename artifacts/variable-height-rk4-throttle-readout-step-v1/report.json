@@ -1,0 +1,106 @@
+{
+  "classification": "no_safe_local_readout_step",
+  "family_only_scale_one": {
+    "bias": {
+      "full_nrmse_improvement": 0.000010609626770019531,
+      "pair_common_throttle_drift_rms": 0.000041147402953356504,
+      "selected": false
+    },
+    "edge_magnitude": {
+      "full_nrmse_improvement": 0.0005908012390136719,
+      "pair_common_throttle_drift_rms": 0.0003871519584208727,
+      "selected": false
+    },
+    "raw_time_constant": {
+      "full_nrmse_improvement": 0.0,
+      "pair_common_throttle_drift_rms": 2.5809567816281742e-8,
+      "selected": false
+    }
+  },
+  "full_proposal_directional_derivative": -0.0014300262380315839,
+  "full_report_sha256": "508c54ebb00aa8419e66e540bbc7ca45bd0d254858e76eab590cc4f39dc878f7",
+  "gradient": {
+    "all_masked_families_nonzero": true,
+    "family_rms_before_clipping": {
+      "bias": 0.04812922328710556,
+      "edge_magnitude": 0.04657833278179169,
+      "raw_time_constant": 0.010511108674108982
+    },
+    "norm_before_clipping": 1.0423876785981665,
+    "outside_mask_exactly_zero": true
+  },
+  "implementation_commit": "536ef12",
+  "locked_solver_report_sha256": "daeb4c000b3421a2d1d4d22890ccb900f654f1587748d035d88c4f884cff85a7",
+  "numerical_controls": {
+    "baseline_objectives": [
+      1.5309767723083496,
+      1.5309761762619019,
+      1.5309761762619019
+    ],
+    "measured_probe_change": -0.00009341186472511254,
+    "pass": true,
+    "predicted_probe_change": -0.00008937925548974603,
+    "probe_scale": 0.0625,
+    "replay_noise": 5.960464477539062e-7,
+    "symmetric_relative_error": 0.044122594474244124
+  },
+  "ordinary_candidates": [
+    {
+      "failure": "fixed and full NRMSE improvement below 0.001 only",
+      "fixed_nrmse_improvement": 0.0006018877029418945,
+      "full_nrmse_improvement": 0.000601649284362793,
+      "pair_common_drift_maximum": 0.0005442500114440918,
+      "pair_common_drift_rms": 0.00042788474820554256,
+      "pass": false,
+      "scale": 1.0
+    },
+    {
+      "fixed_nrmse_improvement": 0.0003008842468261719,
+      "full_nrmse_improvement": 0.0003006458282470703,
+      "pass": false,
+      "scale": 0.5
+    },
+    {
+      "fixed_nrmse_improvement": 0.00015044212341308594,
+      "full_nrmse_improvement": 0.00015056133270263672,
+      "pass": false,
+      "scale": 0.25
+    },
+    {
+      "fixed_nrmse_improvement": 0.00007534027099609375,
+      "full_nrmse_improvement": 0.00007510185241699219,
+      "pass": false,
+      "scale": 0.125
+    },
+    {
+      "fixed_nrmse_improvement": 0.00003743171691894531,
+      "full_nrmse_improvement": 0.00003743171691894531,
+      "pass": false,
+      "scale": 0.0625
+    },
+    {
+      "fixed_nrmse_improvement": 0.000018596649169921875,
+      "full_nrmse_improvement": 0.000018477439880371094,
+      "pass": false,
+      "scale": 0.03125
+    }
+  ],
+  "pass": false,
+  "readout_mask": {
+    "edge_count": 493,
+    "edge_indices_sha256": "4978758242ecfc9e53e859e077c098821e5747027a96f2945d3020e65ef81f3d",
+    "negative_edges": 179,
+    "node_count": 7,
+    "node_indices_sha256": "69c46d204b312950eb04e4538d5802031803e301d5b28dc45e8adb2d35487831",
+    "positive_edges": 314
+  },
+  "selected_scale": null,
+  "source": {
+    "correct_sign_fraction": 0.0,
+    "nrmse": 1.2373260259628296,
+    "teacher_aligned_gain": -0.22327198088169098
+  },
+  "start_marker_sha256": "72cf53a6402b072d4d2677b01b0a914229dd9693710c638fb8ad01ec23735a56",
+  "terminal_source_restored": true,
+  "training_execution_authorized": false
+}
