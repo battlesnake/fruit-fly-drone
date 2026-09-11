@@ -1,0 +1,62 @@
+{
+  "archive": {
+    "file_sha256": "fb4c3118348eee63e9d0365c64123a459aa8327cd39a056ae5496318cd6f9f42",
+    "size_bytes": 234104414,
+    "tensor_semantic_sha256": {
+      "authoritative_endpoint_damping_row": "8e84dbfeb877f65d64e570fe8f93e398b115ff528a458a5efc708f8d6f15e740",
+      "candidate_parameters": "223d3eda98a5c7c3280b28782d4f46ac5845c290e14ca11898749712cbba02e3",
+      "full_correction_direction": "940940ce49483aeec18b9491efe2402efb68930de247fe63b3e9365ce967b4fa",
+      "full_correction_parameters": "223d3eda98a5c7c3280b28782d4f46ac5845c290e14ca11898749712cbba02e3",
+      "pending_optimizer_state": "6743cc01e41e01ccd7183b8981acff29eb5af22a72c3039bb9d234cfcbde42d6",
+      "repair_tensor_capture": "05b8da2b4d62fe177abfdd5c07904c4adf1344db0a4444d7e039281ff011ddde",
+      "solver_constraint_rows": "bb1fc8d4e7eab45ac599cbe00797b80110fe6a09cd02b1128dd460e76c0938f8",
+      "starting_candidate_parameters": "8cb6f9c625356c8a5f9112f417b0081254073af1e044e5cd98b61c47d59b04b4"
+    }
+  },
+  "accepted_update_21_snapshot_authorized": true,
+  "classification": "accepted_update_21_transaction_snapshot_qualified",
+  "development": {
+    "endpoint_damping_nrmse": 1.3192670345306396,
+    "endpoint_damping_nrmse_improvement_from_update_20": 0.0017644166946411133,
+    "endpoint_damping_teacher_aligned_gain": -0.30521970987319946,
+    "endpoint_damping_correct_sign_fraction": 0.0,
+    "preservation_pass": true,
+    "replay_values_checked": 25,
+    "replay_pass": true
+  },
+  "experiment": "variable-height-full-native-d-first-fp64-update21-snapshot-audit-v1",
+  "full_report_sha256": "c8f665732e2ebe84b0ee09fea8dee431e4e6ca021a8035bca1e9276d831413e5",
+  "implementation_commit": "0acf7c5",
+  "pass": true,
+  "producer": {
+    "all_input_and_repair_controls_pass": true,
+    "classification": "accepted_update_21_transaction_snapshot_produced",
+    "producer_report_sha256": "429e592696d114d0d8d5df396a32df205aae12707085d36e043928d87cd1fa3a",
+    "selected_correction_scale": 1.0,
+    "selected_proposal_scale": 0.0625
+  },
+  "promoted": false,
+  "protocol_commit": "44f39c5",
+  "restoration": {
+    "optimizer_sha256": "ff5e686148163a7f51b237b542d5f03ae74f63dcb7ef256dc1a82d99ad32f577",
+    "parameters_sha256": "783e39231e800a79f7fb9669eb9fa8c148d614c47885a58848f1881bbaeba327",
+    "producer_pass": true,
+    "verifier_pass": true
+  },
+  "training": {
+    "endpoint_common_step_25_nrmse": 1.6835944652557373,
+    "endpoint_damping_correct_sign_fraction": 0.0,
+    "endpoint_damping_nrmse": 1.3536418676376343,
+    "endpoint_damping_teacher_aligned_gain": -0.33833014965057373,
+    "replay_values_checked": 25,
+    "replay_pass": true
+  },
+  "verifier": {
+    "archive_unchanged_after_load": true,
+    "baseline_reproductions_pass": true,
+    "candidate_parameters_exact": true,
+    "pending_optimizer_exact": true,
+    "primary_or_repair_recomputed": false,
+    "semantic_hashes_pass": true
+  }
+}

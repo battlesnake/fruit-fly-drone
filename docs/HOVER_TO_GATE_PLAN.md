@@ -1477,3 +1477,71 @@ useful damping, authorize closed-loop hover, change the total-update-50 mandator
 permit automatic promotion. CPU repair and a general parameter-distance tolerance are not
 part of this audit: moving only the solver would not remove GPU gradient variation, while
 the stored snapshot gives future processes an exact state boundary.
+
+Result: the accepted-transaction snapshot qualification passed. The producer performed
+the single permitted reconstruction and selected the unchanged scale-1/16 proposal plus
+scale-1.0 repair. Its candidate parameter hash was
+`223d3eda98a5c7c3280b28782d4f46ac5845c290e14ca11898749712cbba02e3`; the exact pending
+Adam hash remained `6743cc01e41e01ccd7183b8981acff29eb5af22a72c3039bb9d234cfcbde42d6`.
+Training endpoint-D NRMSE was `1.35364187`, endpoint-C25 was `1.68359447`, and every
+repair and preservation control passed. Fixed-development endpoint-D NRMSE was
+`1.31926703`, an improvement of 0.00176442 from update 20, with all preservation gates
+passing.
+
+The producer archived the complete transaction, repair rows and correction direction in
+the ignored 224 MiB file whose SHA-256 is
+`fb4c3118348eee63e9d0365c64123a459aa8327cd39a056ae5496318cd6f9f42`. In a separate
+AIRA-confined process, the verifier loaded that archive without recomputing the primary or
+repair. Candidate parameters and optimizer were exact, both training and fixed-development
+replays matched all 25 registered values, the archive remained byte-for-byte unchanged,
+and both processes restored update 20 exactly. The full report SHA-256 is
+`c8f665732e2ebe84b0ee09fea8dee431e4e6ca021a8035bca1e9276d831413e5`.
+Sign fraction is still zero and teacher-aligned gain remains negative, so this establishes
+an exact continuation boundary rather than useful damping or hover. No fresh data,
+closed-loop simulation or promotion occurred. See
+[`artifacts/variable-height-full-native-d-first-fp64-update21-snapshot-audit-v1/`](../artifacts/variable-height-full-native-d-first-fp64-update21-snapshot-audit-v1/).
+
+Proceed with one **snapshot-seeded FP64-primary corrected fitting continuation to total
+update 50** in a new ignored run. Do not alter or resume either prior stopped continuation.
+Hash-lock the snapshot qualification report (SHA-256
+`c8f665732e2ebe84b0ee09fea8dee431e4e6ca021a8035bca1e9276d831413e5`), its producer
+report (SHA-256 `429e592696d114d0d8d5df396a32df205aae12707085d36e043928d87cd1fa3a`),
+and the complete transaction archive above, in addition to the existing update-20 source,
+graph, checkpoint, immutable cache and FP64 qualification inputs.
+
+Create the new crash-safe resume by loading the archived candidate parameters and pending
+Adam state exactly as accepted total update 21. Require their semantic hashes to equal the
+qualified snapshot hashes, append one provenance-only repaired update-21 history record,
+and retain development history only through total update 20. Do not recompute update 21's
+primary proposal, repair gradient, constraint rows, projection or candidate, and do not use
+its fixed-development result as a selection channel. Before generating update 22, require
+the loaded training metric tree to reproduce the archived candidate under the established
+numerical tolerance, the source metric tree to reproduce, the controller and pending Adam
+hashes to remain exact, and all locked files to remain unchanged. Failure is terminal and
+must persist a stopped resume without attempting update 22.
+
+For updates 22 onward, use the same fixed training bank and endpoint-D-only Adam objective.
+Generate each proposal's constraint specifications, Jacobian rows and dedicated endpoint-D
+gradient exactly once, take exactly one Adam update, and use only the qualified FP64
+bound-aware primary projection. Require solver success, original-unit primal violation at
+most `1e-6`, normalized KKT residual at most `1e-8`, exhaustive-support independent
+agreement, active-set convergence within eight rounds, native bounds, canonical
+idempotence, post-materialization linear violation at most `1e-6`, negative endpoint-D
+direction, finite/valid outputs and exact optimizer transaction accounting.
+
+Try the unchanged ordinary scales 1, 1/2, 1/4, 1/8, 1/16 and 1/32. Only the unchanged
+scale-1/16 C25-only case may enter the existing guard-band repair with its current
+eligibility, authoritative D row, finite-difference probe, fixed Jacobian, solver and
+acceptance margins, correction scales and no-extra-Adam rule. A rejected proposal,
+projection failure, numerical-control failure or failed scheduled development preservation
+restores the pre-update controller and optimizer exactly, persists a stopped result and is
+not retried.
+
+The phase still ends at 50 total accepted updates. Evaluate the unchanged fixed development
+bank at totals 30, 40 and 50. Apply the same terminal criteria at every scheduled point and
+the existing mandatory 25% source-relative endpoint-D improvement on both training and
+development at total 50. A mandatory-gate failure closes this route without hover. Terminal
+success permits only the already registered fresh qualification; closed-loop hover remains
+unauthorized until that passes. Keep all generated checkpoints, resumes and the 224 MiB
+snapshot under ignored `runs/`, commit only compact reports, and make no automatic
+promotion or actor-interface change.
