@@ -2548,3 +2548,27 @@ used by a separately preregistered temporal-credit/time-constant training experi
 does not authorize that training to execute, and it cannot authorize hover, gate flight or
 promotion. A stronger wrong-signed converged response is diagnostically useful but is not a
 failure of the numerical audit and must not be tuned away here.
+
+Result: the extension passed and selected classical RK4 with one 20 ms step per camera frame.
+K=16 exponential Euler passed against the K=32 fine reference with normalized contrast RMS
+difference `0.008004` and all-axis terminal-motor RMS difference `0.001231`. K=64 therefore
+remained unopened. RK4-M=1, M=2 and M=4 all passed directly against K=32; their normalized
+contrast differences were `0.008310`, `0.007284` and `0.007373`, and motor differences were
+`0.001152`, `0.001840` and `0.001843`. The registered evaluation-count rule selected RK4-M=1
+at four recurrent graph evaluations per 50 Hz camera/action frame.
+
+All source identities, endpoint equality and finiteness controls passed. Runtime was not a
+selection input, but RK4-M=1 took `1.256 s` versus `11.980 s` for K=32 on the audit. It is
+also four times cheaper in graph evaluations than adequate K=16 exponential Euler, making
+backpropagation through the native recurrence materially more practical.
+
+The converged descriptive response remained anti-damping: correct-sign fraction was 0/24,
+with aligned gain `-0.217006` for K=32 and `-0.223272` for selected RK4-M=1. The source's
+one-update-at-50-Hz dynamics were numerically coarse, but that coarseness did not cause the
+sign failure. The next experiment therefore needs to train temporal credit/routing under the
+selected accurate solver rather than expecting faster integration alone to repair control.
+
+This result authorizes naming RK4-M=1 in a separately preregistered training experiment; it
+does not authorize training execution, hover, gate flight or promotion. The full report
+SHA-256 is `daeb4c000b3421a2d1d4d22890ccb900f654f1587748d035d88c4f884cff85a7`;
+see [`artifacts/variable-height-continuous-cns-solver-v1/`](../artifacts/variable-height-continuous-cns-solver-v1/).

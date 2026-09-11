@@ -1,0 +1,103 @@
+{
+  "adequate_exponential_candidate": "exponential_euler_k16",
+  "candidate_comparisons_to_exponential_euler_k32": {
+    "exponential_euler_k16": {
+      "contrast_rms_difference_over_teacher_scale": 0.00800367009724281,
+      "graph_evaluations_per_camera_frame": 16,
+      "pass": true,
+      "terminal_motor_rms_difference": 0.0012311480679876676
+    },
+    "rk4_m1": {
+      "contrast_rms_difference_over_teacher_scale": 0.008310035306328267,
+      "graph_evaluations_per_camera_frame": 4,
+      "pass": true,
+      "terminal_motor_rms_difference": 0.0011521592438240632
+    },
+    "rk4_m2": {
+      "contrast_rms_difference_over_teacher_scale": 0.0072841753900990585,
+      "graph_evaluations_per_camera_frame": 8,
+      "pass": true,
+      "terminal_motor_rms_difference": 0.0018401344263496756
+    },
+    "rk4_m4": {
+      "contrast_rms_difference_over_teacher_scale": 0.007372877735812582,
+      "graph_evaluations_per_camera_frame": 16,
+      "pass": true,
+      "terminal_motor_rms_difference": 0.0018430303738497793
+    }
+  },
+  "classification": "numerically_adequate_solver_selected",
+  "conditions": {
+    "exponential_euler_k32": {
+      "correct_sign_fraction": 0.0,
+      "graph_evaluations_per_camera_frame": 32,
+      "nrmse": 1.2307168245315552,
+      "pair_common_throttle_rms": 0.39019039273262024,
+      "prediction_rms_motor_units": 0.012399425730109215,
+      "source_loaded_and_restored_exactly": true,
+      "teacher_aligned_gain": -0.2170063704252243,
+      "wall_time_seconds": 11.980310130995349
+    },
+    "rk4_m1": {
+      "correct_sign_fraction": 0.0,
+      "graph_evaluations_per_camera_frame": 4,
+      "nrmse": 1.2373260259628296,
+      "pair_common_throttle_rms": 0.39110657572746277,
+      "prediction_rms_motor_units": 0.012686719186604023,
+      "source_loaded_and_restored_exactly": true,
+      "teacher_aligned_gain": -0.22327198088169098,
+      "wall_time_seconds": 1.2559646150039043
+    },
+    "rk4_m2": {
+      "correct_sign_fraction": 0.0,
+      "graph_evaluations_per_camera_frame": 8,
+      "nrmse": 1.2365728616714478,
+      "pair_common_throttle_rms": 0.39221224188804626,
+      "prediction_rms_motor_units": 0.01264727022498846,
+      "source_loaded_and_restored_exactly": true,
+      "teacher_aligned_gain": -0.22260233759880066,
+      "wall_time_seconds": 2.221852315997239
+    },
+    "rk4_m4": {
+      "correct_sign_fraction": 0.0,
+      "graph_evaluations_per_camera_frame": 16,
+      "nrmse": 1.2366832494735718,
+      "pair_common_throttle_rms": 0.3921268582344055,
+      "prediction_rms_motor_units": 0.01265039574354887,
+      "source_loaded_and_restored_exactly": true,
+      "teacher_aligned_gain": -0.22271831333637238,
+      "wall_time_seconds": 4.091752000997076
+    }
+  },
+  "correct_sign_fraction_all_conditions": 0.0,
+  "full_report_sha256": "daeb4c000b3421a2d1d4d22890ccb900f654f1587748d035d88c4f884cff85a7",
+  "future_training_may_use_selected_solver": true,
+  "gate_flight_authorized": false,
+  "hover_authorized": false,
+  "implementation_commit": "be0c1de",
+  "locked_cache": {
+    "file_sha256": "68ea98cc60a8969eb38c1bc62db698bb232ddb6ddaebac426a850ee31596ecb8",
+    "semantic_sha256": "43a576a2abc01283a7b5a72560e3c9ff921bfaaf3e5a481ac6715019843f7d0e"
+  },
+  "locked_rate_report_sha256": "ded09b91a114d08039d5334a937e36812b69ba55183634ae4bd21ed9864baff7",
+  "pass": true,
+  "promotion_authorized": false,
+  "protocol_commit": "2f3e46b",
+  "reference": {
+    "coarse": "exponential_euler_k16",
+    "contrast_rms_difference_over_teacher_scale": 0.00800367009724281,
+    "fine": "exponential_euler_k32",
+    "k64_opened": false,
+    "pass": true,
+    "terminal_motor_rms_difference": 0.0012311480679876676
+  },
+  "selected_solver": {
+    "graph_evaluations_per_camera_frame": 4,
+    "method": "rk4",
+    "name": "rk4_m1",
+    "steps_per_camera_frame": 1,
+    "step_seconds": 0.02
+  },
+  "start_marker_sha256": "6d706293be1dc6b9e32e11ea2db78f23429644c08f5df48ffd5ad2368356ee06",
+  "training_execution_authorized": false
+}
