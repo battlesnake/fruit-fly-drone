@@ -3003,3 +3003,39 @@ authorize or alter a candidate. Hash-lock the failed report and direction archiv
 inputs, reject any direction mismatch, and do not overwrite, remove or reinterpret the `-001`
 failure. A corrected failure still closes this premotor-tau-only route; a corrected pass still
 authorizes only a separately preregistered bounded fit.
+
+#### RK4 premotor time-constant result
+
+The corrected implementation commit `169cbce` completed in
+`native-rk4-premotor-tau-preflight-002` with classification
+`premotor_tau_source_solver_requalification_failed`. The finite-difference gate passed: the
+measured objective change was `-0.00399087`, the raw-gradient prediction was `-0.00396557`,
+their symmetric relative error was `0.006361`, and the change was well above the
+`2.98e-6` replay-noise threshold.
+
+The largest scale-4 candidate passed the complete training gate. Per-cell ratio clipping
+reduced its requested 4 ms physical-tau RMS change to an actual `2.8769` ms; 22 cells hit the
+lower trust boundary and 190 hit the upper. Fixed-prefix and zero-state NRMSE improved from
+about `1.251558` to `1.219591` and `1.219601`, respectively. All four blocks preserved
+collective throttle and RPY outputs, with maximum block common-throttle RMS `0.001817` and
+maximum absolute common-throttle drift `0.006498`. This is substantially more local leverage
+than the accepted two-update motor readout fit, while using no external velocity or history.
+
+It did not solve the responsibility. Correct damping sign remained `0/96` and aligned gain
+only moved from `-0.238209` to `-0.208339`. More importantly, the unchanged source failed the
+new per-block RK4-M1 versus K32 gate: normalized contrast differences were `0.010041` and
+`0.010355` on two blocks, just above the immutable `0.01` limit. The candidate itself passed
+all four blocks (`0.007741`–`0.009559`), and both source and candidate were well inside the
+`0.005` terminal-motor RMS limit. This suggests that premotor tau shaping improves both the
+motion objective and numerical conditioning, but the preregistered source-and-candidate gate
+is conjunctive. Do not relax it after seeing the result or open development.
+
+The source was restored exactly, no candidate was retained, and held-out development remained
+unrendered and unopened. This closes the fixed 883-cell premotor-tau-only intervention. Preserve
+the useful mechanism—native time-scale separation can attenuate the anti-damping response—in a
+genuinely different internal decomposition that forms signed optic-flow/temporal-difference
+signals upstream and routes them through descending/VNC circuitry. Do not repeat another
+last-hop fit, expand this same tau mask, add engineered velocity/history, or reinterpret this
+as hover or gate-flight authorization. The corrected full report SHA-256 is
+`c5062fb18039d248d045eebbbfc17ccacc43522d5a34c2d239f7a14b309ba64a`; see
+[`artifacts/variable-height-rk4-premotor-tau-v1/`](../artifacts/variable-height-rk4-premotor-tau-v1/).

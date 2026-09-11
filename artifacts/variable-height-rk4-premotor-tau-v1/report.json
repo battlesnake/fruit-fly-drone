@@ -1,0 +1,55 @@
+{
+  "candidate": {
+    "actual_tau_delta_rms_seconds": 0.0028768808115273714,
+    "candidate_solver_normalized_contrast_range": [
+      0.00774051442586193,
+      0.009558641262258718
+    ],
+    "correct_sign_fraction": 0.0,
+    "fixed_nrmse": 1.2195909023284912,
+    "fixed_nrmse_improvement": 0.0319671630859375,
+    "full_nrmse": 1.219600796699524,
+    "full_nrmse_improvement": 0.031957149505615234,
+    "maximum_block_common_throttle_absolute": 0.0064983069896698,
+    "maximum_block_common_throttle_rms": 0.0018174188444390893,
+    "per_block_preservation_pass": true,
+    "requested_tau_delta_rms_seconds": 0.004000000189989805,
+    "scale": 4.0,
+    "solver_all_blocks_pass": true,
+    "teacher_aligned_gain": -0.2083386480808258,
+    "tau_components_clamped_lower": 22,
+    "tau_components_clamped_upper": 190
+  },
+  "classification": "premotor_tau_source_solver_requalification_failed",
+  "corrected_full_report_sha256": "c5062fb18039d248d045eebbbfc17ccacc43522d5a34c2d239f7a14b309ba64a",
+  "corrected_implementation_commit": "169cbce",
+  "corrected_protocol_commit": "c318a1f",
+  "development_generated": false,
+  "direction": {
+    "components_at_cap": 155,
+    "file_sha256": "ee2fa3b6b6944addef112544a7ffa7453b4bb8e5ab7ff98b2f3ab21997b5f085",
+    "maximum_absolute_seconds": 0.002,
+    "rms_seconds": 0.001,
+    "semantic_sha256": "ad34ae1a8e7bd1a295b23d3bab494b9c16714821e5558907492b3da1a19b063e"
+  },
+  "failed_harness_report_sha256": "a2b29f4879313f1763f8f10dbbb524fad3c34d05ea5042debbc799b85c5a637f",
+  "finite_difference": {
+    "measured_objective_change": -0.003990870980757677,
+    "noise_threshold": 0.000002983946814083538,
+    "pass": true,
+    "predicted_objective_change": -0.003965567381482887,
+    "symmetric_relative_error": 0.006360534229706456
+  },
+  "pass": false,
+  "source": {
+    "correct_sign_fraction": 0.0,
+    "failing_solver_blocks": {
+      "450992": 0.01004115292197561,
+      "450993": 0.010355161614729866
+    },
+    "nrmse": 1.2515579462051392,
+    "solver_all_blocks_pass": false,
+    "teacher_aligned_gain": -0.23820921778678894
+  },
+  "source_restored": true
+}
