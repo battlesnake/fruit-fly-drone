@@ -2890,3 +2890,73 @@ or adding external state. No hover, gate flight, collective-restoration training
 was authorized. The full report SHA-256 is
 `7f0dbd25aff387a67ec992e2ea7468c7c9c7b74e7d569914565f99665501b09c`;
 see [`artifacts/variable-height-rk4-readout-capacity-v1/`](../artifacts/variable-height-rk4-readout-capacity-v1/).
+
+### Preregistered RK4 premotor time-constant preflight
+
+Test the remaining control-theory hypothesis that visual velocity should be formed by native
+temporal filtering before the collective foreleg readout. This is not another edge/bias route
+expansion: the earlier K=1 shallow and expanded-route fits already showed safe attenuation
+without sign reversal, while the accurate-solver audit showed that the source anti-damping
+response is real rather than an integration artifact. The new intervention changes only the
+intrinsic time constants of the existing upstream premotor route under RK4.
+
+Hash-lock the failed readout-capacity report at
+`7f0dbd25aff387a67ec992e2ea7468c7c9c7b74e7d569914565f99665501b09c`, the older expanded-
+route preflight and training reports at
+`4a93a09acee7efc96e55043cddfd089f198ed253c44cab1e419972e8c5c8f6ea` and
+`137da6fee2f0fac564931f5db8cdaa7cb3c340747af9286dfa9ef0d3f96fbcec`, and the same graph,
+source checkpoint and four 24-pair training cache files used by the capacity fit. Generate no
+new training scene, target or permutation.
+
+Reuse the deterministic expanded premotor node set whose node-index SHA-256 is
+`f2cedb5b38e80beb9c29bba190ac9881c4cc473ea2849329b1f449c80402bd9b`. It contains 883
+nonmotor neurons: 612 `descending_neuron`, 253 `vnc_intrinsic` and 18 `ascending_neuron`
+cells already belonging to the native route into the seven throttle motor neurons. It
+contains no retinal, engineered attitude or motor-pool node. Train only these 883
+`raw_time_constant` values. Freeze every edge magnitude, every bias, every other time
+constant, topology, transmitter sign, sensory mapping and the complete four-axis foreleg
+readout bit-exactly to source.
+
+Parameterize the tested direction in physical time rather than arbitrary raw-logit units.
+For each selected neuron, convert the raw gradient through the exact local derivative of
+`tau = 0.01 + 0.24*sigmoid(raw_tau)` to obtain the gradient with respect to seconds. Use its
+negative Euclidean steepest-descent direction, normalized over the 883 selected cells.
+Materialize each candidate by changing physical tau, clamping only to the controller's native
+10–250 ms open interval with one float32 inverse-logit conversion, and report both actual
+tau and raw-parameter displacement. No Adam moments, edge/bias update, source-distance repair
+or output-Jacobian projection is used in this restored one-step preflight.
+
+Recompute the current source RK4-M1 neutral prefixes for each of the four cached blocks and
+differentiate the complete 96-pair motion-contrast NRMSE objective through every response
+frame. Replay the source detached-prefix objective three times and use the first as
+authoritative; the others define maximum pairwise numerical noise. Require finite nonzero
+selected tau gradient, gradients exactly zero outside the mask, and a finite negative
+directional derivative.
+
+Use physical-tau RMS candidates `4`, `2`, `1`, `0.5`, `0.25` and `0.125` ms in descending
+order. Before opening the ordinary ladder, use the 0.125 ms candidate as a forward finite-
+difference control: measured and predicted objective changes must be negative, their
+symmetric relative error at most 20%, and measured change greater than
+`max(1e-8,10*replay_noise)`. The probe cannot select a candidate.
+
+Select the largest ordinary candidate that improves NRMSE by at least `1e-4` in both the
+source-prefix and complete zero-state RK4 replay over all 96 pairs. Separately on every block,
+retain the readout-capacity source-relative common-throttle limits `0.005` RMS and `0.01`
+maximum and RPY limits `0.005` RMS and `0.01` maximum per axis. Also require exact paired
+endpoints, finite recurrence/outputs/metrics, motor outputs in `[-1,1]`, physical tau strictly
+inside 10–250 ms, exact non-tau parameters, and exact unselected time constants. Do not try an
+unregistered scale or combine candidates.
+
+Only a training-selected candidate may open the still-unrendered held-out-style development
+blocks at seeds `460991` and `460992`. Evaluate that one candidate once against freshly
+computed source references. It must improve development NRMSE by at least `1e-4`, improve or
+match every horizon within a `1e-5` numerical tolerance, and pass every per-block preservation
+and validity gate above. Do not select a different tau scale after development. Restore and
+hash-verify the complete source in all outcomes; retain no candidate.
+
+A pass establishes one transferable local temporal-shaping direction and authorizes only a
+separately preregistered bounded premotor-tau fit. It does not establish correct damping,
+hover or biological time constants. Failure closes this fixed premotor-tau-only route and
+requires a different internal control decomposition rather than accelerometer/velocity input,
+external history, a relaxed collective constraint or another last-hop fit. No result directly
+authorizes hover, gate flight or promotion.
