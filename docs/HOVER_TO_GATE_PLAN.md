@@ -1604,3 +1604,9 @@ controller mutation. Classify numerical failure separately from “projector qua
 no ordinary scale passed.” A passing audit authorizes only a separately preregistered
 continuation from the exact accepted update-24 boundary; it does not pass the stopped run,
 waive the total-update-50 mandatory gate, authorize hover or permit promotion.
+
+For this solver audit, `pass` means that source controls and exhaustive-primary numerical
+qualification pass; the training-only ordinary-scale result is reported in the
+classification but is not part of numerical qualification and does not install update 25.
+This preserves visibility of a possible unchanged repair-eligible outcome without invoking
+repair inside the solver audit.
