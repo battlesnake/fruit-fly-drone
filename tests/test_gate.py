@@ -12,10 +12,12 @@ from flydrone.gate import (
     crossing_coordinates,
     initial_gate_geometry,
     render_annular_gate,
+    render_annular_gate_rgb,
     sample_annular_gates,
     teacher_gate_rc,
 )
 from flydrone.hover import ConnectomeController, DifferentiableQuad, QuadState
+from flydrone.visual_hover import CameraSpec
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -77,6 +79,30 @@ def test_oblique_annulus_renders_off_centre_with_dark_aperture() -> None:
     assert image[32, 32] < 0.5
     assert bright_column < 32  # positive world/body Y is left in the rendered image
     assert not torch.allclose(image, torch.flip(image, dims=(1,)))
+
+
+def test_rgb_gate_camera_contains_coloured_gate_and_textured_floor() -> None:
+    quad = DifferentiableQuad()
+    state = quad.initial_state(1, device=torch.device("cpu"), dtype=torch.float32)
+    state = QuadState(
+        position=torch.tensor([[0.0, 0.0, 1.1]]),
+        velocity=state.velocity,
+        euler=state.euler,
+        rates=state.rates,
+        actuator=state.actuator,
+        specific_force=state.specific_force,
+    )
+    gate = AnnularGate(center=torch.tensor([[3.0, 0.7, 1.1]]), yaw=torch.tensor([0.2]))
+    camera = CameraSpec(width=80, height=50, horizontal_fov_degrees=125.0)
+
+    image = render_annular_gate_rgb(state, gate, camera=camera)[0]
+
+    assert image.shape == (3, 50, 80)
+    assert image.min() >= 0.0
+    assert image.max() <= 1.0
+    assert image[1].max() > 0.7  # green gate
+    assert image[:, -1].std() > 0.002  # textured grey floor
+    assert image[:, 0].max() < 0.01  # black background above the horizon
 
 
 def test_fixed_l1_receptive_fields_see_every_strict_launch_gate() -> None:

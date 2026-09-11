@@ -17,6 +17,39 @@ This plan advances one promotion gate at a time. Gate-training infrastructure ma
 built while hover runs, but controller optimization for the gate begins only after the
 variable-height hover gate passes.
 
+## Behavior-first feasibility update — 2026-09-12
+
+The formal promotion order above remains useful for a robust result, but it is no longer
+the critical path for deciding whether this approach can work at all. Following the
+explicit behavior-first decision, two deliberately pragmatic full-network probes were run
+before perfecting the large evaluation harness:
+
+- A motor-interface search produced useful all-native airborne hover on 50/128 fresh
+  six-second cases under the strict 10 cm criterion, with no ground contacts or invalid
+  flights. Frozen vision reduced this to 8/128.
+- A staged visual teacher followed by training of only short anatomical
+  photoreceptor-to-roll-motor paths produced a full-network single-gate controller. On 64
+  untouched flights arranged as 32 mirrored pairs, it made 50 clean passes, exactly 25/32
+  on each side, and passed both directions in 18/32 pairs. Freezing RGB after 0.5 seconds
+  produced 24 passes and none on the positive-offset side.
+
+Both deployed actors retain the fixed boundary below: native MaleCNS recurrence, raw RGB
+and roll/pitch in, and four-axis commands through the two forelegs. The gate actor starts
+airborne on a deliberately narrow single-gate distribution and therefore does **not** pass
+the formal Goal 2 promotion gate. Its purpose is more basic and now achieved: the full
+network can visibly steer a quadcopter through physical apertures on either side. See the
+[`hover record`](../artifacts/pragmatic-full-native-hover-v1/) and
+[`gate record`](../artifacts/pragmatic-full-native-gate-v1/).
+
+The next feasibility experiment is a two-gate course, not a certification expansion of
+the one-gate result. It must preserve neural, foreleg and aircraft state across both
+crossings. The passed gate becomes black, the current gate uses the already learned target
+colour, and the next gate uses one fixed secondary colour. Only the renderer/task owns the
+colour-role transition; the actor receives no gate index, waypoint or pass bit. Begin with
+generous spacing and modest alternating offsets, mirror whole courses, try the frozen
+single-gate actor zero-shot, then continue the same anatomical-path training while mixing
+single-gate replay if needed.
+
 ## Fixed actor boundary
 
 Throughout both goals, the deployed actor receives:

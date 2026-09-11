@@ -14,6 +14,23 @@ right pane is a schematic fly: the orange front leg moves the roll/pitch stick a
 blue front leg moves the yaw/throttle stick.  A green FPV border marks the swept-sphere
 gate crossing; it is a presentation indicator and is not supplied to the actor.
 
+### New full-network feasibility result
+
+The older compact milestone below remains the takeoff and broad-evaluation record. A
+separate behavior-first run now demonstrates substantially stronger visual steering with
+the complete 165,122-neuron recurrent graph and the requested 320×200 RGB camera. On 64
+untouched airborne flights arranged as 32 physically matched left/right pairs, it made
+50 clean passes (78.1%), exactly 25/32 on each side. Eighteen pairs passed in both
+directions, 38 flights met the stricter post-crossing success definition, and none hit the
+ground or became invalid. Freezing RGB after 0.5 seconds cut clean passes to 24 and caused
+the positive-offset side to score 0/32.
+
+This does not supersede the formal milestone: it starts airborne, uses nominal mass and a
+narrower nearby-gate distribution, and remains below 90% strict success. It does establish
+the feasibility needed to proceed directly to a continuous two-gate experiment. Full
+details and limitations are in the
+[`pragmatic full-network gate record`](../artifacts/pragmatic-full-native-gate-v1/).
+
 ## Task and acceptance boundary
 
 Every evaluation flight starts on the grey floor against a black background.  The bright

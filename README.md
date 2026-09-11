@@ -113,7 +113,27 @@ This result uses a compact, auditable **498-neuron MaleCNS subgraph** and abstra
 bilateral two-axis foreleg/stick kinematics. It is not an articulated fly-leg result, a
 FlyGym result, or an independent MuJoCo transfer result.
 
-### Annular gate: working checkpoint, milestone not yet passed
+### Full-connectome annular gate: behavior-first proof
+
+The full 165,122-neuron actor now steers through a nearby off-axis annular gate from
+ordinary 320x200 RGB plus roll and pitch. On an untouched set of 32 mirrored left/right
+pairs, it made 50/64 clean passes (78.1%), with exactly 25/32 on each side; 18/32 pairs
+passed in both directions. Freezing the camera after 0.5 seconds reduced this to 24/64 and
+eliminated every positive-offset pass. There were no ground contacts or invalid flights.
+
+This is a useful feasibility result, not the formal gate milestone. It starts airborne,
+uses nominal mass and a narrow single-gate distribution, and achieves 59.4% under the
+stricter post-crossing success definition. The actor has no gate geometry, detector,
+velocity, accelerometer, external memory or state machine. A training-only visual-servo
+teacher shaped existing photoreceptor-to-roll-motor pathways; deployment remains entirely
+inside the recurrent connectome and both virtual forelegs. See the compact
+[`pragmatic full-network gate record`](artifacts/pragmatic-full-native-gate-v1/).
+
+The immediate next experiment is two gates with uninterrupted brain, foreleg and aircraft
+state. Simulator bookkeeping only changes their visible roles: passed gate dark, current
+gate the learned target colour, and following gate a fixed secondary colour.
+
+### Compact annular-gate controller: working checkpoint, milestone not yet passed
 
 A denser **1,122-neuron MaleCNS subgraph** can lift off and traverse a 1.24 m
 inner-diameter annular gate. The gate centre begins 0.8 m off-axis and its plane is 20°

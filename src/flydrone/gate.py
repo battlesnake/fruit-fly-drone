@@ -15,6 +15,7 @@ from flydrone.hover import (
     make_camera_rays,
     rotation_matrix,
 )
+from flydrone.visual_hover import DEFAULT_VISUAL_CAMERA, CameraSpec, make_pinhole_rays
 
 GATE_TASK_VERSION = "annular-gate-v1"
 
@@ -190,6 +191,90 @@ def render_annular_gate(
     annulus = outer * inner * paint
     gate_in_front = plane_valid & (~floor_valid | (plane_time < floor_time))
     return torch.maximum(image, torch.where(gate_in_front, annulus, 0.0)).clamp(0.0, 1.0)
+
+
+def render_annular_gate_rgb(
+    state: QuadState,
+    gate: AnnularGate,
+    *,
+    camera: CameraSpec = DEFAULT_VISUAL_CAMERA,
+    gate_config: GateConfig = DEFAULT_GATE_CONFIG,
+    gate_colour: tuple[float, float, float] = (0.08, 0.86, 0.66),
+) -> Tensor:
+    """Render a coloured annulus, a world-fixed grey floor, and a black background.
+
+    The result is ordinary linear RGB camera data with shape ``(B, 3, H, W)``.
+    It contains no gate mask, bearing, range, optical flow, or other decoded task
+    feature.  Texture is fixed in world coordinates, so motion in the image is caused
+    only by motion of the camera.
+    """
+
+    batch = state.position.shape[0]
+    rays_body = make_pinhole_rays(
+        camera,
+        device=state.position.device,
+        dtype=state.position.dtype,
+    )
+    # rotation_matrix uses a +X-forward/+Z-up frame, for which +Y is camera-left.
+    # make_pinhole_rays follows image columns, so mirror its lateral component here.
+    rays_body = torch.stack((rays_body[..., 0], -rays_body[..., 1], rays_body[..., 2]), dim=-1)
+    body_to_world = rotation_matrix(state.euler)
+    rays_world = torch.einsum("bij,hwj->bhwi", body_to_world, rays_body)
+    origin = state.position[:, None, None, :]
+
+    downward = rays_world[..., 2] < -1.0e-4
+    floor_time = -origin[..., 2] / rays_world[..., 2].clamp_max(-1.0e-4)
+    floor_valid = downward & (floor_time > 0.0)
+    floor_x = origin[..., 0] + floor_time * rays_world[..., 0]
+    floor_y = origin[..., 1] + floor_time * rays_world[..., 1]
+    broad_texture = torch.sin(0.73 * floor_x + 0.41 * floor_y + 2.1) * torch.sin(
+        0.37 * floor_x - 0.89 * floor_y - 1.26
+    )
+    fine_texture = torch.sin(2.31 * floor_x - 1.67 * floor_y + 2.94) * torch.cos(
+        1.13 * floor_x + 2.03 * floor_y - 2.1
+    )
+    floor_texture = 0.68 * broad_texture + 0.32 * fine_texture
+    floor_base = state.position.new_tensor((0.235, 0.235, 0.235))
+    floor_tint = state.position.new_tensor((0.023, 0.021, 0.018))
+    floor_rgb = floor_base + floor_texture[..., None] * floor_tint
+    image = torch.zeros(
+        batch,
+        camera.height,
+        camera.width,
+        3,
+        device=state.position.device,
+        dtype=state.position.dtype,
+    )
+    image = torch.where(floor_valid[..., None], floor_rgb, image)
+
+    normal = gate.normal[:, None, None, :]
+    plane_numerator = ((gate.center[:, None, None, :] - origin) * normal).sum(dim=-1)
+    plane_denominator = (rays_world * normal).sum(dim=-1)
+    safe_denominator = torch.where(
+        plane_denominator.abs() > 1.0e-4,
+        plane_denominator,
+        torch.ones_like(plane_denominator),
+    )
+    plane_time = plane_numerator / safe_denominator
+    plane_valid = (plane_denominator.abs() > 1.0e-4) & (plane_time > 0.0)
+    hit = origin + plane_time[..., None] * rays_world
+    hit_offset = hit - gate.center[:, None, None, :]
+    gate_lateral = (hit_offset * gate.lateral[:, None, None, :]).sum(dim=-1)
+    gate_vertical = hit_offset[..., 2]
+    radial = torch.sqrt(gate_lateral.square() + gate_vertical.square() + 1.0e-8)
+    outer = torch.sigmoid((gate_config.outer_radius - radial) / gate_config.edge_softness)
+    inner = torch.sigmoid((radial - gate_config.inner_radius) / gate_config.edge_softness)
+    annulus_alpha = outer * inner
+    gate_visible = plane_valid & (~floor_valid | (plane_time < floor_time))
+    annulus_alpha = annulus_alpha * gate_visible
+
+    # A small top/bottom paint cue makes pose observable without breaking the left/right
+    # mirror symmetry needed by the paired steering curriculum.
+    paint = 0.82 + 0.18 * torch.sigmoid(gate_vertical / 0.06)
+    colour = state.position.new_tensor(gate_colour)
+    gate_rgb = paint[..., None] * colour
+    image = image * (1.0 - annulus_alpha[..., None]) + gate_rgb * annulus_alpha[..., None]
+    return image.clamp(0.0, 1.0).permute(0, 3, 1, 2)
 
 
 def crossing_geometry(

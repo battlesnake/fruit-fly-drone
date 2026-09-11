@@ -1,0 +1,87 @@
+{
+  "actor": {
+    "accelerometer": false,
+    "external_history_or_state_machine": false,
+    "inputs": [
+      "320x200 linear RGB at 125 degree HFOV",
+      "roll",
+      "pitch"
+    ],
+    "neuron_count": 165122,
+    "outputs": [
+      "foreleg roll",
+      "foreleg pitch",
+      "foreleg yaw",
+      "foreleg throttle"
+    ]
+  },
+  "checkpoint": {
+    "git_storage": "ignored exploratory run; use Git LFS if promoted",
+    "local_path": "runs/gate/pragmatic-visual-roll-path-001/best-controller.pt",
+    "sha256": "35956cae1ba37d976fc237cf55d54a483aa14791e9b391d23a9b196552505076",
+    "size_mib_approx": 77
+  },
+  "evaluation": {
+    "episodes": 64,
+    "fresh_relative_to_training_and_selection": true,
+    "mirrored_pairs": 32,
+    "seed": 620983,
+    "seconds": 9.0,
+    "vision_warmup_seconds": 0.2
+  },
+  "experiment": "pragmatic-full-native-gate-visual-roll-path-v1",
+  "frozen_vision_after_half_second": {
+    "ground_contacts": 0,
+    "invalid_flights": 0,
+    "negative_offset_clean_passes": 24,
+    "paired_clean_passes": 0,
+    "positive_offset_clean_passes": 0,
+    "strict_successes": 16,
+    "total_clean_passes": 24
+  },
+  "graph": {
+    "anatomical_edges": 2749407,
+    "sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665"
+  },
+  "live_vision": {
+    "ground_contacts": 0,
+    "invalid_flights": 0,
+    "mean_crossing_radius_metres": 0.3845418691635132,
+    "negative_offset_clean_passes": 25,
+    "paired_clean_passes": 18,
+    "positive_offset_clean_passes": 25,
+    "strict_successes": 38,
+    "total_clean_passes": 50
+  },
+  "purpose": "rapid behavioral proof of concept; not a formal promotion run",
+  "task": {
+    "clean_aperture_radius_metres": 0.53,
+    "gate_distance_metres": [
+      2.7,
+      3.3
+    ],
+    "gate_height_metres": 1.1,
+    "gate_obliquity_degrees": [
+      2.0,
+      7.0
+    ],
+    "initial_height_metres": [
+      1.02,
+      1.18
+    ],
+    "lateral_offset_magnitude_metres": [
+      0.61,
+      0.78
+    ],
+    "nominal_mass_only": true,
+    "starts_airborne": true
+  },
+  "training": {
+    "biases_and_time_constants_frozen": true,
+    "maximum_path_hops": 5,
+    "selected_anatomical_edges": 19286,
+    "selected_nodes": 7056,
+    "selected_photoreceptors": 1327,
+    "unselected_edge_max_absolute_change": 0.0
+  }
+}
