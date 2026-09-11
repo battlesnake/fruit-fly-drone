@@ -2768,3 +2768,94 @@ constraints. It does not authorize that fitting to execute, nor hover, gate flig
 promotion. The full report SHA-256 is
 `cd65d0d77fe88af1335d7b6baf1b57cf1b95c9e22bfa7962324dbc80cfc99d73`;
 see [`artifacts/variable-height-rk4-readout-trust-region-canonical-v1/`](../artifacts/variable-height-rk4-readout-trust-region-canonical-v1/).
+
+### Preregistered bounded RK4 last-hop readout-capacity fit
+
+Treat the canonical scale-8 result as evidence for one feasible step, not evidence that the
+unchanged readout subspace has enough cumulative room to learn damping. Scale 8 already used
+about 68% of the source-relative pair-common RMS allowance. Run one source-restarted,
+constraint-bounded capacity test; do not relax that allowance, project or repair candidates,
+expand the radius after a rejection, or assume that a pass establishes hover.
+
+Hash-lock the canonical trust-region report at
+`cd65d0d77fe88af1335d7b6baf1b57cf1b95c9e22bfa7962324dbc80cfc99d73`, its source
+checkpoint and graph, the existing immutable 24-pair RGB cache at physical SHA-256
+`68ea98cc60a8969eb38c1bc62db698bb232ddb6ddaebac426a850ee31596ecb8` and semantic
+SHA-256 `43a576a2abc01283a7b5a72560e3c9ff921bfaaf3e5a481ac6715019843f7d0e`, and its frozen
+teacher scale. Restart the original controller under selected RK4-M=1 with fresh Adam
+`betas=(0,0.999)`, accepted-update counter zero and no inherited candidate or optimizer.
+
+Keep only the registered 493 incoming throttle-motor edge magnitudes and the biases and raw
+time constants of the seven throttle-antagonist motor neurons trainable. Preserve topology,
+transmitter signs, `[0,8]` edge bounds, learning rates `1e-4` for edge/bias and `1e-6` for raw
+time constant, epsilon `1e-8`, and global gradient cap 1.0. Zero gradients outside the mask
+before clipping and require all outside-mask parameters to remain bit-identical to source.
+The actor still receives only 320x200 linear RGB plus roll and pitch and emits the four native
+foreleg stick axes. It has no velocity, acceleration, marker error, timer, decoded motion,
+external history or state.
+
+Use four separately persisted 24-pair exact-factorial training blocks: the immutable seed
+`450991` block plus newly rendered ordinary-style blocks at seeds `450992`, `450993` and
+`450994`. Each block independently contains every combination of marker-error magnitude
+0.05/0.10 m, marker-error sign minus/plus, endpoint-speed magnitude 0.15/0.30 m/s and response
+history 15/20/25 frames in a seeded order. Stream blocks so the 320x200 caches need not be
+resident together. Freeze the RMS teacher contrast over the combined training targets,
+floored at 0.01, before optimization and reuse it everywhere. Persist immutable source
+zero-state outputs separately for every block.
+
+Reserve two held-out-style 24-pair development blocks at seeds `460991` and `460992`; do not
+generate them before the update-10 training gate passes. Reserve eight further held-out-style
+qualification blocks at seeds `470991` through `470998`; do not generate or inspect them
+unless a single update-50 controller has already passed training and development. Every block
+uses the same exact factorial but an independently seeded pose, scene style and permutation.
+Development is never used for an update, line-search choice or alternate-checkpoint choice;
+qualification is evaluated once on the first eligible terminal checkpoint.
+
+At every attempt, reconstruct each current-controller 25-frame neutral prefix from native
+zero state, detach it, and accumulate the equally weighted complete 96-pair RK4 contrast
+gradient in fixed block and case order. This detached state is only a truncated-gradient
+boundary during training, not actor memory; every candidate must also replay every response
+from zero state. Apply exactly one pending Adam transaction and persist it before any replay.
+Rejected transactions restore controller and optimizer exactly; an interrupted persisted
+transaction must be replayed, never regenerated.
+
+Keep the derivative probe independent of ordinary selection. Replay the current detached-
+prefix objective three times to measure numerical noise, then test scales `1/16`, `1/32`,
+`1/64`, `1/128`, `1/256` and `1/512` until two adjacent probes have negative measured and predicted change,
+at most 20% symmetric derivative error, and absolute objective change above
+`max(1e-8,10*replay_noise)`. A nonfinite probe is fatal. A finite probe ladder that cannot
+establish two adjacent above-noise agreements stops inconclusively and cannot donate a step.
+
+Only after the numerical controls pass, replay the complete fixed ordinary ladder
+`16,8,4,2,1,1/2,1/4,1/8,1/16,1/32` in descending order and accept its first passing scale.
+Require current-relative NRMSE improvement of at least `0.001` in both detached-prefix and
+complete zero-state replay over the combined training bank. Separately on every 24-pair block,
+require original-source-relative pair-common throttle drift at most `0.005` RMS and `0.01`
+maximum, roll/pitch/yaw drift at most `0.005` RMS and `0.01` maximum per axis, exact paired
+endpoints, finite recurrence/outputs/metrics, motor outputs in `[-1,1]`, native bounds and
+exact outside-mask identity. Per-block constraints cannot be diluted by averaging. A first
+finite no-scale result is terminal because repeating the same controller, bank and Adam state
+would reproduce the proposal; do not retry or enlarge the mask.
+
+Allow at most 50 accepted attempts. At update 10, require combined training NRMSE to have
+improved by at least `0.02` absolute from source. Then generate and evaluate the one fixed
+48-pair development cohort: require at least `0.01` absolute NRMSE improvement from its own
+source, every per-horizon development NRMSE no more than `0.01` worse than source, and every
+per-block preservation, endpoint, finiteness, motor and identity gate above. Failure is
+terminal; there is no alternate checkpoint. Passing this gate permits only continued fitting.
+
+At update 50, require NRMSE at most `0.5`, at least 90% correct motion sign, and teacher-aligned
+gain in `[0.5,1.5]`, both overall and within every horizon, on training and on the unchanged
+development cohort. Require all preservation and validity gates again. Only the first such
+checkpoint opens the 192-pair qualification cohort, which must pass the same NRMSE, sign,
+gain, preservation and validity gates overall, per horizon and per block. Finally compare the
+qualified controller's RK4-M=1 terminal contrasts and all motor outputs with K=32 exponential
+Euler on the qualification inputs; require the established normalized-contrast RMS difference
+at most `0.01` and raw terminal-motor RMS difference at most `0.005`.
+
+A complete pass establishes independent-scene capacity for native visual damping in this
+anatomical last-hop subspace and authorizes a separately preregistered curriculum that restores
+collective/height control before closed-loop hover. A constraint-boundary stop closes this
+unchanged last-hop family and moves the optimization responsibility upstream; it must not
+trigger a relaxed common-throttle limit. No result here directly authorizes hover, gate flight
+or promotion.
