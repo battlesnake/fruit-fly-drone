@@ -1,0 +1,129 @@
+{
+  "artifact_kind": "compact_terminal_summary",
+  "experiment": "vertical-t4t5-proposal25-gradient-attribution-v1",
+  "classification": "vertical_motion_gradient_attribution_requires_objective_review",
+  "audit_completed": true,
+  "whole_bank_trial_pass": false,
+  "first_passing_multiplier": null,
+  "protocol_commit": "b026247",
+  "implementation_commit": "bfe8edcc0b3040c9da12045a984ccfb1ec863be6",
+  "implementation_file_sha256": "215a0327d8f41edc95d2b4ebc9051f5c94bdd2b7783c0d5acb9e6992c292eac0",
+  "checker_file_sha256": "475390f69bdd13772c29b1ea36afc5b23d2e9c7a47e763653dacc0d5757bde9f",
+  "runner_file_sha256": "3103a855b71c2f019a168f375151415583cc646c42d6cf4b50db2604770bda40",
+  "full_report_path": "runs/optic-motion/vertical-motion-gradient-attribution-001/report.json",
+  "full_report_file_sha256": "451d71b7752b4b6f25b210b8ae6b2c790cb507c3b50ac56fbf436327cb6ebe3a",
+  "full_started_path": "runs/optic-motion/vertical-motion-gradient-attribution-001/started.json",
+  "full_started_file_sha256": "fd2a173c5050167152efa2787287d0d6c9c3c03b5df8e6a04e565fde7de3764a",
+  "locked_training_report_sha256": "53925b64c412bc0b50d3483bfd0120076205e362dc3bb214fecfce7fce370ca9",
+  "reproduction_control": {
+    "absolute_tolerance": 1e-6,
+    "pass": true,
+    "maximum_absolute_difference": 0.0
+  },
+  "gradient_reproduction_control": {
+    "absolute_tolerance": 1e-6,
+    "pass": true,
+    "maximum_absolute_differences": {
+      "loss": 1.2914339703185007e-7,
+      "components": 9.897727674436363e-8,
+      "strata": 2.374584556763537e-8
+    }
+  },
+  "proposal25": {
+    "source_loss": 0.804610642294089,
+    "candidate_loss": 0.4765322543680668,
+    "candidate_strata": {
+      "ON_down": 0.20187378497560834,
+      "ON_up": 0.1636830817393881,
+      "OFF_down": 0.10165473464570596,
+      "OFF_up": 0.20854884549044073
+    },
+    "source_components": {
+      "activity": 0.0,
+      "bias": 0.10046332407121857,
+      "direction": 0.1198035879060626,
+      "dsi": 0.3137784966578086,
+      "regularization": 0.0,
+      "reverse": 0.2089039764056603,
+      "stationary": 0.21833925352742276
+    },
+    "candidate_components": {
+      "activity": 0.005404495769956459,
+      "bias": 0.03691300633363426,
+      "direction": 0.1043281905973951,
+      "dsi": 0.28600355548163253,
+      "regularization": 0.030909184366464615,
+      "reverse": 0.1418873149280747,
+      "stationary": 0.012433633897065496
+    }
+  },
+  "gradient_attribution": {
+    "parameter_count": 24,
+    "parameter_order": ["gain", "bias_offset", "tau_ratio"],
+    "full_gradient_unclipped_norm": 0.22543219387352106,
+    "gradient_clip_scale": 1.0,
+    "stratum_order": ["ON_down", "ON_up", "OFF_down", "OFF_up"],
+    "stratum_gradient_norms": [0.9454239559393197, 1.076636564560563, 1.2453919463558725, 1.6619303459587214],
+    "stratum_gradient_cosines": [
+      [1.0, -0.824513064252104, 0.08264325384059398, -0.12227095162625],
+      [-0.824513064252104, 1.0, -0.01756487299903477, 0.022592526565545997],
+      [0.08264325384059398, -0.01756487299903477, 1.0, -0.9737560820665436],
+      [-0.12227095162625, 0.022592526565545997, -0.9737560820665436, 1.0]
+    ],
+    "batch_to_full_gradient_cosine": {
+      "minimum": 0.006179566014897228,
+      "mean": 0.40349443901564347,
+      "maximum": 0.8554702968948643,
+      "negative_count": 0,
+      "below_point_one_count": 2,
+      "batch_count": 24
+    },
+    "common_descent": {
+      "assessment": "inconclusive_solver_or_feasibility_failure",
+      "solver_status": 8,
+      "solver_success": false,
+      "solver_message": "Positive directional derivative for linesearch",
+      "finite_result": true,
+      "unit_norm_constraint_pass": true,
+      "active_bound_tangent_constraints_pass": true,
+      "claimed_margin_constraints_pass": true,
+      "certified_feasible_solution": false,
+      "strict_common_descent": false,
+      "direction_norm": 1.0000000001144942,
+      "full_objective_directional_derivative": -0.09369671932789268,
+      "normalized_stratum_directional_derivatives": {
+        "ON_down": -0.09460810172500841,
+        "ON_up": -0.09460810172500814,
+        "OFF_down": -0.09460810172500819,
+        "OFF_up": -0.0946081017250084
+      },
+      "unit_direction": [-0.03593182956225303, -0.007907531570578935, -0.2072842193749606, 0.10440612546595861, -0.08737987652646652, -0.0024491211541642316, 0.03216615055082968, -0.032278917252590286, -0.022431417123862242, -0.4396296597506609, -0.11164455099206051, -0.4484148586337289, 0.015422970267955291, 0.5248749044695168, 0.12331840776100009, 0.13156275419632052, 0.2864663816448864, 0.13739985327390647, -0.00999789644694543, 0.2930306841483258, 0.03844807276256958, -0.022845228850348287, -0.0658348176756962, 0.16202656996005782]
+    }
+  },
+  "whole_bank_adam_trials": [
+    {"multiplier": 1.0, "displacement_norm": 0.03152330128027931, "loss": 0.47196371853351593, "loss_improvement_fraction": 0.009587044303242871, "strata": {"ON_down": 0.20895564602687955, "ON_up": 0.1452025401810412, "OFF_down": 0.1072202026607556, "OFF_up": 0.19961692641178766}, "maximum_stratum_improvement_fraction": -0.0019506247348536356, "pass": false},
+    {"multiplier": 0.5, "displacement_norm": 0.015761602240293333, "loss": 0.4739779743055503, "loss_improvement_fraction": 0.005360140974935187, "strata": {"ON_down": 0.20526664509573797, "ON_up": 0.15414800987249086, "OFF_down": 0.1043889515653215, "OFF_up": 0.20405490649864078}, "maximum_stratum_improvement_fraction": 0.015738281298005086, "pass": false},
+    {"multiplier": 0.25, "displacement_norm": 0.00788086048763824, "loss": 0.47518689185380936, "loss_improvement_fraction": 0.0028232349477403727, "strata": {"ON_down": 0.20354211267992164, "ON_up": 0.1588425168544442, "OFF_down": 0.10301046860411134, "OFF_up": 0.20629529158274332}, "maximum_stratum_improvement_fraction": 0.010805880523566385, "pass": false},
+    {"multiplier": 0.125, "displacement_norm": 0.003940424556182279, "loss": 0.47584232812126476, "loss_improvement_fraction": 0.001447805978457738, "strata": {"ON_down": 0.20270118059124798, "ON_up": 0.161244677384578, "OFF_down": 0.10232959692981088, "OFF_up": 0.20741978636942804}, "maximum_stratum_improvement_fraction": 0.005413883344007485, "pass": false}
+  ],
+  "interpretation": {
+    "ordinary_full_bank_adam_tradeoff": "all tested displacements improve ON_up and OFF_up but worsen ON_down and OFF_down",
+    "aggregate_improvement_dominated_by": "common-bias and stationary-response suppression rather than robust signed vertical direction",
+    "next_admissible_step": "separately preregistered frozen-witness finite-step training-only audit"
+  },
+  "controls": {
+    "all_four_multipliers_evaluated": true,
+    "all_trials_finite": true,
+    "active_bounds_at_archive_or_trials": false,
+    "archived_parameters_and_adam_restored": true,
+    "source_restored": true,
+    "development_or_acceptance_opened": false,
+    "candidate_or_optimizer_retained": false,
+    "cuda_peak_reserved_gibibytes": 2.826171875
+  },
+  "authority": {
+    "closed_training_run_may_resume": false,
+    "larger_effective_batch_preregistration_authorized": false,
+    "motion_routing_hover_gate_or_promotion_authorized": false
+  }
+}

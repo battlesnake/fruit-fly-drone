@@ -3700,3 +3700,35 @@ The audit's locked failed-run files are: report
 `cc83094035c70c74145764d81e201d1f31c6422459634e4a5a8f41988482eb34`. The registered manifest is
 `1403c552b371378a59b9cd9830d06ce144f336c7adf05d5061fd385dfc5dbb88`; the original trainer is
 `9ba1ad42625cb52c5c24be538ff328e3f35746645a6d9a70db5e0959e2eff727`.
+
+### Proposal-25 gradient-attribution audit result
+
+The training-only audit under implementation commit `bfe8edc` completed and its independent
+terminal checker passed. The complete ignored report SHA-256 is
+`451d71b7752b4b6f25b210b8ae6b2c790cb507c3b50ac56fbf436327cb6ebe3a`; a compact tracked result
+is in
+[`artifacts/vertical-motion-gradient-attribution-v1/`](../artifacts/vertical-motion-gradient-attribution-v1/).
+It reproduced the archived losses, components, strata and state with zero difference. Independent
+gradient replay differed by at most `1.30e-7`, below the registered `1e-6` tolerance. The source
+and archived parameters and Adam moments were restored exactly, no bounds were active, development
+and acceptance remained sealed, nothing was retained, and peak CUDA reserved memory was 2.826
+GiB.
+
+Every whole-bank Adam trial failed the unchanged discriminator. Multipliers `1`, `0.5`, `0.25`
+and `0.125` all reduced total loss, but every materialized displacement improved `ON_up` and
+`OFF_up` while worsening `ON_down` and `OFF_down`. This is a real whole-training-bank branch
+tradeoff rather than minibatch sampling noise, so a larger effective batch is not authorized.
+Within-pathway stratum-gradient cosines were `-0.8245` for ON and `-0.9738` for OFF. Response
+attribution showed that proposal 25 mostly removed common bias and stationary activity; normalized
+signed direction remained small or inconsistent, so the aggregate reduction does not yet supply
+a dependable vertical-velocity signal.
+
+The max-min solver nevertheless returned a finite unit vector with independently evaluated
+directional derivatives near `-0.09461` for every normalized stratum and `-0.09370` for the full
+objective. It obeyed the tangent, norm and claimed-margin constraints, but SLSQP exited with status
+8 rather than success. Under the frozen protocol this is
+`inconclusive_solver_or_feasibility_failure`, not a certified common-descent result. It is,
+however, a specific frozen witness worth testing causally. The next admissible action is one
+separately preregistered finite-step audit along that exact vector. This result does not authorize
+rewriting the loss, expanding anatomy, resuming the closed trainer, opening held-out data, routing
+motion outputs, hover, gate flight or promotion.
