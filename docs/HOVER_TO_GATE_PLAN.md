@@ -2920,11 +2920,15 @@ readout bit-exactly to source.
 Parameterize the tested direction in physical time rather than arbitrary raw-logit units.
 For each selected neuron, convert the raw gradient through the exact local derivative of
 `tau = 0.01 + 0.24*sigmoid(raw_tau)` to obtain the gradient with respect to seconds. Use its
-negative Euclidean steepest-descent direction, normalized over the 883 selected cells.
-Materialize each candidate by changing physical tau, clamping only to the controller's native
-10–250 ms open interval with one float32 inverse-logit conversion, and report both actual
-tau and raw-parameter displacement. No Adam moments, edge/bias update, source-distance repair
-or output-Jacobian projection is used in this restored one-step preflight.
+negative Euclidean steepest-descent direction. Form one deterministic capped unit direction
+by bisection on a scalar multiplier and componentwise clipping until its selected-cell RMS is
+1 ms and no cell changes by more than 2 ms. Candidate scales multiply that same unit direction,
+so the 4 ms RMS candidate has an 8 ms per-cell maximum and every smaller candidate has the
+proportional cap. Materialize each candidate by changing physical tau, requiring it to remain
+strictly inside the controller's native 10–250 ms interval, and performing one float32 inverse-
+logit conversion. Report requested and actual RMS, maximum per-cell tau change, tau endpoints
+and raw-parameter displacement. No Adam moments, edge/bias update, source-distance repair or
+output-Jacobian projection is used in this restored one-step preflight.
 
 Recompute the current source RK4-M1 neutral prefixes for each of the four cached blocks and
 differentiate the complete 96-pair motion-contrast NRMSE objective through every response
@@ -2947,12 +2951,19 @@ endpoints, finite recurrence/outputs/metrics, motor outputs in `[-1,1]`, physica
 inside 10–250 ms, exact non-tau parameters, and exact unselected time constants. Do not try an
 unregistered scale or combine candidates.
 
-Only a training-selected candidate may open the still-unrendered held-out-style development
-blocks at seeds `460991` and `460992`. Evaluate that one candidate once against freshly
-computed source references. It must improve development NRMSE by at least `1e-4`, improve or
-match every horizon within a `1e-5` numerical tolerance, and pass every per-block preservation
-and validity gate above. Do not select a different tau scale after development. Restore and
-hash-verify the complete source in all outcomes; retain no candidate.
+Before development, compare that one training-selected candidate's RK4-M1 outputs with K=32
+exponential Euler on all four fixed training blocks. Require normalized throttle-contrast RMS
+difference at most `0.01`, raw terminal-motor RMS difference at most `0.005`, and all existing
+identity, endpoint and finiteness controls. This requalifies the solver after changing tau;
+the source-only RK4 result cannot be assumed to transfer to a temporally modified controller.
+
+Only a candidate passing that fine-solver check may open the still-unrendered held-out-style
+development blocks at seeds `460991` and `460992`. Evaluate that one candidate once against
+freshly computed source references. It must improve development NRMSE by at least `1e-4`,
+improve or match every horizon within a `1e-5` numerical tolerance, and pass every per-block
+preservation and validity gate above. Do not select a different tau scale after either the
+solver check or development. Restore and hash-verify the complete source in all outcomes;
+retain no candidate.
 
 A pass establishes one transferable local temporal-shaping direction and authorizes only a
 separately preregistered bounded premotor-tau fit. It does not establish correct damping,
