@@ -3104,13 +3104,29 @@ Generate a deterministic 320x200 linear-RGB motion bank with 125-degree horizont
 seed `480991`. The actor receives frames and zero roll/pitch only; it receives no flow, image
 difference, direction label, history feature, plant state or target. The core contains 64
 opposite-direction edge-motion pairs: vertical/horizontal axis x bright/dark polarity x 2/4
-pixels per 20 ms frame x eight balanced spatial phases. Add 16 nonselecting generalization
+pixels per 20 ms frame x eight balanced spatial phases. Each core stimulus is a single
+advancing half-plane edge whose spatial orientation flips with its travel direction: pixels
+crossed by either bright/ON branch only increase, while pixels crossed by either dark/OFF branch
+only decrease. This avoids confounding an ON/OFF audit with the two opposite-polarity boundaries
+of a moving bar. Add 16 nonselecting generalization
 pairs from fixed periodic sine and band-limited faint-texture fields across both axes, speeds
 and two phases. Use a 25-frame uniform prefix, 16 motion frames and one common terminal frame.
 Within every pair, the final pixels and attitude must be bit-identical. Generate matched
 stationary histories, exact duplicate histories and temporally reversed histories as controls.
 Labels are angular image direction and speed derived from the declared camera projection, never
-metric drone velocity.
+metric drone velocity. Under the frozen engineering camera map, decreasing image row is declared
+anatomical upward because the assigned MaleCNS hex-2 coordinate is negated before `grid_sample`;
+this remains an affine engineering approximation rather than reconstructed ommatidial optics.
+
+A literal temporal reversal changes an ON edge into an OFF edge and vice versa. Give each
+reversed history a stationary control made from its own actual first frame, and measure a
+reversed bright/ON history in T5 and a reversed dark/OFF history in T4. Keep branch identities
+unchanged: each reversed branch travels in the opposite screen direction, so its anatomical
+opponent score must invert relative to the corresponding normal branch score. Count every fixed
+branch in its bright/dark x original-up/original-down stratum; both scores must be finite and
+above the same ten-times-duplicate-noise floor used for active-cell qualification. Inactive
+branches remain in the denominator. Do not contrast-invert the reversed frames, because that
+would no longer be a literal history reversal.
 
 Use K32 exponential Euler—32 recurrent updates per held 20 ms image—as the primary source
 condition. Before interpreting anatomy, compare it with K64 on a frozen eight-pair subset
@@ -3135,11 +3151,13 @@ the reversed-history control. Report horizontal and textured responses descripti
 not rescue a failed vertical ON/OFF gate.
 
 Finally, replay the vertical bank while replacing all T4/T5 states after every neural substep
-with the within-pair mean. This training-only causal intervention preserves pair-common activity
+with the state obtained by mapping the within-pair mean `tanh(state)` activity back through
+`atanh`. Verify the inverse domain and report the maximum instantaneous activity-preservation
+error. This training-only causal intervention preserves pair-common emitted activity
 while removing T4/T5 directional differences. Report the change in downstream typed visual
-populations and native four-axis motor contrasts, especially wrong-signed throttle damping. It
-is diagnostic, not an acceptance requirement: attenuation establishes mediation, not useful
-control.
+populations and native four-axis motor contrasts, especially wrong-signed throttle damping, as
+well as drift in the pair-common downstream activity and native output. It is diagnostic, not an
+acceptance requirement: attenuation establishes mediation, not useful control.
 
 If the frozen motion module passes, freeze it and next preregister training only its existing
 motion-output-to-DN/VNC routing. If it fails with valid numerics, next preregister short local
