@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -12,6 +13,7 @@ sys.path.insert(0, str(SCRIPTS))
 
 import audit_variable_height_native_throttle_optimizer as optimizer_audit  # noqa: E402
 import train_variable_height_native_throttle_assisted as train  # noqa: E402
+import train_variable_height_native_throttle_assisted_beta1_zero as beta1_zero  # noqa: E402
 
 from flydrone.hover import HoverConfig  # noqa: E402
 
@@ -27,6 +29,7 @@ def test_protocol_locks_assisted_boundary_data_and_claim() -> None:
     }
     assert protocol["actor"]["motor_merge_before_foreleg_stick_plant"] is True
     assert protocol["parameters"]["rpy_source_constraints"] is False
+    assert protocol["parameters"]["adam_betas"] == [0.9, 0.999]
     assert protocol["curriculum"]["detached_burn_in_fixed_across_gradient_fd_and_trials"]
     assert protocol["optimizer_transaction"]["one_gradient_and_adam_call_per_attempt"]
     assert protocol["optimizer_transaction"]["numerical_failure_is_terminal"]
@@ -35,6 +38,24 @@ def test_protocol_locks_assisted_boundary_data_and_claim() -> None:
     assert protocol["passing_authorizes"] == "native attitude reintegration experiment only"
     assert protocol["full_native_hover"] is False
     assert protocol["promotion"] is False
+
+
+def test_beta1_zero_entry_point_changes_only_registered_optimizer_identity() -> None:
+    original = (train.EXPERIMENT, train.PROTOCOL_COMMIT, train.OPTIMIZER_BETAS)
+    expected = copy.deepcopy(train.protocol_manifest())
+    expected["experiment"] = beta1_zero.EXPERIMENT
+    expected["protocol_commit"] = beta1_zero.PROTOCOL_COMMIT
+    expected["parameters"]["adam_betas"] = list(beta1_zero.OPTIMIZER_BETAS)
+    try:
+        beta1_zero.configure_protocol()
+        assert train.EXPERIMENT == "variable-height-native-throttle-assisted-beta1-zero-v1"
+        assert train.PROTOCOL_COMMIT == "ddd3c5c"
+        assert train.protocol_manifest() == expected
+        controller = _ToyController()
+        optimizer = train._make_optimizer(controller)
+        assert all(group["betas"] == (0.0, 0.999) for group in optimizer.param_groups)
+    finally:
+        train.EXPERIMENT, train.PROTOCOL_COMMIT, train.OPTIMIZER_BETAS = original
 
 
 @pytest.mark.parametrize("split", ["train", "held_out_marker", "held_out_combination"])

@@ -37,12 +37,14 @@ def parse_args() -> argparse.Namespace:
         default=REPO_ROOT / "runs/visual-hover/paired-dynamic-001/controller.pt",
     )
     parser.add_argument("--device", default="cuda")
+    parser.add_argument("--optimizer-beta1", type=float, choices=(0.0, 0.9), default=0.9)
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
     train.require_nonformal_seeds(CHECK_CASE_SEED, CHECK_MOTION_SEED, CHECK_SAMPLING_SEED)
+    train.OPTIMIZER_BETAS = (args.optimizer_beta1, 0.999)
     device = torch.device(args.device)
     loaded = torch.load(args.checkpoint, map_location=device, weights_only=True)
     controller = ConnectomeController(args.graph, neural_dt=1.0 / train.POLICY_HZ).to(device)
@@ -176,6 +178,7 @@ def main() -> int:
             )
         ),
         "seeds": [CHECK_CASE_SEED, CHECK_MOTION_SEED, CHECK_SAMPLING_SEED],
+        "optimizer_betas": list(train.OPTIMIZER_BETAS),
         "case_support": train.case_support_decision(cases),
         "teacher_hover": hover,
         "trajectory_bank": train.trajectory_bank_report(teacher_bank),

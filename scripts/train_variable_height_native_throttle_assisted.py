@@ -81,6 +81,7 @@ GRADIENT_NORM_CAP = joint.GRADIENT_NORM_CAP
 EDGE_BIAS_LEARNING_RATE = joint.EDGE_BIAS_LEARNING_RATE
 TIME_CONSTANT_LEARNING_RATE = joint.TIME_CONSTANT_LEARNING_RATE
 PARAMETER_FAMILIES = joint.PARAMETER_FAMILIES
+OPTIMIZER_BETAS = (0.9, 0.999)
 
 POSITIVE_CONTROL_SEED = 380_983
 TEACHER_HISTORY_SEEDS = (381_983, 382_983, 383_983, 384_983)
@@ -192,6 +193,7 @@ def protocol_manifest() -> dict[str, Any]:
             "raw_time_constant_learning_rate": TIME_CONSTANT_LEARNING_RATE,
             "gradient_norm_cap": GRADIENT_NORM_CAP,
             "fresh_adam": True,
+            "adam_betas": list(OPTIMIZER_BETAS),
             "topology_signs_and_interfaces_frozen": True,
             "rpy_source_constraints": False,
         },
@@ -2136,6 +2138,7 @@ def _make_optimizer(controller: ConnectomeController) -> torch.optim.Adam:
                 "lr": TIME_CONSTANT_LEARNING_RATE,
             },
         ],
+        betas=OPTIMIZER_BETAS,
         weight_decay=0.0,
     )
 
@@ -2154,6 +2157,7 @@ def _resume_payload(
         **state,
         "experiment": EXPERIMENT,
         "protocol_commit": PROTOCOL_COMMIT,
+        "optimizer_betas": list(OPTIMIZER_BETAS),
         "graph_sha256": EXPECTED_GRAPH_SHA256,
         "checkpoint_sha256": EXPECTED_CHECKPOINT_SHA256,
         "controller": controller_state,
@@ -2248,6 +2252,11 @@ def _validate_resume_scientific_state(
     expected_optimizer_counters = [] if accepted == 0 else [float(accepted)] * 3
     if actual_optimizer_counters != expected_optimizer_counters:
         raise SystemExit("resume Adam counters do not match accepted updates")
+    if any(
+        tuple(group.get("betas", ())) != OPTIMIZER_BETAS
+        for group in payload["optimizer"]["param_groups"]
+    ):
+        raise SystemExit("resume Adam betas do not match the registered run")
 
     block = payload.get("block")
     scales = payload.get("objective_scales")
@@ -2319,6 +2328,7 @@ def _load_resume(
     expected = {
         "experiment": EXPERIMENT,
         "protocol_commit": PROTOCOL_COMMIT,
+        "optimizer_betas": list(OPTIMIZER_BETAS),
         "graph_sha256": EXPECTED_GRAPH_SHA256,
         "checkpoint_sha256": EXPECTED_CHECKPOINT_SHA256,
     }
@@ -2346,6 +2356,7 @@ def _load_resume(
         not in {
             "experiment",
             "protocol_commit",
+            "optimizer_betas",
             "graph_sha256",
             "checkpoint_sha256",
             "controller",
