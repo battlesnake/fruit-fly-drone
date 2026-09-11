@@ -16,6 +16,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import train_variable_height_native_throttle_assisted as train  # noqa: E402
+import train_variable_height_native_throttle_assisted_beta1_zero_ladder as ladder  # noqa: E402
 
 from flydrone.hover import ConnectomeController, HoverConfig  # noqa: E402
 
@@ -38,13 +39,18 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--optimizer-beta1", type=float, choices=(0.0, 0.9), default=0.9)
+    parser.add_argument("--derivative-probe-ladder", action="store_true")
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
     train.require_nonformal_seeds(CHECK_CASE_SEED, CHECK_MOTION_SEED, CHECK_SAMPLING_SEED)
-    train.OPTIMIZER_BETAS = (args.optimizer_beta1, 0.999)
+    if args.derivative_probe_ladder:
+        ladder.configure_protocol()
+        ladder.validate_authorizing_audit()
+    else:
+        train.OPTIMIZER_BETAS = (args.optimizer_beta1, 0.999)
     device = torch.device(args.device)
     loaded = torch.load(args.checkpoint, map_location=device, weights_only=True)
     controller = ConnectomeController(args.graph, neural_dt=1.0 / train.POLICY_HZ).to(device)
@@ -179,6 +185,7 @@ def main() -> int:
         ),
         "seeds": [CHECK_CASE_SEED, CHECK_MOTION_SEED, CHECK_SAMPLING_SEED],
         "optimizer_betas": list(train.OPTIMIZER_BETAS),
+        "derivative_probe_protocol": train.derivative_probe_protocol_manifest(),
         "case_support": train.case_support_decision(cases),
         "teacher_hover": hover,
         "trajectory_bank": train.trajectory_bank_report(teacher_bank),

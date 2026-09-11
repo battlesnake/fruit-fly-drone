@@ -75,6 +75,20 @@ FINAL_UPDATE = 100
 MINIMUM_OBJECTIVE_IMPROVEMENT = 1.0e-4
 FINITE_DIFFERENCE_SCALE = 0.0625
 FINITE_DIFFERENCE_RELATIVE_ERROR_LIMIT = 0.20
+DERIVATIVE_PROBE_SCALES = (FINITE_DIFFERENCE_SCALE,)
+DERIVATIVE_BASELINE_REPEATS = 1
+DERIVATIVE_REQUIRED_CONSECUTIVE_PASSES = 1
+DERIVATIVE_REPLAY_NOISE_MULTIPLIER = 0.0
+DERIVATIVE_MINIMUM_OBJECTIVE_CHANGE = 0.0
+AUTHORIZING_TAYLOR_AUDIT_SHA256: str | None = None
+LEGACY_SINGLE_DERIVATIVE_PROBE_PROTOCOL = {
+    "scales": [FINITE_DIFFERENCE_SCALE],
+    "baseline_repeats": 1,
+    "required_consecutive_passes": 1,
+    "replay_noise_multiplier": 0.0,
+    "minimum_objective_change": 0.0,
+    "authorizing_taylor_audit_sha256": None,
+}
 BACKTRACK_SCALES = (1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125)
 DENOMINATOR_RMS_FLOOR = 0.01
 GRADIENT_NORM_CAP = joint.GRADIENT_NORM_CAP
@@ -164,6 +178,28 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def derivative_probe_protocol_manifest() -> dict[str, Any]:
+    return {
+        "scales": list(DERIVATIVE_PROBE_SCALES),
+        "baseline_repeats": DERIVATIVE_BASELINE_REPEATS,
+        "required_consecutive_passes": DERIVATIVE_REQUIRED_CONSECUTIVE_PASSES,
+        "replay_noise_multiplier": DERIVATIVE_REPLAY_NOISE_MULTIPLIER,
+        "minimum_objective_change": DERIVATIVE_MINIMUM_OBJECTIVE_CHANGE,
+        "authorizing_taylor_audit_sha256": AUTHORIZING_TAYLOR_AUDIT_SHA256,
+    }
+
+
+def validate_derivative_probe_resume_identity(payload: dict[str, Any]) -> None:
+    expected = derivative_probe_protocol_manifest()
+    actual = payload.get("derivative_probe_protocol")
+    if actual is None:
+        if expected != LEGACY_SINGLE_DERIVATIVE_PROBE_PROTOCOL:
+            raise SystemExit("resume is missing the registered derivative-probe protocol")
+        return
+    if actual != expected:
+        raise SystemExit("resume derivative-probe protocol does not match the registered run")
+
+
 def protocol_manifest() -> dict[str, Any]:
     return {
         "experiment": EXPERIMENT,
@@ -245,6 +281,15 @@ def protocol_manifest() -> dict[str, Any]:
             "one_gradient_and_adam_call_per_attempt": True,
             "finite_difference_scale": FINITE_DIFFERENCE_SCALE,
             "finite_difference_relative_error_limit": (FINITE_DIFFERENCE_RELATIVE_ERROR_LIMIT),
+            "derivative_probe_scales": list(DERIVATIVE_PROBE_SCALES),
+            "derivative_baseline_repeats": DERIVATIVE_BASELINE_REPEATS,
+            "derivative_required_consecutive_passes": (
+                DERIVATIVE_REQUIRED_CONSECUTIVE_PASSES
+            ),
+            "derivative_replay_noise_multiplier": DERIVATIVE_REPLAY_NOISE_MULTIPLIER,
+            "derivative_minimum_objective_change": DERIVATIVE_MINIMUM_OBJECTIVE_CHANGE,
+            "derivative_probes_select_ordinary_step": False,
+            "authorizing_taylor_audit_sha256": AUTHORIZING_TAYLOR_AUDIT_SHA256,
             "ordinary_scales_descending": list(BACKTRACK_SCALES),
             "minimum_fixed_burn_in_and_full_prefix_improvement": (MINIMUM_OBJECTIVE_IMPROVEMENT),
             "numerical_failure_is_terminal": True,
@@ -302,6 +347,18 @@ def validate_args(args: argparse.Namespace) -> None:
         raise SystemExit("checkpoint does not match the preregistered source")
     if (args.output_dir / "report.json").is_file():
         raise SystemExit("the assisted-throttle experiment already has a terminal report")
+    if (
+        DERIVATIVE_BASELINE_REPEATS < 1
+        or not DERIVATIVE_PROBE_SCALES
+        or not all(scale > 0.0 for scale in DERIVATIVE_PROBE_SCALES)
+        or tuple(sorted(DERIVATIVE_PROBE_SCALES, reverse=True)) != DERIVATIVE_PROBE_SCALES
+        or not 1
+        <= DERIVATIVE_REQUIRED_CONSECUTIVE_PASSES
+        <= len(DERIVATIVE_PROBE_SCALES)
+        or DERIVATIVE_REPLAY_NOISE_MULTIPLIER < 0.0
+        or DERIVATIVE_MINIMUM_OBJECTIVE_CHANGE < 0.0
+    ):
+        raise SystemExit("derivative-probe protocol is invalid")
 
 
 def _uniform_by_family(family: Tensor, bands: tuple[tuple[float, float], ...]) -> Tensor:
@@ -1678,6 +1735,253 @@ def materialize_scaled_proposal(
     }, effective
 
 
+def derivative_replay_noise(objectives: list[float], *, expected_repeats: int) -> float:
+    if len(objectives) != expected_repeats or not all(
+        math.isfinite(value) for value in objectives
+    ):
+        raise ValueError(f"expected {expected_repeats} finite derivative baseline replays")
+    return max(objectives) - min(objectives)
+
+
+def derivative_probe_local_agreement(record: dict[str, Any]) -> bool:
+    return bool(
+        record["controls"]["pass"]
+        and record["all_metrics_finite"]
+        and record["predicted_directional_derivative"] < -1.0e-8
+        and record["measured_directional_derivative"] < -1.0e-8
+        and record["relative_error"] <= FINITE_DIFFERENCE_RELATIVE_ERROR_LIMIT
+        and abs(record["objective_change"]) > record["objective_change_noise_threshold"]
+    )
+
+
+def _consecutive_probe_scale_windows(
+    records: list[dict[str, Any]], key: str, *, required: int
+) -> list[list[float]]:
+    if required < 1:
+        raise ValueError("required consecutive probes must be positive")
+    windows = []
+    for begin in range(len(records) - required + 1):
+        window = records[begin : begin + required]
+        if all(record[key] for record in window):
+            windows.append([float(record["scale"]) for record in window])
+    return windows
+
+
+def derivative_probe_decision(
+    records: list[dict[str, Any]], *, required_consecutive_passes: int
+) -> dict[str, Any]:
+    numerical_failure = any(record["numerical_failure"] for record in records)
+    passing = _consecutive_probe_scale_windows(
+        records, "local_derivative_agreement", required=required_consecutive_passes
+    )
+    above_noise = _consecutive_probe_scale_windows(
+        records,
+        "objective_change_exceeds_noise_threshold",
+        required=required_consecutive_passes,
+    )
+    if numerical_failure:
+        classification = "derivative_probe_numerical_failure"
+    elif passing:
+        classification = "adjacent_local_derivative_agreement"
+    elif above_noise:
+        classification = "derivative_probe_above_noise_nonconvergence"
+    else:
+        classification = "derivative_probe_noise_limited_inconclusive"
+    return {
+        "pass": bool(passing and not numerical_failure),
+        "classification": classification,
+        "qualified_consecutive_scale_windows": passing,
+        "above_noise_consecutive_scale_windows": above_noise,
+    }
+
+
+def _evaluate_derivative_probe(
+    controller: ConnectomeController,
+    current: dict[str, Tensor],
+    displacement: dict[str, Tensor],
+    raw_gradients: dict[str, Tensor],
+    scale: float,
+    authoritative_j0: float,
+    noise_threshold: float,
+    dense_sample: dict[str, Any],
+    dense_burn: Tensor,
+    motion_bank: dict[str, Any],
+    motion_indices: list[int],
+    motion_burns: list[Tensor],
+    objective_scales: dict[str, float],
+    *,
+    device: torch.device,
+) -> dict[str, Any]:
+    try:
+        controls, effective = materialize_scaled_proposal(
+            controller, current, displacement, scale
+        )
+        if not controls["pass"]:
+            return {
+                "scale": scale,
+                "pass": False,
+                "local_derivative_agreement": False,
+                "numerical_failure": True,
+                "numerical_failure_reason": "probe failed bounds or canonical control",
+                "objective_change_exceeds_noise_threshold": False,
+                "objective_change_noise_threshold": noise_threshold,
+                "all_metrics_finite": False,
+                "controls": controls,
+                "candidate": None,
+            }
+        candidate = _sample_objective_report(
+            controller,
+            dense_sample,
+            dense_burn,
+            motion_bank,
+            motion_indices,
+            motion_burns,
+            objective_scales,
+            device=device,
+        )
+        objective_change = candidate["objective"] - authoritative_j0
+        predicted_change = float(
+            sum(
+                (raw_gradients[name].double() * effective[name].double()).sum()
+                for name in PARAMETER_FAMILIES
+            )
+        )
+        measured_direction = objective_change / scale
+        predicted_direction = predicted_change / scale
+        relative_error = _relative_error(measured_direction, predicted_direction)
+        finite = bool(
+            candidate["all_recurrent_states_and_outputs_finite"]
+            and _all_finite_nested(candidate)
+            and math.isfinite(objective_change)
+            and math.isfinite(predicted_change)
+            and math.isfinite(measured_direction)
+            and math.isfinite(predicted_direction)
+            and math.isfinite(relative_error)
+        )
+        record = {
+            "scale": scale,
+            "pass": False,
+            "autograd_directional_derivative": predicted_direction,
+            "predicted_directional_derivative": predicted_direction,
+            "measured_directional_derivative": measured_direction,
+            "objective_change": objective_change,
+            "predicted_change": predicted_change,
+            "relative_error": relative_error,
+            "relative_error_limit": FINITE_DIFFERENCE_RELATIVE_ERROR_LIMIT,
+            "objective_change_exceeds_noise_threshold": (
+                abs(objective_change) > noise_threshold
+            ),
+            "objective_change_noise_threshold": noise_threshold,
+            "uses_exact_frozen_sample_and_burn_in": True,
+            "all_metrics_finite": finite,
+            "numerical_failure": not finite,
+            "numerical_failure_reason": (
+                None if finite else "probe produced a nonfinite recurrent state, output or metric"
+            ),
+            "controls": controls,
+            "candidate": candidate,
+        }
+        record["local_derivative_agreement"] = derivative_probe_local_agreement(record)
+        record["pass"] = record["local_derivative_agreement"]
+        return record
+    finally:
+        _load_parameters(controller, current)
+
+
+def run_derivative_probe_ladder(
+    controller: ConnectomeController,
+    current: dict[str, Tensor],
+    displacement: dict[str, Tensor],
+    raw_gradients: dict[str, Tensor],
+    authoritative_directional: float,
+    baseline_objectives: list[float],
+    dense_sample: dict[str, Any],
+    dense_burn: Tensor,
+    motion_bank: dict[str, Any],
+    motion_indices: list[int],
+    motion_burns: list[Tensor],
+    objective_scales: dict[str, float],
+    *,
+    device: torch.device,
+) -> dict[str, Any]:
+    replay_noise = derivative_replay_noise(
+        baseline_objectives, expected_repeats=DERIVATIVE_BASELINE_REPEATS
+    )
+    noise_threshold = max(
+        DERIVATIVE_MINIMUM_OBJECTIVE_CHANGE,
+        DERIVATIVE_REPLAY_NOISE_MULTIPLIER * replay_noise,
+    )
+    records = []
+    for scale in DERIVATIVE_PROBE_SCALES:
+        record = _evaluate_derivative_probe(
+            controller,
+            current,
+            displacement,
+            raw_gradients,
+            scale,
+            baseline_objectives[0],
+            noise_threshold,
+            dense_sample,
+            dense_burn,
+            motion_bank,
+            motion_indices,
+            motion_burns,
+            objective_scales,
+            device=device,
+        )
+        records.append(record)
+        if record["numerical_failure"]:
+            break
+        if len(records) >= DERIVATIVE_REQUIRED_CONSECUTIVE_PASSES and all(
+            item["local_derivative_agreement"]
+            for item in records[-DERIVATIVE_REQUIRED_CONSECUTIVE_PASSES:]
+        ):
+            break
+    decision = derivative_probe_decision(
+        records,
+        required_consecutive_passes=DERIVATIVE_REQUIRED_CONSECUTIVE_PASSES,
+    )
+    representative = records[-1]
+    return {
+        **decision,
+        "scale": representative["scale"],
+        "autograd_directional_derivative": representative.get(
+            "autograd_directional_derivative"
+        ),
+        "authoritative_full_proposal_directional_derivative": authoritative_directional,
+        "measured_directional_derivative": representative.get(
+            "measured_directional_derivative"
+        ),
+        "relative_error": representative.get("relative_error"),
+        "relative_error_limit": FINITE_DIFFERENCE_RELATIVE_ERROR_LIMIT,
+        "controls": representative["controls"],
+        "candidate": representative.get("candidate"),
+        "not_run_due_to_prior_numerical_failure": False,
+        "baseline": {
+            "authoritative_j0_is_first_replay": True,
+            "objectives": baseline_objectives,
+            "replay_noise_max_pairwise_absolute": replay_noise,
+            "noise_multiplier": DERIVATIVE_REPLAY_NOISE_MULTIPLIER,
+            "objective_change_noise_threshold": noise_threshold,
+        },
+        "probe_scales_registered": list(DERIVATIVE_PROBE_SCALES),
+        "required_consecutive_passes": DERIVATIVE_REQUIRED_CONSECUTIVE_PASSES,
+        "probes": records,
+        "probe_candidates_retained": False,
+        "ordinary_step_selected_by_probes": False,
+    }
+
+
+def restore_unaccepted_update(
+    controller: ConnectomeController,
+    optimizer: torch.optim.Optimizer,
+    current: dict[str, Tensor],
+    optimizer_before: dict[str, Any],
+) -> None:
+    _load_parameters(controller, current)
+    optimizer.load_state_dict(optimizer_before)
+
+
 def run_update_attempt(
     controller: ConnectomeController,
     optimizer: torch.optim.Optimizer,
@@ -1706,6 +2010,21 @@ def run_update_attempt(
         scales,
         device=device,
     )
+    current_fixed_replays = [current_fixed]
+    for _ in range(1, DERIVATIVE_BASELINE_REPEATS):
+        current_fixed_replays.append(
+            _sample_objective_report(
+                controller,
+                dense_sample,
+                dense_burn,
+                motion_bank,
+                motion_indices,
+                motion_burns,
+                scales,
+                device=device,
+            )
+        )
+    baseline_objectives = [float(report["objective"]) for report in current_fixed_replays]
     current_full_value, current_full = combined_full_prefix_objective(
         controller,
         dense_sample,
@@ -1727,9 +2046,12 @@ def run_update_attempt(
     )
     numerical_reasons = []
     if (
-        not current_fixed["all_recurrent_states_and_outputs_finite"]
+        not all(
+            report["all_recurrent_states_and_outputs_finite"]
+            and _all_finite_nested(report)
+            for report in current_fixed_replays
+        )
         or not current_full["all_recurrent_states_and_outputs_finite"]
-        or not _all_finite_nested(current_fixed)
         or not _all_finite_nested(current_full)
         or not math.isfinite(current_full_value)
     ):
@@ -1776,15 +2098,18 @@ def run_update_attempt(
 
     finite_difference: dict[str, Any] = {
         "pass": False,
-        "scale": FINITE_DIFFERENCE_SCALE,
+        "scale": None,
+        "classification": "not_run_due_to_prior_numerical_failure",
         "not_run_due_to_prior_numerical_failure": bool(numerical_reasons),
     }
     if not numerical_reasons:
-        fd_controls, fd_effective = materialize_scaled_proposal(
-            controller, current, displacement, FINITE_DIFFERENCE_SCALE
-        )
-        fd_candidate = _sample_objective_report(
+        finite_difference = run_derivative_probe_ladder(
             controller,
+            current,
+            displacement,
+            raw_gradients,
+            authoritative_directional,
+            baseline_objectives,
             dense_sample,
             dense_burn,
             motion_bank,
@@ -1793,44 +2118,8 @@ def run_update_attempt(
             scales,
             device=device,
         )
-        measured_direction = (
-            fd_candidate["objective"] - current_fixed["objective"]
-        ) / FINITE_DIFFERENCE_SCALE
-        fd_directional = float(
-            sum(
-                (
-                    raw_gradients[name].double()
-                    * (fd_effective[name].double() / FINITE_DIFFERENCE_SCALE)
-                ).sum()
-                for name in PARAMETER_FAMILIES
-            )
-        )
-        fd_error = _relative_error(measured_direction, fd_directional)
-        fd_pass = bool(
-            fd_controls["pass"]
-            and fd_candidate["all_recurrent_states_and_outputs_finite"]
-            and _all_finite_nested(fd_candidate)
-            and math.isfinite(fd_directional)
-            and fd_directional < -1.0e-8
-            and math.isfinite(measured_direction)
-            and measured_direction < -1.0e-8
-            and fd_error <= FINITE_DIFFERENCE_RELATIVE_ERROR_LIMIT
-        )
-        if not fd_pass:
-            numerical_reasons.append("fixed-burn-in directional finite difference failed")
-        finite_difference = {
-            "pass": fd_pass,
-            "scale": FINITE_DIFFERENCE_SCALE,
-            "autograd_directional_derivative": fd_directional,
-            "authoritative_full_proposal_directional_derivative": authoritative_directional,
-            "measured_directional_derivative": measured_direction,
-            "relative_error": fd_error,
-            "relative_error_limit": FINITE_DIFFERENCE_RELATIVE_ERROR_LIMIT,
-            "uses_exact_frozen_sample_and_burn_in": True,
-            "controls": fd_controls,
-            "candidate": fd_candidate,
-            "not_run_due_to_prior_numerical_failure": False,
-        }
+        if not finite_difference["pass"]:
+            numerical_reasons.append(finite_difference["classification"])
     _load_parameters(controller, current)
 
     trials = []
@@ -1906,8 +2195,7 @@ def run_update_attempt(
                 break
             _load_parameters(controller, current)
     if selected is None:
-        _load_parameters(controller, current)
-        optimizer.load_state_dict(optimizer_before)
+        restore_unaccepted_update(controller, optimizer, current, optimizer_before)
     else:
         optimizer.load_state_dict(optimizer_after)
     return {
@@ -2158,6 +2446,7 @@ def _resume_payload(
         "experiment": EXPERIMENT,
         "protocol_commit": PROTOCOL_COMMIT,
         "optimizer_betas": list(OPTIMIZER_BETAS),
+        "derivative_probe_protocol": derivative_probe_protocol_manifest(),
         "graph_sha256": EXPECTED_GRAPH_SHA256,
         "checkpoint_sha256": EXPECTED_CHECKPOINT_SHA256,
         "controller": controller_state,
@@ -2335,6 +2624,7 @@ def _load_resume(
     for name, value in expected.items():
         if payload.get(name) != value:
             raise SystemExit(f"resume {name} does not match the registered run")
+    validate_derivative_probe_resume_identity(payload)
     parameters = {name: payload["controller"][name] for name in PARAMETER_FAMILIES}
     if audit.semantic_sha256(parameters) != payload["controller_parameter_sha256"]:
         raise SystemExit("resume controller semantic hash mismatch")
@@ -2357,6 +2647,7 @@ def _load_resume(
             "experiment",
             "protocol_commit",
             "optimizer_betas",
+            "derivative_probe_protocol",
             "graph_sha256",
             "checkpoint_sha256",
             "controller",
@@ -2667,10 +2958,29 @@ def record_attempt_outcome(
     if state["accepted_updates"] == FINAL_UPDATE and state["final"] is None:
         state["final_started"] = True
     if result["fatal_numerical_failure"]:
+        probe_classification = result.get("finite_difference", {}).get("classification")
+        probe_stop_reasons = {
+            "derivative_probe_numerical_failure": (
+                "a derivative probe produced a nonfinite or invalid numerical control"
+            ),
+            "derivative_probe_noise_limited_inconclusive": (
+                "no adjacent derivative probes agreed above the registered replay-noise floor"
+            ),
+            "derivative_probe_above_noise_nonconvergence": (
+                "adjacent above-noise derivative probes did not achieve local agreement"
+            ),
+        }
+        terminal_classification = (
+            probe_classification
+            if probe_classification in probe_stop_reasons
+            else "fatal_numerical_control_failure"
+        )
         state["pending_terminal"] = {
-            "classification": "fatal_numerical_control_failure",
-            "stop_reason": (
-                "a mandatory gradient, transaction, direction or finite-difference control failed"
+            "classification": terminal_classification,
+            "stop_reason": probe_stop_reasons.get(
+                terminal_classification,
+                "a mandatory gradient, transaction, direction or finite-difference control "
+                "failed",
             ),
             "passed": False,
         }

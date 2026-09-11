@@ -14,6 +14,7 @@ sys.path.insert(0, str(SCRIPTS))
 import audit_variable_height_native_throttle_optimizer as optimizer_audit  # noqa: E402
 import train_variable_height_native_throttle_assisted as train  # noqa: E402
 import train_variable_height_native_throttle_assisted_beta1_zero as beta1_zero  # noqa: E402
+import train_variable_height_native_throttle_assisted_beta1_zero_ladder as ladder  # noqa: E402
 
 from flydrone.hover import HoverConfig  # noqa: E402
 
@@ -56,6 +57,73 @@ def test_beta1_zero_entry_point_changes_only_registered_optimizer_identity() -> 
         assert all(group["betas"] == (0.0, 0.999) for group in optimizer.param_groups)
     finally:
         train.EXPERIMENT, train.PROTOCOL_COMMIT, train.OPTIMIZER_BETAS = original
+
+
+def test_ladder_entry_point_changes_only_registered_derivative_control() -> None:
+    names = (
+        "EXPERIMENT",
+        "PROTOCOL_COMMIT",
+        "OPTIMIZER_BETAS",
+        "DERIVATIVE_PROBE_SCALES",
+        "DERIVATIVE_BASELINE_REPEATS",
+        "DERIVATIVE_REQUIRED_CONSECUTIVE_PASSES",
+        "DERIVATIVE_REPLAY_NOISE_MULTIPLIER",
+        "DERIVATIVE_MINIMUM_OBJECTIVE_CHANGE",
+        "AUTHORIZING_TAYLOR_AUDIT_SHA256",
+    )
+    original = {name: getattr(train, name) for name in names}
+    try:
+        beta1_zero.configure_protocol()
+        expected = copy.deepcopy(train.protocol_manifest())
+        expected["experiment"] = ladder.EXPERIMENT
+        expected["protocol_commit"] = ladder.PROTOCOL_COMMIT
+        transaction = expected["optimizer_transaction"]
+        transaction["derivative_probe_scales"] = list(ladder.DERIVATIVE_PROBE_SCALES)
+        transaction["derivative_baseline_repeats"] = ladder.DERIVATIVE_BASELINE_REPEATS
+        transaction["derivative_required_consecutive_passes"] = (
+            ladder.DERIVATIVE_REQUIRED_CONSECUTIVE_PASSES
+        )
+        transaction["derivative_replay_noise_multiplier"] = (
+            ladder.DERIVATIVE_REPLAY_NOISE_MULTIPLIER
+        )
+        transaction["derivative_minimum_objective_change"] = (
+            ladder.DERIVATIVE_MINIMUM_OBJECTIVE_CHANGE
+        )
+        transaction["authorizing_taylor_audit_sha256"] = (
+            ladder.EXPECTED_TAYLOR_AUDIT_SHA256
+        )
+
+        ladder.configure_protocol()
+
+        assert train.protocol_manifest() == expected
+        assert train.derivative_probe_protocol_manifest() == {
+            "scales": list(ladder.DERIVATIVE_PROBE_SCALES),
+            "baseline_repeats": 3,
+            "required_consecutive_passes": 2,
+            "replay_noise_multiplier": 10.0,
+            "minimum_objective_change": 1.0e-8,
+            "authorizing_taylor_audit_sha256": ladder.EXPECTED_TAYLOR_AUDIT_SHA256,
+        }
+    finally:
+        for name, value in original.items():
+            setattr(train, name, value)
+
+
+def test_ladder_requires_exact_authorizing_taylor_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    report = tmp_path / "report.json"
+    with pytest.raises(SystemExit, match="missing authorizing"):
+        ladder.validate_authorizing_audit(report)
+
+    report.write_text('{"pass": true}\n')
+    expected = train.responsibility.file_sha256(report)
+    monkeypatch.setattr(ladder, "EXPECTED_TAYLOR_AUDIT_SHA256", expected)
+    ladder.validate_authorizing_audit(report)
+
+    report.write_text('{"pass": false}\n')
+    with pytest.raises(SystemExit, match="hash mismatch"):
+        ladder.validate_authorizing_audit(report)
 
 
 @pytest.mark.parametrize("split", ["train", "held_out_marker", "held_out_combination"])
@@ -353,6 +421,175 @@ class _ToyController(torch.nn.Module):
 
     def project_parameters(self) -> None:
         return None
+
+
+def _probe_record(
+    scale: float, *, local: bool, above_noise: bool, numerical: bool = False
+) -> dict[str, object]:
+    return {
+        "scale": scale,
+        "local_derivative_agreement": local,
+        "objective_change_exceeds_noise_threshold": above_noise,
+        "numerical_failure": numerical,
+    }
+
+
+@pytest.mark.parametrize(
+    ("records", "classification", "passed"),
+    [
+        (
+            [
+                _probe_record(1 / 16, local=False, above_noise=True),
+                _probe_record(1 / 32, local=True, above_noise=True),
+                _probe_record(1 / 64, local=True, above_noise=True),
+            ],
+            "adjacent_local_derivative_agreement",
+            True,
+        ),
+        (
+            [_probe_record(1 / 16, local=False, above_noise=False, numerical=True)],
+            "derivative_probe_numerical_failure",
+            False,
+        ),
+        (
+            [
+                _probe_record(1 / 16, local=False, above_noise=False),
+                _probe_record(1 / 32, local=False, above_noise=False),
+            ],
+            "derivative_probe_noise_limited_inconclusive",
+            False,
+        ),
+        (
+            [
+                _probe_record(1 / 16, local=False, above_noise=True),
+                _probe_record(1 / 32, local=False, above_noise=True),
+            ],
+            "derivative_probe_above_noise_nonconvergence",
+            False,
+        ),
+    ],
+)
+def test_derivative_probe_decision_is_conservative(
+    records: list[dict[str, object]], classification: str, passed: bool
+) -> None:
+    decision = train.derivative_probe_decision(records, required_consecutive_passes=2)
+    assert decision["classification"] == classification
+    assert decision["pass"] is passed
+
+
+@pytest.mark.parametrize(
+    "classification",
+    [
+        "derivative_probe_numerical_failure",
+        "derivative_probe_noise_limited_inconclusive",
+        "derivative_probe_above_noise_nonconvergence",
+    ],
+)
+def test_run_update_attempt_probe_failures_skip_trials_restore_and_propagate_terminal(
+    monkeypatch: pytest.MonkeyPatch, classification: str
+) -> None:
+    controller = _ToyController()
+    optimizer = train._make_optimizer(controller)
+    current = train._copy_parameters(controller)
+    optimizer_before = copy.deepcopy(optimizer.state_dict())
+    controller_hash = train.audit.semantic_sha256(current)
+    optimizer_hash = train.audit.semantic_sha256(optimizer_before)
+    calls = {"fixed": 0, "full": 0}
+
+    monkeypatch.setattr(train, "DERIVATIVE_BASELINE_REPEATS", 3)
+    monkeypatch.setattr(train, "materialize_dense_sample", lambda *_: {})
+    monkeypatch.setattr(
+        train,
+        "_build_fixed_burns",
+        lambda *args, **kwargs: (torch.zeros(1), []),
+    )
+
+    def fixed_report(*args, **kwargs):
+        calls["fixed"] += 1
+        return {
+            "objective": 1.0,
+            "all_recurrent_states_and_outputs_finite": True,
+        }
+
+    def full_report(*args, **kwargs):
+        calls["full"] += 1
+        return 1.0, {
+            "objective": 1.0,
+            "all_recurrent_states_and_outputs_finite": True,
+        }
+
+    def gradient_report(*args, **kwargs):
+        raw_gradients = {}
+        for name in train.PARAMETER_FAMILIES:
+            parameter = getattr(controller, name)
+            parameter.grad = torch.ones_like(parameter)
+            raw_gradients[name] = parameter.grad.clone()
+        return {
+            "objective": 1.0,
+            "gradients_finite": True,
+            "all_recurrent_states_and_outputs_finite": True,
+        }, raw_gradients
+
+    monkeypatch.setattr(train, "_sample_objective_report", fixed_report)
+    monkeypatch.setattr(train, "combined_full_prefix_objective", full_report)
+    monkeypatch.setattr(train, "accumulate_sample_gradient", gradient_report)
+    monkeypatch.setattr(
+        train,
+        "run_derivative_probe_ladder",
+        lambda *args, **kwargs: {"pass": False, "classification": classification},
+    )
+
+    result = train.run_update_attempt(
+        controller,
+        optimizer,
+        {},
+        None,
+        {},
+        {"motion_indices": []},
+        {"dense": 1.0, "motion": 1.0},
+        device=torch.device("cpu"),
+    )
+
+    assert result["fatal_numerical_failure"] is True
+    assert result["accepted"] is False
+    assert result["trials"] == []
+    assert result["finite_difference"]["classification"] == classification
+    assert result["optimizer_transaction"]["counters_before"] == []
+    assert result["optimizer_transaction"]["counters_after"] == [1.0, 1.0, 1.0]
+    assert calls == {"fixed": 3, "full": 1}
+    assert train.audit.semantic_sha256(train._copy_parameters(controller)) == controller_hash
+    assert train.audit.semantic_sha256(optimizer.state_dict()) == optimizer_hash
+
+    state = _attempt_state(accepted_updates=0)
+    train.record_attempt_outcome(state, result, attempted_number=1, target_update=1)
+    assert state["pending_terminal"]["classification"] == classification
+
+
+def test_missing_derivative_resume_identity_is_allowed_only_for_legacy_single_probe(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(train, "DERIVATIVE_PROBE_SCALES", (train.FINITE_DIFFERENCE_SCALE,))
+    monkeypatch.setattr(train, "DERIVATIVE_BASELINE_REPEATS", 1)
+    monkeypatch.setattr(train, "DERIVATIVE_REQUIRED_CONSECUTIVE_PASSES", 1)
+    monkeypatch.setattr(train, "DERIVATIVE_REPLAY_NOISE_MULTIPLIER", 0.0)
+    monkeypatch.setattr(train, "DERIVATIVE_MINIMUM_OBJECTIVE_CHANGE", 0.0)
+    monkeypatch.setattr(train, "AUTHORIZING_TAYLOR_AUDIT_SHA256", None)
+    train.validate_derivative_probe_resume_identity({})
+    with pytest.raises(SystemExit, match="does not match"):
+        train.validate_derivative_probe_resume_identity(
+            {"derivative_probe_protocol": {"scales": [1 / 32]}}
+        )
+
+    monkeypatch.setattr(train, "DERIVATIVE_PROBE_SCALES", ladder.DERIVATIVE_PROBE_SCALES)
+    monkeypatch.setattr(train, "DERIVATIVE_BASELINE_REPEATS", 3)
+    monkeypatch.setattr(train, "DERIVATIVE_REQUIRED_CONSECUTIVE_PASSES", 2)
+    monkeypatch.setattr(train, "DERIVATIVE_REPLAY_NOISE_MULTIPLIER", 10.0)
+    monkeypatch.setattr(train, "DERIVATIVE_MINIMUM_OBJECTIVE_CHANGE", 1.0e-8)
+    monkeypatch.setattr(
+        train, "AUTHORIZING_TAYLOR_AUDIT_SHA256", ladder.EXPECTED_TAYLOR_AUDIT_SHA256
+    )
+    with pytest.raises(SystemExit, match="missing the registered"):
+        train.validate_derivative_probe_resume_identity({})
 
 
 def test_beta1_zero_removes_opposed_first_moment_direction() -> None:
