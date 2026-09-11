@@ -2104,3 +2104,24 @@ unchanged update-100 gate requires at least 90% assisted-hover success, 90% corr
 motion gain 0.5-1.5 and a positive 95% live-minus-frozen bootstrap lower bound. A pass still
 authorizes only a separately preregistered native-attitude reintegration experiment; it does
 not itself promote a full-native hover controller or authorize gate training.
+
+Result: the source-restarted β1=0 run stopped safely at attempted update 6 with accepted
+update 5 retained. Its teacher hover and foreleg motion positive controls passed, every paired
+endpoint image was exactly equal, and the unchanged source was again wrong-signed on all 24
+training motion pairs. The first five attempts were accepted at scales 1/2, 1, 1/2, 1/2 and
+1/4.
+
+Attempt 6 had finite gradients, recurrence, outputs, objectives and projected parameters. Its
+one β1=0 transaction advanced all three pending counters from 5 to 6 and remained a descent
+direction: autograd and independently materialized values were `-0.785668` and `-0.785674`.
+The mandatory scale-1/16 finite difference reduced the fixed objective from `1.046161` to
+`1.020021`, but its measured derivative was `-0.418238`; the 46.77% relative error exceeded
+the frozen 20% limit. This was therefore a fatal numerical-control failure before ordinary
+scale trials. The transaction was discarded, and the stopped resume exactly retains the
+pre-attempt optimizer hash and counters of 5.
+
+No midpoint or final data were generated, no assisted-hover claim was tested, and no native
+attitude reintegration, full-native hover, gate flight or promotion was authorized. The run
+is closed and must not be resumed. The full report SHA-256 is
+`1b951c0613ebe904cdb39186a053fcba72d5da7408170b73fac85693b915cc36`; see
+[`artifacts/variable-height-native-throttle-assisted-beta1-zero-v1/`](../artifacts/variable-height-native-throttle-assisted-beta1-zero-v1/).

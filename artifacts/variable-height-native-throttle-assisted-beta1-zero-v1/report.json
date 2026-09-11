@@ -1,0 +1,107 @@
+{
+  "accepted_scale_counts": {
+    "0.25": 1,
+    "0.5": 3,
+    "1.0": 1
+  },
+  "accepted_updates": 5,
+  "actor_contract_unchanged": true,
+  "attempted_updates": 6,
+  "classification": "fatal_numerical_control_failure",
+  "disposable_integration": {
+    "accepted_scale": 0.5,
+    "finite_difference_relative_error": 0.061711541542150236,
+    "formal_seed_overlap": [],
+    "optimizer_betas": [
+      0.0,
+      0.999
+    ],
+    "pass": true,
+    "resume_round_trip_pass": true
+  },
+  "fatal_attempt": {
+    "adam_counters_after_pending_transaction": [
+      6.0,
+      6.0,
+      6.0
+    ],
+    "adam_counters_before": [
+      5.0,
+      5.0,
+      5.0
+    ],
+    "adam_transaction_pass": true,
+    "attempt": 6,
+    "autograd_directional_derivative": -0.785668134919305,
+    "candidate_fixed_burn_in_objective": 1.0200214385986328,
+    "controls_pass": true,
+    "current_fixed_burn_in_objective": 1.0461612939834595,
+    "current_full_prefix_objective": 1.0461606103926897,
+    "finite_difference_measured_directional_derivative": -0.41823768615722656,
+    "finite_difference_relative_error": 0.4676662224564023,
+    "finite_difference_relative_error_limit": 0.2,
+    "finite_difference_scale": 0.0625,
+    "gradient_norm_before_clipping": 29.089332580566406,
+    "gradients_finite": true,
+    "materialized_directional_derivative": -0.7856744796120311,
+    "motion_endpoint_image_difference_max": 0.0,
+    "objective_decreased_in_finite_difference": true,
+    "ordinary_trials_run": 0,
+    "reason": "fixed-burn-in directional finite difference failed",
+    "recurrent_states_and_outputs_finite": true,
+    "target_accepted_update": 6
+  },
+  "final_evaluation_started": false,
+  "final_parameter_family_rms_from_source": {
+    "bias": 0.00011431307211751118,
+    "edge_magnitude": 0.00012134568532928824,
+    "raw_time_constant": 0.0000013770716122963
+  },
+  "full_native_hover_authorized": false,
+  "full_report_sha256": "1b951c0613ebe904cdb39186a053fcba72d5da7408170b73fac85693b915cc36",
+  "gate_flight_authorized": false,
+  "implementation_commit": "3a7348b",
+  "locked_inputs": {
+    "checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+    "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665"
+  },
+  "midpoint_evaluation_started": false,
+  "native_attitude_reintegration_authorized": false,
+  "objective_scales": {
+    "dense": 0.013762206770479679,
+    "motion": 0.04366247355937958,
+    "nominal_hover_motor_drive": 0.35242146253585815
+  },
+  "optimizer_betas": [
+    0.0,
+    0.999
+  ],
+  "ordinary_rejected_attempts": [],
+  "pass": false,
+  "preflight": {
+    "motion_endpoint_images_exact": true,
+    "pass": true,
+    "source_motion_correct_sign_fraction": 0.0,
+    "source_motion_nrmse": 1.0302996635437012,
+    "source_motion_teacher_aligned_gain": -0.029650317505002022,
+    "teacher_hover_success_fraction": 1.0,
+    "teacher_motion_correct_sign_fraction": 1.0,
+    "teacher_motion_maximum_rc_error": 0.0010695457458496094
+  },
+  "promoted": false,
+  "protocol_commit": "ddd3c5c",
+  "restoration": {
+    "controller_parameter_sha256": "1c28c49770687e4db164e16b02eb65095ef32661dde24a7595626ac14e934e7b",
+    "optimizer_hash_equals_fatal_attempt_pre_transaction": true,
+    "optimizer_sha256": "9ecbe922bcfc0bf5a6a14edc49836ac803af600363211bd75903aea7723d441f",
+    "optimizer_step_counters": [
+      5.0,
+      5.0,
+      5.0
+    ],
+    "resume_sha256": "330fa83864a711a7630df8109f1a0550360b111f950e6572b25a4919b978acb3",
+    "run_state": "stopped"
+  },
+  "status": "nonpromotional_teacher_attitude_assisted_native_throttle",
+  "stop_reason": "a mandatory gradient, transaction, direction or finite-difference control failed"
+}
