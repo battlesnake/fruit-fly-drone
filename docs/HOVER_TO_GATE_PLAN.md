@@ -3383,6 +3383,37 @@ The v2 direct-state implementation SHA-256 is
 `b0e60b02d68e48e088d430a2105b24b5a406af865657b5c9275a62a42f7d31d3`. Commit these files
 before the v2 one-shot execution.
 
+V2 ran once under implementation commit `fcd1e78` and also stopped at the derivative gate.
+Identity, rendered-subset, normalization, source-state and analytic-gradient hashes reproduced
+v1 exactly. The direct write moved T5c tau from 2.84% to 1.00% relative error, inside the 2%
+gate, but T4c tau moved from 10.31% to 25.98%. All other probes passed again; memory remained
+2.7695 GiB and source/local identity was restored. This mixed result rules out treating the v1
+subtract/add expression as the sole cause. The full v2 report SHA-256 is
+`df8396dd18e83a66e206dbfba3d9276bccdc409d795745e0cb4c4c2dc6a05248`; see
+[`artifacts/vertical-motion-commissioning-preflight-v2/`](../artifacts/vertical-motion-commissioning-preflight-v2/).
+Training remains unauthorized and the direct-write candidate is not retained.
+
+Preregister the promised derivative-conditioning ladder using the original v1 state arithmetic,
+not the v2 direct write. Lock both terminal reports, the original source and manifest, the same
+four minibatch cases and eight identity cases, source-normalization hash
+`796cf8f0488edff30dd34bf556268b4faac6ad5564244a1ce9b13cfcb131e475`, rendered-subset hash
+`c04bb10318cd3b0620c9a71abf7a7420afe166a0eff2cf1d1d154d9a41440576`, loss, six probes and all
+optimizer/restoration/memory gates. Evaluate every probe at central steps
+`[0.008,0.004,0.002,0.001,0.0005,0.00025]`. Materialize and record the actual float32 parameter
+offsets, total plus/minus losses and every component loss. Repeat the unperturbed loss three
+times; define the loss-resolution floor as the greater of their maximum range and eight float32
+ULPs at the baseline loss. A scale is resolved only when its absolute plus/minus loss difference
+is at least that floor.
+
+For the two tau probes, record analytic gradients separately for every loss component. Reproduce
+v1's analytic gradients within `1e-6` absolute and its `h=0.001` plus/minus losses within `2e-6`
+absolute before interpreting the ladder. A probe qualifies only if two adjacent resolved steps
+both have the analytic sign and at most 2% symmetric relative error. All six probes must qualify.
+Only then run the original one-update Adam/backtracking test and require at least 0.1% fixed-
+minibatch improvement, exact restoration and the original 14 GiB peak-reserved limit. A complete
+pass authorizes the separately bounded 100-update training run; any failure stops without another
+implementation change. Do not use or render development/acceptance and do not retain a candidate.
+
 For each pathway and integrated/terminal window, let `O_up` and `O_down` be the
 stationary-subtracted c-d anatomical opponents, then define `D=(O_up-O_down)/2` and
 `B=(O_up+O_down)/2`. Freeze each normalization from the source training response with an absolute
