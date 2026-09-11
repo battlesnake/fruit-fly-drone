@@ -1545,3 +1545,62 @@ success permits only the already registered fresh qualification; closed-loop hov
 unauthorized until that passes. Keep all generated checkpoints, resumes and the 224 MiB
 snapshot under ignored `runs/`, commit only compact reports, and make no automatic
 promotion or actor-interface change.
+
+Result: the snapshot boundary loaded exactly and its parameter, pending-Adam and two
+25-value training metric-tree controls all passed. Fresh ordinary proposals at totals 22,
+23 and 24 were accepted at scales 1/16, 1/32 and 1/32. Training endpoint-D NRMSE improved
+from `1.35364187` at accepted update 21 to `1.34913635` at update 24. Sign fraction remained
+zero and gain remained negative, so the result was not eligible for hover.
+
+Attempted update 25 stopped at the preregistered solver-success gate before installing a
+candidate. The first free-coordinate L-BFGS result returned `ABNORMAL`, even though its
+original-unit primal violation was only `3.31e-11`, normalized projected-gradient KKT
+residual was `9.05e-11`, and both the exhaustive-support and SLSQP references passed. The
+round identified 5,506 edge lower-bound crossings but returned before adding them to the
+active set; subsequent authoritative clamping of that unfinished first-round result caused
+the reported `0.048034` common-step-25 violation. This is a solver-status control failure,
+not evidence that the completed bound-aware QP is infeasible.
+
+The failed update-25 transaction restored controller and Adam exactly to update 24 and
+persisted a stopped resume (SHA-256
+`5a500afb19910b0fb19186d575b0f75455d4b0f72b8f4e592663693697dc34b0`). No scheduled
+development data beyond the inherited update-20 record were evaluated, and there was no
+terminal checkpoint, fresh qualification, closed-loop hover or promotion. See
+[`artifacts/variable-height-full-native-d-first-fp64-snapshot-corrected-fitting-v1/`](../artifacts/variable-height-full-native-d-first-fp64-snapshot-corrected-fitting-v1/).
+
+Before any further fitting, run one restored, frozen-input **update-25 exhaustive-support
+primary-solver audit** in a new ignored run. Hash-lock the stopped snapshot-seeded report
+(SHA-256 `55aa8e0848d2b93b5493c2c6478b93f30485bd810520f0814b126a918aec1691`), its resume
+above, the graph, source checkpoint and immutable cache. Load and verify the exact accepted
+update-24 controller and Adam state, discard only the recorded rejected update-25 history
+entry in the audit copy, reproduce the accepted-update-24 training metrics, generate the
+update-25 constraint specifications, rows, endpoint-D gradient and raw one-step Adam
+displacement exactly once, and archive those tensors before solving. The source run and
+resume must remain untouched.
+
+Use the existing exhaustive active-support Lawson-Hanson nonnegative solve as the primary
+dual solution in every bound-aware round. Enumerate all supports (at most 1,024 for the ten
+constraints), select the minimum-objective full-KKT-feasible solution with deterministic
+support-mask tie-breaking, and apply it to the primal displacement. Retain SLSQP as an
+independent diagnostic and L-BFGS only as a non-authoritative diagnostic; do not require
+reproduction or success of the historical L-BFGS status. Require finite coefficients,
+original-unit primal violation at most `1e-6`, normalized KKT residual at most `1e-8`,
+independent objective and Gram-induced primal agreement, and completion of the unchanged
+monotonic edge-bound active set within eight rounds.
+
+Reload the frozen archive from CPU and run the complete exhaustive-primary projection three
+times from an empty active set. Require exact active/fixed-set hashes per round and compare
+the complete learning-rate-scaled primal displacement plus objective at the existing
+`1e-10` and `1e-12` relative tolerances; do not require equality of non-unique dual
+coefficients. On each repeat require native bounds, canonical idempotence, post-
+materialization linear violation at most `1e-6`, negative endpoint-D derivative, exact
+one-step Adam accounting and the existing finite-difference direction check.
+
+Only if every numerical control passes, evaluate the unchanged six ordinary scales on the
+fixed training bank as a diagnostic, with the unchanged source-relative preservation and
+minimum endpoint-D-improvement gates. Do not invoke or modify nonlinear repair, do not
+evaluate development or fresh data, and do not retain the candidate, optimizer step or any
+controller mutation. Classify numerical failure separately from “projector qualified but
+no ordinary scale passed.” A passing audit authorizes only a separately preregistered
+continuation from the exact accepted update-24 boundary; it does not pass the stopped run,
+waive the total-update-50 mandatory gate, authorize hover or permit promotion.

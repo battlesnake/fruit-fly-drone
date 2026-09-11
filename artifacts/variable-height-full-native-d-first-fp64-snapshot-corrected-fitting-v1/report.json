@@ -1,0 +1,75 @@
+{
+  "accepted_updates": 24,
+  "attempted_update": 25,
+  "classification": "no_terminal_checkpoint",
+  "closed_loop_hover_authorized": false,
+  "experiment": "variable-height-full-native-d-first-fp64-snapshot-corrected-fitting-v1",
+  "final_training": {
+    "endpoint_common_step_25_nrmse": 1.6837676763534546,
+    "endpoint_damping_correct_sign_fraction": 0.0,
+    "endpoint_damping_nrmse": 1.3491363525390625,
+    "endpoint_damping_teacher_aligned_gain": -0.3342113494873047
+  },
+  "full_report_sha256": "55aa8e0848d2b93b5493c2c6478b93f30485bd810520f0814b126a918aec1691",
+  "implementation_commit": "f038f11",
+  "locked_inputs_unchanged": true,
+  "pass": false,
+  "pre_update_22_snapshot_control": {
+    "candidate_parameter_sha256": "223d3eda98a5c7c3280b28782d4f46ac5845c290e14ca11898749712cbba02e3",
+    "candidate_training_replay_pass": true,
+    "candidate_training_values_checked": 25,
+    "pass": true,
+    "pending_optimizer_sha256": "6743cc01e41e01ccd7183b8981acff29eb5af22a72c3039bb9d234cfcbde42d6",
+    "source_training_replay_pass": true,
+    "source_training_values_checked": 25
+  },
+  "promoted": false,
+  "protocol_commit": "36e573e",
+  "resume": {
+    "accepted_updates": 24,
+    "controller_semantic_sha256": "299dae786c06b5a64b9d9d29a9e365697ea5a36333caac5eb7c1b3ea2ffbaeed",
+    "file_sha256": "5a500afb19910b0fb19186d575b0f75455d4b0f72b8f4e592663693697dc34b0",
+    "optimizer_semantic_sha256": "5213d7ee914c97e402bc1108b6c4fcc7be385b952388981865d388ba3fc8574f",
+    "optimizer_step_counters": [24.0],
+    "run_state": "stopped",
+    "size_bytes": 105166039,
+    "update_25_transaction_restored": true
+  },
+  "stop_reason": "constraint projection failed",
+  "update_22_through_24": [
+    {
+      "acceptance_kind": "ordinary",
+      "endpoint_damping_nrmse": 1.3513845205307007,
+      "scale": 0.0625,
+      "update": 22
+    },
+    {
+      "acceptance_kind": "ordinary",
+      "endpoint_damping_nrmse": 1.3502614498138428,
+      "scale": 0.03125,
+      "update": 23
+    },
+    {
+      "acceptance_kind": "ordinary",
+      "endpoint_damping_nrmse": 1.3491363525390625,
+      "scale": 0.03125,
+      "update": 24
+    }
+  ],
+  "update_25_projection": {
+    "active_set_rounds_completed": 0,
+    "damping_descent_fraction_retained_in_unfinished_result": 0.6587718751306991,
+    "exhaustive_support_reference_pass": true,
+    "first_round_free_primal_maximum_violation": 3.3114798399333945e-11,
+    "first_round_free_primal_pass": true,
+    "first_round_normalized_kkt_pass": true,
+    "first_round_normalized_projected_gradient_residual": 9.052855612786187e-11,
+    "fixed_edges_committed": 0,
+    "identified_new_lower_bound_edges": 5506,
+    "optimizer_transaction_accounting_pass": true,
+    "post_clamp_common_step_25_linearized_violation": 0.0480340391058531,
+    "primary_solver_message": "ABNORMAL: ",
+    "primary_solver_success": false,
+    "slsqp_reference_kkt_pass": true
+  }
+}
