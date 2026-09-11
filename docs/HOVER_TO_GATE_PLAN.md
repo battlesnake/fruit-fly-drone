@@ -3039,3 +3039,111 @@ last-hop fit, expand this same tau mask, add engineered velocity/history, or rei
 as hover or gate-flight authorization. The corrected full report SHA-256 is
 `c5062fb18039d248d045eebbbfc17ccacc43522d5a34c2d239f7a14b309ba64a`; see
 [`artifacts/variable-height-rk4-premotor-tau-v1/`](../artifacts/variable-height-rk4-premotor-tau-v1/).
+
+### Separate camera, CNS, action and aircraft clocks
+
+The 50 Hz camera is not a 50 Hz synapse clock. Treat the connectome state as a continuous-time
+recurrent system whose visual drive is held between camera exposures. A path of several edges
+must accumulate delay through its cells' dynamics, not an artificial mandatory 20 ms delay per
+edge. Classical RK4 stages are evaluations of that continuous equation; they are not new images,
+external memory or independent biological frames.
+
+Keep the following rate domains explicit in all subsequent flight work:
+
+- the FPV image updates at 50 Hz initially;
+- the internal CNS solver advances repeatedly while that image is held, with K32 exponential
+  Euler at 1,600 substeps/s serving as the current fine reference;
+- attitude sensing and native motor-pool readout may later be sampled faster than vision rather
+  than being unnecessarily quantized to camera frames;
+- the foreleg/stick plant, aircraft rate controller, mixer and rigid-body physics use their own
+  faster clocks, holding or interpolating the most recent fly command as declared.
+
+Do not call four RK4 derivative stages four 200 Hz biological updates. If faster stick updates
+are required, integrate to actual intermediate output times and read the native motor pools
+there. Before closed-loop use, qualify a practical fixed CNS/output schedule—likely RK4-M2 or
+RK4-M4 with 100 or 200 Hz state/output boundaries—against the fine reference, then let the
+ordinary aircraft rate loop run at hundreds or thousands of hertz. The current simulator's
+50 Hz fly output and 100 Hz plant remain historical experiment settings, not an architectural
+claim that neural propagation waits for video frames.
+
+### Preregistered frozen T4/T5 optic-motion audit
+
+Commission visual velocity estimation as its own native module before fitting another
+descending, VNC or foreleg controller. Connectivity and recurrence do not by themselves prove
+that the initialized model implements fly motion vision. T4 and T5 are the first known
+direction-selective populations in the ON and OFF pathways; their `a`, `b`, `c` and `d`
+subtypes prefer front-to-back, back-to-front, upward and downward motion, respectively. Use
+that anatomical opponent code rather than fitting a high-dimensional decoder. The subtype and
+ON/OFF assignments follow the primary physiological evidence in
+[Haag et al.](https://elifesciences.org/articles/29044); task optimization of connectome-
+constrained visual models is precedent for commissioning, not evidence that this initialized
+MaleCNS simulation already has the function
+([Lappalainen et al.](https://www.nature.com/articles/s41586-024-07939-3)).
+
+This is a source-only, no-learning audit. Hash-lock the full graph at
+`8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665`, the original
+`paired-dynamic-001` checkpoint at
+`7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572`, the official
+MaleCNS annotation table at
+`2177e246113e4cfbf1e7772ec37c6da1955ff22e8063d0b1f833101f99a9a3b2`, and the terminal
+premotor-tau report at
+`c5062fb18039d248d045eebbbfc17ccacc43522d5a34c2d239f7a14b309ba64a`. Restore and
+hash-verify the complete source after every condition and at termination.
+
+Select exactly the official types `T4a`, `T4b`, `T4c`, `T4d`, `T5a`, `T5b`, `T5c` and `T5d`;
+exclude the single `T5a_unclear` cell. All 13,580 selected cells occur in the full graph:
+T4 counts are 1,684/1,690/1,778/1,709 and T5 counts are 1,664/1,715/1,720/1,620 in subtype
+order a/b/c/d. Freeze the sorted body-ID SHA-256 at
+`3af4c6cbccc60438067dcc4143f07e7cbae56b8132ac61ff3ed545f57a69a176` and graph-index
+SHA-256 at `4146cd93be4cfc9ca7344081d3f9ae87690e21e5b41fc1cb8d54db4857b86cb5`.
+Record bilateral counts and hashes per type, all existing graph afferents into these cells, and
+their typed immediate lobula-plate/visual-projection targets. These descriptive anatomy sets
+cannot be adjusted after responses are observed.
+
+Generate a deterministic 320x200 linear-RGB motion bank with 125-degree horizontal FOV and
+seed `480991`. The actor receives frames and zero roll/pitch only; it receives no flow, image
+difference, direction label, history feature, plant state or target. The core contains 64
+opposite-direction edge-motion pairs: vertical/horizontal axis x bright/dark polarity x 2/4
+pixels per 20 ms frame x eight balanced spatial phases. Add 16 nonselecting generalization
+pairs from fixed periodic sine and band-limited faint-texture fields across both axes, speeds
+and two phases. Use a 25-frame uniform prefix, 16 motion frames and one common terminal frame.
+Within every pair, the final pixels and attitude must be bit-identical. Generate matched
+stationary histories, exact duplicate histories and temporally reversed histories as controls.
+Labels are angular image direction and speed derived from the declared camera projection, never
+metric drone velocity.
+
+Use K32 exponential Euler—32 recurrent updates per held 20 ms image—as the primary source
+condition. Before interpreting anatomy, compare it with K64 on a frozen eight-pair subset
+containing every edge polarity and axis at the faster speed. Require selected-cell activity RMS
+difference, anatomical opponent-contrast RMS difference and native terminal-motor RMS difference
+each at most `0.005`, plus exact inputs, finite states/outputs and exact source identity. If K32
+fails, stop as a numerical failure; do not inspect or select motion tuning. Separately report
+RK4-M2 and RK4-M4 costs and agreement, but select neither by its apparent tuning score.
+
+At every camera boundary record `tanh(state)` for all selected cells. Subtract the matched
+stationary response and compute fixed population opponents: T4c-T4d for bright vertical edges,
+T5c-T5d for dark vertical edges, and the corresponding a-b controls horizontally. Measure both
+the integrated motion-window response and the response after the common terminal frame. For
+each vertical polarity, speed and phase, require the c-d opponent sign to distinguish upward
+from downward histories. Qualification requires at least 90% correct sign separately for T4 ON
+upward, T4 ON downward, T5 OFF upward and T5 OFF downward cases. For active T4c, T4d, T5c and
+T5d cells, require median preferred-versus-null DSI
+`(R_pref-R_null)/(|R_pref|+|R_null|+noise_floor)` at least `0.3` and at least half the subtype
+above ten times the duplicate-control numerical noise. Also require exact duplicate equality,
+stationary opponent RMS at most 10% of moving opponent RMS, and at least 90% sign inversion for
+the reversed-history control. Report horizontal and textured responses descriptively; they do
+not rescue a failed vertical ON/OFF gate.
+
+Finally, replay the vertical bank while replacing all T4/T5 states after every neural substep
+with the within-pair mean. This training-only causal intervention preserves pair-common activity
+while removing T4/T5 directional differences. Report the change in downstream typed visual
+populations and native four-axis motor contrasts, especially wrong-signed throttle damping. It
+is diagnostic, not an acceptance requirement: attenuation establishes mediation, not useful
+control.
+
+If the frozen motion module passes, freeze it and next preregister training only its existing
+motion-output-to-DN/VNC routing. If it fails with valid numerics, next preregister short local
+motion-task optimization confined to type-shared T4/T5 afferent magnitudes, biases and time
+constants while preserving retinotopy, ON/OFF pathways, direction subtypes and all downstream
+parameters. A numerical or annotation failure stops before learning. This audit cannot authorize
+hover, gate flight, candidate retention or promotion.
