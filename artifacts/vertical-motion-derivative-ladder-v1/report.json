@@ -1,0 +1,120 @@
+{
+  "artifact_kind": "compact_terminal_summary",
+  "candidate_retained": false,
+  "classification": "vertical_motion_derivative_ladder_qualification_failed",
+  "cuda_peak_reserved_gibibytes": 5.115234375,
+  "cuda_peak_reserved_memory_pass": true,
+  "development_or_acceptance_pixels_rendered": false,
+  "finite_difference_ladder": {
+    "loss_resolution_floor": 4.76837158203125e-07,
+    "pass": false,
+    "probes": [
+      {
+        "analytic_gradient": 1.57722008228302,
+        "name": "T4_gain_Mi1_to_T4c",
+        "pass": true,
+        "passing_adjacent_step_pairs": [[0.008, 0.004], [0.004, 0.002], [0.002, 0.001], [0.001, 0.0005], [0.0005, 0.00025]],
+        "rows": [
+          {"central_finite_difference": 1.5766290661461204, "pass": true, "step": 0.008, "symmetric_relative_error": 0.00037472014434669697},
+          {"central_finite_difference": 1.578570523853163, "pass": true, "step": 0.004, "symmetric_relative_error": 0.0008554838379008628},
+          {"central_finite_difference": 1.57371699350301, "pass": true, "step": 0.002, "symmetric_relative_error": 0.0022210526098167204},
+          {"central_finite_difference": 1.5832215765161675, "pass": true, "step": 0.001, "symmetric_relative_error": 0.0037906849692849395},
+          {"central_finite_difference": 1.5800798712523096, "pass": true, "step": 0.0005, "symmetric_relative_error": 0.001809901525435588},
+          {"central_finite_difference": 1.5693848354792561, "pass": true, "step": 0.00025, "symmetric_relative_error": 0.004967757443477652}
+        ]
+      },
+      {
+        "analytic_gradient": -0.15678033232688904,
+        "name": "T5_gain_Tm1_to_T5c",
+        "pass": true,
+        "passing_adjacent_step_pairs": [[0.008, 0.004]],
+        "rows": [
+          {"central_finite_difference": -0.1577619991357344, "pass": true, "step": 0.008, "symmetric_relative_error": 0.006222454166549769},
+          {"central_finite_difference": -0.15389257694628847, "pass": true, "step": 0.004, "symmetric_relative_error": 0.018419117613423366},
+          {"central_finite_difference": -0.15223222268581987, "pass": false, "step": 0.002, "symmetric_relative_error": 0.029009439982473673},
+          {"central_finite_difference": -0.15562509313068096, "pass": true, "step": 0.001, "symmetric_relative_error": 0.007368521159907935},
+          {"central_finite_difference": -0.1641533051201049, "pass": false, "step": 0.0005, "symmetric_relative_error": 0.04491516505148238},
+          {"central_finite_difference": -0.163447782546495, "pass": false, "step": 0.00025, "symmetric_relative_error": 0.040792540074438235}
+        ]
+      },
+      {
+        "analytic_gradient": 0.6460350751876831,
+        "name": "T4c_bias",
+        "pass": true,
+        "passing_adjacent_step_pairs": [[0.008, 0.004], [0.004, 0.002], [0.002, 0.001], [0.001, 0.0005], [0.0005, 0.00025]],
+        "rows": [
+          {"central_finite_difference": 0.6468146732192968, "pass": true, "step": 0.008, "symmetric_relative_error": 0.0012052881047572228},
+          {"central_finite_difference": 0.6450935891831545, "pass": true, "step": 0.004, "symmetric_relative_error": 0.0014573295486395611},
+          {"central_finite_difference": 0.6408989125063228, "pass": true, "step": 0.002, "symmetric_relative_error": 0.007950284556714149},
+          {"central_finite_difference": 0.6435811213938173, "pass": true, "step": 0.001, "symmetric_relative_error": 0.0037984838410714834},
+          {"central_finite_difference": 0.6482004811445022, "pass": true, "step": 0.0005, "symmetric_relative_error": 0.003340642316395323},
+          {"central_finite_difference": 0.6412267380370166, "pass": true, "step": 0.00025, "symmetric_relative_error": 0.00744284224702449}
+        ]
+      },
+      {
+        "analytic_gradient": 0.2906070053577423,
+        "name": "T5c_bias",
+        "pass": true,
+        "passing_adjacent_step_pairs": [[0.008, 0.004], [0.004, 0.002], [0.002, 0.001]],
+        "rows": [
+          {"central_finite_difference": 0.2898163955839014, "pass": true, "step": 0.008, "symmetric_relative_error": 0.0027205461646310934},
+          {"central_finite_difference": 0.2919807891445046, "pass": true, "step": 0.004, "symmetric_relative_error": 0.004705048543732727},
+          {"central_finite_difference": 0.28975306565183556, "pass": true, "step": 0.002, "symmetric_relative_error": 0.0029384691014434873},
+          {"central_finite_difference": 0.29075144340440295, "pass": true, "step": 0.001, "symmetric_relative_error": 0.0004967749943712129},
+          {"central_finite_difference": 0.28473137456802644, "pass": false, "step": 0.0005, "symmetric_relative_error": 0.020218476091045583},
+          {"central_finite_difference": 0.2760887014860997, "pass": false, "step": 0.00025, "symmetric_relative_error": 0.04995854746780903}
+        ]
+      },
+      {
+        "analytic_gradient": 0.020206790417432785,
+        "name": "T4c_tau",
+        "pass": false,
+        "passing_adjacent_step_pairs": [],
+        "rows": [
+          {"central_finite_difference": 0.020254362306099033, "pass": true, "step": 0.008, "symmetric_relative_error": 0.002348723102080731},
+          {"central_finite_difference": 0.01787403980121743, "pass": false, "step": 0.004, "symmetric_relative_error": 0.1154438962361309},
+          {"central_finite_difference": 0.019982714430470287, "pass": true, "step": 0.002, "symmetric_relative_error": 0.011089142923419637},
+          {"central_finite_difference": 0.022530174340634777, "pass": false, "step": 0.001, "symmetric_relative_error": 0.10312321103577098},
+          {"central_finite_difference": 0.023365321571198666, "pass": false, "step": 0.0005, "symmetric_relative_error": 0.13518029889471986},
+          {"central_finite_difference": 0.0416070577014783, "pass": false, "step": 0.00025, "symmetric_relative_error": 0.514342240626286}
+        ]
+      },
+      {
+        "analytic_gradient": -0.12225273251533508,
+        "name": "T5c_tau",
+        "pass": true,
+        "passing_adjacent_step_pairs": [[0.008, 0.004]],
+        "rows": [
+          {"central_finite_difference": -0.12184654815300482, "pass": true, "step": 0.008, "symmetric_relative_error": 0.0033224972069995744},
+          {"central_finite_difference": -0.12241370318216023, "pass": true, "step": 0.004, "symmetric_relative_error": 0.0013149726104242703},
+          {"central_finite_difference": -0.11947904869762174, "pass": false, "step": 0.002, "symmetric_relative_error": 0.022688113064183793},
+          {"central_finite_difference": -0.1258232752197884, "pass": false, "step": 0.001, "symmetric_relative_error": 0.028377442076724508},
+          {"central_finite_difference": -0.11807832151159325, "pass": false, "step": 0.0005, "symmetric_relative_error": 0.034145748056945896},
+          {"central_finite_difference": -0.10097758702908917, "pass": false, "step": 0.00025, "symmetric_relative_error": 0.17402593012452472}
+        ]
+      }
+    ],
+    "relative_error_limit": 0.02,
+    "steps": [0.008, 0.004, 0.002, 0.001, 0.0005, 0.00025],
+    "two_adjacent_resolved_steps_required": true
+  },
+  "frozen_source_normalizations_semantic_sha256": "796cf8f0488edff30dd34bf556268b4faac6ad5564244a1ce9b13cfcb131e475",
+  "full_report_file_sha256": "fb1038ee688874ebbc369a3d7f36bd80b63a7371b9bd4b3a0aabec933db1c167",
+  "full_report_path": "runs/optic-motion/vertical-motion-derivative-ladder-001/report.json",
+  "full_start_file_sha256": "0916c41440594841dd18db60fd02761ac7758c5bb7b58d7a8d18fe3fcaf06b1b",
+  "full_start_path": "runs/optic-motion/vertical-motion-derivative-ladder-001/start.json",
+  "hover_or_gate_flight_authorized": false,
+  "identity": {
+    "maximum_absolute_difference": 0.0,
+    "pass": true,
+    "response_semantic_sha256": "abfdfcd03f050994032b0f28b376b150eb06e00fbf02663fe4187a7c1d2d672c"
+  },
+  "implementation_commit": "a70def84a47eceaa29a87d80a6a527e42579e341",
+  "one_update": null,
+  "passed": false,
+  "rendered_training_identity_subset_float32_sha256": "c04bb10318cd3b0620c9a71abf7a7420afe166a0eff2cf1d1d154d9a41440576",
+  "source_and_local_identity_restored": true,
+  "training_execution_authorized": false,
+  "v1_reproduction_pass": true,
+  "wall_time_seconds": 2272.3481348500063
+}

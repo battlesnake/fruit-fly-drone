@@ -3420,6 +3420,19 @@ The derivative-ladder implementation SHA-256 is
 `add5d4134e7b4651d09dc7e477235cc50674a65849996373c66818dd2eb3a0b0`. Commit them before the
 one-shot ladder run.
 
+The one-shot ladder ran under implementation commit `a70def8` and stopped at its preregistered
+qualification gate. It reproduced v1 identity, analytic gradients, normalizations, pixels and
+`h=0.001` losses exactly. All six probe signs agreed and every scale was resolved. Five probes
+qualified at two adjacent scales; `T4c_tau` did not. Its analytic gradient was `0.0202068`; the
+finite difference passed at `h=0.008` (`0.0202544`, 0.23% error) and `h=0.002` (`0.0199827`,
+1.11%), but the intervening `h=0.004` row and smaller-scale rows exceeded 2%, so no adjacent pair
+passed. The optimizer gate remained closed, no candidate was retained, development/acceptance
+remained unopened, source/local identity was restored, and peak CUDA reserved memory was
+5.1152 GiB. The full terminal report SHA-256 is
+`fb1038ee688874ebbc369a3d7f36bd80b63a7371b9bd4b3a0aabec933db1c167`; see
+[`artifacts/vertical-motion-derivative-ladder-v1/`](../artifacts/vertical-motion-derivative-ladder-v1/).
+Training, hover and gate flight remain unauthorized pending a separately committed next protocol.
+
 For each pathway and integrated/terminal window, let `O_up` and `O_down` be the
 stationary-subtracted c-d anatomical opponents, then define `D=(O_up-O_down)/2` and
 `B=(O_up+O_down)/2`. Freeze each normalization from the source training response with an absolute
