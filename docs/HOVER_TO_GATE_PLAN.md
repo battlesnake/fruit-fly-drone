@@ -2687,3 +2687,21 @@ last-hop fitting run whose per-update line search includes the complete combined
 `16,8,4,2,1,1/2,1/4,1/8,1/16,1/32` and always enforces the same source-relative output
 constraints. Failure closes the last-hop readout route and moves upstream into native routing.
 Neither result authorizes training execution, hover, gate flight or promotion.
+
+Result: the extension stopped at its reproduction gate before opening any trust-region
+scale. Its three source objectives reproduced within `3.58e-7`, gradient objective within
+`4.77e-7`, and directional derivative within `6.37e-11`, all far inside the registered
+`2e-5` scalar tolerance. The empty-to-one Adam counters and mask controls also passed.
+
+The pending controller and optimizer did not reproduce byte-identically across CUDA
+processes: their semantic hashes were `4c84cc…` and `5ae04a…` rather than the registered
+`73d633…` and `0692f5…`. Tiny differences in the reported family-gradient RMS values are
+consistent with GPU reduction nondeterminism, but the exact-hash gate is preserved. Scale
+16, 8, 4 and 2 were never evaluated, so this result says nothing about their feasibility.
+
+Source and optimizer restoration passed exactly. A corrected repeat must persist one
+reconstructed direction and establish numerical plus functional equivalence to the prior
+scale-1 replay; it must not simply delete the failed hash gate after the fact. No fitting,
+hover, gate flight or promotion was authorized. The full report SHA-256 is
+`03c4ee348d51c351611b425de184a3d64cf3211f1a75ddf1c6f9e50006dcfc5e`;
+see [`artifacts/variable-height-rk4-readout-trust-region-v1/`](../artifacts/variable-height-rk4-readout-trust-region-v1/).

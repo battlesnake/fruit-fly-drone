@@ -1,0 +1,30 @@
+{
+  "classification": "direction_reproduction_failed",
+  "full_report_sha256": "03c4ee348d51c351611b425de184a3d64cf3211f1a75ddf1c6f9e50006dcfc5e",
+  "implementation_commits": ["67de0bd", "4c27a7f"],
+  "pass": false,
+  "reproduction": {
+    "baseline_absolute_differences": [
+      2.384185791015625e-7,
+      1.1920928955078125e-7,
+      3.5762786865234375e-7
+    ],
+    "directional_derivative_absolute_difference": 6.365914392847394e-11,
+    "expected_optimizer_after_sha256": "0692f59a15c27ef9c3cff3a09dc6611246e0d1dcea8b051e9c32a97cd371976e",
+    "expected_pending_parameter_sha256": "73d633cecf3fd0b42616142eb16eac931d9e41dac6158d640ab07f124353ec0d",
+    "gradient_objective_absolute_difference": 4.76837158203125e-7,
+    "observed_optimizer_after_sha256": "5ae04a6be3fc40fc07cb8434a6b22dddf696dfb7eda4540ea9f1a5080d2f26c3",
+    "observed_pending_parameter_sha256": "4c84cc1a6a04bacc769217a353a1a1f128793d9eaa42e7d089ef54282b14862b",
+    "optimizer_counters_after": [1.0, 1.0, 1.0],
+    "optimizer_counters_before": [],
+    "scalar_tolerance": 0.00002,
+    "scalar_tolerance_pass": true,
+    "tensor_hash_pass": false
+  },
+  "start_marker_sha256": "6bc2c2196c590a73eac04c1b710ab5c037f5486d50b8cc258a6447e8da1109cf",
+  "terminal_optimizer_restored": true,
+  "terminal_source_restored": true,
+  "training_execution_authorized": false,
+  "trust_region_scales_opened": [],
+  "trust_region_selection_authorized": false
+}
