@@ -3341,6 +3341,32 @@ integrated/terminal windows. The reusable implementation SHA-256 is
 is `88da56310ce9689cd347c31584901f78407308ff337d647f44451e42611cd16f`. This implementation must
 be committed before its one-shot execution; it does not itself authorize training.
 
+The committed v1 preflight ran once under implementation commit `9ca8acf` and stopped at its
+derivative gate. Exact identity passed across all eight normal and literal-reversal cases with
+zero maximum difference; all 24 analytic gradients were finite and nonzero; source/local
+identity was restored; and peak CUDA reserved memory was 2.7695 GiB against the 14 GiB limit.
+Both gain probes and both bias probes passed the unchanged 2% central-difference gate, with
+relative errors from 0.050% to 0.735%. T4c tau measured analytic `0.0202068` versus central
+`0.0225306` (10.31% error), while T5c tau measured `-0.122253` versus `-0.125825` (2.84%). The
+optimizer step therefore remained unopened, no candidate was retained, and training remains
+unauthorized. The full terminal report SHA-256 is
+`661868629adae98e1ee664a4ec4c4e50607137097a4e4dcdb07164510917f8e4`; see
+[`artifacts/vertical-motion-commissioning-preflight-v1/`](../artifacts/vertical-motion-commissioning-preflight-v1/).
+
+Preregister one numerical-correction retry before training. In v1, selected-node tau dynamics
+were evaluated as the source next state plus
+`(candidate_alpha-source_alpha)*(target-state)`. Although algebraically correct, this
+subtract-small/add-small float32 path makes the `1e-3` tau perturbations resolve through a
+rounded correction to a much larger source state. V2 must instead compute selected target-node
+states directly as `state + candidate_alpha*(target-state)` and install them with a unique-index
+copy. Keep the source calculation and every scientific choice unchanged: source, graph, mask,
+24 parameters and bounds, stimulus bytes and case IDs, normalizations and their hash, loss and
+averaging, K32 clock, checkpointing, all six probe coordinates, central step `1e-3`, 2% relative
+error limit, optimizer and ladder, 0.1% useful-step gate, restoration gate and 14 GiB memory gate.
+Require exact v2 identity again. Do not render development/acceptance, retain a candidate, or
+authorize training unless every original gate passes. This is an arithmetic-conditioning
+correction, not a post-result threshold change.
+
 For each pathway and integrated/terminal window, let `O_up` and `O_down` be the
 stationary-subtracted c-d anatomical opponents, then define `D=(O_up-O_down)/2` and
 `B=(O_up+O_down)/2`. Freeze each normalization from the source training response with an absolute

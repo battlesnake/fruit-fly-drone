@@ -1,0 +1,76 @@
+{
+  "artifact_kind": "compact_terminal_summary",
+  "candidate_retained": false,
+  "classification": "vertical_motion_preflight_derivative_failed",
+  "cuda_peak_reserved_gibibytes": 2.76953125,
+  "cuda_peak_reserved_memory_pass": true,
+  "development_or_acceptance_pixels_rendered": false,
+  "finite_difference": {
+    "pass": false,
+    "probes": [
+      {
+        "analytic_gradient": 1.57722008228302,
+        "central_finite_difference": 1.5832483768463135,
+        "name": "T4_gain_Mi1_to_T4c",
+        "pass": true,
+        "symmetric_relative_error": 0.0038075482352941175
+      },
+      {
+        "analytic_gradient": -0.15678033232688904,
+        "central_finite_difference": -0.15562772750854492,
+        "name": "T5_gain_Tm1_to_T5c",
+        "pass": true,
+        "symmetric_relative_error": 0.007351718173048136
+      },
+      {
+        "analytic_gradient": 0.6460350751876831,
+        "central_finite_difference": 0.6435811519622803,
+        "name": "T4c_bias",
+        "pass": true,
+        "symmetric_relative_error": 0.003798436524038466
+      },
+      {
+        "analytic_gradient": 0.2906070053577423,
+        "central_finite_difference": 0.29075145721435547,
+        "name": "T5c_bias",
+        "pass": true,
+        "symmetric_relative_error": 0.0004968224682246823
+      },
+      {
+        "analytic_gradient": 0.020206790417432785,
+        "central_finite_difference": 0.022530555725097656,
+        "name": "T4c_tau",
+        "pass": false,
+        "symmetric_relative_error": 0.10313839285714285
+      },
+      {
+        "analytic_gradient": -0.12225273251533508,
+        "central_finite_difference": -0.1258254051208496,
+        "name": "T5c_tau",
+        "pass": false,
+        "symmetric_relative_error": 0.028393889152060633
+      }
+    ],
+    "relative_error_limit": 0.02,
+    "step": 0.001
+  },
+  "frozen_source_normalizations_semantic_sha256": "796cf8f0488edff30dd34bf556268b4faac6ad5564244a1ce9b13cfcb131e475",
+  "full_report_file_sha256": "661868629adae98e1ee664a4ec4c4e50607137097a4e4dcdb07164510917f8e4",
+  "full_report_path": "runs/optic-motion/vertical-motion-preflight-001/report.json",
+  "full_start_file_sha256": "d85a6c9e9d52a93dad6f0e629c2afc5cc6db2839620f11e5e6ebb00476e7e32d",
+  "full_start_path": "runs/optic-motion/vertical-motion-preflight-001/start.json",
+  "hover_or_gate_flight_authorized": false,
+  "identity": {
+    "maximum_absolute_difference": 0.0,
+    "normal_and_literal_reverse_checked": true,
+    "pass": true,
+    "response_semantic_sha256": "abfdfcd03f050994032b0f28b376b150eb06e00fbf02663fe4187a7c1d2d672c"
+  },
+  "implementation_commit": "9ca8acfe0e6ab2bb911d3cd23ad006dc9e555819",
+  "one_update": null,
+  "passed": false,
+  "rendered_training_identity_subset_float32_sha256": "c04bb10318cd3b0620c9a71abf7a7420afe166a0eff2cf1d1d154d9a41440576",
+  "source_and_local_identity_restored": true,
+  "training_execution_authorized": false,
+  "wall_time_seconds": 482.2126980549947
+}
