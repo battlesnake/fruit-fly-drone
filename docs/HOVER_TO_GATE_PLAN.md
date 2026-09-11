@@ -2176,11 +2176,30 @@ transaction or selected continuation scale. Write once to
 `runs/variable-height-hover/native-throttle-beta1-zero-taylor-audit-001`.
 
 A result consistent with finite-step curvature authorizes only preregistration of a new
-source-restarted run that
-separates a sufficiently local derivative-check probe from ordinary optimization-step
-selection. It does not retroactively pass or resume accepted update 5, establish useful motion
-damping or hover, open evaluation data, authorize native attitude reintegration or gate flight,
-or promote a controller. Above-noise nonconvergence instead requires investigation of
-gradient/replay alignment before further training. If the smaller objective changes do not
-clear the registered noise threshold, classify the audit as noise-limited and inconclusive,
-not as evidence of a gradient defect.
+source-restarted run that separates a sufficiently local derivative-check probe from ordinary
+optimization-step selection. It does not retroactively pass or resume accepted update 5,
+establish useful motion damping or hover, open evaluation data, authorize native attitude
+reintegration or gate flight, or promote a controller. Above-noise nonconvergence instead
+requires investigation of gradient/replay alignment before further training. If the smaller
+objective changes do not clear the registered noise threshold, classify the audit as
+noise-limited and inconclusive, not as evidence of a gradient defect.
+
+Result: the accepted-5 Taylor-convergence audit passed every identity, reproduction,
+numerical and restoration control. Three baseline replays measured maximum objective noise
+of only `3.5763e-7`, setting the registered objective-change threshold to `3.5763e-6`. The
+β1=0 transaction again advanced all pending counters from 5 to 6 and reproduced the full
+materialized direction at `-0.785671`.
+
+The scale-1/16 failure reproduced at 46.77% relative error, and scale 1/32 remained just over
+the 20% limit at 23.33%. Scales 1/64, 1/128, 1/256 and 1/512 passed at 11.65%, 5.81%, 2.90%
+and 1.41%; their objective changes all remained far above the noise threshold. The absolute
+Taylor residual ratios after each step halving were `0.24946`, `0.24966`, `0.24951`,
+`0.24942` and `0.24371`, so the residual decreased essentially quadratically across the
+entire registered ladder. This is strong local derivative convergence consistent with
+finite-step curvature, not retroactive acceptance of attempt 6.
+
+Controller and optimizer hashes were restored exactly; no candidate, transaction or
+continuation scale was retained, and no midpoint or final data were opened. This establishes
+neither motion damping nor hover. The full report SHA-256 is
+`0ee33e31f913a3de8e3b27934c1205706f4a417c7b3a33f12e190d4084930e50`; see
+[`artifacts/variable-height-native-throttle-taylor-audit-v1/`](../artifacts/variable-height-native-throttle-taylor-audit-v1/).
