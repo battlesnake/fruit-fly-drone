@@ -1,0 +1,114 @@
+{
+  "accepted_scale_counts": {
+    "1.0": 17
+  },
+  "accepted_updates": 17,
+  "actor_contract_unchanged": true,
+  "attempted_updates": 18,
+  "classification": "derivative_probe_noise_limited_inconclusive",
+  "development_completed": false,
+  "development_started": false,
+  "external_or_engineered_state_added": false,
+  "final_parameter_family_rms_from_source": {
+    "bias": 0.0007447615498676896,
+    "edge_magnitude": 0.0007601314573548734,
+    "raw_time_constant": 0.000006167716037452919
+  },
+  "full_native_hover_authorized": false,
+  "full_report_sha256": "ad0f4f0524be5f9a769b74d890d8f8b6925ba25921bb283ac52b8089ddc22c5c",
+  "gate_flight_authorized": false,
+  "implementation_commit": "28c8ba9",
+  "locked_inputs": {
+    "authorizing_report_sha256": "549259e08db3dd1dc43afda0ea85b76f86fac115a5a28bb0aca6700dbccb9ed9",
+    "checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+    "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665"
+  },
+  "motion_response": {
+    "correct_sign_fraction_final": 0.0,
+    "correct_sign_fraction_source": 0.0,
+    "descriptive_height_sign_contrast_final_motor_units": 0.001979231834411621,
+    "descriptive_height_sign_contrast_source_motor_units": 0.03886422514915466,
+    "nrmse_final": 1.0015941432867883,
+    "nrmse_relative_improvement": 0.02922720449485995,
+    "nrmse_source": 1.031749290796319,
+    "pair_mean_drift_maximum_motor_units": 0.34344014525413513,
+    "pair_mean_drift_rms_motor_units": 0.2706995951380489,
+    "prediction_rms_attenuation_fraction": 0.9474689026774741,
+    "prediction_rms_final_motor_units": 0.00012041393347317353,
+    "prediction_rms_source_motor_units": 0.002292240969836712,
+    "target_rms_motor_units": 0.043661270290613174,
+    "teacher_aligned_gain_final": -0.0015915831318125129,
+    "teacher_aligned_gain_source": -0.030875112861394882,
+    "terminal_throttle_maximum": 0.6663100719451904,
+    "terminal_throttle_minimum": 0.624742865562439,
+    "wrong_sign_response_erased_not_reversed": true
+  },
+  "native_attitude_reintegration_authorized": false,
+  "optimizer_betas": [
+    0.0,
+    0.999
+  ],
+  "optimizer_step_counters": [
+    17.0,
+    17.0,
+    17.0
+  ],
+  "pass": false,
+  "preflight": {
+    "exact_full_factorial": true,
+    "history_length_counts": {
+      "15": 8,
+      "20": 8,
+      "25": 8
+    },
+    "objective_scale_motor_units": 0.043661270290613174,
+    "pass": true,
+    "sampled_endpoint_velocity_ratio_maximum": 2.9347145557403564,
+    "sampled_endpoint_velocity_ratio_minimum": 1.2673604488372803,
+    "sampled_velocity_signs_match": true,
+    "teacher_foreleg_sign_control_pass": true,
+    "training_bank_seed": 450991,
+    "training_bank_sha256": "0887ead1e9eef7755c47b51967f55bbde0e7203b17e76ea9f50456e97ca530fc"
+  },
+  "promoted": false,
+  "protocol_commit": "77340c1",
+  "staged_assisted_curriculum_authorized": false,
+  "stopped_resume_sha256": "04c4b4e0b598f37c3808a7740bad0160c2826d20584149c841694696d1d0e28d",
+  "terminal_attempt": {
+    "attempt": 18,
+    "authoritative_directional_derivative": -0.00021959716059084732,
+    "baseline_objectives": [
+      1.003191194186608,
+      1.00319188584884,
+      1.003191515803337
+    ],
+    "gradient_norm_before_clipping": 0.039091821759939194,
+    "objective_change_noise_threshold": 0.000006916622319330656,
+    "pending_optimizer_counters_after": [
+      18.0,
+      18.0,
+      18.0
+    ],
+    "pending_optimizer_counters_before": [
+      17.0,
+      17.0,
+      17.0
+    ],
+    "probe_one_sixteenth": {
+      "local_derivative_agreement": true,
+      "objective_change": -0.000013530254364013672,
+      "objective_change_exceeds_noise_threshold": true,
+      "relative_error": 0.014145017735798399
+    },
+    "probe_one_thirty_second": {
+      "local_derivative_agreement": false,
+      "objective_change": -0.000006134311358207967,
+      "objective_change_exceeds_noise_threshold": false,
+      "relative_error": 0.10608517287844191
+    },
+    "probes_run": 6,
+    "transaction_pass": true,
+    "unaccepted_restoration_pass": true
+  },
+  "update_25_milestone_reached": false
+}

@@ -2384,3 +2384,35 @@ while restoring collective and height calibration. A failure at update 25, updat
 development instead sends work to a temporal-credit/time-constant experiment, not a repeat
 with a post-hoc loss weight. Neither outcome authorizes native-attitude reintegration,
 full-native hover, gate flight or promotion.
+
+Result: the motion-only experiment stopped safely before its update-25 milestone. The exact
+24-combination bank, endpoint-image identity, source finiteness, teacher/foreleg sign and
+sampled-trajectory sign controls passed. The registered trajectory limitation was sizeable:
+last-frame displacement represented 1.27-2.93 times the declared continuous endpoint-speed
+magnitude, although its sign was correct in every case.
+
+All first 17 proposals passed the derivative ladder and were accepted at ordinary scale 1.
+Full-prefix motion NRMSE improved only 2.92%, from `1.031749` to `1.001594`; correct-sign
+fraction stayed 0/24 and aligned gain moved from `-0.030875` to `-0.001592`. Prediction RMS
+fell 94.75%, from `0.002292` to `0.000120` motor units against an unchanged `0.043661` target.
+Thus the optimizer erased the wrong-signed response rather than crossing zero to learn
+braking. The descriptive height-sign response simultaneously collapsed from `0.038864` to
+`0.001979`, while pair-common throttle drifted `0.270700` RMS from source. This is a
+degenerate loss-reduction path, not useful native recurrence.
+
+Attempt 18 remained finite and its pending Adam transaction and full proposal were valid.
+The scale-1/16 derivative probe passed with 1.41% relative error and objective change
+`-1.35303e-5`. The adjacent 1/32 change, `-6.13431e-6`, fell just below the registered
+`6.91662e-6` replay-noise threshold; every smaller probe was also below threshold. Without
+two adjacent above-noise passing probes the run correctly stopped as
+`derivative_probe_noise_limited_inconclusive`. Controller and Adam were restored exactly,
+with counters retained at 17.
+
+The disjoint development bank was never generated. No staged curriculum, hover, native-
+attitude reintegration, gate flight or promotion was authorized, and this endpoint must not
+be resumed. The result rejects the tested combined motion-only/full-bank learning setup; it
+does not establish that the fly lacks recurrence. Per the registered branch, the next work
+is a source-restarted temporal-credit/time-constant diagnostic, not a post-hoc relaxation of
+the noise threshold or continuation of the response-erasure endpoint. The full report
+SHA-256 is `ad0f4f0524be5f9a769b74d890d8f8b6925ba25921bb283ac52b8089ddc22c5c`;
+see [`artifacts/variable-height-native-throttle-motion-only-v1/`](../artifacts/variable-height-native-throttle-motion-only-v1/).
