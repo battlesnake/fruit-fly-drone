@@ -2974,3 +2974,32 @@ hover or biological time constants. Failure closes this fixed premotor-tau-only 
 requires a different internal control decomposition rather than accelerometer/velocity input,
 external history, a relaxed collective constraint or another last-hop fit. No result directly
 authorizes hover, gate flight or promotion.
+
+#### Fail-closed harness result and corrected replay
+
+The first implementation, commit `27acf55`, stopped fail-closed during the scale-4 training
+replay because its candidate decision requested a `maximum_motor_absolute` convenience field
+that the combined multi-block summary does not contain. The same summary does contain every
+terminal motor output needed to compute that scalar. The terminal report is locked at SHA-256
+`a2b29f4879313f1763f8f10dbbb524fad3c34d05ea5042debbc799b85c5a637f`. It records
+classification `premotor_tau_exception_failed_closed`, exact source restoration, no retained
+trial or selected scale, and no solver or development access. The held-out development caches,
+source references and result marker were never created.
+
+The completed direction archive is independently valid. Lock its physical SHA-256 at
+`ee2fa3b6b6944addef112544a7ffa7453b4bb8e5ab7ff98b2f3ab21997b5f085` and its semantic
+SHA-256 at `ad34ae1a8e7bd1a295b23d3bab494b9c16714821e5558907492b3da1a19b063e`. Its
+physical-time unit direction has exactly 1 ms selected-cell RMS, a 2 ms maximum, 155 capped
+components, valid source replays and all frozen-gradient controls true. The corrected audit
+must load this exact archive rather than recompute or reselect its direction.
+
+Authorize one corrected execution in
+`runs/variable-height-hover/native-rk4-premotor-tau-preflight-002`. The only scientific-path
+code correction is to compute the candidate motor bound directly from the combined terminal
+motor-output array. Preserve the full preregistered scale order, thresholds, solver checks,
+one-shot development rule and source restoration above. Also carry completed intermediate
+results into an exception report when available; this improves audit visibility but cannot
+authorize or alter a candidate. Hash-lock the failed report and direction archive as explicit
+inputs, reject any direction mismatch, and do not overwrite, remove or reinterpret the `-001`
+failure. A corrected failure still closes this premotor-tau-only route; a corrected pass still
+authorizes only a separately preregistered bounded fit.
