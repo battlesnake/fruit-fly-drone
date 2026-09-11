@@ -58,6 +58,7 @@ _UPDATE_NUMBER = EXPECTED_INITIAL_ACCEPTED_UPDATES
 _PENDING_OPTIMIZER: torch.optim.Optimizer | None = None
 _OPTIMIZER_BEFORE_PROPOSAL: dict[str, Any] | None = None
 _OPTIMIZER_AFTER_PROPOSAL_SHA256: str | None = None
+_REPAIR_TENSOR_CAPTURE: dict[str, Any] | None = None
 
 
 def parse_args() -> argparse.Namespace:
@@ -741,6 +742,33 @@ def _attempt_repair(
         report["accepted_endpoint_damping_nrmse_improvement"] = (
             current_metrics["endpoint_damping_nrmse"] - selected_metrics["endpoint_damping_nrmse"]
         )
+        if _REPAIR_TENSOR_CAPTURE is not None:
+            _REPAIR_TENSOR_CAPTURE.update(
+                {
+                    "solver_constraint_rows": [
+                        {name: value.detach().cpu().clone() for name, value in row.items()}
+                        for row in rows
+                    ],
+                    "authoritative_endpoint_damping_row": {
+                        name: value.detach().cpu().clone()
+                        for name, value in authoritative_damping_row.items()
+                    },
+                    "full_correction_direction": {
+                        name: value.detach().cpu().clone() for name, value in effective.items()
+                    },
+                    "starting_candidate_parameters": {
+                        name: value.detach().cpu().clone()
+                        for name, value in starting_parameters.items()
+                    },
+                    "full_correction_parameters": {
+                        name: value.detach().cpu().clone()
+                        for name, value in corrected_parameters.items()
+                    },
+                    "solver_constraint_specs": copy.deepcopy(solver_specs),
+                    "acceptance_constraint_specs": copy.deepcopy(acceptance_specs),
+                    "selected_correction_scale": selected_scale,
+                }
+            )
     return selected_scale, selected_metrics, report
 
 
