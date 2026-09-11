@@ -1822,3 +1822,18 @@ alternate checkpoint selection. Persist each milestone decision before continuin
 run and cannot authorize another candidate, selection or development retry. A pass
 authorizes only a subsequent learning experiment; it does not authorize hover, gate flight
 or promotion.
+
+Result: the joint teacher-learning run stopped at its preregistered update-25 milestone.
+All 25 updates were accepted and reduced J from `1.000000` to `0.541016`. Aggregate common
+NRMSE improved from `2.533490` to `0.294855`, height from `0.593303` to `0.548998`, and
+endpoint-D from `1.458401` to `1.265771`. The endpoint-D change is a `13.208%` improvement,
+short of the fixed 15% gate. The damping response also remained wrong-signed in all scenes:
+correct-sign fraction was zero and teacher-aligned gain was still negative (`-0.254692`).
+This is attenuation of the source anti-damping response, not learned vertical braking.
+
+Final roll, pitch and yaw source NRMSE remained within the 0.05 limit at `0.039849`,
+`0.049969` and `0.049507`. The stopped resume retained exact accepted update 25 and Adam
+counters of 25. No development data, closed-loop hover or gate flight were evaluated and
+no controller was promoted. The failed endpoint is audit-only and must not be continued.
+See
+[`artifacts/variable-height-full-native-joint-teacher-learning-v1/`](../artifacts/variable-height-full-native-joint-teacher-learning-v1/).

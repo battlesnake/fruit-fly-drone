@@ -1,0 +1,72 @@
+{
+  "accepted_updates": 25,
+  "actor_contract_unchanged": true,
+  "classification": "midpoint_gate_failed",
+  "closed_loop_hover_authorized": false,
+  "development_candidate_evaluations": 0,
+  "experiment": "variable-height-full-native-joint-teacher-learning-v1",
+  "final_parameter_family_rms_from_source": {
+    "bias": 0.00038069754373282194,
+    "edge_magnitude": 0.0003689448058139533,
+    "raw_time_constant": 0.000003884943453158485
+  },
+  "final_training": {
+    "component_nrmse": {
+      "common": 0.2948554754257202,
+      "damping": 1.5277000665664673,
+      "height": 0.5489975810050964,
+      "interaction": 0.07723071426153183
+    },
+    "endpoint_damping_correct_sign_fraction": 0.0,
+    "endpoint_damping_nrmse": 1.2657713890075684,
+    "endpoint_damping_teacher_aligned_gain": -0.2546915113925934,
+    "joint_teacher_objective": 0.5410163861255929,
+    "rpy_source_nrmse": {
+      "pitch": 0.04996867477893829,
+      "roll": 0.03984947130084038,
+      "yaw": 0.0495072640478611
+    }
+  },
+  "full_report_sha256": "85199ca29943c7a01b1a18aede8c4425f29dad03f74c67c3b1cd5b92b3b352c9",
+  "gate_flight_authorized": false,
+  "implementation_commit": "6595d56",
+  "locked_inputs_unchanged": true,
+  "midpoint_gate": {
+    "aggregate_common_and_height_no_worse_than_source": true,
+    "endpoint_damping_source_relative_improvement_fraction": 0.13208286837062355,
+    "minimum_endpoint_damping_source_relative_improvement_fraction": 0.15,
+    "pass": false,
+    "update": 25
+  },
+  "objective_denominators": {
+    "common": 6.418572497067544,
+    "endpoint_damping": 2.1269340693654613,
+    "height": 0.35200876210882726
+  },
+  "optimizer_step_counters": [
+    25.0
+  ],
+  "pass": false,
+  "promoted": false,
+  "protocol_commit": "f0e5614",
+  "resume": {
+    "accepted_updates": 25,
+    "file_sha256": "3e5d6d7f5d49438de54e1e6dea94a522c834b363c8fcab8eaf2c92a5b425eef2",
+    "run_state": "stopped",
+    "size_bytes": 105143767
+  },
+  "source_training": {
+    "component_nrmse": {
+      "common": 2.5334901809692383,
+      "damping": 1.5853216648101807,
+      "height": 0.5933032631874084,
+      "interaction": 0.15215428173542023
+    },
+    "endpoint_damping_correct_sign_fraction": 0.0,
+    "endpoint_damping_nrmse": 1.4584012031555176,
+    "endpoint_damping_teacher_aligned_gain": -0.43296879529953003,
+    "joint_teacher_objective": 1.0
+  },
+  "stop_reason": "mandatory update-25 joint teacher gate failed",
+  "subsequent_learning_experiment_authorized": false
+}
