@@ -2654,3 +2654,36 @@ this exact optimizer repeated. No fitting, hover, gate flight or promotion was a
 The full report SHA-256 is
 `508c54ebb00aa8419e66e540bbc7ca45bd0d254858e76eab590cc4f39dc878f7`;
 see [`artifacts/variable-height-rk4-throttle-readout-step-v1/`](../artifacts/variable-height-rk4-throttle-readout-step-v1/).
+
+### Preregistered direct readout trust-region extension
+
+Preserve the failed scale-1 verdict and reconstruct its source-computed RK4 prefixes, complete
+24-pair gradient, masked β1=0 Adam transaction and bound-projected pending parameters from
+scratch. Hash-lock the failed report at
+`508c54ebb00aa8419e66e540bbc7ca45bd0d254858e76eab590cc4f39dc878f7` and require exact
+pending-parameter semantic SHA-256
+`73d633cecf3fd0b42616142eb16eac931d9e41dac6158d640ab07f124353ec0d` and post-step
+optimizer SHA-256 `0692f59a15c27ef9c3cff3a09dc6611246e0d1dcea8b051e9c32a97cd371976e`.
+Reproduce its three fixed-prefix objectives, gradient objective and full directional derivative
+within absolute `2e-5`, and its empty-to-one Adam counters exactly. Any reproduction failure
+is terminal.
+
+Treat the reconstructed displacement only as a direction in the declared 493-edge/seven-node
+readout subspace. This is a new functional trust-region test, not retroactive acceptance of
+the old scale. Materialize extrapolation scales `16, 8, 4, 2` in fixed descending order from
+the original source, apply native edge bounds once, and evaluate actual detached-prefix and
+zero-state full-prefix RK4 replay. Select the first scale that passes every unchanged readout
+audit gate: at least `0.001` NRMSE improvement in both replays; pair-common throttle drift at
+most `0.005` RMS and `0.01` maximum; per-axis RPY drift at most `0.005` RMS and `0.01`
+maximum; exact endpoint equality; finite state, output and metrics; motor outputs in `[-1,1]`;
+and exact unmasked parameters and replay restoration. Do not evaluate any scale at or below 1,
+which has already failed, and do not interpolate an unregistered scale.
+
+The trust-region result is determined by actual nonlinear functional replay, not Taylor
+extrapolation. Report bound activations, masked-family displacement RMS and every preservation
+margin at every tried scale. Restore and hash-verify the source and optimizer at termination;
+retain no candidate. A pass authorizes only preregistration of a source-restarted bounded
+last-hop fitting run whose per-update line search includes the complete combined ladder
+`16,8,4,2,1,1/2,1/4,1/8,1/16,1/32` and always enforces the same source-relative output
+constraints. Failure closes the last-hop readout route and moves upstream into native routing.
+Neither result authorizes training execution, hover, gate flight or promotion.
