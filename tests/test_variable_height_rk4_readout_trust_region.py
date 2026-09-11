@@ -3,10 +3,21 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 import audit_variable_height_rk4_readout_trust_region as audit  # noqa: E402
+
+
+def test_default_cli_can_be_parsed(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sys, "argv", ["audit"])
+
+    args = audit.parse_args()
+
+    assert args.device == "cuda"
+    assert args.output_dir.name == "native-rk4-readout-trust-region-001"
 
 
 def _prior() -> dict:

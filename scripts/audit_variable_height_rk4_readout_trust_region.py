@@ -35,17 +35,52 @@ TRUST_REGION_SCALES = (16.0, 8.0, 4.0, 2.0)
 
 
 def parse_args() -> argparse.Namespace:
-    parser = readout.parse_args()
-    parser.description = __doc__
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--graph",
+        type=Path,
+        default=REPO_ROOT / "data/derived/full-visual-connectome-v1.npz",
+    )
+    parser.add_argument(
+        "--checkpoint",
+        type=Path,
+        default=REPO_ROOT / "runs/visual-hover/paired-dynamic-001/controller.pt",
+    )
+    parser.add_argument(
+        "--motion-report",
+        type=Path,
+        default=REPO_ROOT
+        / "runs/variable-height-hover/native-throttle-motion-only-001/report.json",
+    )
+    parser.add_argument(
+        "--motion-resume",
+        type=Path,
+        default=REPO_ROOT / "runs/variable-height-hover/native-throttle-motion-only-001/resume.pt",
+    )
+    parser.add_argument(
+        "--solver-report",
+        type=Path,
+        default=REPO_ROOT
+        / "runs/variable-height-hover/native-continuous-cns-solver-001/report.json",
+    )
+    parser.add_argument(
+        "--input-cache",
+        type=Path,
+        default=REPO_ROOT
+        / "runs/variable-height-hover/native-neural-integration-rate-audit-001/input-cache.pt",
+    )
     parser.add_argument(
         "--readout-report",
         type=Path,
         default=REPO_ROOT
         / "runs/variable-height-hover/native-rk4-throttle-readout-step-001/report.json",
     )
-    parser.set_defaults(
-        output_dir=REPO_ROOT / "runs/variable-height-hover/native-rk4-readout-trust-region-001"
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=REPO_ROOT / "runs/variable-height-hover/native-rk4-readout-trust-region-001",
     )
+    parser.add_argument("--device", default="cuda")
     return parser.parse_args()
 
 
