@@ -2264,3 +2264,31 @@ success, 90% correct motion sign, motion gain 0.5–1.5 and a positive 95% live-
 bootstrap lower bound. Passing still authorizes only a separately preregistered native-
 attitude reintegration experiment; it does not itself promote full-native hover or authorize
 gate training.
+
+Result: the derivative-ladder control solved the numerical stopping problem but the formal
+curriculum failed its fixed update-50 behavioral gate. All 53 attempts found two adjacent,
+above-noise local derivative probes; 50 updates were accepted, three were ordinary restored
+rejections, and no numerical or transaction guard failed. The stopped Adam counters are
+exactly 50. This run is closed and must not be resumed.
+
+Assisted hover succeeded in 23/64 cases (`0.359375`) against the fixed 50% midpoint gate.
+There were no ground contacts or invalid states, mean final-window height RMSE was
+`0.247881 m`, and vertical-speed RMS was `0.063173 m/s`. More importantly, motion-response
+sign was wrong in all 64 equal-endpoint pairs at every 15-, 20- and 25-frame horizon.
+Prediction RMS was `0.001636` motor units against target RMS `0.043659`, teacher-aligned gain
+was `-0.024702`, and NRMSE was `1.025002`.
+
+The accepted-step record exposes objective dominance rather than a derivative defect. Across
+the 50 sampled accepted candidates, fixed-burn dense-loss improvement summed to `125.304640`
+while motion-loss improvement summed to only `0.006764`; 21 accepted candidates actually
+worsened their sampled motion loss. Full-prefix selection showed the same imbalance. These
+within-step sums are not a shared-bank learning curve, but they demonstrate that equal scalar
+weights did not provide equal optimization pressure: static/common throttle imitation
+overwhelmed the weak recurrent motion contrast. This does not show inadequate fly recurrence;
+the next experiment must first make visual damping a genuine optimization responsibility,
+then reintroduce collective/height calibration rather than repeating this mixed loss.
+
+Final data were never generated or opened. No native-attitude reintegration, full-native
+hover, gate flight or promotion was authorized. The full report SHA-256 is
+`549259e08db3dd1dc43afda0ea85b76f86fac115a5a28bb0aca6700dbccb9ed9`; see
+[`artifacts/variable-height-native-throttle-assisted-beta1-zero-ladder-v1/`](../artifacts/variable-height-native-throttle-assisted-beta1-zero-ladder-v1/).

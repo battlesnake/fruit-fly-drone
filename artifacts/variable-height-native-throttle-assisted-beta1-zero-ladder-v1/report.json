@@ -1,0 +1,139 @@
+{
+  "accepted_scale_counts": {
+    "0.0625": 1,
+    "0.125": 10,
+    "0.25": 27,
+    "0.5": 9,
+    "1.0": 3
+  },
+  "accepted_updates": 50,
+  "actor_contract_unchanged": true,
+  "attempted_updates": 53,
+  "classification": "midpoint_gate_failed",
+  "derivative_ladder": {
+    "all_attempts_classified_as_adjacent_local_derivative_agreement": true,
+    "attempts_by_probe_count": {
+      "2": 33,
+      "3": 15,
+      "4": 5
+    },
+    "attempts_exhausting_ladder": 0,
+    "attempts_passing": 53,
+    "probe_scales": [
+      0.0625,
+      0.03125,
+      0.015625,
+      0.0078125,
+      0.00390625,
+      0.001953125
+    ],
+    "probes_selected_ordinary_steps": false,
+    "required_adjacent_passes": 2
+  },
+  "final_evaluation_started": false,
+  "final_parameter_family_rms_from_source": {
+    "bias": 0.00019727023027371615,
+    "edge_magnitude": 0.0003484704939182848,
+    "raw_time_constant": 0.000003155708554913872
+  },
+  "full_native_hover_authorized": false,
+  "full_report_sha256": "549259e08db3dd1dc43afda0ea85b76f86fac115a5a28bb0aca6700dbccb9ed9",
+  "gate_flight_authorized": false,
+  "implementation_commit": "7fcc1ec",
+  "locked_inputs": {
+    "authorizing_taylor_audit_sha256": "0ee33e31f913a3de8e3b27934c1205706f4a417c7b3a33f12e190d4084930e50",
+    "checkpoint_sha256": "7238b0e3ca39dc1a8bfd35dcf9f8b6fc9e8c8881ff989f64cb135fa6fed4e572",
+    "graph_sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665"
+  },
+  "midpoint": {
+    "decision_pass": false,
+    "hover": {
+      "all_metrics_finite": true,
+      "cases": 64,
+      "ground_contact_cases": 0,
+      "height_rmse_mean_metres": 0.24788101017475128,
+      "height_rmse_p95_metres": 0.9526641964912415,
+      "invalid_cases": 0,
+      "success_fraction": 0.359375,
+      "successes": 23,
+      "vertical_speed_rms_mean_mps": 0.06317251920700073
+    },
+    "motion": {
+      "all_metrics_finite": true,
+      "all_recurrent_states_and_outputs_finite": true,
+      "by_horizon": {
+        "15": {
+          "correct_sign_fraction": 0.0,
+          "nrmse": 0.9735302329063416,
+          "pairs": 22,
+          "teacher_aligned_gain": -0.0013019173638895154
+        },
+        "20": {
+          "correct_sign_fraction": 0.0,
+          "nrmse": 1.056814193725586,
+          "pairs": 21,
+          "teacher_aligned_gain": -0.014205642975866795
+        },
+        "25": {
+          "correct_sign_fraction": 0.0,
+          "nrmse": 1.0450700521469116,
+          "pairs": 21,
+          "teacher_aligned_gain": -0.06030183285474777
+        }
+      },
+      "correct_sign_fraction": 0.0,
+      "endpoint_image_difference_max": 0.0,
+      "nrmse": 1.0250024795532227,
+      "pairs": 64,
+      "prediction_rms_motor_units": 0.0016357038402929902,
+      "target_rms_motor_units": 0.0436587892472744,
+      "teacher_aligned_gain": -0.02470191940665245
+    },
+    "motion_seed": 420984,
+    "motion_sha256": "19b19ed9db517a705da03f549dc7a28a91b7552019ec35008390ad28d5a0f063",
+    "seed": 420983,
+    "sha256": "306845c580266121132da4b0d1a80c15d16f4a22d3a17ba0facc24eb53e8a7fe"
+  },
+  "native_attitude_reintegration_authorized": false,
+  "objective_selection_diagnostic": {
+    "accepted_candidates": 50,
+    "fixed_burn_dense_improvement_sum": 125.30464041233063,
+    "fixed_burn_motion_improvement_sum": 0.0067642927169799805,
+    "fixed_burn_motion_improved_candidates": 29,
+    "fixed_burn_motion_worsened_candidates": 21,
+    "full_prefix_dense_improvement_sum": 159.75888288021088,
+    "full_prefix_motion_improvement_sum": 0.01266123354434967,
+    "full_prefix_motion_improved_candidates": 31,
+    "full_prefix_motion_worsened_candidates": 19,
+    "interpretation": "within-step sampled selection diagnostics, not a common-bank loss curve"
+  },
+  "optimizer_betas": [
+    0.0,
+    0.999
+  ],
+  "optimizer_step_counters": [
+    50.0,
+    50.0,
+    50.0
+  ],
+  "ordinary_rejected_attempts": [
+    6,
+    9,
+    26
+  ],
+  "pass": false,
+  "preflight": {
+    "motion_endpoint_images_exact": true,
+    "pass": true,
+    "source_motion_correct_sign_fraction": 0.0,
+    "source_motion_nrmse": 1.0302997827529907,
+    "source_motion_teacher_aligned_gain": -0.029650568962097168,
+    "teacher_hover_success_fraction": 1.0,
+    "teacher_motion_correct_sign_fraction": 1.0,
+    "teacher_motion_maximum_rc_error": 0.0010695457458496094
+  },
+  "promoted": false,
+  "protocol_commit": "4b25f56",
+  "stopped_resume_sha256": "51ee3e289b77c7ece63f239732a5b41fcac5ccbc7efec4a38fbe5e8833ab3a08",
+  "stop_reason": "the fixed update-50 assisted-hover or motion gate failed"
+}
