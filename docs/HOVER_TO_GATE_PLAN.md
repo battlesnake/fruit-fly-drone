@@ -2125,3 +2125,62 @@ attitude reintegration, full-native hover, gate flight or promotion was authoriz
 is closed and must not be resumed. The full report SHA-256 is
 `1b951c0613ebe904cdb39186a053fcba72d5da7408170b73fac85693b915cc36`; see
 [`artifacts/variable-height-native-throttle-assisted-beta1-zero-v1/`](../artifacts/variable-height-native-throttle-assisted-beta1-zero-v1/).
+
+### Preregistered accepted-5 Taylor-convergence audit
+
+Run one restored, training-only audit of the failed attempt-6 direction. Hash-lock the stopped
+β1=0 report and resume at
+`1b951c0613ebe904cdb39186a053fcba72d5da7408170b73fac85693b915cc36` and
+`330fa83864a711a7630df8109f1a0550360b111f950e6572b25a4919b978acb3`; the accepted-5
+controller and optimizer hashes are
+`1c28c49770687e4db164e16b02eb65095ef32661dde24a7595626ac14e934e7b` and
+`9ecbe922bcfc0bf5a6a14edc49836ac803af600363211bd75903aea7723d441f`. Require the
+frozen block-zero teacher and motion hashes
+`69993c6de95bfc150b4f2277a53c93da7aa2b6a94c9932d9f76c2893af3d1f62` and
+`089bbb8cc72980ca6321f9919227cad5bda1a746041e64426a29455090be6fbd`, objective-scale
+hash `53f780b8d08feeab98cf147f3ce3cbb31315eadfe8c7bc3a487fd5dd3526c810`, and exact
+failed sample-spec hash `fd0ea38428fdff8be75421451537173ac8ba5066ac0ac9891c86d993a1c951e7`.
+Create an exclusive, no-replay start marker before computation. Do not generate fresh cases or
+open midpoint or final data.
+
+Reconstruct the exact dense sample, motion examples and detached burn-ins at accepted update
+5. Evaluate the unchanged fixed-burn baseline three times. The first replay is the single
+authoritative `J0` for every objective change, derivative, residual and reproduction
+comparison; the other two are used only to define replay noise as the maximum pairwise
+absolute difference among the three objectives. Generate the sampled raw gradient once and
+one β1=0 Adam proposal from the restored optimizer. Reproduce, within `2e-5` absolute
+error, the recorded fixed-burn objective `1.0461612939834595`, full-prefix objective
+`1.0461606103926897`, materialized direction `-0.7856744796120311`, scale-1/16 candidate
+objective `1.0200214385986328`, and scale-1/16 measured direction
+`-0.41823768615722656`. Require exact 5-to-6 pending counters, finite gradients, recurrence,
+outputs and reports, and passing bounds and canonical controls.
+
+Using that one proposal and those same fixed burn-ins, evaluate every scale `1/16`, `1/32`,
+`1/64`, `1/128`, `1/256` and `1/512`; do not stop at the first passing scale. For each,
+materialize the actual post-projection displacement and report dense and motion losses,
+objective change, raw-gradient predicted change, measured and predicted directional
+derivatives, the unchanged symmetric relative error, signed and absolute Taylor residual,
+parameter-family displacement RMS, bounds/canonical controls, and recurrent/output
+finiteness. Also report adjacent-scale Taylor-residual ratios and whether a residual reduction
+is approximately quadratic, defined descriptively as a halving ratio from 1/8 through 1/2
+when both residuals exceed the replay-noise floor.
+
+A scale has local derivative agreement only if controls and all values are finite, predicted
+and measured directions are both below `-1e-8`, relative error is at most 20%, and its absolute
+objective change exceeds `max(1e-8, 10 * replay_noise)`. The audit finds local derivative
+convergence consistent with finite-step curvature only if every identity, reproduction and
+restoration control passes, scale 1/16 reproduces its registered failure, and two adjacent
+scales among `1/32` through `1/512` have local derivative agreement. Restore and hash-verify
+the accepted-5 controller and optimizer regardless of outcome; retain no candidate, optimizer
+transaction or selected continuation scale. Write once to
+`runs/variable-height-hover/native-throttle-beta1-zero-taylor-audit-001`.
+
+A result consistent with finite-step curvature authorizes only preregistration of a new
+source-restarted run that
+separates a sufficiently local derivative-check probe from ordinary optimization-step
+selection. It does not retroactively pass or resume accepted update 5, establish useful motion
+damping or hover, open evaluation data, authorize native attitude reintegration or gate flight,
+or promote a controller. Above-noise nonconvergence instead requires investigation of
+gradient/replay alignment before further training. If the smaller objective changes do not
+clear the registered noise threshold, classify the audit as noise-limited and inconclusive,
+not as evidence of a gradient defect.
