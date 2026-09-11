@@ -2203,3 +2203,64 @@ continuation scale was retained, and no midpoint or final data were opened. This
 neither motion damping nor hover. The full report SHA-256 is
 `0ee33e31f913a3de8e3b27934c1205706f4a417c7b3a33f12e190d4084930e50`; see
 [`artifacts/variable-height-native-throttle-taylor-audit-v1/`](../artifacts/variable-height-native-throttle-taylor-audit-v1/).
+
+### Preregistered source-restarted β1=0 derivative-ladder curriculum
+
+Run one new teacher-attitude-assisted native-throttle experiment from the original visual-
+hover checkpoint, not accepted update 5 or 18. Incorporate every actor, simulator, parameter,
+β1=0 Adam, case-support, teacher/student-history, paired-motion, detached-burn-in, objective,
+ordinary backtracking, budget, midpoint, final, frozen-vision, bootstrap and interpretation
+rule from the registered β1=0 curriculum. Lock the passed Taylor-audit report at
+`0ee33e31f913a3de8e3b27934c1205706f4a417c7b3a33f12e190d4084930e50`. Change only
+the derivative-validation control described below; learning rates, gradient clipping,
+optimizer transactions, ordinary candidate scales and acceptance thresholds remain unchanged.
+
+For every attempted update, retain the exact sampled objective, raw gradient, one pending Adam
+transaction and independently materialized full proposal. Evaluate the current fixed-burn
+objective three times with the same sample and detached burn-ins. The first replay is the
+authoritative `J0` used for every probe and ordinary-candidate comparison; the other two
+measure replay noise, defined as the maximum pairwise objective difference. All three must be
+finite. The pending full proposal must retain the existing finite negative-direction, exact
+counter, parameter-bound and canonical-idempotence controls.
+
+Probe the pending direction in the fixed order `1/16`, `1/32`, `1/64`, `1/128`, `1/256`,
+`1/512`. At each scale, use the actual post-projection displacement and require finite
+recurrence, outputs and reports, passing bounds/canonical controls, predicted and measured
+directions below `-1e-8`, symmetric relative error at most 20%, and absolute objective change
+greater than `max(1e-8, 10 * replay_noise)`. Continue until the first two adjacent probes pass;
+then stop probing. A single passing probe is insufficient. Probe candidates are diagnostic
+only: never retain one, use its scale to choose the optimizer step, or reuse its result as an
+ordinary candidate evaluation.
+
+Only after two adjacent probes pass, run the unchanged ordinary scales `1`, `1/2`, `1/4`,
+`1/8`, `1/16`, `1/32` from largest to smallest. Retain the first scale that independently
+improves both the fixed-burn objective and zero-state full-prefix objective by at least `1e-4`.
+As before, a finite no-scale result is an ordinary rejection; any nonfinite recurrent state,
+output, report, parameter-bound/canonical failure, invalid transaction or full-proposal
+direction is a fatal numerical-control failure.
+
+If no adjacent probe pair qualifies, restore the controller and optimizer and stop the run
+without ordinary trials. Record `derivative_probe_numerical_failure` for any nonfinite or
+invalid control; otherwise record `derivative_probe_noise_limited_inconclusive` when no two
+adjacent smaller objective changes clear the registered noise threshold, or
+`derivative_probe_above_noise_nonconvergence` when an adjacent above-noise pair exists but does
+not meet local derivative agreement. Do not add smaller probes, weaken thresholds, resample or
+retry during the run. Every failed attempt must preserve the established atomic transition,
+sampling-RNG and exact controller/optimizer restoration rules.
+
+Reuse positive-control seed `380983`, training-history seeds `381983` through `384983`,
+student-history seeds `392983` through `394983`, paired-motion seeds `401983` through `404983`,
+and optimizer-sampling seed `410983`. This reuse is intentional so the sole control change is
+causally comparable. The update-50 seeds `420983` and `420984`, update-100 seeds `430983` and
+`430984`, and bootstrap seed `440983` remain unopened. Before formal execution, run one
+complete disposable ladder update and CPU-canonical resume round trip with only nonformal
+seeds `990983`, `990984`, `990985`, including injected numerical-, noise- and above-noise-
+failure rollback tests. Then execute the formal run once at
+`runs/variable-height-hover/native-throttle-assisted-beta1-zero-ladder-001`.
+
+The unchanged update-50 gate requires at least 50% assisted-hover success and 50% correctly
+signed motion pairs. The unchanged update-100 gate requires at least 90% assisted-hover
+success, 90% correct motion sign, motion gain 0.5–1.5 and a positive 95% live-minus-frozen
+bootstrap lower bound. Passing still authorizes only a separately preregistered native-
+attitude reintegration experiment; it does not itself promote full-native hover or authorize
+gate training.
