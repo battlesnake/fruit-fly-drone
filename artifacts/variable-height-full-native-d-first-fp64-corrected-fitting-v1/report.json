@@ -1,0 +1,55 @@
+{
+  "accepted_updates": 20,
+  "attempted_update": 21,
+  "classification": "no_terminal_checkpoint",
+  "closed_loop_hover_authorized": false,
+  "control_failure": "exact_repaired_candidate_reproduction_failed",
+  "experiment": "variable-height-full-native-d-first-fp64-corrected-fitting-v1",
+  "full_report_sha256": "7790d61241280dc315323563058858e1c16f9e625f459ad2b84f5d8cbc74ee40",
+  "implementation_commit": "abf67b1",
+  "locked_inputs_unchanged": true,
+  "ordinary_scale_1_16": {
+    "candidate_parameter_sha256": "8cb6f9c625356c8a5f9112f417b0081254073af1e044e5cd98b61c47d59b04b4",
+    "endpoint_common_step_25_nrmse": 1.6838915348052979,
+    "endpoint_damping_nrmse": 1.3536405563354492,
+    "only_failed_gate": "common NRMSE at step 25 exceeded original source plus 0.02",
+    "repair_eligible": true
+  },
+  "pass": false,
+  "primary_fp64_transaction": {
+    "complete_primal_objective": 17920.27762329695,
+    "complete_primal_objective_exact": true,
+    "fp64_controls_pass": true,
+    "optimizer_pending_sha256": "6743cc01e41e01ccd7183b8981acff29eb5af22a72c3039bb9d234cfcbde42d6",
+    "optimizer_transaction_pass": true,
+    "projected_displacement_sha256": "0fb352c318ab18efafe0bc2ff68991709aa2f14b79774f7c8e5475d432135e3f",
+    "reproduction_pass": true
+  },
+  "promoted": false,
+  "protocol_commit": "ba6fcc3",
+  "repair_recomputation": {
+    "accepted_endpoint_common_headroom": 0.0000958799362182905,
+    "accepted_endpoint_damping_nrmse_improvement": 0.0022602081298828125,
+    "actual_parameter_sha256": "7d5f2b6bc03f2fa51de96aecee42d5128caa66a7acec9bb3cabba6b6c7eb987a",
+    "all_internal_controls_and_gates_pass": true,
+    "endpoint_common_step_25_nrmse": 1.6835942268371582,
+    "endpoint_damping_correct_sign_fraction": 0.0,
+    "endpoint_damping_nrmse": 1.3536425828933716,
+    "endpoint_damping_teacher_aligned_gain": -0.33833083510398865,
+    "expected_parameter_sha256": "3d8d96f36944113ad942ebd1d30f6510998a3a337881b03e0ce3e6032e0f7308",
+    "finite_difference_relative_error": 0.0016310026463032803,
+    "registered_metric_tree_comparison_pass": true,
+    "registered_metric_values_checked": 25,
+    "selected_correction_scale": 1.0,
+    "tensor_hash_match": false
+  },
+  "restoration": {
+    "controller_semantic_sha256": "62f6cea996ff43cdf1d02b2c328136d8efe93b0542eb6a356f7a60bc9209cb0f",
+    "controller_update_20_exact": true,
+    "optimizer_semantic_sha256": "ff5e686148163a7f51b237b542d5f03ae74f63dcb7ef256dc1a82d99ad32f577",
+    "optimizer_update_20_exact": true,
+    "resume_state": "stopped",
+    "resume_state_sha256": "6c7d695405a42d9b399537c0dc2cb387feceae2ae22d27dd93667fd02a34a9a5"
+  },
+  "stop_reason": "deterministic constrained proposal had no acceptable scale"
+}

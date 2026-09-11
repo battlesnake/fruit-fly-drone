@@ -1413,3 +1413,67 @@ silently retry, and an interrupted first qualification cannot select another che
 Keep all run tensors/checkpoints ignored; commit only compact reports. Do not introduce
 external recurrence, state machines, engineered history, actor changes, fresh data outside
 the terminal path, closed-loop simulation, or promotion in this fitting phase.
+
+Result: the FP64-primary continuation stopped safely at attempted update 21, with total
+accepted updates still 20. The frozen input, source controller, raw Adam displacement,
+pending one-step Adam state, FP64 projected displacement and complete primal objective all
+reproduced their registered hashes or values exactly. The ordinary scale-1/16 candidate
+also reproduced its registered parameter hash exactly and was repair-eligible for the same
+sole endpoint-C25 outer-gate failure.
+
+The unchanged repair again passed at correction scale 1.0, with every numerical, bound,
+linear and nonlinear safety gate passing. Its endpoint-D NRMSE was `1.35364258`, endpoint-
+C25 NRMSE was `1.68359423`, and its registered training metric tree matched all 25 values
+within the existing reproduction tolerance. Its tensor SHA-256 was nevertheless
+`7d5f2b6bc03f2fa51de96aecee42d5128caa66a7acec9bb3cabba6b6c7eb987a`, not the exact
+step-audit hash `3d8d96f36944113ad942ebd1d30f6510998a3a337881b03e0ce3e6032e0f7308`.
+Because exact tensor identity was a preregistered gate, update 21 was rejected and the run
+was not retried. The controller and optimizer were restored exactly to update 20, the
+stopped resume was persisted, and there was no development selection, terminal checkpoint,
+fresh qualification, closed-loop hover or promotion. This is a control failure of exact
+reconstructed-repair tensor identity across GPU processes, not a damping, transfer or
+safety failure. See
+[`artifacts/variable-height-full-native-d-first-fp64-corrected-fitting-v1/`](../artifacts/variable-height-full-native-d-first-fp64-corrected-fitting-v1/).
+
+Before another fitting continuation, run one **restored update-21 accepted-transaction
+snapshot qualification** in a new ignored run. Hash-lock the update-20 report and resume,
+the frozen primary archive and qualification report, the passing restored step-audit
+report, and the stopped continuation report. Do not modify or retry either stopped fitting
+run. Preserve the actor, objective, constraints, ordinary scales, repair arithmetic,
+training/development banks and all no-promotion restrictions.
+
+The producer process must restore exact update 20, reproduce the frozen primary proposal
+and pending Adam transaction using all existing exact FP64 controls, and run the unchanged
+ordinary-then-repair selection exactly once. A primary failure, a non-repair-eligible
+ordinary result, a repair control failure or a rejected repaired candidate is terminal;
+there is no retry, alternate candidate or relaxed hash comparison. Do not require equality
+to either previously recomputed repaired tensor hash. Instead require all preregistered
+repair controls, at least 0.001 training endpoint-D improvement from update 20, and every
+existing training preservation gate. Evaluate only that selected candidate on the existing
+fixed development bank, explicitly as reused development rather than fresh validation;
+require at least 0.001 endpoint-D improvement from update 20 and every original-source
+development preservation gate.
+
+Only after those gates pass, write one complete accepted-transaction archive containing
+the selected parameter tensors, exact pending Adam state, repair constraint rows, the
+authoritative endpoint-D row, full correction direction, ordinary and corrected metrics,
+all scalar specifications, and provenance. Record semantic hashes for every tensor tree
+and a SHA-256 for the complete archive. This is an ignored run artifact, not a Git or Git
+LFS payload. Restore the in-memory controller and optimizer exactly to update 20 after the
+archive is written, and require every locked input to remain byte-for-byte unchanged.
+
+A separate verifier process must load the archive without recomputing the primary proposal,
+repair gradients, projection or candidate. Require exact candidate-parameter and pending-
+optimizer semantic hashes, exact equality to the archived tensor trees after load, no
+change to the archive's byte hash, and training plus fixed-development replay agreement
+under the already-established numerical-tree tolerances. It must also restore its source
+controller and optimizer exactly after replay. Any producer or verifier failure preserves
+the diagnostic archive/report but authorizes nothing.
+
+A passing producer and verifier authorize only a separately preregistered continuation
+that loads this audited accepted update-21 transaction directly and begins fresh proposal
+generation at update 22. It does not retroactively pass the stopped continuation, establish
+useful damping, authorize closed-loop hover, change the total-update-50 mandatory gate, or
+permit automatic promotion. CPU repair and a general parameter-distance tolerance are not
+part of this audit: moving only the solver would not remove GPU gradient variation, while
+the stored snapshot gives future processes an exact state boundary.
