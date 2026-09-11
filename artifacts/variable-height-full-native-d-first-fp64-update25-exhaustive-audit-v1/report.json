@@ -1,0 +1,70 @@
+{
+  "archive": {
+    "file_sha256": "5fc3b908962986c43f511565296950ca06f0f04d80a9d2b3266c9dbb2fcc4f61",
+    "identity_and_semantic_hashes_pass": true,
+    "size_bytes": 209437734,
+    "unchanged_after_verification": true
+  },
+  "candidate_retained": false,
+  "classification": "one_or_more_exhaustive_primary_runs_failed",
+  "closed_loop_hover_run": false,
+  "continuation_authorized": false,
+  "development_or_fresh_data_used": false,
+  "experiment": "variable-height-full-native-d-first-fp64-update25-exhaustive-audit-v1",
+  "full_report_sha256": "7b9532798c7bb55ea8d27bd06dd026d6de4c54847a10c108120a22bfc0bfc47a",
+  "implementation_commits": [
+    "c1395d2",
+    "1ba167a"
+  ],
+  "pass": false,
+  "primary_round_1": {
+    "exhaustive_supports_examined": 1024,
+    "full_kkt_feasible_supports": 1,
+    "normalized_kkt_residual": 1.1554474087820312e-17,
+    "original_unit_primal_violation": 5.032324383591469e-16,
+    "pass_before_independent_reference": true,
+    "selected_support_mask": 840
+  },
+  "producer": {
+    "classification": "frozen_update_25_inputs_produced",
+    "controller_and_optimizer_restored_exactly": true,
+    "one_step_adam_transaction_pass": true,
+    "pass": true,
+    "producer_report_sha256": "7022b5e7768279574166aca7186f8155e4904f6a5b3bd8a5d4521cf9a3e67995",
+    "source_files_unchanged": true,
+    "training_replay_values_checked_each": 25,
+    "training_replays_pass": true
+  },
+  "promoted": false,
+  "protocol_commit": "18a237b",
+  "repeat_control": {
+    "active_and_fixed_paths_exact": true,
+    "complete_primal_objective_relative_differences": [0.0, 0.0, 0.0],
+    "learning_rate_scaled_primal_relative_distances": [0.0, 0.0, 0.0],
+    "pass": true,
+    "repeats": 3
+  },
+  "restoration": {
+    "optimizer_exact": true,
+    "optimizer_sha256": "5213d7ee914c97e402bc1108b6c4fcc7be385b952388981865d388ba3fc8574f",
+    "parameters_exact": true,
+    "parameters_sha256": "299dae786c06b5a64b9d9d29a9e365697ea5a36333caac5eb7c1b3ea2ffbaeed",
+    "source_files_unchanged": true
+  },
+  "round_1_bound_state": {
+    "active_set_rounds_completed": 0,
+    "fixed_edges_committed": 0,
+    "new_bound_crossings_identified": 5506
+  },
+  "slsqp_independent_round_1": {
+    "dual_objective_relative_difference": 8.724320650455411e-11,
+    "dual_objective_relative_difference_limit": 1e-8,
+    "gram_induced_primal_relative_distance": 9.340370841561005e-6,
+    "gram_induced_primal_relative_distance_limit": 1e-6,
+    "normalized_kkt_pass": false,
+    "normalized_kkt_residual": 7.001242034318938e-7,
+    "normalized_kkt_residual_limit": 1e-8,
+    "pass": false,
+    "solver_success": true
+  }
+}

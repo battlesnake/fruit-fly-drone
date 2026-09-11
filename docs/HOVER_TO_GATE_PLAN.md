@@ -1610,3 +1610,67 @@ qualification pass; the training-only ordinary-scale result is reported in the
 classification but is not part of numerical qualification and does not install update 25.
 This preserves visibility of a possible unchanged repair-eligible outcome without invoking
 repair inside the solver audit.
+
+Result: the frozen producer passed. It restored exact accepted update 24, reproduced both
+25-value training metric trees, generated update 25 once and wrote the ignored 200 MiB
+archive with SHA-256
+`5fc3b908962986c43f511565296950ca06f0f04d80a9d2b3266c9dbb2fcc4f61` before any
+projection. Its controller, one-step Adam transaction, final restoration and all source
+hashes passed. The separate verifier loaded that archive three times with exact semantic
+hashes and byte identity.
+
+The exhaustive primary result was identical on all three reloads. In round 1 it examined
+all 1,024 supports, found one full-KKT-feasible support (mask 840), achieved normalized KKT
+residual `1.16e-17` and original-unit primal violation `5.03e-16`. The required unchanged
+SLSQP reference reported success but did not meet the registered accuracy: normalized KKT
+was `7.00e-7`, Gram-induced primal distance from primary was `9.34e-6`, and objective
+relative difference was `8.72e-11`. The first two exceed their `1e-8` and `1e-6` limits.
+All three audit repeats therefore failed identically in the first free-coordinate round,
+before adding the 5,506 newly identified edge-bound crossings. The complete bound-aware
+projection, post-projection controls and ordinary scales were not tested.
+
+This is an independent-reference accuracy failure, not demonstrated primary-solver or QP
+infeasibility. The controller and optimizer were restored exactly to accepted update 24;
+no candidate or Adam step was retained, no development or fresh data were evaluated, and
+there was no hover or promotion. The full report SHA-256 is
+`7b9532798c7bb55ea8d27bd06dd026d6de4c54847a10c108120a22bfc0bfc47a`. See
+[`artifacts/variable-height-full-native-d-first-fp64-update25-exhaustive-audit-v1/`](../artifacts/variable-height-full-native-d-first-fp64-update25-exhaustive-audit-v1/).
+
+Run one final bounded **SLSQP-support-polished exhaustive-primary audit** in a new ignored
+run. Hash-lock the failed exhaustive audit's report, producer report and frozen archive
+above, plus the same graph, checkpoint, cache manifest, stopped update-24 report and resume.
+Regenerate no constraint rows, gradients, Adam step, metrics or candidate. A separate
+verifier must load the existing CPU archive and require all semantic and file hashes before
+solving. Preserve the failed audit and its archive unchanged.
+
+In each free-coordinate active-set round, keep the exhaustive-support primary arithmetic,
+support enumeration, selection and gates unchanged. Run SLSQP once with the same zero
+initialization, analytic gradient, nonnegative bounds, `ftol=1e-12` and 10,000-iteration
+limit. Determine a polishing support only from that SLSQP result using
+`lambda_i > 1e-10 * max(1, ||lambda||_inf)`. Do not use the exhaustive primary's support.
+On that fixed support, perform exactly one direct FP64 SVD solve of
+`G_SS lambda_S = v_S`, with relative singular-value cutoff `1e-12`; require the support
+matrix to be full rank. Set all other dual coefficients to zero. There is no retry,
+alternate threshold, regularization, support search, iterative refinement or fallback to
+an unpolished solver.
+
+Require the polished reference coefficients to be finite and nonnegative, its normalized
+full-original-QP KKT residual at most `1e-8`, and the resulting original-unit primal
+violation at most `1e-6`. Compare the polished reference to exhaustive primary using the
+unchanged Gram-induced primal relative-distance limit `1e-6` and dual-objective relative-
+difference limit `1e-8`; do not compare raw dual coefficients. Report unpolished SLSQP and
+L-BFGS results as diagnostics only.
+
+Apply that reference in every round of the unchanged monotonic edge-bound active-set loop,
+with no more than eight rounds. Run three complete projections from empty active sets and
+fresh CPU archive reloads; require every run to pass, identical active/fixed-set paths, and
+the same `1e-10` learning-rate-scaled primal and `1e-12` objective repeat limits. Do not
+materialize or evaluate an actor candidate, run finite-difference or nonlinear trials,
+evaluate development/fresh data, or retain any state. Require exact final restoration and
+unchanged locked inputs/archive.
+
+If any control fails, classify the reason and pause this exhaustive-primary integration
+route; do not rotate to another reference or relax a threshold. A pass qualifies only this
+revised frozen-input numerical reference and permits a separately preregistered update-24
+continuation. It does not retroactively pass either failed run, install update 25, authorize
+hover, alter the total-update-50 gate or permit promotion.
