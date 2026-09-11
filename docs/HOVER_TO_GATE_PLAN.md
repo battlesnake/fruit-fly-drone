@@ -3433,6 +3433,47 @@ remained unopened, source/local identity was restored, and peak CUDA reserved me
 [`artifacts/vertical-motion-derivative-ladder-v1/`](../artifacts/vertical-motion-derivative-ladder-v1/).
 Training, hover and gate flight remain unauthorized pending a separately committed next protocol.
 
+Preregister one bounded independent FP64 tau audit before deciding whether to freeze temporal
+parameters. Lock the v1, v2 and derivative-ladder terminal reports at SHA-256
+`661868629adae98e1ee664a4ec4c4e50607137097a4e4dcdb07164510917f8e4`,
+`df8396dd18e83a66e206dbfba3d9276bccdc409d795745e0cb4c4c2dc6a05248` and
+`fb1038ee688874ebbc369a3d7f36bd80b63a7371b9bd4b3a0aabec933db1c167`. Reuse only the same
+four training cases, their exact float32-rendered pixels, the source checkpoint's effective
+float32 coefficients, and the v1 source-normalization tensors promoted without changing their
+values. Development and acceptance specs and pixels remain unopened.
+
+Construct an independent direct FP64 controller: promote the effective source edge weights,
+biases, physical time constants, sensory coefficients, recurrent states, exponential-Euler alpha
+calculation, selected-node direct state updates, response summaries and every loss reduction to
+float64. Do not evaluate a float32 graph and merely cast its final scalar. Use the v2 direct
+selected-state expression, not the production subtract/add correction. Preserve the complete
+165,122-node graph, K32 clock, exact objective and all 24 parameter identities and bounds; this is
+a numerical reference, not a new biological model.
+
+Audit only `T4c_tau` and `T5c_tau` at central steps `[0.008,0.004,0.002,0.001]`. Repeat the FP64
+unperturbed loss three times and define resolution as the greater of the repeat range and eight
+float64 ULPs at its mean. Record actual materialized offsets, total losses and every component
+loss. Each tau probe must have the analytic sign and no more than 2% symmetric relative error at
+two adjacent resolved steps. Require the FP32 production and FP64 reference analytic total
+derivatives to have the same sign and no more than 2% symmetric relative error. Reproduce the
+locked FP32 analytic gradients, rendered-pixel hash and source-normalization hash before making
+that comparison.
+
+Also perform a fixed-state, one-neural-step FP64 check for the first hash-locked T4c and T5c
+target nodes. At identity tau ratio use scalar state `0.125` and target `-0.375`; compare autograd
+through the direct exponential-Euler update to the closed-form derivative of
+`state + (1-exp(-dt/(source_tau*ratio)))*(target-state)`. Require finite nonzero values, inactive
+tau clamps, equal signs and symmetric relative error at most `1e-10`.
+
+Fail closed if any FP64 ladder, cross-precision, reproduction, one-step, restoration or 14 GiB
+peak-reserved-memory gate fails. Do not change the loss, discard components, freeze taus, select
+a different parameter family, run an optimizer, or retain a candidate within a failed audit. If
+and only if all numerical gates pass, run the original disposable float32 one-update
+Adam/backtracking test using the already computed production gradients and require its unchanged
+0.1% fixed-minibatch improvement, identity/restoration and memory gates. A complete pass may
+authorize the already bounded 100-update training protocol; it does not itself authorize hover,
+gate flight or promotion.
+
 For each pathway and integrated/terminal window, let `O_up` and `O_down` be the
 stationary-subtracted c-d anatomical opponents, then define `D=(O_up-O_down)/2` and
 `B=(O_up+O_down)/2`. Freeze each normalization from the source training response with an absolute
