@@ -3312,6 +3312,18 @@ attitude and K32 deterministic CNS clock. The exposed `-002` bank is diagnostic 
 never be used for fitting, checkpoint selection or acceptance. Commit acceptance specifications
 but do not render or evaluate their pixels until development has passed.
 
+The no-response manifest is now materialized at
+[`artifacts/vertical-motion-commissioning-manifest-v1/`](../artifacts/vertical-motion-commissioning-manifest-v1/).
+Its canonical semantic SHA-256 is
+`8d40ae087c1552f0473be47ede74a11f220c1d7474e4b4025a251839f1dcdfef`; the formatted file
+SHA-256 is `1403c552b371378a59b9cd9830d06ce144f336c7adf05d5061fd385dfc5dbb88` and the materializing
+generator SHA-256 is `b8a39a9e324a7aad71e8e4e21aaf494c393019d2af13ad2fbfb4a280fdd57ea4`.
+It records the exact PCG64 draw order and state hashes, uses string-safe hexadecimal uint64
+texture seeds, and analytically proves that hard-edge row-crossing histories do not overlap
+between splits. No pixels or neural responses were produced. This commits the acceptance
+specifications while leaving acceptance pixels sealed, and authorizes only implementing and
+running the disposable preflight below.
+
 For each pathway and integrated/terminal window, let `O_up` and `O_down` be the
 stationary-subtracted c-d anatomical opponents, then define `D=(O_up-O_down)/2` and
 `B=(O_up+O_down)/2`. Freeze each normalization from the source training response with an absolute
