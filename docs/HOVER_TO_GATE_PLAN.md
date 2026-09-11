@@ -1335,3 +1335,81 @@ continuation checkpoint, run no fresh data or closed-loop simulation, and make n
 promotion. A pass authorizes only a separately registered FP64-primary corrected fitting
 continuation from update 20 toward the existing total-update-50 milestone; it neither
 accepts update 21 into the stopped run nor establishes useful damping or hover.
+
+Result: the restored update-21 audit passed. The archived raw displacement, reconstructed
+one-step Adam state, qualified FP64 displacement hash and complete primal objective all
+matched exactly. No ordinary scale passed. Scale 1/16 improved training endpoint-D NRMSE
+by 0.002262 and failed only endpoint-C25's outer gate, so it entered the unchanged repair.
+The first correction scale, 1.0, passed every control and nonlinear gate. Its training
+endpoint-D NRMSE was `1.35364211`, and endpoint-C25 was `1.68359399`, leaving `9.61e-5`
+headroom to the source-plus-0.0199 acceptance boundary. The repair directional finite
+difference disagreed by only 0.0580%, and correction made no additional Adam step.
+
+The selected candidate also passed the one fixed development transfer. Development
+endpoint-D NRMSE improved from update 20's `1.32103145` to `1.31926715`, a 0.001764
+improvement, while every original-source preservation gate passed. Training and
+development sign fraction remained zero and teacher-aligned gain remained negative, so
+this is not yet useful damping. Update-20 parameters and Adam state were restored exactly;
+all locked files were unchanged and no candidate, checkpoint, fresh cohort, closed-loop
+run, or promotion resulted. See
+[`artifacts/variable-height-full-native-d-first-fp64-corrected-step-audit-v1/`](../artifacts/variable-height-full-native-d-first-fp64-corrected-step-audit-v1/).
+
+Proceed with one **FP64-primary corrected fitting continuation to total update 50** in a
+new ignored run; do not resume or overwrite the stopped float32-projection run. Hash-lock
+its update-20 report and resume, the passing frozen-input qualification and archive, and
+the passing restored step-audit report (SHA-256
+`8f76e9b5bd9cb1cecc782b207c3694b332926fb9f34b5be1fea8fd31b2deb6dd`). Preserve the
+native recurrent actor, visual/roll-pitch inputs, foreleg outputs, endpoint-D-only Adam
+objective, parameter families, learning rates, gradient clipping, source-relative
+C/P/RPY/validity/output constraints, current-relative D improvement, development bank,
+terminal criteria, and no-automatic-promotion rule.
+
+Seed the new crash-safe resume from exact update 20. Reproduce accepted update 21 from the
+frozen archive rather than regenerating its Jacobians: reconstruct the single pending Adam
+state from the archived gradient, require the exact raw and FP64 displacement/objective
+hashes, run the ordinary-then-repair selection unchanged, and require the accepted
+parameter hash
+`3d8d96f36944113ad942ebd1d30f6510998a3a337881b03e0ce3e6032e0f7308` plus registered
+training metrics within the existing reproduction tolerances. Persist it as accepted
+update 21 only after all transaction, projection, repair and reproduction controls pass.
+The step audit's already passing development result is provenance, not an extra candidate
+selection channel; scheduled continuation development evaluations remain fixed below.
+
+For updates 22 onward, generate each current proposal's constraint specifications,
+Jacobian rows and dedicated endpoint-D gradient exactly once from the fixed training bank.
+Take exactly one Adam moment/step update and replace only the primary inequality projection
+with the qualified FP64 implementation. Every free-coordinate round must require primary
+solver success, original-unit primal violation at most `1e-6`, normalized KKT residual at
+most `1e-8`, and the exhaustive-support independent check; the active set must converge
+within eight rounds with native bounds. Canonicalize once and retain the existing
+idempotence, post-materialization `1e-6` linear, negative-D direction, finite/validity and
+optimizer-transaction controls. A projection or numerical-control failure is terminal for
+this run and cannot enter repair or fall back to the old projector.
+
+For each valid proposal, try ordinary scales 1, 1/2, 1/4, 1/8, 1/16 and 1/32 and accept
+the first passing all original gates. Only the scale-1/16 C25-only case may use the existing
+guard-band repair, unchanged: the same eligibility, authoritative D row and one-quarter
+finite difference, one fixed Jacobian, one zero-reference correction solve, internal
+source-plus-0.0198 C25 target, source-plus-0.0199 actual acceptance, correction scales 1,
+1/2, 1/4 and 1/8, no relinearization or second solve, and no additional Adam step. Retain
+the pending one-step Adam state only for an accepted ordinary or repaired candidate. Any
+other rejection restores the pre-update controller and optimizer exactly and stops.
+
+The phase budget ends at **50 total accepted updates**, not 50 new updates and not a reset
+of the existing 200-update outer budget. Evaluate the unchanged fixed development bank at
+accepted totals 30, 40 and 50, requiring original-source preservation. Apply the existing
+terminal criteria at each scheduled checkpoint. At total 50 also apply the already
+registered mandatory gate: endpoint-D NRMSE must have improved by at least 25% from the
+original source on both training and development, with all preservation gates passing.
+If that mandatory gate fails, stop this route at update 50 without relaxing it or testing
+hover. If it passes without terminal success, record the result before registering any
+continuation toward total update 200. If terminal criteria pass, retain only the first
+terminal checkpoint and run the already specified fresh qualification before any
+closed-loop hover authorization.
+
+Persist resume state before the next attempted update and preserve the corrected fitter's
+existing interruption semantics: a recorded rejected proposal or failed milestone cannot
+silently retry, and an interrupted first qualification cannot select another checkpoint.
+Keep all run tensors/checkpoints ignored; commit only compact reports. Do not introduce
+external recurrence, state machines, engineered history, actor changes, fresh data outside
+the terminal path, closed-loop simulation, or promotion in this fitting phase.
