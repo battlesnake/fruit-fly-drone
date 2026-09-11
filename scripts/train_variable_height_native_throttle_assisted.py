@@ -1355,6 +1355,23 @@ def evaluate_motion_bank(
     prediction = torch.stack(predictions).cpu()
     target = torch.stack(targets).cpu()
     target_power = target.square().sum().clamp_min(1.0e-12)
+    by_horizon_report = {}
+    for horizon, values in by_horizon.items():
+        horizon_prediction = torch.stack([prediction for prediction, _ in values])
+        horizon_target = torch.stack([target for _, target in values])
+        horizon_target_power = horizon_target.square().sum().clamp_min(1.0e-12)
+        by_horizon_report[horizon] = {
+            "pairs": len(values),
+            "correct_sign_fraction": float(
+                ((horizon_prediction * horizon_target) > 0).float().mean()
+            ),
+            "teacher_aligned_gain": float(
+                (horizon_prediction * horizon_target).sum() / horizon_target_power
+            ),
+            "nrmse": float(
+                ((horizon_prediction - horizon_target) / motion_scale).square().mean().sqrt()
+            ),
+        }
     report = {
         "pairs": bank["cases"],
         "correct_sign_fraction": float(((prediction * target) > 0).float().mean()),
@@ -1363,20 +1380,7 @@ def evaluate_motion_bank(
         "prediction_rms_motor_units": float(prediction.square().mean().sqrt()),
         "target_rms_motor_units": float(target.square().mean().sqrt()),
         "endpoint_image_difference_max": max(image_differences),
-        "by_horizon": {
-            horizon: {
-                "pairs": len(values),
-                "correct_sign_fraction": float(
-                    (
-                        (torch.stack([p for p, _ in values]) * torch.stack([t for _, t in values]))
-                        > 0
-                    )
-                    .float()
-                    .mean()
-                ),
-            }
-            for horizon, values in by_horizon.items()
-        },
+        "by_horizon": by_horizon_report,
         "all_recurrent_states_and_outputs_finite": bool(
             all(
                 item["recurrent_state_finite"] and item["actor_output_finite"]

@@ -10,6 +10,7 @@ import torch
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
+import audit_variable_height_native_throttle_optimizer as optimizer_audit  # noqa: E402
 import train_variable_height_native_throttle_assisted as train  # noqa: E402
 
 from flydrone.hover import HoverConfig  # noqa: E402
@@ -320,6 +321,56 @@ def test_resume_validation_rejects_skippable_mandatory_phase() -> None:
                 "development_started": False,
             }
         )
+
+
+class _ToyController(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.edge_magnitude = torch.nn.Parameter(torch.full((2,), 0.2))
+        self.bias = torch.nn.Parameter(torch.zeros(2))
+        self.raw_time_constant = torch.nn.Parameter(torch.zeros(2))
+
+    def project_parameters(self) -> None:
+        return None
+
+
+def test_beta1_zero_removes_opposed_first_moment_direction() -> None:
+    controller = _ToyController()
+    optimizer = train._make_optimizer(controller)
+    for _ in range(18):
+        for name in train.PARAMETER_FAMILIES:
+            getattr(controller, name).grad = torch.full_like(getattr(controller, name), -1.0)
+        optimizer.step()
+    current = train._copy_parameters(controller)
+    raw = {
+        name: torch.full_like(getattr(controller, name), 0.01) for name in train.PARAMETER_FAMILIES
+    }
+
+    original = optimizer_audit.materialize_optimizer_direction(
+        controller,
+        optimizer.state_dict(),
+        current,
+        raw,
+        raw,
+        beta1=0.9,
+    )
+    momentum_free = optimizer_audit.materialize_optimizer_direction(
+        controller,
+        optimizer.state_dict(),
+        current,
+        raw,
+        raw,
+        beta1=0.0,
+    )
+
+    assert original["materialized"]["total"] > 0.0
+    assert momentum_free["materialized"]["total"] < 0.0
+    assert momentum_free["optimizer_counters_before"] == [18.0, 18.0, 18.0]
+    assert momentum_free["optimizer_counters_after"] == [19.0, 19.0, 19.0]
+    assert momentum_free["moment_mechanism"]["first_moment_replaced"] is True
+    assert momentum_free["moment_mechanism"]["second_moment_retained_and_updated"] is True
+    for name in train.PARAMETER_FAMILIES:
+        assert torch.equal(getattr(controller, name), current[name])
     with pytest.raises(SystemExit, match="missing its terminal transition"):
         train._validate_resume_scientific_state(
             {
