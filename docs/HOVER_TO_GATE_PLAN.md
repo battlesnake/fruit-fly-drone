@@ -2705,3 +2705,37 @@ scale-1 replay; it must not simply delete the failed hash gate after the fact. N
 hover, gate flight or promotion was authorized. The full report SHA-256 is
 `03c4ee348d51c351611b425de184a3d64cf3211f1a75ddf1c6f9e50006dcfc5e`;
 see [`artifacts/variable-height-rk4-readout-trust-region-v1/`](../artifacts/variable-height-rk4-readout-trust-region-v1/).
+
+### Preregistered canonical readout trust-region repeat
+
+Run one corrected repeat that preserves both preceding outcomes. Hash-lock the failed
+trust-region report at
+`03c4ee348d51c351611b425de184a3d64cf3211f1a75ddf1c6f9e50006dcfc5e` and the original
+readout-step report at
+`508c54ebb00aa8419e66e540bbc7ca45bd0d254858e76eab590cc4f39dc878f7`.
+Reconstruct the same source, cache, mask, detached RK4 prefixes, complete-bank gradient and
+one β1=0 Adam transaction once. Retain the existing `2e-5` scalar reproduction tolerance,
+mask checks and empty-to-one counters, but do not require a floating-point CUDA reduction to
+reproduce a prior process's parameter or moment bytes.
+
+Before any new-scale evaluation, persist the once-reconstructed source parameters, pending
+parameters and optimizer states below the ignored run directory. Hash them physically and
+semantically, reload them on CPU, require bit-exact equality to the just-produced in-memory
+tensors, and use only clones of that reloaded archive thereafter. This makes one canonical
+direction inside the run and prevents different replays from silently regenerating it.
+
+Evaluate old scale 1 once as a reproduction control. Against the hash-locked prior scale-1
+record, require fixed-prefix and full-prefix NRMSE, gain, all 24 throttle contrasts, all 48×4
+terminal motor outputs, pair-common drift and each RPY drift metric to agree within `2e-5`
+absolute. Require the same exact mask, bounds, endpoint, finiteness and restoration controls.
+This control cannot be selected and preserves its original failure below `0.001` improvement.
+If either the scalar, archive or functional control fails, stop before opening a new scale.
+
+Only after all controls pass, evaluate the unchanged trust-region ladder `16,8,4,2` in fixed
+descending order from the canonical source/pending tensors. Apply the exact candidate and
+selection gates registered for the failed extension and select the first actual passing
+scale. Report bound activations and masked-family RMS. Restore and hash-verify source plus
+the empty optimizer at termination and retain no candidate. A pass has the same narrow
+meaning: it authorizes preregistration, not execution, of bounded last-hop fitting. Failure
+closes this direct last-hop route and moves upstream. No result authorizes hover, gate flight
+or promotion.
