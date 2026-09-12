@@ -204,8 +204,10 @@ it as the final goal holdout. Direct-only best50 achieved **10/64**, versus orig
 1/64. Its cumulative passes were 53, 40, 33, 21 and 10, with no ground contacts or
 invalid states. Success was still asymmetric (9/32 negative-side, 1/32 positive-side),
 and ring contact remained frequent. This supports some improvement beyond the small
-selection set, but is nowhere near the >50% goal. The matched unit-contrast best50 is
-being checked on the same bank.
+selection set, but is nowhere near the >50% goal. The matched unit-contrast best50
+also achieved **10/64**, all on the negative side (10/32 versus 0/32 positive). Its
+cumulative passes were 53, 39, 30, 20 and 10. Thus neither loss variant established
+superiority on this bank, and bilateral generalization is a clear remaining weakness.
 
 `scripts/export_pragmatic_course_candidate.py` can compile any saved ES trial into a
 normal controller for standalone checks, without replacing a selected checkpoint.
