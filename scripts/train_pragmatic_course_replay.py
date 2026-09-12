@@ -99,6 +99,13 @@ class ReplayBank:
             ),
             source_preservation_outputs_stored=self.reference_outputs is not None,
             roll_teacher=self.roll_teacher,
+            active_frames_by_gate_and_side=[
+                [
+                    int(((self.current[:, side::2] == g) & self.active[:, side::2]).sum())
+                    for side in (0, 1)
+                ]
+                for g in range(5)
+            ],
         )
 
 
@@ -316,6 +323,106 @@ def prepare_window(bank, rows, starts, unroll, device):
     )
 
 
+def select_balanced_window(primary, fallback, phase, unroll, rng, window_kind, device):
+    """Prefer paired resets, then independent same-phase rows, then per-side fallback.
+
+    Early windows stay entirely before gate one. Late windows may cross a gate.
+    All sides keep equal direct-loss weight; mixed-source difference losses are
+    supervised comparisons, not controlled mirrored-geometry interventions.
+    """
+    banks = (primary,) if primary is fallback else (primary, fallback)
+    eligible = {}
+    for bank in banks:
+        starts = bank.starts(phase, unroll)
+        if phase == 0:
+            starts = [
+                [t for t in options if bool((bank.current[t : t + unroll, row] == 0).all())]
+                for row, options in enumerate(starts)
+            ]
+        eligible[id(bank)] = starts
+    starts = eligible[id(primary)]
+    pairs = [p for p in range(len(starts) // 2) if starts[2 * p] and starts[2 * p + 1]]
+    pair = int(rng.choice(pairs)) if pairs else None
+    selections, kinds = [], []
+    for side in (0, 1):
+        if pair is not None:
+            chosen, row = primary, 2 * pair + side
+        else:
+            for chosen in banks:
+                candidates = [
+                    r for r in range(side, len(eligible[id(chosen)]), 2) if eligible[id(chosen)][r]
+                ]
+                if candidates:
+                    row = int(rng.choice(candidates))
+                    break
+            else:
+                raise RuntimeError(f"no side {side} replay windows for gate {phase + 1}")
+        options = eligible[id(chosen)][row]
+        preferred = []
+        if window_kind == "transition":
+            preferred = [t for t in options if chosen.current[t + unroll - 1, row] > phase]
+        elif window_kind == "pre-failure" and chosen.failure_steps is not None:
+            if chosen.failure_steps[row] >= 0:
+                last = int(torch.nonzero(chosen.active[:, row]).flatten()[-1])
+                preferred = [t for t in options if t + unroll - 1 >= last - unroll]
+        selections.append((chosen, row, int(rng.choice(preferred or options))))
+        kinds.append(window_kind if preferred else "approach")
+    columns = [
+        prepare_window(bank, (row,), (start,), unroll, device) for bank, row, start in selections
+    ]
+    stop = max(len(column[2]) for column in columns)
+
+    def pad(value):
+        # Padding is never read at a branch's supervised times. Prefix replay
+        # already holds shorter branches without applying extra neural updates.
+        missing = stop - len(value)
+        return (
+            torch.cat((value, value[-1:].expand(missing, *value.shape[1:]))) if missing else value
+        )
+
+    states = tuple(
+        torch.cat([pad(c[0][field]) for c in columns], dim=1) for field in range(len(columns[0][0]))
+    )
+    gates = tuple(
+        AnnularGate(
+            torch.cat([c[1][g].center for c in columns]), torch.cat([c[1][g].yaw for c in columns])
+        )
+        for g in range(len(columns[0][1]))
+    )
+    window = (
+        states,
+        gates,
+        torch.cat([pad(c[2]) for c in columns], dim=1),
+        torch.cat([pad(c[3]) for c in columns], dim=1),
+        torch.cat([c[4] for c in columns]),
+    )
+    record = dict(
+        source_by_side=[bank.kind for bank, _, _ in selections],
+        seed_by_side=[bank.seed for bank, _, _ in selections],
+        rows=[row for _, row, _ in selections],
+        starts=[start for _, _, start in selections],
+        phase=phase + 1,
+        kinds=kinds,
+        matched_mirrored_reset=pair is not None,
+        substituted_sides=[
+            side for side, (bank, _, _) in enumerate(selections) if bank is not primary
+        ],
+        entirely_pre_first_gate=phase == 0,
+        difference_loss_is_controlled_geometry_contrast=False,
+    )
+    return window, record
+
+
+def replay_update_plan(late_phase, balanced):
+    if balanced:
+        return [
+            (0, 0.5, "early-source"),
+            (late_phase, 0.25, "native-late"),
+            (late_phase, 0.25, "assisted-late"),
+        ]
+    return [(0, 0.5, "native-first"), (late_phase, 0.5, "native-first")]
+
+
 def window_observations(window, times, camera, gate_config):
     states, gates, roles, _, starts = window
     device = starts.device
@@ -456,6 +563,8 @@ def parse_args():
         action="store_true",
         help="report fixed training-window motor errors by phase and side at development checks",
     )
+    parser.add_argument("--balanced-late-replay", action="store_true")
+    parser.add_argument("--freeze-replay-collections", action="store_true")
     parser.add_argument("--interval", type=int, default=20)
     parser.add_argument("--seconds", type=float, default=30.0)
     parser.add_argument("--development-pairs", type=int, default=16)
@@ -484,6 +593,8 @@ def main():
         raise SystemExit("contrast weight must be finite and nonnegative")
     if args.roll_teacher != "curved" and args.supervision != "late-roll-preserve":
         raise SystemExit("non-curved roll targets require --supervision late-roll-preserve")
+    if args.balanced_late_replay and args.supervision != "late-roll-preserve":
+        raise SystemExit("balanced late replay requires frozen-source late-roll-preserve")
     anticipation = args.supervision == "late-roll-anticipation"
     if anticipation and args.check_replay_fit:
         raise SystemExit("anticipation already has its own replay validation")
@@ -671,14 +782,46 @@ def main():
             args.seed + 100000,
         )
         native_bank = collect("native", args.native_pairs, args.seed)
+        if args.freeze_replay_collections:
+            torch.save(
+                dict(
+                    source_checkpoint=str(args.checkpoint),
+                    geometry=GEOMETRY,
+                    banks=[
+                        dict(
+                            states=b.states,
+                            gates=[(g.center, g.yaw) for g in b.gates],
+                            current=b.current,
+                            active=b.active,
+                            target=b.target,
+                            failure_steps=b.failure_steps,
+                            reference_outputs=b.reference_outputs,
+                            kind=b.kind,
+                            seed=b.seed,
+                            roll_teacher=b.roll_teacher,
+                        )
+                        for b in (native_bank, teacher_bank)
+                    ],
+                ),
+                args.output_dir / "source-replay.pt",
+            )
         if args.check_replay_fit:
             fit_rng = np.random.default_rng(args.seed + 200000)
             for phase in range(5):
-                bank, rows, starts, record = select_pair_window(
-                    native_bank, teacher_bank, phase, args.unroll, fit_rng, "approach"
-                )
-                window = prepare_window(bank, rows, starts, args.unroll, device)
-                fit_lessons.append((window, record))
+                if args.balanced_late_replay:
+                    primary_banks = (native_bank,) if phase == 0 else (native_bank, teacher_bank)
+                    for primary in primary_banks:
+                        window, record = select_balanced_window(
+                            primary, teacher_bank, phase, args.unroll, fit_rng, "approach", device
+                        )
+                        record["requested_source"] = primary.kind
+                        fit_lessons.append((window, record))
+                else:
+                    bank, rows, starts, record = select_pair_window(
+                        native_bank, teacher_bank, phase, args.unroll, fit_rng, "approach"
+                    )
+                    window = prepare_window(bank, rows, starts, args.unroll, device)
+                    fit_lessons.append((window, record))
             source_fit = replay_fit_summary(
                 controller, fit_lessons, args.unroll, camera, gate_config, args.contrast_weight
             )
@@ -689,9 +832,20 @@ def main():
         windows, loss_values, axis_values = [], [], []
         kind = ("approach", "transition", "pre-failure")[(update - 1) % 3]
         late_phase = 1 + ((update - 1) // 2) % 3 if anticipation else 1 + (update - 1) % 4
-        for phase in (0, late_phase):
+        for phase, loss_weight, role in replay_update_plan(late_phase, args.balanced_late_replay):
             roll_contrast_weight = None
-            if anticipation and phase > 0:
+            if args.balanced_late_replay:
+                primary = teacher_bank if role == "assisted-late" else native_bank
+                window, record = select_balanced_window(
+                    primary, teacher_bank, phase, args.unroll, rng, kind, device
+                )
+                record["role"] = role
+                record["direct_loss_weight_by_source"] = {
+                    source_kind: loss_weight * record["source_by_side"].count(source_kind) / 2
+                    for source_kind in set(record["source_by_side"])
+                }
+                record["difference_loss_weight"] = loss_weight * args.contrast_weight
+            elif anticipation and phase > 0:
                 side = (update - 1) % 2
                 bank, row, start = lessons.select_anticipation_window(
                     banks, phase, side, args.unroll, rng
@@ -724,7 +878,8 @@ def main():
             )
             if not bool(torch.isfinite(loss)):
                 raise RuntimeError("nonfinite replay loss; no update applied")
-            (0.5 * loss).backward()
+            (loss_weight * loss).backward()
+            record["loss_weight"] = loss_weight
             windows.append(record)
             loss_values.append(float(loss.detach()))
             axis_values.append(axes.tolist())
@@ -808,7 +963,8 @@ def main():
                         controller.edge_magnitude.copy_(best_edges)
                     optimizer.state.clear()
                     entry["restored_best_update"] = best_update
-                native_bank = collect("native", args.native_pairs, args.seed + update)
+                if not args.freeze_replay_collections:
+                    native_bank = collect("native", args.native_pairs, args.seed + update)
         history.append(entry)
         print(json.dumps({k: v for k, v in entry.items() if k != "development"}), flush=True)
         report()

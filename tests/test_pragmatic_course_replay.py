@@ -109,6 +109,85 @@ def test_fixed_fit_summary_preserves_phase_side_axis_meaning(monkeypatch):
     assert record["motor_rmse_by_side"] == [[1.0, 2.0, 3.0, 4.0], [2.0, 4.0, 6.0, 8.0]]
 
 
+def test_balanced_replay_plan_preserves_half_early_and_half_late_weight():
+    assert replay.replay_update_plan(3, True) == [
+        (0, 0.5, "early-source"),
+        (3, 0.25, "native-late"),
+        (3, 0.25, "assisted-late"),
+    ]
+    assert replay.replay_update_plan(3, False) == [
+        (0, 0.5, "native-first"),
+        (3, 0.5, "native-first"),
+    ]
+
+
+def test_balanced_early_windows_never_cross_into_teacher_roll_labels():
+    native, assisted = bank(), bank("roll-assisted")
+    native.current[4:] = 1
+    for seed in range(8):
+        window, record = replay.select_balanced_window(
+            native, assisted, 0, 3, np.random.default_rng(seed), "transition", torch.device("cpu")
+        )
+        assert record["matched_mirrored_reset"]
+        assert record["entirely_pre_first_gate"]
+        assert record["kinds"] == ["approach", "approach"]
+        for side, start in enumerate(record["starts"]):
+            assert torch.equal(window[2][start : start + 3, side], torch.zeros(3, dtype=torch.long))
+
+
+def test_missing_native_side_uses_only_that_assisted_side_and_preserves_physical_history():
+    native, assisted = bank(), bank("roll-assisted")
+    native.current[:, 0] = 1
+    native.active[6:, 0] = False
+    assisted.current[7:, 1] = 1
+    assisted.states[0][:, :, 0] += 100
+    for gate in assisted.gates:
+        gate.center[:, 0] = 100
+    window, record = replay.select_balanced_window(
+        native, assisted, 1, 2, np.random.default_rng(4), "approach", torch.device("cpu")
+    )
+    assert not record["matched_mirrored_reset"]
+    assert record["source_by_side"] == ["native", "roll-assisted"]
+    assert record["substituted_sides"] == [1]
+    assert not record["difference_loss_is_controlled_geometry_contrast"]
+    assert window[1][0].center[:, 0].tolist() == [0.0, 100.0]
+    assert len(window[2]) == max(record["starts"]) + 2
+    for side, original in enumerate((native, assisted)):
+        start, row = record["starts"][side], record["rows"][side]
+        for field in range(6):
+            assert torch.equal(
+                window[0][field][: start + 2, side], original.states[field][: start + 2, row]
+            )
+        assert torch.equal(window[3][: start + 2, side], original.target[: start + 2, row])
+
+
+def test_independent_native_courses_are_preferred_to_assisted_substitution():
+    native, assisted = bank(), bank("roll-assisted")
+    native.states = tuple(v.repeat(1, 2, 1) for v in native.states)
+    native.current = native.current.repeat(1, 2)
+    native.active = native.active.repeat(1, 2)
+    native.target = native.target.repeat(1, 2, 1)
+    native.gates = tuple(AnnularGate(g.center.repeat(2, 1), g.yaw.repeat(2)) for g in native.gates)
+    native.current[:, (0, 3)] = 1
+    assisted.current[:] = 1
+    _, record = replay.select_balanced_window(
+        native, assisted, 1, 2, np.random.default_rng(5), "approach", torch.device("cpu")
+    )
+    assert record["rows"] == [0, 3]
+    assert record["source_by_side"] == ["native", "native"]
+    assert record["substituted_sides"] == []
+    assert not record["matched_mirrored_reset"]
+
+
+def test_balanced_replay_fails_explicitly_when_a_side_has_no_valid_examples():
+    native, assisted = bank(), bank("roll-assisted")
+    native.current[:, 0] = 1
+    with pytest.raises(RuntimeError, match="side 1.*gate 2"):
+        replay.select_balanced_window(
+            native, assisted, 1, 2, np.random.default_rng(5), "approach", torch.device("cpu")
+        )
+
+
 def test_roll_mask_excludes_edges_entering_other_motor_pools(monkeypatch):
     graph = dict(
         output_pool_indices=np.array([10, 11, 12, 13]),

@@ -1723,3 +1723,62 @@ It enables `--supervision late-roll-preserve --roll-teacher current-gate`,
 `--check-replay-fit`. The completed physical-gradient experiment and both diagnostic
 processes exited before this launch. No fresh goal holdout has been spent; the goal
 remains unproven until unassisted performance transfers to fresh varied courses.
+
+#### First local-target learner barely fits and does not improve native flight
+
+The 20-update pilot finishes normally after 279.23 s, retaining the original source
+at **12/32**. Update ten gives 9/32 clean (5 negative / 4 positive), first passes
+26/32, prefix gates 89, ring episodes 22 and wrong-order episodes three. Update
+twenty still gives **9/32** (8 negative / 1 positive), first passes 25/32, prefix
+gates 81, ring episodes 21 and wrong-order episodes six. Ground and invalid counts
+remain zero. Training weights were allowed to continue; no interim rollback erased
+the first ten updates. This branch is not extended.
+
+On the fixed training examples, aggregate late-roll RMSE across gates 2–5 starts at
+0.023013 negative / 0.047809 positive. It changes to 0.022635 / 0.048126 at update ten
+and 0.021847 / 0.048951 at twenty: a 5.07% negative-side reduction but a 2.39%
+positive-side increase at the end. Individual phases are mixed, so this is not a
+uniform improvement. Early-source roll preservation error rises to 0.001822 /
+0.001779; the maximum fixed-window non-roll RMSE reaches 0.000694. These are motor
+differences on training examples, not flight-coordinate errors or held-out scores.
+The result is insufficient two-sided fitting, not evidence that a well-learned
+local teacher has already failed to transfer.
+
+Only two of twenty late windows came from assisted flight; native-first sampling
+made the physically successful teacher trajectories fallback-only. The next bounded
+pilot addresses that coverage limitation along with optimization strength. It does
+not change the target law, network, physical plant or native success definition.
+
+#### Stronger, explicitly mixed replay pilot
+
+The prepared ten-update source restart uses LR **1e-4**, twenty-frame unrolls and
+native checks at **5/10**. Each update assigns half its window-loss weight to early
+source preservation, one quarter to native late examples and one quarter to assisted
+late examples, with equal direct-loss weighting of the two sides. In this mode early
+windows are entirely before the first gate; unlike the legacy transition windows,
+they cannot include post-pass teacher targets.
+
+Late sampling prefers a mirrored pair from the requested bank. If none exists, it
+uses independent negative/positive examples at the same gate phase. If a native side
+is absent, only that side is substituted from the assisted bank. The source and row
+of each side, substitutions and actual **direct-loss** source weights are logged;
+the additional pair-difference term is logged separately and is not attributed as
+a controlled mirrored-geometry experiment. No bank is enlarged or resampled until
+it happens to contain every desired case. Assisted means valid pre-failure windows,
+not a filter for complete-course successes; full native evaluation still owns the
+30-second safety requirement.
+
+`--balanced-late-replay --freeze-replay-collections` recollects the same original
+eight native / four assisted pairs once, at seeds 1690983 / 1790983, from the retained
+source. These are the same course seeds, **not a claim of byte-identical reuse of
+the previous trajectories**. The banks then stay fixed and are saved as a tensor-only
+`source-replay.pt` artifact for reuse. Nine fixed fitting checks cover early preservation
+and both requested banks at each late phase, with fresh current-weight neural prefixes.
+All **556 tests pass**, including independent-course selection, missing-side fallback,
+mixed-history padding and strictly pre-first-gate preservation.
+
+Continue beyond ten updates only if late fitting moves meaningfully on both sides
+(roughly 10% RMSE reduction as an initial screen), individual phases remain sensible,
+and early/other-axis preservation plus native flight avoid substantial deterioration.
+This is an optimization-and-data-mixture pilot, not a learning-rate-only attribution.
+The retained source and fresh varied-course goal validation remain protected.
