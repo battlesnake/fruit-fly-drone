@@ -1388,3 +1388,23 @@ future processes can use this diagnostic-storage optimization without changing t
 experimental recipe. No end-to-end speedup is claimed yet. All **542 tests pass**,
 including tracing with and without backward passes, detached outputs, host copies
 only after the last frame, and preserved trainable gradients.
+
+#### Next small diagnostic: neutral roll after the first gate
+
+Astra recommends one inexpensive diagnostic after the current GPU run ends, before
+spending on the outcome-mode fallback: compare native flight, curved teacher roll,
+and **zero roll-motor difference** after gate one on the same 32 development cases.
+Keep native pitch/yaw/throttle, live RGB, continuous neural/physical state and all
+30 s of scoring. Record completion conditional on a clean first gate by side, plus
+the usual gate crossing errors and safety events. The prepared local script is
+`neutral-roll-takeover-audit.py` in the 100-frame run directory; it has not run yet.
+
+This is not redundant with straight teacher guidance, which still actively corrects
+the flight. Neutral motor drive lets the foreleg/stick relax toward center and the
+acro controller damp roll rate; it does **not** command wings-level attitude and
+may retain the existing bank and lateral motion. A rescue would suggest that the
+native late-roll commands are harmful and motivate a simpler training-only target.
+A failure rejects this neutral intervention, not every constant/open-loop policy
+and not all alternatives to feedback steering. The external gate-one switch is
+diagnostic only: it cannot be deployed or counted toward the native completion goal.
+The original courses, source checkpoint and fresh-evaluation requirement stay fixed.
