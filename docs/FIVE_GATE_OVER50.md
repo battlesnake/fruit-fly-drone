@@ -1870,7 +1870,8 @@ native positive gate-five coverage is absent bank-wide. If fitting reaches the s
 collect one predeclared new source-native/source-roll-assisted bank, without resampling
 until coverage looks favourable, and test the nominated fit on that new sensory history.
 Seek at least 20% late-roll RMSE improvement on both transfer sides before a larger
-native-flight validation. This transfer collection is not yet implemented or run.
+native-flight validation. The deferred implementation is recorded below; no transfer
+collection has run.
 Fresh full-distribution goal validation remains separate and requires a genuinely
 promising autonomous controller; overfitting these lessons cannot satisfy the goal.
 
@@ -1891,3 +1892,42 @@ is 0.803150 before the update. All **569 tests pass** with the report-restoratio
 regression included, and the fixes are pushed. The five-hop arm is active; the
 seven-hop source restart follows in the same single GPU process. The next native
 flight/fit check is at update 25. No improvement is claimed from startup or training loss.
+
+#### Deferred new-course replay-transfer check
+
+`scripts/audit_pragmatic_replay_transfer.py` is ready, with **578 tests passing** in
+the full suite. It has not collected data or used the GPU. The sole active GPU job
+remains the fixed-bank comparison. At five-hop update 14 its complete fixed objective
+is 0.682768 versus 0.803150 initially; this is before the first fit/native check and
+is not a two-sided or autonomous improvement claim.
+
+After a saved checkpoint meets the 50% fitting reduction on each side, nominate its
+fit directory, hop budget and update. The tool rejects an unfitted or nonfinite
+nomination. It collects exactly eight source-native pairs at seed **2026091303** and
+eight source-roll-assisted pairs at **2026091304**, once each, with the same varied
+course geometry and local roll teacher. It does not resample for favourable coverage.
+These seeds are allocated to diagnostic transfer histories, not future goal holdouts.
+Only run this after the current GPU process exits; no parallel GPU collection is needed.
+
+Source and candidate replay every recorded frame from zero neural state and ten
+warmup frames, maintaining separate continuous neural state. Inactive or unscored
+intervals mask the score, not neural updates. Labels preserve the source before the
+first gate and on pitch/yaw/throttle, with current-gate roll labels afterward. All
+four motor errors are reported by bank, gate phase and side; the recorded physical
+trajectory is identical for both actors. This is fixed-input replay transfer, not
+closed-loop candidate flight. In particular, collection eligibility ends at source
+lesson failures and is not the full 30-second clean-flight criterion.
+
+A bank/phase/side group qualifies for aggregation only with at least **20 active
+frames from two distinct episodes**. Thinner or empty groups remain explicitly
+reported. The available groups have equal MSE weight, with identical weights and
+source-derived masks for both actors. Every late phase/side must have a qualifying
+group in at least one bank, and each bank kind must have qualifying late observations
+on both sides. Missing native positive gate-five data is not imputed from another
+group or concealed by dropping the coverage check.
+
+The summary reports combined, native-only and assisted-only reductions. At least
+20% combined reduction on both sides, complete coverage and no native-only regression
+permits expanded native validation. A combined gain with worse native-bank errors is
+flagged as assisted-state-only improvement instead. No checkpoint is automatically
+promoted, and passing this diagnostic cannot establish the above-50% flight goal.
