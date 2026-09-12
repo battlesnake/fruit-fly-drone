@@ -197,3 +197,77 @@ def test_fixed_retinal_spectral_weights_map_rgb_without_a_learned_adapter() -> N
     assert torch.allclose(retina[:, 0::3], torch.full_like(retina[:, 0::3], 0.2))
     assert torch.allclose(retina[:, 1::3], torch.full_like(retina[:, 1::3], 0.5))
     assert torch.allclose(retina[:, 2::3], torch.full_like(retina[:, 2::3], 0.8))
+
+
+def _controller_with_unequal_motor_pools() -> ConnectomeController:
+    controller = ConnectomeController(
+        Path(__file__).resolve().parents[1] / "artifacts" / "gate-v1" / "connectome.npz"
+    )
+    controller.pool_indices = torch.arange(20)
+    controller.pool_offsets = torch.tensor([0, 1, 4, 6, 10, 11, 14, 16, 20])
+    controller.refresh_motor_pool_ranges()
+    return controller
+
+
+def _uncached_motor_drive(controller, state):
+    """Original eight-pool reduction, including checkpoint-buffer scalar reads."""
+    activity = torch.sigmoid(state)
+    means = []
+    for pool in range(8):
+        begin = int(controller.pool_offsets[pool].item())
+        end = int(controller.pool_offsets[pool + 1].item())
+        means.append(activity[:, controller.pool_indices[begin:end]].mean(dim=1))
+    pools = torch.stack(means, dim=-1)
+    return torch.stack(tuple(pools[:, i] - pools[:, i + 1] for i in range(0, 8, 2)), dim=-1)
+
+
+def test_motor_pool_cache_preserves_outputs_and_gradients_without_scalar_reads(monkeypatch):
+    controller = _controller_with_unequal_motor_pools()
+    state = torch.randn(2, controller.n_nodes, generator=torch.Generator().manual_seed(913))
+    state.requires_grad_()
+    expected = _uncached_motor_drive(controller, state)
+    expected_gradient = torch.autograd.grad(expected.square().sum(), state)[0]
+
+    def forbidden_scalar_read(*args, **kwargs):
+        raise AssertionError("fixed motor wiring must not read device scalars each frame")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(torch.Tensor, "item", forbidden_scalar_read)
+        actual = controller.motor_drive(state)
+        actual_gradient = torch.autograd.grad(actual.square().sum(), state)[0]
+
+    torch.testing.assert_close(actual, expected)
+    torch.testing.assert_close(actual_gradient, expected_gradient)
+
+
+@pytest.mark.parametrize("nested", [False, True])
+def test_motor_pool_cache_refreshes_after_direct_or_parent_checkpoint_load(nested):
+    controller = _controller_with_unequal_motor_pools()
+    model = torch.nn.ModuleDict({"actor": controller}) if nested else controller
+    payload = model.state_dict()
+    key = "actor.pool_offsets" if nested else "pool_offsets"
+    payload[key] = payload[key].clone()
+    payload[key][7] += 1  # move one neuron between the throttle antagonist pools
+    original_ranges = controller._motor_pool_ranges
+
+    model.load_state_dict(payload)
+
+    assert controller._motor_pool_ranges != original_ranges
+    assert controller._motor_pool_ranges[6:] == ((14, 17), (17, 20))
+    assert list(model.state_dict()) == list(payload)  # no checkpoint-format change
+    state = torch.randn(2, controller.n_nodes, generator=torch.Generator().manual_seed(914))
+    torch.testing.assert_close(
+        controller.motor_drive(state), _uncached_motor_drive(controller, state)
+    )
+
+
+def test_explicit_motor_pool_edit_can_refresh_cached_wiring():
+    controller = _controller_with_unequal_motor_pools()
+    controller.pool_offsets[1] += 1
+    controller.refresh_motor_pool_ranges()
+
+    assert controller._motor_pool_ranges[:2] == ((0, 2), (2, 4))
+    state = torch.randn(2, controller.n_nodes, generator=torch.Generator().manual_seed(915))
+    torch.testing.assert_close(
+        controller.motor_drive(state), _uncached_motor_drive(controller, state)
+    )

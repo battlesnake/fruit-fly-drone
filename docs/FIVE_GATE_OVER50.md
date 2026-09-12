@@ -1014,3 +1014,24 @@ settles within 2% at 0.76 s; actual stick positions are 0.0308 at 0.20 s, 0.0818
 This supports testing two-second rather than one-second gradient credit if needed;
 it does not establish that horizon length caused the failures. Neither neural timing
 nor the foreleg/quad plant is changed by this check.
+
+#### Fixed motor-wiring metadata cache
+
+The motor-pool reduction was reading sixteen fixed pool-boundary scalars from the
+GPU on every neural frame. `ConnectomeController` now caches those integer ranges
+on the host while retaining the same ordered gathers, means and antagonist
+subtractions. This is topology metadata, not actor memory or a new control path.
+The persisted offset buffer remains authoritative: direct and nested checkpoint
+loads refresh the cache automatically. Explicit in-place topology edits must call
+`refresh_motor_pool_ranges()`; ordinary device transfers need no refresh.
+
+A short isolated RTX 5080 benchmark alternated old/cached/cached/old implementations
+for 100 full brain-forward frames at batch two, after ten warmup frames. Times were
+3.423 / 1.015 / 1.225 / 3.991 ms per frame. The benchmark shared the GPU with the
+ongoing training run and is **not** an end-to-end training speed measurement.
+Motor outputs matched in that check. Regression tests additionally compare outputs
+and state gradients on unequal pools, prohibit per-frame scalar reads, and exercise
+direct/nested checkpoint loads and explicit metadata refresh. The full suite passed
+**529 tests**. No checkpoint format, precision, neural dynamics, physical dynamics or
+learned weights change. The already-running corrected training process loaded the
+old implementation; leave it uninterrupted and use the cache in subsequent processes.

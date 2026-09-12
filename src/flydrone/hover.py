@@ -244,6 +244,8 @@ class ConnectomeController(nn.Module):
         )
         self.register_buffer("pool_offsets", torch.from_numpy(pool_offsets))
         self.register_buffer("pool_indices", torch.from_numpy(pool_indices))
+        self.refresh_motor_pool_ranges()
+        self.register_load_state_dict_post_hook(self._refresh_motor_pool_ranges_after_load)
         if visual_grid is None:
             visual_hex = graph["visual_hex"].astype(np.float32)
             visual_eye = graph["visual_eye"]
@@ -299,6 +301,20 @@ class ConnectomeController(nn.Module):
     @property
     def time_constant(self) -> Tensor:
         return 0.01 + 0.24 * torch.sigmoid(self.raw_time_constant)
+
+    def refresh_motor_pool_ranges(self) -> None:
+        """Cache wiring metadata, avoiding sixteen GPU scalar reads per neural tick.
+
+        Checkpoint loads refresh this automatically, including loads through a parent
+        module. Code explicitly editing pool_offsets in place must call this once.
+        Device transfers do not change the ranges or require another refresh.
+        """
+        offsets = self.pool_offsets.detach().cpu().tolist()
+        self._motor_pool_ranges = tuple(zip(offsets[:-1], offsets[1:], strict=True))
+
+    @staticmethod
+    def _refresh_motor_pool_ranges_after_load(module, incompatible_keys) -> None:
+        module.refresh_motor_pool_ranges()
 
     def project_parameters(self) -> None:
         """Enforce fixed transmitter signs after an optimizer update."""
@@ -423,9 +439,8 @@ class ConnectomeController(nn.Module):
         if privileged_throttle_pool_bias is not None:
             if privileged_throttle_pool_bias.shape != (image.shape[0],):
                 raise ValueError("privileged throttle-pool bias must have shape (batch,)")
-            throttle_positive_begin = int(self.pool_offsets[6].item())
-            throttle_positive_end = int(self.pool_offsets[7].item())
-            throttle_negative_end = int(self.pool_offsets[8].item())
+            throttle_positive_begin, throttle_positive_end = self._motor_pool_ranges[6]
+            _, throttle_negative_end = self._motor_pool_ranges[7]
             throttle_positive = self.pool_indices[throttle_positive_begin:throttle_positive_end]
             throttle_negative = self.pool_indices[throttle_positive_end:throttle_negative_end]
             positive_values = privileged_throttle_pool_bias[:, None].expand(
@@ -446,9 +461,7 @@ class ConnectomeController(nn.Module):
     def motor_drive(self, state: Tensor) -> Tensor:
         activity = torch.sigmoid(state)
         means = []
-        for pool in range(len(POOL_NAMES)):
-            begin = int(self.pool_offsets[pool].item())
-            end = int(self.pool_offsets[pool + 1].item())
+        for begin, end in self._motor_pool_ranges:
             means.append(activity[:, self.pool_indices[begin:end]].mean(dim=1))
         pools = torch.stack(means, dim=-1)
         return torch.stack(
