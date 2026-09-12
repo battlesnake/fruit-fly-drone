@@ -699,8 +699,8 @@ gain or latent-feature probe. The pragmatic imitation/replay gradients never pas
 through the forelegs and aircraft: a better instantaneous motor label need not
 produce a better trajectory. If the larger anticipation steps do not improve complete
 flights, test **short closed-loop lateral-control learning** on the retained source.
-This proposal is not implemented yet, and does not replace the eventual racing or
-hint-fading goals.
+The implementation and first physical-gradient preflight are now complete, as described
+below. This does not replace the eventual racing or hint-fading goals.
 
 - Keep the existing 19,286 visual-to-roll edges, fixed topology/signs, frozen biases
   and time constants, and the same deployed observations and motor interface.
@@ -727,3 +727,97 @@ promotion or a new deployed decoder. A training-only bearing/exit-line auxiliary
 existing descending neurons remains an alternative, but is lower priority than asking
 the current controller directly whether its actions improve flight. The existing
 velocity-information probe does not presently justify another motion-only trial.
+
+`scripts/pragmatic_closed_loop.py` constructs fixed native physical-history lessons
+from cache bank 1190983, excluding the last two held-out whole pairs. The three paired
+lessons use current gates 2/3/4 and both base sides, selected with seed 1420983. They
+end at least 0.15 m before the expected gate plane on their recorded source trajectories.
+Neural prefixes are replayed from zero under current weights; actual foreleg states are
+reconstructed from recorded source commands, with two physics ticks per frame and no
+physical ticks during the ten-frame neural warmup. Cached actuator lag state is retained.
+
+The loss differentiates fifty neural/visual frames and one hundred physical steps.
+It combines mean squared lateral path error (0.5 m scale), terminal lateral velocity
+error relative to `path dy/dx * current vx` (0.5 m/s scale), non-roll preservation,
+and a forward-progress floor. Non-roll targets are the **fixed recorded native command
+sequence**. They are not a detached teacher recomputed on each candidate's changing
+images; that moving-target construction would invalidate a simple finite-difference
+check of the preservation loss. All four actual actor outputs remain live.
+
+#### Ground contact and trial acceptance
+
+The full-course evaluator already permanently fails a flight at any physics step with
+height at or below 0.03 m. Later recovery, or having passed every gate before the touch,
+does not clear that failure. Course trials begin airborne. This is the simulator's
+height-based contact proxy, not detailed tilted-body/propeller contact geometry. The
+previous imitation objective was not directly a crash-penalized RL objective.
+
+The new physical learner adds a smooth squared clearance cost below 0.30 m (weight 10)
+and a 25-point penalty per failed short rollout, averaged across the paired batch. A
+ground-contact flag is latched at every physical step. Candidate acceptance also rejects
+**any** ground/ring/illegal-traversal/invalid event regardless of its scalar loss; touching
+down and recovering cannot qualify. It requires at least 95% of recorded forward travel
+and terminal forward speed, no more than 0.05 m altitude deterioration at the minimum
+or endpoint, bounded non-roll error, and no gate crossing during this initially smooth
+pre-crossing lesson. These are training-step guards, not changes to the full-course
+evaluation rules. Tests explicitly cover touch-then-recover rejection and an upward
+near-ground loss gradient.
+
+#### Physical preflight and bounded training
+
+`scripts/audit_pragmatic_closed_loop_step.py` verifies saved-action replay before any
+gradient test. Its first attempt caught an implementation error: the shared imitation
+bank's roll *teacher labels* were being used for boundary replay rather than its actual
+recorded native commands. No gradient update ran in that attempt. The corrected check
+reproduced all six physical-state components across all three paired lessons, including
+actuator state. A regression now distinguishes source commands from teacher labels.
+
+The completed audit is `runs/gate/pragmatic-closed-loop-step-001/report.json`. On its first
+paired lesson, source tracking loss was 0.300102. A restored fresh-Adam proposal at
+LR 1e-4 reduced fixed-prefix loss to 0.292742 and current-weight-prefix loss to 0.292094.
+At 3e-4 these were 0.290879/0.290454; at 1e-3 they worsened to 0.415720/0.446585 because
+terminal lateral velocity overshot. All tested steps met contact, altitude and progress
+guards, so safety alone is insufficient selection evidence. First-order predictions
+were optimistic even at small steps; actual finite changes, not a claim of globally
+smooth rendering, justify the conservative training rate. The full one-second gradient
+fits the available GPU without activation checkpointing. No controller was exported by
+the restored audit.
+
+`scripts/train_pragmatic_course_closed_loop.py` ran the bounded experiment in
+`runs/gate/pragmatic-closed-loop-training-001`: ten updates, LR 1e-4, cycling the three
+paired physical lessons and mixing an ordinary twenty-frame gate-one preservation
+lesson each time. It tests fresh-prefix proposals at scales 1/0.3/0.1 and accepts only
+an admissible decrease in both physical tracking and the combined objective. Rejected
+proposals restore weights and optimizer state. Native 30-second development flights
+on seed 1110983 select at updates 5 and 10 with the existing first-gate floor. The
+new physical/safety helpers passed the 515-test regression suite before this training
+run started.
+
+The run finished without a promoted checkpoint. Six of ten proposals were accepted
+on their short physical lessons, but full-course completion fell from source **12/32**
+to **7/32** at update 5 and **9/32** at update 10. First-gate passes were 28/32,
+24/32 and 27/32 respectively; update 5 also failed the first-gate selection floor.
+Completion splits were source 9 negative / 3 positive, then 5 / 2 and 6 / 3.
+All three full-flight checks had zero ground contacts and invalid states. The selector
+retained update 0, and the phase-balanced controller remains the overall source.
+
+This establishes that gradients through the real foreleg/aircraft model can improve
+a short physical lesson, **not** that these six lessons improve whole-course flight.
+One sampled twenty-frame early imitation window per update did not reliably preserve
+the first approach, and later gates did not compensate for that regression. Do not
+extend the same run or spend a fresh final holdout on it. A next physical-learning
+experiment should investigate broader lesson coverage and preservation of the complete
+early approach before increasing the number of updates; it must still earn promotion
+on native full flights. The preserved anticipation branch remains available.
+
+Astra's review identified a pre-crossing acceptance gap: a flight could cross the
+expected gate's plane outside the annulus without changing its gate role. The helper
+now separately latches expected-plane sign changes at every physics tick, including
+a touch-and-return. This is deliberately stricter than full-course rules only for
+these smooth training windows; exterior-plane misses remain legal in full evaluation.
+The correction was made while the bounded run was already executing, so that run
+used its original role-change-only crossing guard. There is no evidence it exploited
+the gap, and no trained checkpoint was selected; its failed full-flight results stand.
+Any future claimed short-window improvement must use the corrected guard. The final
+suite passed **516 tests**, including this crossing regression and touch-then-recover
+ground rejection. No GPU jobs from this experiment remain running.
