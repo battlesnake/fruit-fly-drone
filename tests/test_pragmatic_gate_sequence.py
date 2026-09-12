@@ -64,6 +64,14 @@ def test_evaluator_distinguishes_clean_completion_from_eventual_passes(
         camera=CameraSpec(width=32, height=20, horizontal_fov_degrees=125.0),
         hover_config=HoverConfig(), gate_config=GateConfig(back_pattern="checkerboard"),
     )
+    compact = sequence.evaluate(
+        StubActor(), cases, gates, seconds=0.04, warmup_steps=0,
+        camera=CameraSpec(width=32, height=20, horizontal_fov_degrees=125.0),
+        hover_config=HoverConfig(), gate_config=GateConfig(back_pattern="checkerboard"),
+        compact_policies=1,
+    )[0]
+    for key, value in compact.items():
+        assert value == pytest.approx(metrics[key])
     if ground_contact:
         assert metrics["clean_course_success_rate"] == 0.0
         assert metrics["gates_before_failure_mean"] == 0.0
@@ -119,6 +127,27 @@ def test_short_spacing_late_lessons_start_after_the_previous_gate(start_gate):
     )
     assert not events.failed.any()
     assert events.passed[:, start_gate].all()
+
+
+def test_gate_yaw_jitter_varies_independently_without_changing_course_positions():
+    kwargs = dict(
+        pairs=8, seed=789, device=torch.device("cpu"), hover_config=HoverConfig(),
+        layout="variable", gate_count=5, spacing_range=(0.9, 1.5),
+    )
+    _, old = sample_two_gate_cases(**kwargs)
+    _, varied = sample_two_gate_cases(**kwargs, yaw_jitter_degrees=15.0)
+    assert torch.equal(varied[0].yaw, old[0].yaw)
+    differences = []
+    for original, gate in zip(old[1:], varied[1:], strict=True):
+        assert torch.equal(original.center, gate.center)
+        delta = gate.yaw - original.yaw
+        assert (delta.abs() <= torch.deg2rad(torch.tensor(15.0))).all()
+        assert delta.abs().max() > 0.1
+        assert torch.allclose(gate.yaw.reshape(-1, 2).sum(dim=1), torch.zeros(8))
+        differences.append(delta)
+    assert not torch.equal(differences[0], differences[1])
+    with pytest.raises(ValueError, match="yaw_jitter_degrees"):
+        sample_two_gate_cases(**kwargs, yaw_jitter_degrees=-1.0)
 
 
 def test_aligned_sequence_inserts_equally_spaced_collinear_gates() -> None:

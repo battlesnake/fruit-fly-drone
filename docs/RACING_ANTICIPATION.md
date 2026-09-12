@@ -5,6 +5,12 @@ front legs → virtual sticks → acro flight controller. Temporary attitude inp
 as documented in [the main plan](PLAN.md). No course index, route planner, teacher state
 or extra recurrent controller is added to the deployed actor.
 
+Later implementation update: the continuous-path teacher now passes 192/192 varied
+preflight courses through the real foreleg/stick plant. The first native imitation
+trial did not improve autonomous flight. See [the active >50% five-gate
+experiment](FIVE_GATE_OVER50.md) for the results and follow-ups. Path ribbons remain
+planned, not implemented; the proposal below is retained as the original curriculum.
+
 ## What the colours are for
 
 Relative gate colours are intended to teach anticipation, not just target selection.

@@ -71,6 +71,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--gates", type=int, default=2)
     parser.add_argument("--gate-back-pattern", choices=("solid", "checkerboard"))
+    parser.add_argument("--yaw-jitter-degrees", type=float, default=0.0)
     parser.add_argument("--spacing-min", type=float, default=3.8)
     parser.add_argument("--spacing-max", type=float, default=4.2)
     parser.add_argument(
@@ -154,6 +155,7 @@ def sample_two_gate_cases(
     lateral_deviation_limit: float = 0.25,
     height_step_range: tuple[float, float] = (0.0, 0.05),
     height_range: tuple[float, float] = (0.95, 1.25),
+    yaw_jitter_degrees: float = 0.0,
 ) -> tuple[MirroredGateCases, tuple[AnnularGate, ...]]:
     """Sample mirrored courses whose first gate matches the learned task.
 
@@ -179,6 +181,8 @@ def sample_two_gate_cases(
         raise ValueError("spacing_range must be positive")
     if lateral_deviation_limit < 0.0:
         raise ValueError("lateral_deviation_limit must be nonnegative")
+    if not math.isfinite(yaw_jitter_degrees) or yaw_jitter_degrees < 0.0:
+        raise ValueError("yaw_jitter_degrees must be finite and nonnegative")
 
     cases = sample_mirrored_cases(
         pairs,
@@ -274,6 +278,16 @@ def sample_two_gate_cases(
         else:
             raise ValueError(f"unknown gate layout: {layout}")
         gates.append(AnnularGate(center=centre, yaw=yaw))
+    if yaw_jitter_degrees:
+        # A separate stream preserves matched positions when auditing angle variation.
+        rng = torch.Generator(device=device).manual_seed(seed + 104_729)
+        limit = math.radians(yaw_jitter_degrees)
+        for index in range(1, len(gates)):
+            jitter = torch.empty(pairs, device=device).uniform_(-limit, limit, generator=rng)
+            gates[index] = AnnularGate(
+                center=gates[index].center,
+                yaw=gates[index].yaw + side * jitter.repeat_interleave(2),
+            )
     return cases, tuple(gates)
 
 
@@ -293,6 +307,37 @@ def side_rate(values: Tensor, side: Tensor, negative: bool) -> float:
     return float(values[mask].float().mean())
 
 
+def compact_policy_metrics(
+    first: Tensor,
+    clean: Tensor,
+    failed: Tensor,
+    prefix: Tensor,
+    centering: Tensor,
+    side: Tensor,
+    gate_count: int,
+    policy_count: int,
+) -> list[dict[str, float | int]]:
+    """Keep independent candidate scores when several policies share a GPU batch."""
+    if policy_count < 1 or len(first) % (2 * policy_count):
+        raise ValueError("each policy requires whole mirrored pairs")
+    rows = len(first) // policy_count
+    summaries = []
+    fitness = prefix + 5.0 * clean - 2.0 * failed + 0.2 * centering / gate_count
+    for index in range(policy_count):
+        take = slice(index * rows, (index + 1) * rows)
+        summaries.append(dict(
+            episodes=rows,
+            first_gate_pass_rate=float(first[take].float().mean()),
+            clean_course_success_rate=float(clean[take].float().mean()),
+            clean_course_negative_success_rate=side_rate(clean[take], side[take], True),
+            clean_course_positive_success_rate=side_rate(clean[take], side[take], False),
+            course_failure_rate=float(failed[take].float().mean()),
+            gates_before_failure_mean=float(prefix[take].mean()),
+            course_race_fitness=float(fitness[take].mean()),
+        ))
+    return summaries
+
+
 @torch.no_grad()
 def evaluate(
     controller: ConnectomeController,
@@ -306,9 +351,14 @@ def evaluate(
     gate_config: GateConfig,
     teacher_drives: bool = False,
     frozen_vision: bool = False,
-) -> dict[str, object]:
+    compact_policies: int | None = None,
+) -> dict[str, object] | list[dict[str, float | int]]:
     device = cases.side.device
     count = len(cases.side)
+    if compact_policies is not None and (
+        compact_policies < 1 or count % (2 * compact_policies)
+    ):
+        raise ValueError("each policy requires whole mirrored pairs")
     quad = DifferentiableQuad(hover_config).to(device)
     stick_plant = ForelegStickPlant(hover_config).to(device)
     state = _clone_quad(cases.state)
@@ -322,6 +372,7 @@ def evaluate(
     course_penalty = torch.zeros(count, device=device)
     prefix_passes = torch.zeros(count, device=device)
     failed_prefix = torch.zeros(count, dtype=torch.bool, device=device)
+    prefix_centering = torch.zeros(count, device=device)
     missed = torch.zeros_like(passed)
     pass_step = torch.full_like(current[:, None].expand(-1, len(gates)), -1)
     crossing_step = torch.full_like(pass_step, -1)
@@ -395,6 +446,14 @@ def evaluate(
             # Conservatively omit passes in the same physics step as a failure.
             # Subsequent recovery passes remain in the raw diagnostic only.
             prefix_passes += (events.passed & ~failed_prefix[:, None]).sum(dim=1)
+            radial = torch.sqrt(
+                events.crossing_lateral.square() + events.crossing_vertical.square()
+            )
+            clean_radius = gate_config.inner_radius - gate_config.drone_radius
+            centering = (1.0 - radial / clean_radius).clamp(0.0, 1.0)
+            prefix_centering += torch.where(
+                events.passed & ~failed_prefix[:, None], centering, 0.0
+            ).sum(dim=1)
 
         maximum_tilt = torch.maximum(
             maximum_tilt,
@@ -412,6 +471,11 @@ def evaluate(
         & ~ground
         & valid
     )
+    if compact_policies is not None:
+        return compact_policy_metrics(
+            first, clean_course, failed_prefix, prefix_passes, prefix_centering,
+            cases.side, len(gates), compact_policies,
+        )
     strict = (
         clean_course
         & (final_gate_signed >= 0.30)
@@ -486,6 +550,13 @@ def evaluate(
         "all_gates_pass_rate": float(both.float().mean()),
         "course_rules": "ordered-directed-all-annuli-v1",
         "clean_course_success_rate": float(clean_course.float().mean()),
+        "clean_course_negative_success_rate": side_rate(clean_course, cases.side, True),
+        "clean_course_positive_success_rate": side_rate(clean_course, cases.side, False),
+        "course_failure_rate": float(failed_prefix.float().mean()),
+        "course_race_fitness": float(
+            (prefix_passes + 5.0 * clean_course - 2.0 * failed_prefix
+             + 0.2 * prefix_centering / len(gates)).mean()
+        ),
         "clean_course_paired_success_rate": float(
             clean_course.reshape(-1, 2).all(dim=1).float().mean()
         ),
@@ -639,6 +710,7 @@ def main() -> int:
         lateral_deviation_limit=args.lateral_deviation_limit,
         height_step_range=(args.height_step_min, args.height_step_max),
         height_range=(args.height_min, args.height_max),
+        yaw_jitter_degrees=args.yaw_jitter_degrees,
     )
     metrics = evaluate(
         controller,
@@ -671,6 +743,7 @@ def main() -> int:
             "passed black",
         ],
         "geometry": {
+            "independent_later_gate_yaw_jitter_degrees": args.yaw_jitter_degrees,
             "layout": args.layout,
             "first_gate_matches_single_gate_training_distribution": True,
             "second_gate_spacing_metres": [args.spacing_min, args.spacing_max],

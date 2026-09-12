@@ -47,6 +47,8 @@ current quantitative results are in the [hover milestone](docs/HOVER_MILESTONE.m
 
 - [`docs/PLAN.md`](docs/PLAN.md) — architecture, simulator decision, curriculum,
   experiments, safety, and milestones.
+- [`docs/FIVE_GATE_OVER50.md`](docs/FIVE_GATE_OVER50.md) — active >50% varied-course goal,
+  current baselines, teacher results and native training experiments.
 - [`docs/RACING_ANTICIPATION.md`](docs/RACING_ANTICIPATION.md) — anticipatory racing lines,
   directional gate markings, course penalties and the next teacher/hint experiment.
 - [`docs/CONTROL_ARCHITECTURE.md`](docs/CONTROL_ARCHITECTURE.md) — PX4/control-theory

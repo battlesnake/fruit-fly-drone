@@ -1,5 +1,9 @@
 # Plan: a connectome-constrained acro pilot
 
+Current quantitative goal: [more than 50% clean completion on varied five-gate
+courses](FIVE_GATE_OVER50.md). That page records the widened course distribution,
+fresh baselines, successful privileged-teacher preflight and ongoing native training.
+
 ## End goal and current priorities — clarified 2026-09-12
 
 Train the fly-derived recurrent nervous system to pilot a quadcopter around a complete
