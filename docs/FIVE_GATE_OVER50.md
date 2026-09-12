@@ -1329,3 +1329,50 @@ optimizer proposal has yet been assessed. If that bounded comparison also fails 
 produce transferable progress, start a separately named source-restarted outcome
 trial, keeping the 100-frame horizon, curved reference, banks and other settings
 fixed. Do not reinterpret rejected proposals from the current run as accepted steps.
+
+#### Two-second comparison: first update rejected at every step size
+
+The 100-frame run's first update finished at 984.68 s including its baseline and
+nominal flights. No weights were accepted; the run has advanced to the next
+predetermined bank, 1620984. Its source nominal has 2/16 clean courses, 28 clean
+prefix gates and first-side counts [7, 3]. The actual saved proposals give:
+
+| Step scale | Clean courses | Clean prefix | First passes, negative / positive | Ring contacts | Wrong-order episodes |
+| --- | ---: | ---: | --- | ---: | ---: |
+| 1.0 | 2/16 | 31 | 7 / 5 | 13 | 3 |
+| 0.3 | 2/16 | 31 | 7 / 5 | 13 | 2 |
+| 0.1 | 1/16 | 26 | 7 / 3 | 13 | 2 |
+
+The source has twelve ring-contact and two wrong-order episodes. Ground, invalid
+and wrong-direction counts stay zero for every proposal. At both larger scales,
+source-clean episode 6 falls from five to three prefix gates while episode 12
+improves to a full completion; this is not preservation of both source successes.
+The smallest scale retains only source-clean episode 2. Continuous loss rises from
+0.253734 to 0.258254 / 0.263311 / 0.268916. This first bank therefore does not show
+better native flight from the longer gradient window. No proposal is promoted or
+sent to a fresh holdout. Keep the later banks and development checks unchanged.
+
+The pre-clipping gradient norm is 4.81256, versus 0.26844 in the corrected 50-frame
+first update. A larger gradient is not evidence of more useful credit: both runs
+reject every proposal on this bank. This observation does not by itself identify
+neural or physical instability, and does not justify changing the live trial's rate.
+
+#### Later throughput option, without changing either current comparison
+
+Astra's read-only audit finds no cross-episode coupling in the controller or plant.
+A later opt-in implementation could batch the sixteen **no-gradient** nominal/trial
+flights, while keeping each gradient microbatch at two episodes. Slice the batched
+motor/mask traces by episode for gradients, keeping their existing 1/8 scale. Use
+the same batched execution for both nominal and candidate acceptance scores.
+Preserve individual prefix, failure, timing and loss records; the current B2
+`clean_prefix_by_side` ceases to identify individuals at B16. Phase means must use
+summed loss numerators and frame counts, not averages of pair means.
+
+The tiny detached motor/mask trace can also stay on GPU until a rollout ends,
+avoiding two host copies per frame without retaining a neural computation graph.
+These changes are not implemented or enabled. A representative-bank comparison
+would need to check gross B2/B16 behavior and the sliced-reference gradient replay;
+ordinary FP32 differences near crossing boundaries do not require byte identity.
+Since gradient work remains pairwise, any total speedup will be limited—not sixteen
+times faster. Keep the active horizon run and first outcome-mode comparison
+unchanged; this is a later throughput option, not evidence of improved flying.
