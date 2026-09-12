@@ -26,6 +26,12 @@ def bank():
     )
 
 
+def test_old_transfer_audit_rejects_unified_label_experiment(tmp_path):
+    (tmp_path / "report.json").write_text(json.dumps({"roll_labels": "unified"}))
+    with pytest.raises(ValueError, match="not unified labels"):
+        audit.nominated_checkpoint(tmp_path, 5, 25)
+
+
 def test_group_eligibility_needs_frames_and_distinct_episodes():
     data = bank()
     residual = torch.ones(60, 4, 4)

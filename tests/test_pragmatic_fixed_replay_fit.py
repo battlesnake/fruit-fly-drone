@@ -84,6 +84,45 @@ def test_reported_lesson_metadata_can_be_measured_again_without_duplicate_fields
     assert summary["windows"][0]["motor_rmse_by_side"] == [[0.0] * 4, [0.0] * 4]
 
 
+def test_unified_labels_change_only_early_roll_not_histories_or_late_targets(monkeypatch):
+    cache, report = fixtures()
+    lessons, _ = audit.fixed_lessons(cache, report, torch.device("cpu"))
+    originals = [window[3].clone() for window, _ in lessons]
+    calls = []
+
+    def local(state, gate, config, *, active):
+        calls.append((state.position.clone(), gate.center.clone(), active.clone()))
+        return state.position[:, 0] * 0.01
+
+    monkeypatch.setattr(audit.replay, "current_gate_roll_motor", local)
+    unified = audit.unify_early_roll_labels(lessons, None)
+    assert audit.lesson_weights(unified) == audit.lesson_weights(lessons)
+    for index, ((old, record), (new, new_record)) in enumerate(zip(lessons, unified, strict=True)):
+        for field in (0, 1, 2, 4):
+            assert new[field] is old[field]
+        assert torch.equal(old[3], originals[index])  # Never relabel the source cache in place.
+        assert torch.equal(new[3][:, :, 1:], old[3][:, :, 1:])
+        early = old[2] == 0
+        assert torch.equal(new[3][:, :, 0][early], (old[0][0][:, :, 0] * 0.01)[early])
+        assert torch.equal(new[3][:, :, 0][~early], old[3][:, :, 0][~early])
+        assert "roll_supervision" not in record
+        assert new_record["roll_supervision"] == "local-current-gate-from-start"
+        assert torch.equal(calls[index][0], old[0][0].flatten(0, 1))
+        expected_centers = torch.stack([gate.center for gate in old[1]])
+        rows = torch.arange(len(old[4])).expand_as(old[2])
+        assert torch.equal(calls[index][1], expected_centers[old[2], rows].flatten(0, 1))
+    assert not torch.equal(unified[0][0][3], lessons[0][0][3])
+
+
+def test_unified_early_error_reduction_is_not_source_preservation_error():
+    source = {"early_roll_rmse_by_side": [0.02, 0.04], "late_roll_rmse_by_side": [0.08, 0.08]}
+    measured = {"early_roll_rmse_by_side": [0.01, 0.01], "late_roll_rmse_by_side": [0.06, 0.06]}
+    assert audit.fitting_reductions(source, measured) == pytest.approx([0.25, 0.25])
+    assert audit.fitting_reductions(
+        source, measured, metric="early_roll_rmse_by_side"
+    ) == pytest.approx([0.5, 0.75])
+
+
 @pytest.mark.parametrize("fault", ["inactive", "early-crossing", "wrong-side", "missing-role"])
 def test_fixed_lesson_validation_rejects_invalid_training_intervals(fault):
     cache, report = fixtures()

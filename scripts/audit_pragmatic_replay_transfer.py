@@ -166,6 +166,8 @@ def summarize_transfer(records):
 
 def nominated_checkpoint(fit_dir, hops, update):
     report = json.loads((fit_dir / "report.json").read_text())
+    if report.get("roll_labels", "late-preserve") != "late-preserve":
+        raise ValueError("this transfer audit uses late-preserve labels, not unified labels")
     entries = [
         entry
         for arm in report["arms"]

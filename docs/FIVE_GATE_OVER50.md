@@ -2087,3 +2087,72 @@ An auxiliary would be useful only if better geometry coding also improves both
 sides' native roll predictions on unused whole-course histories and then actual
 unassisted flights. Better probe accuracy alone is not a flight solution. This
 fallback is not implemented or scheduled ahead of the simpler unified-rule test.
+
+Scheduling revision: the source-only matched start comparison now runs alongside
+the fixed-bank fitting job, superseding the earlier wait-until-exit instruction.
+Before launch, the RTX 5080 used **2,497 / 16,303 MiB** with 19% utilization at the
+sampled instant. Separate processes/models and ample VRAM permit this short no-grad
+diagnostic without changing training parameters, simulated timing or score rules;
+wall-clock timings may be slower and are not a controlled performance benchmark.
+No second training branch is started. The comparison uses the original source and
+the predeclared 32 cases/screen, writing `current-gate-start-matched-gpu.json` in the
+same ignored run directory. Both job handles are monitored separately; no inference
+output is substituted into the fitting process.
+
+#### Matched GPU start comparison: promising assistance, failed preservation screen
+
+The three-condition comparison completed in **145.03 s**, with the fit process still
+running independently. Observed combined GPU memory was 4,101 / 16,303 MiB. The matched
+source checkpoint, 32 development cases (seed 1110983), inputs, physics and full 30 s
+failure rules were unchanged:
+
+| Roll condition | Clean courses | Negative / positive | Clean first gate | Clean-prefix gates |
+| --- | ---: | ---: | ---: | ---: |
+| All native | 12/32 | 9/16 / 3/16 | 28/32 | 101 |
+| Local roll after first | 26/32 | 13/16 / 13/16 | 28/32 | 137 |
+| Local roll from start | 27/32 | 11/16 / 16/16 | 32/32 | 152 |
+
+All conditions have zero ground, invalid and wrong-direction episodes. Ring-contact
+episodes are 19 / 5 / 5 and wrong-order episodes 2 / 1 / 0. The from-start condition
+loses three previously clean episodes (indices 6, 18, 22; all negative), while gaining
+four (9, 10, 13, 23). Thus the **predeclared conservative screen fails** both the
+12-negative requirement and the at-most-one paired-loss requirement. Its saved flag
+remains false; the positive result is not retroactively labelled a pass.
+
+With from-start roll, all 32 episodes pass gates 1–3; three stop at gate four and two
+at gate five, all on the negative side. Mean absolute lateral crossing offsets stay
+around 0.020–0.033 m, while mean absolute vertical offsets grow from 0.094 m at gate
+one to 0.249 m at gate five. These aggregate observations suggest a remaining vertical
+tracking issue but do not establish each failed episode's cause. No throttle change
+or roll-teacher retuning is justified solely by that aggregate. All assisted outcomes
+remain privileged-teacher results, **not learned fly completion or fresh holdout data**.
+
+Astra's design review recommends an **explicitly exploratory** unified-label pilot
+despite the preservation-screen failure: 27/32 overall and 32/32 first capture provide
+a credible roll-learning target, without establishing preservation of the older rescue.
+This is a learning experiment, not adoption of the assisted controller or a weakened
+goal test. Another teacher-certification round is not required before testing learning.
+
+`audit_pragmatic_fixed_replay_fit.py --roll-labels unified` is prepared, not launched.
+After the original mask comparison finishes, choose its better-fitting mask by the
+best saved worst-side late-roll reduction (prefer five hops on a tie) and restart the
+original source. Reuse the same nine physical histories/windows, optimizer, learning
+rate 1e-4, 0.5 early / eight times 0.0625 late weighting, 20-frame gradients, 25-update
+checks and 100-update cap. Replace only pre-first roll labels with the current-gate
+teacher; retain source PYT and all existing later roll targets. No new collection or
+neural coding auxiliary is combined with this first trial.
+
+Early and late teacher errors are reported separately. For unified labels, an early
+fitting stop requires at least 50% improvement on both sides in **both** early and
+late errors; otherwise run to the cap. This is not a native promotion criterion.
+The legacy late-preservation mode is unchanged, and the old-label replay-transfer
+tool rejects unified checkpoints rather than silently testing against mismatched
+targets. A source-beating autonomous result is still required before larger native
+validation; better fitting alone does not authorize promotion.
+
+The actual-cache CPU preflight changes the early supervised roll by RMS **0.012212 /
+0.012643** and changes no supervised later roll or PYT label. Every physical-history,
+gate, role and window-start object is reused. All **592 tests pass**, including the
+new relabelling and transfer-label guards, and Astra's read-only code review found no
+blocking issue. The original fitting process retains its already-loaded code and
+labels; the opt-in mode does not alter that running experiment.

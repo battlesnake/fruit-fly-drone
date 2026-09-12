@@ -90,6 +90,39 @@ def lesson_weights(lessons):
     return [0.5 if record["phase"] == 1 else 0.0625 for _, record in lessons]
 
 
+@torch.no_grad()
+def unify_early_roll_labels(lessons, config):
+    """Change only pre-first roll labels on the exact same physical histories.
+
+    Later roll labels already use this local teacher. No path, reference output,
+    observation, initial state, window start or non-roll target is changed.
+    """
+    result = []
+    for window, record in lessons:
+        states, gates, current, target, starts = window
+        steps, episodes = current.shape
+        state = replay.QuadState(*(value.flatten(0, 1) for value in states))
+        flat_gates = tuple(
+            replay.AnnularGate(
+                gate.center[None].expand(steps, -1, -1).reshape(-1, 3),
+                gate.yaw[None].expand(steps, -1).reshape(-1),
+            )
+            for gate in gates
+        )
+        flat_current = current.flatten()
+        local = replay.current_gate_roll_motor(
+            state, replay.active_gate(flat_gates, flat_current), config,
+            active=flat_current < len(gates),
+        ).reshape(steps, episodes)
+        unified = target.clone()
+        unified[:, :, 0] = torch.where(current == 0, local, target[:, :, 0])
+        result.append((
+            (states, gates, current, unified, starts),
+            dict(record, roll_supervision="local-current-gate-from-start"),
+        ))
+    return result
+
+
 def fit_metrics(summary):
     windows = summary["windows"]
     if not all(
@@ -109,9 +142,9 @@ def fit_metrics(summary):
     )
 
 
-def fitting_reductions(source, current):
-    baseline = source["late_roll_rmse_by_side"]
-    measured = current["late_roll_rmse_by_side"]
+def fitting_reductions(source, current, *, metric="late_roll_rmse_by_side"):
+    baseline = source[metric]
+    measured = current[metric]
     if (
         len(baseline) != 2
         or len(measured) != 2
@@ -140,6 +173,10 @@ def parse_args():
     parser.add_argument("--updates", type=int, default=100)
     parser.add_argument("--interval", type=int, default=25)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument(
+        "--roll-labels", choices=("late-preserve", "unified"), default="late-preserve",
+        help="unified changes only early roll targets on the original fixed histories/windows",
+    )
     parser.add_argument("--device", default="cuda")
     return parser.parse_args()
 
@@ -166,12 +203,14 @@ def main():
     device = torch.device(args.device)
     controller, source = replay.load_controller(args, device)
     lessons, unroll = fixed_lessons(cache, fitting_report, device)
+    config = replay.HoverConfig(**source["hover_config"])
+    if args.roll_labels == "unified":
+        lessons = unify_early_roll_labels(lessons, config)
     reference_mask, _ = replay.roll_preservation_mask(args.graph, device, hop_budget=5)
     anchor_reference_count = int(reference_mask.sum())
     del reference_mask
     weights = lesson_weights(lessons)
     contrast = fitting_report["arguments"]["contrast_weight"]
-    config = replay.HoverConfig(**source["hover_config"])
     gate_config = replace(replay.GateConfig(**source["gate_config"]), back_pattern="checkerboard")
     camera = replay.CameraSpec(
         width=source["image_resolution"][0],
@@ -206,7 +245,8 @@ def main():
     args.output_dir.mkdir(parents=True)
     started = perf_counter()
     result = dict(
-        experiment="fixed-nine-window-native-plasticity-fit-v1",
+        experiment="fixed-nine-window-unified-roll-fit-v1" if args.roll_labels == "unified"
+        else "fixed-nine-window-native-plasticity-fit-v1",
         arguments={k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
         source_sha256=hashlib.sha256(args.checkpoint.read_bytes()).hexdigest(),
         scope="training-capacity diagnostic; neither held-out fit nor goal validation",
@@ -217,7 +257,13 @@ def main():
         lesson_weights=weights,
         checkpoint_promotion_automatic=False,
         teacher_or_replay_state_deployed=False,
-        stop_rule="at a check: >=50% late-roll RMSE reduction on EACH training side, or update cap",
+        roll_labels=args.roll_labels,
+        early_roll_metric="local teacher error" if args.roll_labels == "unified"
+        else "source preservation error",
+        cached_physical_histories_and_windows_unchanged=True,
+        stop_rule="at a check: >=50% early AND late roll RMSE reduction on EACH side, or update cap"
+        if args.roll_labels == "unified"
+        else "at a check: >=50% late-roll RMSE reduction on EACH training side, or update cap",
         transfer_validation_completed=False,
         arms=[],
     )
@@ -243,6 +289,8 @@ def main():
     for hops in args.hop_budgets:
         controller.load_state_dict(source["controller"])
         mask, manifest = replay.roll_preservation_mask(args.graph, device, hop_budget=hops)
+        if args.roll_labels == "unified":
+            manifest["supervision"] = "current-gate roll throughout plus frozen-source PYT"
         hook = controller.edge_magnitude.register_hook(lambda gradient, mask=mask: gradient * mask)
         optimizer = torch.optim.Adam([controller.edge_magnitude], lr=args.learning_rate)
         arm = dict(hops=hops, mask=manifest, history=[], status="running")
@@ -290,6 +338,14 @@ def main():
                     result["source_fit"]["aggregate"], entry["fit"]["aggregate"]
                 )
                 entry["late_roll_reduction_by_side"] = reductions
+                fit_threshold_met = min(reductions) >= 0.5
+                if args.roll_labels == "unified":
+                    early_reductions = fitting_reductions(
+                        result["source_fit"]["aggregate"], entry["fit"]["aggregate"],
+                        metric="early_roll_rmse_by_side",
+                    )
+                    entry["early_roll_reduction_by_side"] = early_reductions
+                    fit_threshold_met &= min(early_reductions) >= 0.5
                 entry["development"] = assess()
                 payload = dict(source)
                 payload.update(
@@ -301,6 +357,7 @@ def main():
                     diagnostic_only=True,
                     fitting_metrics=entry["fit"]["aggregate"],
                     source_sha256=result["source_sha256"],
+                    roll_labels=args.roll_labels,
                 )
                 name = f"hops-{hops}-update-{update}.pt"
                 torch.save(payload, args.output_dir / name)
@@ -313,12 +370,13 @@ def main():
                             update=update,
                             fit=entry["fit"]["aggregate"],
                             reductions=reductions,
+                            early_reductions=entry.get("early_roll_reduction_by_side"),
                             clean=entry["development"]["clean_course_success_rate"],
                         )
                     ),
                     flush=True,
                 )
-                if min(reductions) >= 0.5:
+                if fit_threshold_met:
                     arm["status"] = "training-fit-threshold-met"
                     report()
                     break
