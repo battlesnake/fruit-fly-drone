@@ -872,3 +872,36 @@ The complete regression suite passed **522 tests**. Astra's read-only implementa
 review found no substantive blocker. The script deliberately aborts on exceptions;
 it is not an in-process retry/resume trainer. Exception-safe restoration of pending
 Adam state would be required before adding that recovery behavior.
+
+The first update exposed an acceptance-objective mismatch. Its full-scale proposal
+improved the four native training flights from 1 to 2 clean completions and from 11
+to 17 clean-prefix gates, while retaining all four clean first-gate passes. Latched
+failures/ring contacts fell from 3 to 1, wrong-order episodes from 1 to 0, with no
+ground, invalid or wrong-direction events. Nevertheless, the original continuous-only
+rule rejected it because tracking/preservation loss increased from 0.181763 to
+0.189587. Scale 0.3 was accepted: 2 completions, 15 prefix gates, loss 0.133474.
+The original run keeps that recorded decision; its executing code is not changed.
+
+After reviewing these complete metrics, Astra recommended reconstructing and testing
+the one nominated full-scale proposal before trying a longer gradient horizon. The
+trainer now offers an explicit `--acceptance-mode flight-first`: prioritize clean
+completions, then clean prefix, and only then lower continuous loss, while retaining
+the existing nondecreasing prefix/first-gate and failure-category guards. This is a
+prospective training selection change, not a relaxation of flight evaluation or proof
+that a four-flight result generalizes. The planned matched one-update reconstruction
+uses the same source, seed 1520983, fifty-frame chunks and LR 1e-4; its native 32-case
+development result will decide whether further validation is warranted. Do not turn
+development into a search over every backtracking proposal.
+
+The original two-update run finished: update 2 accepted scale 0.3 on its new training
+bank, preserving 1/4 completions and 12 prefix gates while reducing the continuous
+loss from 0.216407 to 0.200745. Full native development nevertheless fell to **7/32**
+completions versus source **12/32**, despite clean-first passes improving from 28/32
+to 29/32. The source remains selected (update 0). This rules out loss of first-gate
+competence as the explanation for this particular regression, but does not isolate
+the later-course failure cause. Do not extend this continuous-only run.
+
+The nominated full-scale reconstruction is now running separately as
+`runs/gate/pragmatic-on-policy-flight-first-001`, with the explicit flight-first
+option and a one-update bound. Its source and training seed match the original first
+update. The full revised regression suite passed **523 tests** before it started.

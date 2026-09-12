@@ -14,11 +14,18 @@ from flydrone.gate_course import classify_course_step
 from flydrone.hover import DifferentiableQuad, ForelegStickPlant, QuadState, StickState
 
 
-def whole_flight_trial_admissible(candidate, baseline):
+def whole_flight_trial_admissible(candidate, baseline, *, mode="continuous"):
     """A lower smooth loss cannot buy away clean flight performance on this bank."""
+    if mode not in ("continuous", "flight-first"):
+        raise ValueError("unknown whole-flight acceptance mode")
+    improves = candidate["continuous_objective"] < baseline["continuous_objective"] - 1e-6
+    if mode == "flight-first":
+        outcome = (candidate["clean_completions"], candidate["clean_prefix_gates"])
+        previous = (baseline["clean_completions"], baseline["clean_prefix_gates"])
+        improves = outcome > previous or (outcome == previous and improves)
     return (
         math.isfinite(candidate["objective"])
-        and candidate["continuous_objective"] < baseline["continuous_objective"] - 1e-6
+        and improves
         and candidate["clean_completions"] >= baseline["clean_completions"]
         and candidate["clean_prefix_gates"] >= baseline["clean_prefix_gates"]
         and all(

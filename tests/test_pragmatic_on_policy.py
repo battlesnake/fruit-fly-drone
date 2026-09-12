@@ -247,3 +247,18 @@ def test_microbatch_metrics_add_counts_but_average_objectives(monkeypatch):
     assert result["failed_episodes"] == 2 * metrics["failed_episodes"]
     with pytest.raises(ValueError):
         combine_metrics([dict(metrics, episodes=4)])
+
+
+def test_flight_first_mode_can_prioritize_real_gate_gains_over_tracking_surrogate():
+    base = admissible_metrics()
+    candidate = dict(base, continuous_objective=1.1, clean_completions=2, clean_prefix_gates=9)
+    assert not online.whole_flight_trial_admissible(candidate, base)
+    assert online.whole_flight_trial_admissible(candidate, base, mode="flight-first")
+    assert not online.whole_flight_trial_admissible(
+        dict(candidate, ground_contacts=1), base, mode="flight-first"
+    )
+    assert not online.whole_flight_trial_admissible(
+        dict(base, continuous_objective=1.1), base, mode="flight-first"
+    )
+    with pytest.raises(ValueError):
+        online.whole_flight_trial_admissible(candidate, base, mode="unknown")

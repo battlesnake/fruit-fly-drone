@@ -92,6 +92,9 @@ def main():
     parser.add_argument("--updates", type=int, default=2)
     parser.add_argument("--chunk-steps", type=int, default=50)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument(
+        "--acceptance-mode", choices=("continuous", "flight-first"), default="continuous"
+    )
     parser.add_argument("--training-pairs", type=int, default=2)
     parser.add_argument("--seed", type=int, default=1520983)
     parser.add_argument("--development-seed", type=int, default=1110983)
@@ -174,6 +177,7 @@ def main():
             actor_privileged_inputs=False,
             deployed_extra_state=False,
             training_only_gradient_chunk_steps=args.chunk_steps,
+            training_acceptance_mode=args.acceptance_mode,
         )
         torch.save(payload, args.output_dir / name)
 
@@ -283,7 +287,9 @@ def main():
                     )
                     trial_pairs.append(metrics)
                 metrics = combine_metrics(trial_pairs)
-                keep = online.whole_flight_trial_admissible(metrics, before_metrics)
+                keep = online.whole_flight_trial_admissible(
+                    metrics, before_metrics, mode=args.acceptance_mode
+                )
                 trials.append(dict(scale=scale, metrics=metrics, accepted=keep, **projection))
                 if keep:
                     accepted = controller.edge_magnitude.detach().clone()
