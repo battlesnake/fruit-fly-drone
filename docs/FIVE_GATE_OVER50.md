@@ -1408,3 +1408,33 @@ A failure rejects this neutral intervention, not every constant/open-loop policy
 and not all alternatives to feedback steering. The external gate-one switch is
 diagnostic only: it cannot be deployed or counted toward the native completion goal.
 The original courses, source checkpoint and fresh-evaluation requirement stay fixed.
+
+#### Two-second update two learns on its bank, but does not yet transfer
+
+Update two's scale-one proposal is the first **accepted** step in the longer-credit
+run. On bank 1620984, clean completions increase 3/16→5/16, clean-prefix gates
+40→46, and first-side counts [7, 6]→[7, 7]. Ring-contact/failure episodes fall
+11→9; wrong-order stays at one, with ground/invalid/wrong-direction all zero.
+All three source-clean episodes (4, 8, 12) remain clean. Episode 0 improves from
+three gates to five and positive-side episode 9 from one to five. Two previously
+incomplete episodes lose one prefix gate each. This is an accepted aggregate flight
+improvement under the existing rules, not a retrospective relaxation of them.
+
+Continuous loss rises 0.210187→0.217283; the declared flight-first mode correctly
+prioritizes the actual completion gain. The pre-clipping gradient norm is 6.05916.
+This result differs from the 50-frame run's rejected update-two proposal, which
+kept three completions but added failure/order events. The longer horizon can
+produce an admissible training improvement on this bank; that is not yet transfer.
+
+The actual changed controller's ordinary 32-case development check gives **8/32**
+clean courses (5 negative / 3 positive), versus the retained source's 12/32 (9 / 3).
+Clean-first passes rise 28→29, but prefix gates fall 101→91 and ring-contact episodes
+rise 19→22. Wrong-order stays at two; ground and invalid counts remain zero.
+The selector correctly keeps update zero as best and labels this as a genuinely
+changed controller, not an unchanged-source repeat. No fresh holdout is spent.
+
+At 1,619.23 s elapsed, the bounded run continues into bank 1620985 from the accepted
+weights, as planned. The first-gate stop condition is not triggered. Subsequent
+banks must establish whether this early training gain develops into broader native
+flight improvement. Neither the >50% goal nor the value of outcome-mode fallback
+has been settled by this one accepted step.
