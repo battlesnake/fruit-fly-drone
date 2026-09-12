@@ -47,6 +47,11 @@ def fixtures():
                     rows=[0, 5],
                     starts=[16, 18],
                 )
+            record.update(
+                axis_order=["roll", "pitch", "yaw", "throttle"],
+                side_order=["negative", "positive"],
+                motor_rmse_by_side=[[0.0] * 4, [0.0] * 4],
+            )
             records.append(record)
     return {"banks": banks}, {"arguments": {"unroll": 2}, "source_replay_fit": {"windows": records}}
 
@@ -63,6 +68,20 @@ def test_restored_fixed_lessons_keep_mixed_sources_and_original_history():
     assert mixed[3][16, 0, 0] == 11 and mixed[3][18, 1, 0] == 12
     assert mixed[1][0].center[:, 0].tolist() == [11, 12]
     assert torch.equal(cache["banks"][0]["states"][0], fixtures()[0]["banks"][0]["states"][0])
+
+
+def test_reported_lesson_metadata_can_be_measured_again_without_duplicate_fields(monkeypatch):
+    lessons, unroll = audit.fixed_lessons(*fixtures(), torch.device("cpu"))
+    monkeypatch.setattr(
+        audit.replay,
+        "replay_window_loss",
+        lambda *args, **kwargs: (torch.tensor(0.0), torch.zeros(4), torch.zeros(unroll, 2, 4)),
+    )
+    summary = audit.replay.replay_fit_summary(None, lessons, unroll, None, None, 1.0)
+    assert len(summary["windows"]) == 9
+    assert summary["windows"][0]["axis_order"] == ["roll", "pitch", "yaw", "throttle"]
+    assert summary["windows"][0]["side_order"] == ["negative", "positive"]
+    assert summary["windows"][0]["motor_rmse_by_side"] == [[0.0] * 4, [0.0] * 4]
 
 
 @pytest.mark.parametrize("fault", ["inactive", "early-crossing", "wrong-side", "missing-role"])

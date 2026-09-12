@@ -1873,3 +1873,10 @@ Seek at least 20% late-roll RMSE improvement on both transfer sides before a lar
 native-flight validation. This transfer collection is not yet implemented or run.
 Fresh full-distribution goal validation remains separate and requires a genuinely
 promising autonomous controller; overfitting these lessons cannot satisfy the goal.
+
+The first launch, `pragmatic-fixed-bank-mask-fit-001`, exited before completing its
+source fitting measurement and before any optimizer update. The restored report
+records still contained axis/side labels that `replay_fit_summary` supplies itself,
+causing a duplicate-key exception. The loader now removes those regenerated fields,
+and a regression test exercises a saved record through the actual summary wrapper.
+The empty attempt directory is retained; the corrected run uses a new `-002` directory.
