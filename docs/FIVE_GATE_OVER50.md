@@ -1484,3 +1484,34 @@ thresholds as the cause of replay differences. No further sensitivity investigat
 is planned now; keep judging native flight transfer. The 33.21 s check is recorded
 in `cpu-fixed-input-membrane-sensitivity.json` under the 100-frame run. Controller
 files and the live GPU experiment were untouched.
+
+#### Fourth accepted-bank check: transfer worsens despite local prefix gains
+
+Update four uses the fourth predetermined bank, seed 1620986. Its scale-one proposal
+keeps three clean completions out of sixteen, increases clean-prefix gates 39→41,
+and improves first-side counts [7, 5]→[7, 6]. Ring-contact/failure episodes remain
+twelve and wrong-order episodes fall four→two; ground, invalid and wrong-direction
+counts remain zero. The clean cases change from [0, 8, 10] to [0, 6, 8]. Continuous
+loss rises 0.184865→0.238931 and the pre-clipping gradient norm is 13.6570. The
+declared flight-first rule accepts the prefix gain; this is not evidence that the
+tracking loss or every individual flight improved.
+
+Development transfer deteriorates further: **5/32** clean courses (4 negative /
+1 positive), compared with update two's 8/32 and the retained source's 12/32.
+First-gate passes remain 29/32, but clean-prefix gates fall to 79, ring-contact
+episodes rise to 26 and wrong-order episodes to four. Ground and invalid counts
+remain zero. At 2,974.43 s elapsed the selector still retains the actual original
+source (update zero), and the bounded run continues for its two remaining updates.
+No fresh holdout is consumed and no native improvement is claimed.
+
+Three accepted parameter updates now argue against rejection guards being the
+sole obstacle. After the final check, retain the planned neutral-roll diagnostic
+before deciding whether another outcome-mode run is worthwhile. A further
+training-target alternative is a current-gate, body-relative bearing/velocity
+teacher, avoiding a world-coordinate path label that can depend on already passed
+gates. This is a hypothesis, not an implemented or proven replacement. It still
+requires motion estimation from visual history, must bound near-plane commands,
+and may introduce harmful target jumps at gate transitions. First test teacher
+feasibility and roll-only assistance with the other three axes native; assisted
+success would not satisfy the goal. Keep the curved reference and all current
+course/scoring rules unchanged until comparative evidence supports a change.
