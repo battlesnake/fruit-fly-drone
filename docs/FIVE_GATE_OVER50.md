@@ -602,5 +602,56 @@ native output range are rejected, not independently clipped. Non-roll preservati
 and early lessons are unchanged. This is a training-label change only, not an actor
 helper or decoder. Its validation pair-mean error now measures drift from the source;
 the separate source-to-full-teacher mean error remains recorded. It may still fail
-if preserving the source's mean preserves an inadequate steering policy. The trial
-has started; no improved flight result is claimed yet.
+if preserving the source's mean preserves an inadequate steering policy.
+
+The centered trial finished at 11/32 clean development completions versus its 12/32
+source, with first-gate passes unchanged at 28/32. It retained update zero. Held-out
+contrast RMSE changed only from 0.004089835/0.004521709 to
+0.004087962/0.004521407: a very small reduction, still worse than zero contrast on
+both sides and still negatively aligned with the teacher on the positive side.
+Pair-mean drift from the frozen source was 0.00004250/0.00000709; non-roll RMSE was
+0.00001648/0.00000400. No new controller is promoted.
+
+These short, tiny-step trials are not a test of the network's ultimate learnability.
+At the centered first update the raw gradient norm was about 1.247, and the proposed
+update predicted only about a 0.05% improvement of the weighted lesson objective.
+The trainer's `gradient_update_dot` is measured after clipping, so multiply by the
+clipping factor when interpreting a raw first-order prediction.
+
+`scripts/audit_pragmatic_anticipation_step.py` therefore tests one already-used
+training lesson (bank 1190983, row 10, start 275), with targets held fixed. It scales
+the same fresh Adam displacement by 0/1/10/100/1000, projects each proposal onto native
+weight bounds independently, and restores the source after every test, including
+exceptions. It compares the deliberately fixed source prefix state with complete
+current-weight replay from zero, checking that both agree at scale zero. Contrast,
+pair-mean drift, non-roll preservation, actual displacement and raw-gradient predicted
+change are reported separately. This distinguishes inadequate update size from a
+misleading truncated gradient without opening additional anatomy. It exports no
+controller; improvement on one training lesson is neither generalization nor flight
+success. The audit report is `step-audit.json` in the centered run directory.
+
+The restored audit completed successfully, with the expected scale-zero agreement:
+
+| Step multiplier | Fixed-prefix loss | Full-prefix loss | Full-prefix contrast RMSE |
+| ---: | ---: | ---: | ---: |
+| 0 | 0.374835 | 0.374835 | 0.006075 |
+| 1 | 0.374643 | 0.374665 | 0.006074 |
+| 10 | 0.372927 | 0.373173 | 0.006062 |
+| 100 | 0.356220 | 0.346069 | 0.005837 |
+| 1000 | 0.227499 | 0.124240 | 0.003396 |
+
+Thus the small update was genuinely too small to change this lesson much, and
+recomputing its complete neural history did not defeat descent. The 100× step reduced
+the full-prefix objective by about 7.7%, with source pair-mean drift 0.000318 and
+non-roll RMSE 0.000109. The 1000× probe moved those preserved quantities much more
+(0.002995 and 0.000700), and still did not beat the zero-contrast predictor's 0.002518
+RMSE or achieve positive teacher alignment. This is not a reason to deploy either
+one-lesson perturbation or conclude that all truncated gradients are reliable.
+
+The next bounded training run is `pragmatic-anticipation-source-mean-lr3em4-001`:
+the same ten lessons, seeds, centered targets, mask and source, but LR 3e-4 rather
+than 3e-6, with native development checks at updates 5 and 10. No stale diagnostic
+prefix is used in training. The 1000× probe is not adopted as a learning rate.
+Retain the ordinary first-gate selection floor and require actual flight improvement
+before extending this run. The audit/replay refactor passed 509 regression tests;
+tests do not establish course performance.

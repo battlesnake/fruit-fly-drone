@@ -277,6 +277,39 @@ def prepare_window(bank, rows, starts, unroll, device):
     )
 
 
+def window_observations(window, times, camera, gate_config):
+    states, gates, roles, _, starts = window
+    device = starts.device
+    rows = torch.arange(len(starts), device=device)
+    state = QuadState(*(value[times, rows] for value in states))
+    image = render_annular_gates_rgb(
+        state,
+        gates,
+        current_gate_index=roles[times, rows],
+        camera=camera,
+        gate_config=gate_config,
+    )
+    return image, state.euler[:, :2]
+
+
+@torch.no_grad()
+def replay_prefix_state(controller, window, camera, gate_config):
+    """Recompute the full current-weight prefix up to each supervised window."""
+    starts = window[4]
+    device = starts.device
+    neural = controller.initial_state(len(starts), device=device, dtype=torch.float32)
+    image, attitude = window_observations(window, torch.zeros_like(starts), camera, gate_config)
+    for _ in range(10):
+        _, neural = controller(image, attitude, neural)
+    for time in range(int(starts.max())):
+        times = torch.minimum(torch.full_like(starts, time), starts)
+        image, attitude = window_observations(window, times, camera, gate_config)
+        _, advanced = controller(image, attitude, neural)
+        # A shorter branch waits without receiving extra neural updates.
+        neural = torch.where((time < starts)[:, None], advanced, neural)
+    return neural
+
+
 def replay_window_loss(
     controller,
     window,
@@ -287,40 +320,24 @@ def replay_window_loss(
     *,
     diagnostics=False,
     roll_contrast_weight=None,
+    diagnostic_fixed_prefix=None,
 ):
-    states, gates, roles, targets, starts = window
+    """Replay with fresh prefixes; a deliberately stale prefix is an audit-only option."""
+    _, _, _, targets, starts = window
     device = starts.device
     rows = torch.arange(len(starts), device=device)
-
-    def observations(times):
-        state = QuadState(*(value[times, rows] for value in states))
-        image = render_annular_gates_rgb(
-            state,
-            gates,
-            current_gate_index=roles[times, rows],
-            camera=camera,
-            gate_config=gate_config,
-        )
-        return image, state.euler[:, :2]
-
-    neural = controller.initial_state(len(starts), device=device, dtype=torch.float32)
-    with torch.no_grad():
-        image, attitude = observations(torch.zeros_like(starts))
-        for _ in range(10):
-            _, neural = controller(image, attitude, neural)
-        for time in range(int(starts.max())):
-            times = torch.minimum(torch.full_like(starts, time), starts)
-            image, attitude = observations(times)
-            _, advanced = controller(image, attitude, neural)
-            # A shorter branch waits without receiving extra neural updates.
-            neural = torch.where((time < starts)[:, None], advanced, neural)
+    neural = (
+        replay_prefix_state(controller, window, camera, gate_config)
+        if diagnostic_fixed_prefix is None
+        else diagnostic_fixed_prefix
+    )
     neural = neural.detach()
     scale = neural.new_tensor((0.02, 0.02, 0.01, 0.025))
     active = torch.ones(len(starts), device=device, dtype=torch.bool)
     losses, axes, residuals = [], [], []
     for frame in range(unroll):
         times = starts + frame
-        image, attitude = observations(times)
+        image, attitude = window_observations(window, times, camera, gate_config)
         prediction, neural = controller(image, attitude, neural)
         loss, axis = action_imitation_loss(
             prediction,

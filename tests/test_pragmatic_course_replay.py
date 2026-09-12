@@ -109,7 +109,10 @@ def test_replay_matches_each_original_prefix_and_recomputes_after_weight_change(
     starts = [0, 4]
     window = replay.prepare_window(data, (0, 1), starts, 3, torch.device("cpu"))
     kwargs = dict(unroll=3, camera=CameraSpec(), gate_config=GateConfig(), contrast_weight=1)
+    prefix = replay.replay_prefix_state(actor, window, kwargs["camera"], kwargs["gate_config"])
     loss, _ = replay.replay_window_loss(actor, window, **kwargs)
+    fixed, _ = replay.replay_window_loss(actor, window, **kwargs, diagnostic_fixed_prefix=prefix)
+    assert torch.equal(loss, fixed)
     expected = []
     for row, start in enumerate(starts):
         state = torch.zeros(1, 1)
@@ -146,3 +149,5 @@ def test_replay_matches_each_original_prefix_and_recomputes_after_weight_change(
         actor.weight.mul_(2)
     changed, _ = replay.replay_window_loss(actor, window, **kwargs)
     assert torch.allclose(changed.detach(), 4 * loss.detach(), atol=1e-5)
+    stale, _ = replay.replay_window_loss(actor, window, **kwargs, diagnostic_fixed_prefix=prefix)
+    assert not torch.allclose(changed, stale)
