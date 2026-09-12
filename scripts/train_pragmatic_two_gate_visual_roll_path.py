@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tune native visual-to-roll paths for two uninterrupted role-coloured gates."""
+"""Tune native visual-to-roll paths for uninterrupted role-coloured gate courses."""
 
 from __future__ import annotations
 
@@ -56,7 +56,7 @@ PHYSICS_HZ = 100
 class CourseRollout:
     state: QuadState
     sticks: StickState
-    gates: tuple[AnnularGate, AnnularGate]
+    gates: tuple[AnnularGate, ...]
     mass_scale: Tensor
     neural: Tensor
     source_neural: Tensor
@@ -103,10 +103,35 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--evaluation-interval", type=int, default=50)
     parser.add_argument("--evaluation-pairs", type=int, default=8)
     parser.add_argument("--evaluation-seconds", type=float, default=22.0)
-    parser.add_argument("--layout", choices=("aligned", "s-turn"), default="aligned")
+    parser.add_argument(
+        "--balanced-late-gate-starts",
+        action="store_true",
+        help="cycle training-only reset positions across gates 2..N",
+    )
+    parser.add_argument(
+        "--curriculum-window-seconds",
+        type=float,
+        default=5.0,
+        help="maximum rollout age when balanced late-gate starts are enabled",
+    )
+    parser.add_argument(
+        "--layout",
+        choices=("aligned", "s-turn", "variable"),
+        default="aligned",
+    )
+    parser.add_argument("--gates", type=int, default=2)
+    parser.add_argument("--spacing-min", type=float, default=3.8)
+    parser.add_argument("--spacing-max", type=float, default=4.2)
+    parser.add_argument("--lateral-step-min", type=float, default=0.0)
+    parser.add_argument("--lateral-step-max", type=float, default=0.10)
+    parser.add_argument("--lateral-deviation-limit", type=float, default=0.25)
+    parser.add_argument("--height-step-min", type=float, default=0.0)
+    parser.add_argument("--height-step-max", type=float, default=0.05)
+    parser.add_argument("--height-min", type=float, default=0.95)
+    parser.add_argument("--height-max", type=float, default=1.25)
     parser.add_argument(
         "--lesson",
-        choices=("all", "second-gate"),
+        choices=("all", "second-gate", "after-first"),
         default="second-gate",
         help="which active course segment contributes imitation gradients",
     )
@@ -127,6 +152,13 @@ def new_rollout(
     gate_config: GateConfig,
     warmup_steps: int,
     layout: str,
+    gate_count: int,
+    spacing_range: tuple[float, float],
+    lateral_step_range: tuple[float, float],
+    lateral_deviation_limit: float,
+    height_step_range: tuple[float, float],
+    height_range: tuple[float, float],
+    start_gate: int = 0,
 ) -> CourseRollout:
     cases, gates = sample_two_gate_cases(
         pairs,
@@ -134,8 +166,36 @@ def new_rollout(
         device=device,
         hover_config=config,
         layout=layout,
+        spacing_range=spacing_range,
+        gate_count=gate_count,
+        lateral_step_range=lateral_step_range,
+        lateral_deviation_limit=lateral_deviation_limit,
+        height_step_range=height_step_range,
+        height_range=height_range,
     )
-    current = torch.zeros(2 * pairs, dtype=torch.long, device=device)
+    if not 0 <= start_gate < len(gates):
+        raise ValueError("start_gate must index the sampled course")
+    if start_gate:
+        selected = gates[start_gate]
+        previous = gates[start_gate - 1]
+        segment = selected.center - previous.center
+        horizontal = segment[:, :2]
+        unit = horizontal / torch.linalg.vector_norm(
+            horizontal,
+            dim=1,
+            keepdim=True,
+        ).clamp_min(1.0e-6)
+        original_height_error = cases.state.position[:, 2] - 1.10
+        cases.state.position[:, :2] = selected.center[:, :2] - 1.40 * unit
+        cases.state.position[:, 2] = (
+            selected.center[:, 2] + original_height_error
+        ).clamp_min(0.20)
+    current = torch.full(
+        (2 * pairs,),
+        start_gate,
+        dtype=torch.long,
+        device=device,
+    )
     neural = controller.initial_state(2 * pairs, device=device, dtype=torch.float32)
     source_neural = source_controller.initial_state(
         2 * pairs, device=device, dtype=torch.float32
@@ -208,6 +268,8 @@ def training_step(
         lesson_active = active
         if lesson == "second-gate":
             lesson_active = lesson_active & (rollout.current == 1)
+        elif lesson == "after-first":
+            lesson_active = lesson_active & (rollout.current >= 1)
         lesson_samples += int(lesson_active.sum())
         image = render_annular_gates_rgb(
             rollout.state,
@@ -413,7 +475,7 @@ def save_checkpoint(
     path.parent.mkdir(parents=True, exist_ok=True)
     torch.save(
         {
-            "experiment": "pragmatic-full-native-two-gate-roll-path-v1",
+            "experiment": "pragmatic-full-native-gate-course-roll-path-v2",
             "controller": {
                 name: value.detach().cpu() for name, value in controller.state_dict().items()
             },
@@ -429,6 +491,10 @@ def save_checkpoint(
             "update": update,
             "same_update_gate_one_replay": True,
             "last_hop_only": args.last_hop_only,
+            "gate_count": args.gates,
+            "layout": args.layout,
+            "balanced_late_gate_starts": args.balanced_late_gate_starts,
+            "curriculum_window_seconds": args.curriculum_window_seconds,
         },
         path,
     )
@@ -446,12 +512,12 @@ def score(
     )
     return (
         float(retained),
-        float(metrics["both_gates_paired_pass_rate"]),
+        float(metrics["all_gates_paired_pass_rate"]),
         min(
-            float(metrics["both_gates_negative_course_pass_rate"]),
-            float(metrics["both_gates_positive_course_pass_rate"]),
+            float(metrics["all_gates_negative_course_pass_rate"]),
+            float(metrics["all_gates_positive_course_pass_rate"]),
         ),
-        float(metrics["both_gates_pass_rate"]),
+        float(metrics["all_gates_pass_rate"]),
         float(metrics["first_gate_paired_pass_rate"]),
         float(metrics["first_gate_pass_rate"]),
     )
@@ -459,6 +525,14 @@ def score(
 
 def main() -> int:
     args = parse_args()
+    if args.gates < 1 or (args.layout == "s-turn" and args.gates != 2):
+        raise SystemExit("gates must be positive; s-turn supports exactly two")
+    if args.balanced_late_gate_starts and args.gates < 2:
+        raise SystemExit("balanced late-gate starts require at least two gates")
+    if args.curriculum_window_seconds <= 0.0:
+        raise SystemExit("curriculum window must be positive")
+    if args.spacing_min <= 0.0 or args.spacing_max < args.spacing_min:
+        raise SystemExit("spacing range must be positive and ordered")
     device = torch.device(args.device)
     if device.type == "cuda" and not torch.cuda.is_available():
         raise SystemExit("CUDA was requested but is unavailable")
@@ -497,6 +571,12 @@ def main() -> int:
         device=device,
         hover_config=config,
         layout=args.layout,
+        spacing_range=(args.spacing_min, args.spacing_max),
+        gate_count=args.gates,
+        lateral_step_range=(args.lateral_step_min, args.lateral_step_max),
+        lateral_deviation_limit=args.lateral_deviation_limit,
+        height_step_range=(args.height_step_min, args.height_step_max),
+        height_range=(args.height_min, args.height_max),
     )
     baseline = evaluate(
         controller,
@@ -535,6 +615,7 @@ def main() -> int:
     rollout_seed = args.seed
     preservation_seed = args.seed + 1_000_000
     global_update = 0
+    late_gate_cycle = 0
     for stage, updates, physics_mode in (
         ("recovery_paths", args.teacher_updates, "recovery"),
         ("native_paths", args.native_updates, "native"),
@@ -557,6 +638,12 @@ def main() -> int:
                 flush=True,
             )
         rollout_seed += 1
+        start_gate = (
+            1 + late_gate_cycle % (args.gates - 1)
+            if args.balanced_late_gate_starts
+            else 0
+        )
+        late_gate_cycle += int(args.balanced_late_gate_starts)
         rollout = new_rollout(
             controller,
             source_controller,
@@ -568,6 +655,13 @@ def main() -> int:
             gate_config=gate_config,
             warmup_steps=args.observation_warmup_steps,
             layout=args.layout,
+            gate_count=args.gates,
+            spacing_range=(args.spacing_min, args.spacing_max),
+            lateral_step_range=(args.lateral_step_min, args.lateral_step_max),
+            lateral_deviation_limit=args.lateral_deviation_limit,
+            height_step_range=(args.height_step_min, args.height_step_max),
+            height_range=(args.height_min, args.height_max),
+            start_gate=start_gate,
         )
         preservation_rollout = new_rollout(
             controller,
@@ -580,11 +674,25 @@ def main() -> int:
             gate_config=gate_config,
             warmup_steps=args.observation_warmup_steps,
             layout=args.layout,
+            gate_count=args.gates,
+            spacing_range=(args.spacing_min, args.spacing_max),
+            lateral_step_range=(args.lateral_step_min, args.lateral_step_max),
+            lateral_deviation_limit=args.lateral_deviation_limit,
+            height_step_range=(args.height_step_min, args.height_step_max),
+            height_range=(args.height_min, args.height_max),
         )
         for stage_update in range(1, updates + 1):
             global_update += 1
             reset = (
-                rollout.age + args.unroll > round(args.evaluation_seconds * POLICY_HZ)
+                rollout.age + args.unroll
+                > round(
+                    (
+                        args.curriculum_window_seconds
+                        if args.balanced_late_gate_starts
+                        else args.evaluation_seconds
+                    )
+                    * POLICY_HZ
+                )
                 or bool(
                     (
                         rollout.failed
@@ -594,6 +702,12 @@ def main() -> int:
             )
             if reset:
                 rollout_seed += 1
+                start_gate = (
+                    1 + late_gate_cycle % (args.gates - 1)
+                    if args.balanced_late_gate_starts
+                    else 0
+                )
+                late_gate_cycle += int(args.balanced_late_gate_starts)
                 rollout = new_rollout(
                     controller,
                     source_controller,
@@ -605,6 +719,13 @@ def main() -> int:
                     gate_config=gate_config,
                     warmup_steps=args.observation_warmup_steps,
                     layout=args.layout,
+                    gate_count=args.gates,
+                    spacing_range=(args.spacing_min, args.spacing_max),
+                    lateral_step_range=(args.lateral_step_min, args.lateral_step_max),
+                    lateral_deviation_limit=args.lateral_deviation_limit,
+                    height_step_range=(args.height_step_min, args.height_step_max),
+                    height_range=(args.height_min, args.height_max),
+                    start_gate=start_gate,
                 )
             preservation_reset = (
                 preservation_rollout.age + args.unroll
@@ -629,6 +750,12 @@ def main() -> int:
                     gate_config=gate_config,
                     warmup_steps=args.observation_warmup_steps,
                     layout=args.layout,
+                    gate_count=args.gates,
+                    spacing_range=(args.spacing_min, args.spacing_max),
+                    lateral_step_range=(args.lateral_step_min, args.lateral_step_max),
+                    lateral_deviation_limit=args.lateral_deviation_limit,
+                    height_step_range=(args.height_step_min, args.height_step_max),
+                    height_range=(args.height_min, args.height_max),
                 )
             metrics, rollout, preservation_rollout = training_step(
                 controller,
@@ -704,11 +831,22 @@ def main() -> int:
     )
     changed = (controller.edge_magnitude.detach() - source_edges).abs()
     report = {
-        "experiment": "pragmatic-full-native-two-gate-roll-path-v1",
+        "experiment": "pragmatic-full-native-gate-course-roll-path-v2",
         "purpose": "rapid behavioral proof of concept; not a formal promotion run",
         "actor_gate_index_or_pass_input": False,
         "continuous_state": ["MaleCNS recurrence", "forelegs", "sticks", "aircraft"],
         "layout": args.layout,
+        "gate_count": args.gates,
+        "course_distribution": {
+            "spacing_metres": [args.spacing_min, args.spacing_max],
+            "lateral_step_absolute_metres": [
+                args.lateral_step_min,
+                args.lateral_step_max,
+            ],
+            "lateral_deviation_limit_metres": args.lateral_deviation_limit,
+            "height_step_absolute_metres": [args.height_step_min, args.height_step_max],
+            "height_range_metres": [args.height_min, args.height_max],
+        },
         "lesson": args.lesson,
         "gate_one_preservation_weight": args.gate_one_preservation_weight,
         "gate_one_retention_floor": {
@@ -716,6 +854,8 @@ def main() -> int:
             "paired_pass_rate": first_gate_paired_floor,
         },
         "same_update_gate_one_replay": True,
+        "balanced_late_gate_starts": args.balanced_late_gate_starts,
+        "curriculum_window_seconds": args.curriculum_window_seconds,
         "last_hop_only": args.last_hop_only,
         "path": path_manifest,
         "baseline": baseline,

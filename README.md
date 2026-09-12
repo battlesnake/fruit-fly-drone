@@ -134,6 +134,15 @@ two-gate adaptation cleared both aligned gates 13 times and completed both membe
 mirrored pairs, with no state reset, crash, or gate-index input. This is only a 20.3% early
 proof; see the [`two-gate record`](artifacts/pragmatic-full-native-two-gate-v1/).
 
+The same actor family now handles modest changes in gate height and relative lateral
+position. A gate-balanced anatomical-path curriculum improved five-gate completion from
+13/128 to 17/128 across two fresh matched variable-course banks, with completions on both
+mirrored sides and no ground contacts or invalid states. On the original straight bank it
+improved from 4/64 to 9/64. The candidate still receives only RGB plus roll/pitch and keeps
+one uninterrupted recurrent/foreleg/stick/aircraft state during evaluation; curriculum
+gate selection is training-only. This remains a low-success feasibility result. See the
+[`variable five-gate record`](artifacts/pragmatic-full-native-variable-five-gate-v1/).
+
 ### Compact annular-gate controller: working checkpoint, milestone not yet passed
 
 A denser **1,122-neuron MaleCNS subgraph** can lift off and traverse a 1.24 m

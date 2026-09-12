@@ -84,6 +84,29 @@ two-gate completions. A six-neuron constant roll-bias probe also reduced signed 
 traded away first-gate and opposite-side performance. Retain the source and next train a
 state-dependent between-gate correction before widening spacing or adding turns.
 
+### Variable five-gate improvement — 2026-09-12
+
+The state-dependent correction is now demonstrated. Gates 2–5 vary by 0–0.10 m laterally
+per step (bounded to 0.25 m from the initial centreline) and by 0–0.05 m vertically
+(bounded to 0.95–1.25 m), while spacing remains 0.9–1.1 m. A training-only balanced
+curriculum cycles reset positions across gates 2–5 so that late-gate examples do not
+depend on rare complete prefixes. Gate number selects curriculum examples and renderer
+colour only; the deployed actor still receives no gate index or pass bit and final flights
+remain uninterrupted.
+
+Across two fresh 64-flight variable-course banks, the source completed 13/128 and the
+candidate completed 17/128. Gate-four reach was identical at 30/128, while first-gate
+passes moved from 98/128 to 96/128. On the original straight bank the candidate improved
+from 4/64 to 9/64. Only 19,286 existing visual-to-roll edges changed; all other edges,
+biases and time constants stayed frozen. See the
+[`variable five-gate record`](../artifacts/pragmatic-full-native-variable-five-gate-v1/).
+
+This is a real but small improvement, not reliable racing. Reassess the design before
+more imitation: the staged teacher is far slower than successful native trajectories.
+The next primary branch should optimize uninterrupted cumulative-gate/completion reward
+directly (restricted-subspace ES or recurrent RL), retaining balanced late-gate recovery
+as coverage and control-theory teachers as diagnostics rather than forcing their style.
+
 ## Fixed actor boundary
 
 Throughout both goals, the deployed actor receives:

@@ -1,0 +1,110 @@
+{
+  "actor": {
+    "external_gate_index_or_pass_input": false,
+    "external_history_or_state_machine": false,
+    "inputs": [
+      "320x200 linear RGB at 125 degree HFOV",
+      "roll",
+      "pitch"
+    ],
+    "outputs": [
+      "roll through front legs and virtual sticks",
+      "pitch through front legs and virtual sticks",
+      "yaw through front legs and virtual sticks",
+      "throttle through front legs and virtual sticks"
+    ],
+    "uninterrupted_state": [
+      "165122-neuron MaleCNS recurrence",
+      "forelegs",
+      "virtual sticks",
+      "aircraft"
+    ]
+  },
+  "candidate_checkpoint": {
+    "git_storage": "ignored exploratory run; use Git LFS if promoted",
+    "local_path": "runs/gate/pragmatic-five-gate-variable-balanced-001/best-controller.pt",
+    "sha256": "6679044e84b52c90ff336a3fb4fbc96ca649b2118b7ec689715ad2f13e81c10c",
+    "size_mib_approx": 77
+  },
+  "course": {
+    "gate_count": 5,
+    "gate_height_bounds_metres": [0.95, 1.25],
+    "height_step_absolute_bounds_metres": [0.0, 0.05],
+    "inter_gate_spacing_bounds_metres": [0.9, 1.1],
+    "lateral_deviation_limit_metres": 0.25,
+    "lateral_step_absolute_bounds_metres": [0.0, 0.1],
+    "mirrored_lateral_courses": true,
+    "paired_height_course_shared": true,
+    "sampled_fresh_geometry": {
+      "gate_height_metres": [0.949999988079071, 1.25],
+      "height_step_absolute_metres": [0.00010693073272705078, 0.04987692832946777],
+      "inter_gate_spacing_metres": [0.900670051574707, 1.0966882705688477],
+      "lateral_deviation_absolute_metres": [0.0003966093063354492, 0.25],
+      "lateral_step_absolute_metres": [0.000954747200012207, 0.09982407093048096]
+    }
+  },
+  "experiment": "pragmatic-full-native-variable-five-gate-v1",
+  "fresh_variable_evaluation": {
+    "candidate": {
+      "all_five_passes": 17,
+      "cumulative_gate_passes": [96, 70, 49, 30, 17],
+      "episodes": 128,
+      "first_gate_passes": 96,
+      "negative_course_all_five_passes": 7,
+      "positive_course_all_five_passes": 10
+    },
+    "seeds": [952983, 959983],
+    "source": {
+      "all_five_passes": 13,
+      "cumulative_gate_passes": [98, 77, 49, 30, 13],
+      "episodes": 128,
+      "first_gate_passes": 98,
+      "negative_course_all_five_passes": 6,
+      "positive_course_all_five_passes": 7
+    }
+  },
+  "graph": {
+    "path": "data/derived/full-visual-connectome-v1.npz",
+    "sha256": "8c6ba28d149e9ac4a5223c5919657a1734f2c2cac9828c51114fd0174a383665"
+  },
+  "interpretation": {
+    "absolute_all_five_improvement_percentage_points": 3.125,
+    "behavior_first_goal_met": true,
+    "candidate_all_five_rate": 0.1328125,
+    "relative_all_five_improvement": 0.3076923076923077,
+    "reliable_racing_established": false,
+    "source_all_five_rate": 0.1015625
+  },
+  "source_checkpoint": {
+    "local_path": "runs/gate/pragmatic-two-gate-aligned-roll-path-001/best-controller.pt",
+    "sha256": "e099fb4f87a81ea7565d0c6bc693a3d236ef27b06df003d23dccd2ea5efa1099"
+  },
+  "straight_retention_seed_940983": {
+    "candidate": {
+      "all_five_passes": 9,
+      "cumulative_gate_passes": [50, 35, 24, 18, 9],
+      "negative_course_all_five_passes": 5,
+      "positive_course_all_five_passes": 4
+    },
+    "episodes": 64,
+    "source": {
+      "all_five_passes": 4,
+      "cumulative_gate_passes": [53, 42, 32, 19, 4],
+      "negative_course_all_five_passes": 3,
+      "positive_course_all_five_passes": 1
+    }
+  },
+  "training": {
+    "balanced_training_only_start_gates": [2, 3, 4, 5],
+    "bias_and_time_constants_frozen": true,
+    "development_all_five_candidate": "4/16",
+    "development_all_five_source": "2/16",
+    "learning_rate": 0.00003,
+    "selected_edge_max_absolute_change": 0.000668749213218689,
+    "selected_existing_visual_to_roll_edges": 19286,
+    "selected_update": 30,
+    "signs_and_topology_fixed": true,
+    "total_updates_considered": 60,
+    "unselected_edge_max_absolute_change": 0.0
+  }
+}

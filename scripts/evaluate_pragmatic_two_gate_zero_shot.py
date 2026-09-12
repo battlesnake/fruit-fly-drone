@@ -65,10 +65,46 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--observation-warmup-steps", type=int, default=10)
     parser.add_argument("--seed", type=int, default=630_983)
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--layout", choices=("aligned", "s-turn"), default="aligned")
+    parser.add_argument(
+        "--layout",
+        choices=("aligned", "s-turn", "variable"),
+        default="aligned",
+    )
     parser.add_argument("--gates", type=int, default=2)
     parser.add_argument("--spacing-min", type=float, default=3.8)
     parser.add_argument("--spacing-max", type=float, default=4.2)
+    parser.add_argument(
+        "--lateral-step-min",
+        type=float,
+        default=0.0,
+        help="minimum absolute per-gate lateral perturbation for variable courses",
+    )
+    parser.add_argument(
+        "--lateral-step-max",
+        type=float,
+        default=0.10,
+        help="maximum absolute per-gate lateral perturbation for variable courses",
+    )
+    parser.add_argument(
+        "--lateral-deviation-limit",
+        type=float,
+        default=0.25,
+        help="maximum deviation from the first-gate centreline for variable courses",
+    )
+    parser.add_argument(
+        "--height-step-min",
+        type=float,
+        default=0.0,
+        help="minimum absolute per-gate height change for variable courses",
+    )
+    parser.add_argument(
+        "--height-step-max",
+        type=float,
+        default=0.05,
+        help="maximum absolute per-gate height change for variable courses",
+    )
+    parser.add_argument("--height-min", type=float, default=0.95)
+    parser.add_argument("--height-max", type=float, default=1.25)
     parser.add_argument(
         "--inner-radius",
         type=float,
@@ -114,17 +150,35 @@ def sample_two_gate_cases(
     layout: str = "aligned",
     spacing_range: tuple[float, float] = (3.8, 4.2),
     gate_count: int = 2,
+    lateral_step_range: tuple[float, float] = (0.0, 0.10),
+    lateral_deviation_limit: float = 0.25,
+    height_step_range: tuple[float, float] = (0.0, 0.05),
+    height_range: tuple[float, float] = (0.95, 1.25),
 ) -> tuple[MirroredGateCases, tuple[AnnularGate, ...]]:
     """Sample mirrored courses whose first gate matches the learned task.
 
-    Aligned courses may contain any positive number of equally spaced gates.  The
-    two-gate S-turn remains the only intentionally non-collinear layout.
+    Aligned courses may contain any positive number of equally spaced gates. Variable
+    courses perturb every later gate relative to that first-gate centreline. Paired
+    episodes share the height path and mirror the lateral path; this makes left/right
+    comparisons useful without exposing course state to the actor.
     """
 
     if gate_count < 1:
         raise ValueError("gate_count must be positive")
     if layout == "s-turn" and gate_count != 2:
         raise ValueError("s-turn currently supports exactly two gates")
+    for name, bounds in (
+        ("spacing_range", spacing_range),
+        ("lateral_step_range", lateral_step_range),
+        ("height_step_range", height_step_range),
+        ("height_range", height_range),
+    ):
+        if bounds[0] < 0.0 or bounds[1] < bounds[0]:
+            raise ValueError(f"{name} must be nonnegative and ordered")
+    if spacing_range[0] <= 0.0:
+        raise ValueError("spacing_range must be positive")
+    if lateral_deviation_limit < 0.0:
+        raise ValueError("lateral_deviation_limit must be nonnegative")
 
     cases = sample_mirrored_cases(
         pairs,
@@ -135,19 +189,35 @@ def sample_two_gate_cases(
     if gate_count == 1:
         return cases, (cases.gate,)
     side = cases.side
-    spacing = torch.empty(pairs, device=device).uniform_(*spacing_range).repeat_interleave(2)
     first_displacement = cases.gate.center - cases.state.position
     gates: list[AnnularGate] = [cases.gate]
+    if layout == "aligned":
+        spacing = (
+            torch.empty(pairs, device=device)
+            .uniform_(*spacing_range)
+            .repeat_interleave(2)
+        )
+    cumulative_distance = torch.zeros(2 * pairs, device=device)
+    lateral_deviation = torch.zeros(pairs, device=device)
+    height = torch.full((pairs,), 1.10, device=device)
     for gate_number in range(1, gate_count):
         centre = cases.gate.center.clone()
-        centre[:, 0] += gate_number * spacing
-        centre[:, 2] = 1.10
         if layout == "aligned":
-            centre[:, 1] = cases.gate.center[:, 1] + gate_number * spacing * (
+            cumulative_distance = gate_number * spacing
+            centre[:, 0] += cumulative_distance
+            centre[:, 1] = cases.gate.center[:, 1] + cumulative_distance * (
                 first_displacement[:, 1] / first_displacement[:, 0]
             )
+            centre[:, 2] = 1.10
             yaw = cases.gate.yaw.clone()
         elif layout == "s-turn":
+            spacing = (
+                torch.empty(pairs, device=device)
+                .uniform_(*spacing_range)
+                .repeat_interleave(2)
+            )
+            centre[:, 0] += spacing
+            centre[:, 2] = 1.10
             lateral = (
                 torch.empty(pairs, device=device)
                 .uniform_(0.03, 0.08)
@@ -162,6 +232,45 @@ def sample_two_gate_cases(
                 .repeat_interleave(2)
             )
             yaw = bearing - side * obliquity
+        elif layout == "variable":
+            spacing = (
+                torch.empty(pairs, device=device)
+                .uniform_(*spacing_range)
+                .repeat_interleave(2)
+            )
+            cumulative_distance += spacing
+            lateral_sign = torch.where(
+                torch.rand(pairs, device=device) < 0.5,
+                -torch.ones(pairs, device=device),
+                torch.ones(pairs, device=device),
+            )
+            lateral_step = (
+                torch.empty(pairs, device=device).uniform_(*lateral_step_range)
+                * lateral_sign
+            )
+            lateral_deviation = (lateral_deviation + lateral_step).clamp(
+                -lateral_deviation_limit,
+                lateral_deviation_limit,
+            )
+            height_sign = torch.where(
+                torch.rand(pairs, device=device) < 0.5,
+                -torch.ones(pairs, device=device),
+                torch.ones(pairs, device=device),
+            )
+            height_step = (
+                torch.empty(pairs, device=device).uniform_(*height_step_range)
+                * height_sign
+            )
+            height = (height + height_step).clamp(*height_range)
+            centre[:, 0] += cumulative_distance
+            centre[:, 1] = (
+                cases.gate.center[:, 1]
+                + cumulative_distance
+                * (first_displacement[:, 1] / first_displacement[:, 0])
+                + side * lateral_deviation.repeat_interleave(2)
+            )
+            centre[:, 2] = height.repeat_interleave(2)
+            yaw = cases.gate.yaw.clone()
         else:
             raise ValueError(f"unknown gate layout: {layout}")
         gates.append(AnnularGate(center=centre, yaw=yaw))
@@ -385,6 +494,8 @@ def evaluate(
         "all_gates_paired_pass_rate": float(pair_both.float().mean()),
         "both_gates_negative_course_pass_rate": side_rate(both, cases.side, True),
         "both_gates_positive_course_pass_rate": side_rate(both, cases.side, False),
+        "all_gates_negative_course_pass_rate": side_rate(both, cases.side, True),
+        "all_gates_positive_course_pass_rate": side_rate(both, cases.side, False),
         "strict_two_gate_success_rate": float(strict.float().mean()),
         "strict_all_gate_success_rate": float(strict.float().mean()),
         "strict_two_gate_paired_success_rate": float(pair_strict.float().mean()),
@@ -450,6 +561,16 @@ def main() -> int:
         raise SystemExit("pairs/seconds must be positive and warmup must be nonnegative")
     if args.spacing_min <= 0 or args.spacing_max < args.spacing_min:
         raise SystemExit("spacing range must be positive and ordered")
+    ordered_nonnegative = (
+        (args.lateral_step_min, args.lateral_step_max),
+        (args.height_step_min, args.height_step_max),
+    )
+    if any(low < 0.0 or high < low for low, high in ordered_nonnegative):
+        raise SystemExit("lateral and height step ranges must be nonnegative and ordered")
+    if args.lateral_deviation_limit < 0.0:
+        raise SystemExit("lateral deviation limit must be nonnegative")
+    if args.height_min < 0.0 or args.height_max < args.height_min:
+        raise SystemExit("height range must be nonnegative and ordered")
     if args.gates < 1 or (args.layout == "s-turn" and args.gates != 2):
         raise SystemExit("gates must be positive; s-turn supports exactly two")
     for path in (args.graph, args.checkpoint):
@@ -495,6 +616,10 @@ def main() -> int:
         layout=args.layout,
         spacing_range=(args.spacing_min, args.spacing_max),
         gate_count=args.gates,
+        lateral_step_range=(args.lateral_step_min, args.lateral_step_max),
+        lateral_deviation_limit=args.lateral_deviation_limit,
+        height_step_range=(args.height_step_min, args.height_step_max),
+        height_range=(args.height_min, args.height_max),
     )
     metrics = evaluate(
         controller,
@@ -531,6 +656,24 @@ def main() -> int:
             "second_gate_spacing_metres": [args.spacing_min, args.spacing_max],
             "gate_count": args.gates,
             "uniform_inter_gate_spacing_metres": [args.spacing_min, args.spacing_max],
+            "lateral_step_absolute_metres": (
+                [args.lateral_step_min, args.lateral_step_max]
+                if args.layout == "variable"
+                else None
+            ),
+            "lateral_deviation_limit_metres": (
+                args.lateral_deviation_limit if args.layout == "variable" else None
+            ),
+            "height_step_absolute_metres": (
+                [args.height_step_min, args.height_step_max]
+                if args.layout == "variable"
+                else None
+            ),
+            "gate_height_range_metres": (
+                [args.height_min, args.height_max]
+                if args.layout == "variable"
+                else [1.10, 1.10]
+            ),
             "inner_radius_metres": gate_config.inner_radius,
             "outer_radius_metres": gate_config.outer_radius,
             "clean_aperture_radius_metres": (
