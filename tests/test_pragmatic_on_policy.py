@@ -11,7 +11,7 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 import pragmatic_on_policy as online  # noqa: E402
-from train_pragmatic_course_on_policy import combine_metrics  # noqa: E402
+from train_pragmatic_course_on_policy import combine_metrics, training_bank_seed  # noqa: E402
 
 from flydrone.gate import AnnularGate, GateConfig  # noqa: E402
 from flydrone.hover import (  # noqa: E402
@@ -245,6 +245,7 @@ def test_microbatch_metrics_add_counts_but_average_objectives(monkeypatch):
     assert result["episodes"] == 4
     assert result["objective"] == metrics["objective"]
     assert result["failed_episodes"] == 2 * metrics["failed_episodes"]
+    assert metrics["phase_frames_by_side"] == [[2, 0, 0, 0, 0], [2, 0, 0, 0, 0]]
     with pytest.raises(ValueError):
         combine_metrics([dict(metrics, episodes=4)])
 
@@ -262,3 +263,24 @@ def test_flight_first_mode_can_prioritize_real_gate_gains_over_tracking_surrogat
     )
     with pytest.raises(ValueError):
         online.whole_flight_trial_admissible(candidate, base, mode="unknown")
+
+
+def test_training_course_rotation_is_predetermined_and_supports_new_banks():
+    assert [training_bank_seed(100, update, 4) for update in range(1, 7)] == [
+        100,
+        101,
+        102,
+        103,
+        100,
+        101,
+    ]
+    assert [training_bank_seed(100, update) for update in range(1, 7)] == [
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+    ]
+    with pytest.raises(ValueError):
+        training_bank_seed(100, 0, 4)

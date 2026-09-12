@@ -88,6 +88,8 @@ def fly_course(
     prefix = torch.zeros(count, device=device)
     failure_steps = torch.full_like(current, -1)
     phase_frames = torch.zeros(len(gates), dtype=torch.long, device=device)
+    phase_frames_by_episode = torch.zeros(count, len(gates), dtype=torch.long, device=device)
+    phase_indices = torch.arange(len(gates), device=device)
     phase_tracking = torch.zeros(len(gates), device=device)
     minimum_height = state.position[:, 2].clone()
     path = CoursePath.through_gates(state.position, gates)
@@ -159,10 +161,10 @@ def fly_course(
             chunk_loss = frame_loss if chunk_loss is None else chunk_loss + frame_loss
             with torch.no_grad():
                 totals += terms.detach() / steps
-                for index in range(len(gates)):
-                    selected = active & (phase == index)
-                    phase_frames[index] += selected.sum()
-                    phase_tracking[index] += (tracking_each.detach() * selected).sum()
+                selected = active[:, None] & (phase[:, None] == phase_indices[None])
+                phase_frames_by_episode += selected.long()
+                phase_frames += selected.sum(0)
+                phase_tracking += (tracking_each.detach()[:, None] * selected).sum(0)
             if (frame + 1) % chunk_steps == 0 or frame + 1 == steps:
                 if backward:
                     (gradient_scale * chunk_loss).backward()
@@ -203,6 +205,11 @@ def fly_course(
         wrong_order=int(wrong_order.sum()),
         wrong_direction=int(wrong_direction.sum()),
         phase_frames=phase_frames.tolist(),
+        phase_frames_by_side=[
+            phase_frames_by_episode[cases.side < 0].sum(0).tolist(),
+            phase_frames_by_episode[cases.side > 0].sum(0).tolist(),
+        ],
+        clean_prefix_by_side=[int(prefix[cases.side < 0].sum()), int(prefix[cases.side > 0].sum())],
         phase_tracking_mean=(phase_tracking / phase_frames.clamp_min(1)).tolist(),
         failure_steps=failure_steps.tolist(),
         minimum_height_metres=minimum_height.tolist(),

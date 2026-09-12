@@ -905,3 +905,56 @@ The nominated full-scale reconstruction is now running separately as
 `runs/gate/pragmatic-on-policy-flight-first-001`, with the explicit flight-first
 option and a one-update bound. Its source and training seed match the original first
 update. The full revised regression suite passed **523 tests** before it started.
+
+That matched reconstruction finished without reproducing the original full-scale
+training result. Its nominal flights again had 1/4 completions and 11 prefix gates;
+the fresh gradient proposal produced **1/4 completions and 14 prefix gates**, with
+continuous loss 0.180655 → 0.189099. Flight-first selection accepted the prefix gain,
+but native development was again **7/32**, with 29/32 clean-first passes. The selector
+retained the source. These are a matched recipe and seed, **not** a byte-identical
+recovery of the earlier unexported 2/4, 17-prefix proposal. The small-bank gain was
+not reproduced; do not claim that exact earlier parameter vector was evaluated.
+Do not divert into FP64/bitwise certification or extend this unsuccessful run.
+
+Both whole-flight trials preserved first-gate competence better than the earlier
+short-replay trial, but neither improved later-course completion. The original
+two-update crossing summaries had larger lateral errors at gates two and four while
+vertical errors did not increase; later-gate summaries are conditional on reaching
+those gates, not a matched per-episode causal analysis. The next comparison concerns
+longer gradient credit assignment versus broader native-course sampling, retaining
+the source, full course distribution and deployed sensor/motor interface.
+
+#### Broader native-course gradient batch
+
+Astra recommends addressing coverage first: the repeated training-to-development
+reversal makes a four-course batch a more immediate concern than extending the same
+four courses' temporal horizon. This is a hypothesis, not proof of overfitting.
+The next bounded run is `pragmatic-on-policy-broader-001`: restart the retained
+source, keep fifty-frame chunks, the 19,286-edge mask, LR 1e-4 and flight-first
+acceptance, but accumulate **eight mirrored pairs (16 episodes)** before clipping
+and making one Adam update. Pair microbatches share the same fixed weights until
+the complete training batch finishes.
+
+Use a predetermined rotation through four eight-pair banks (32 training pairs),
+seeds 1620983–1620986, with no source-success-based case selection and no development
+cases. Six updates maximum revisit the first two banks after the first rotation.
+Native development checks are at 2/4/6; existing rejection and first-gate stopping
+rules remain. Report gate-phase exposure and clean prefix by side, because a larger
+launch batch does not guarantee enough clean late-gate training examples.
+
+The trainer's `--save-trial-proposals` option saves each actual evaluated parameter
+proposal as an ordinary, explicitly training-only checkpoint before restoring or
+accepting it. These local ignored artifacts are not automatically promoted, published
+or all tested on development. They avoid relying on a numerically identical rerun to
+recover a promising proposal. Before spending a fresh 128-case comparison, seek at
+least four additional development completions over source, with neither side worse
+and first-gate competence preserved. The original full-distribution >50% goal and
+fresh-holdout completion requirements remain unchanged. If broader sampling still
+repeatedly helps training but harms development, compare a hundred-frame gradient
+horizon under this broader setup.
+The broader run has started; **524 regression tests passed** beforehand. Both smaller
+whole-flight runs are terminal, and no trained checkpoint from them was promoted.
+Its repeated source development baseline is 11/32, with 28/32 clean-first passes;
+the earlier runs obtained 12/32 from the same source. Retain the run's actual matched
+baseline when judging its gains. Astra's read-only review of the rotation, per-side
+reporting, proposal persistence and development schedule found no blocker.

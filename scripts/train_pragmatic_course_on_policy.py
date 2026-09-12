@@ -49,6 +49,13 @@ def split_pairs(cases, gates):
     return result
 
 
+def training_bank_seed(base, update, banks=0):
+    """Predetermined course rotation, independent of source success or development."""
+    if update < 1 or banks < 0:
+        raise ValueError("positive update and nonnegative bank count required")
+    return base + ((update - 1) % banks if banks else update - 1)
+
+
 def combine_metrics(metrics):
     """Equal-size mirrored microbatches; counts add and per-episode losses average."""
     if not metrics or any(m["episodes"] != 2 for m in metrics):
@@ -96,6 +103,14 @@ def main():
         "--acceptance-mode", choices=("continuous", "flight-first"), default="continuous"
     )
     parser.add_argument("--training-pairs", type=int, default=2)
+    parser.add_argument(
+        "--training-banks",
+        type=int,
+        default=0,
+        help="zero draws new bank each update; otherwise rotate fixed seeds",
+    )
+    parser.add_argument("--development-updates", type=int, nargs="+", default=[2, 5, 10])
+    parser.add_argument("--save-trial-proposals", action="store_true")
     parser.add_argument("--seed", type=int, default=1520983)
     parser.add_argument("--development-seed", type=int, default=1110983)
     parser.add_argument("--development-pairs", type=int, default=16)
@@ -114,6 +129,8 @@ def main():
         )
         <= 0
         or args.updates > 10
+        or args.training_banks < 0
+        or min(args.development_updates) < 1
     ):
         raise SystemExit(
             "positive sizes/rates required; this bounded trial allows at most ten updates"
@@ -161,7 +178,7 @@ def main():
     digest = hashlib.sha256(args.checkpoint.read_bytes()).hexdigest()
     history = []
 
-    def save(name, update, metrics):
+    def save(name, update, metrics, *, proposal_scale=None):
         payload = dict(source)
         payload.update(
             controller={
@@ -178,6 +195,10 @@ def main():
             deployed_extra_state=False,
             training_only_gradient_chunk_steps=args.chunk_steps,
             training_acceptance_mode=args.acceptance_mode,
+            selection_scope="development"
+            if proposal_scale is None
+            else "training-only proposal, not promoted",
+            training_proposal_scale=proposal_scale,
         )
         torch.save(payload, args.output_dir / name)
 
@@ -218,7 +239,7 @@ def main():
         flush=True,
     )
     for update in range(1, args.updates + 1):
-        seed = args.seed + update - 1
+        seed = training_bank_seed(args.seed, update, args.training_banks)
         bank = replay.sample_two_gate_cases(
             args.training_pairs, seed=seed, device=device, hover_config=config, **replay.GEOMETRY
         )
@@ -290,7 +311,12 @@ def main():
                 keep = online.whole_flight_trial_admissible(
                     metrics, before_metrics, mode=args.acceptance_mode
                 )
-                trials.append(dict(scale=scale, metrics=metrics, accepted=keep, **projection))
+                trial_record = dict(scale=scale, metrics=metrics, accepted=keep, **projection)
+                if args.save_trial_proposals:
+                    name = f"trial-u{update:03d}-s{scale:g}.pt"
+                    save(name, update, metrics, proposal_scale=scale)
+                    trial_record["saved_actual_proposal"] = name
+                trials.append(trial_record)
                 if keep:
                     accepted = controller.edge_magnitude.detach().clone()
                     accepted_scale = scale
@@ -330,7 +356,7 @@ def main():
             ),
         )
         stop = rejections >= 3
-        if update in (2, 5, 10) or update == args.updates or stop:
+        if update in args.development_updates or update == args.updates or stop:
             metrics = assess()
             entry["development"] = metrics
             save("latest-controller.pt", update, metrics)
