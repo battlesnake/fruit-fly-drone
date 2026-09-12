@@ -1824,3 +1824,52 @@ training capacity deliberately rather than casually widening a supposedly small
 mask. The full neural graph already runs in every case; these counts concern
 plasticity only. The CPU diagnostic completed separately under AIRA in about four
 CPU seconds, without another GPU job.
+
+#### Fixed-lesson fitting comparison: five-hop versus seven-hop plasticity
+
+The next experiment deliberately separates repeated fitting from changing lesson
+samples. `scripts/audit_pragmatic_fixed_replay_fit.py` restores the same nine recorded
+windows from the mixed pilot's `source-replay.pt` and `report.json`, including the
+gate-five cross-bank substitution. **Every optimizer update** accumulates the complete
+objective: 0.5 early-source loss, 0.25 mean requested-native late loss and 0.25 mean
+assisted late loss. Each of the eight late windows therefore has weight 0.0625.
+The existing contrast term and motor normalization are unchanged. Both arms use the
+five-hop edge count (19,286) as the anchor-loss denominator, so increasing the mask
+does not silently weaken the penalty per changed synapse.
+These are deliberately fitted examples, not a held-out performance test.
+
+Two arms restart from the original retained checkpoint with fresh Adam at LR 1e-4,
+twenty differentiated frames, and up to 100 updates each. The only between-arm
+change is five-hop versus seven-hop trainable existing visual-to-roll paths. The
+latter opens 1,097,500 edges rather than 19,286: a substantial change in optimization
+freedom, not new wiring, neurons or actor inputs. Biases, membrane time constants,
+signs, topology and direct inputs to the other motor pools stay fixed. Every lesson
+recomputes its complete current-weight neural prefix before differentiation; stale
+source neural states are not reused.
+
+Checks at 25/50/100 report the nine fitting errors, early/non-roll preservation and
+the usual fully native 32-case development flights over all 30 s. There is no
+development-driven rollback or automatic checkpoint promotion. An arm stops early
+at a check only if aggregate late-roll RMSE falls at least 50% on **each** training
+side; otherwise it reaches the 100-update cap. Nonfinite computation stops the run.
+Preservation losses remain in the objective, but their degradation is recorded rather
+than used to veto this diagnostic fitting experiment. All **568 tests pass** after
+adding fixed-lesson identity, mixed-source history, weighting, two-sided finite-screen
+and equal-per-edge anchor tests.
+
+If five hops fit, repeated coherent fitting was an immediate missing ingredient;
+an anatomical capacity limit is not established. If only seven hops fit, that supports
+broader plasticity under this optimizer. If neither fits, objective conflict and
+truncated recurrent credit remain possibilities; do not infer absent visual information.
+Twenty neural ticks allow gradients through a seven-edge feedforward route, but
+arbitrary long-memory learning is not tested by this comparison.
+
+Unused cached whole pairs cannot supply a balanced late transfer check: the two
+unused assisted positive rows both fail gate one and contain zero later active frames;
+native positive gate-five coverage is absent bank-wide. If fitting reaches the screen,
+collect one predeclared new source-native/source-roll-assisted bank, without resampling
+until coverage looks favourable, and test the nominated fit on that new sensory history.
+Seek at least 20% late-roll RMSE improvement on both transfer sides before a larger
+native-flight validation. This transfer collection is not yet implemented or run.
+Fresh full-distribution goal validation remains separate and requires a genuinely
+promising autonomous controller; overfitting these lessons cannot satisfy the goal.

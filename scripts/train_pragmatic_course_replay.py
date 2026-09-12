@@ -138,8 +138,8 @@ def replay_teacher_motor(state, path, gates, current, config, teacher_config, ro
     return target
 
 
-def roll_preservation_mask(graph_path, device):
-    mask, manifest = visual_roll_path_mask(graph_path, hop_budget=5, device=device)
+def roll_preservation_mask(graph_path, device, *, hop_budget=5):
+    mask, manifest = visual_roll_path_mask(graph_path, hop_budget=hop_budget, device=device)
     with np.load(graph_path) as graph:
         other_motors = graph["output_pool_indices"][graph["output_pool_offsets"][2] :]
         enters_other_motor = torch.tensor(np.isin(graph["edge_post"], other_motors), device=device)
@@ -370,6 +370,26 @@ def select_balanced_window(primary, fallback, phase, unroll, rng, window_kind, d
     columns = [
         prepare_window(bank, (row,), (start,), unroll, device) for bank, row, start in selections
     ]
+    window = combine_replay_columns(columns)
+    record = dict(
+        source_by_side=[bank.kind for bank, _, _ in selections],
+        seed_by_side=[bank.seed for bank, _, _ in selections],
+        rows=[row for _, row, _ in selections],
+        starts=[start for _, _, start in selections],
+        phase=phase + 1,
+        kinds=kinds,
+        matched_mirrored_reset=pair is not None,
+        substituted_sides=[
+            side for side, (bank, _, _) in enumerate(selections) if bank is not primary
+        ],
+        entirely_pre_first_gate=phase == 0,
+        difference_loss_is_controlled_geometry_contrast=False,
+    )
+    return window, record
+
+
+def combine_replay_columns(columns):
+    """Join physical histories, padding only the unused tail of shorter branches."""
     stop = max(len(column[2]) for column in columns)
 
     def pad(value):
@@ -389,28 +409,13 @@ def select_balanced_window(primary, fallback, phase, unroll, rng, window_kind, d
         )
         for g in range(len(columns[0][1]))
     )
-    window = (
+    return (
         states,
         gates,
         torch.cat([pad(c[2]) for c in columns], dim=1),
         torch.cat([pad(c[3]) for c in columns], dim=1),
         torch.cat([c[4] for c in columns]),
     )
-    record = dict(
-        source_by_side=[bank.kind for bank, _, _ in selections],
-        seed_by_side=[bank.seed for bank, _, _ in selections],
-        rows=[row for _, row, _ in selections],
-        starts=[start for _, _, start in selections],
-        phase=phase + 1,
-        kinds=kinds,
-        matched_mirrored_reset=pair is not None,
-        substituted_sides=[
-            side for side, (bank, _, _) in enumerate(selections) if bank is not primary
-        ],
-        entirely_pre_first_gate=phase == 0,
-        difference_loss_is_controlled_geometry_contrast=False,
-    )
-    return window, record
 
 
 def replay_update_plan(late_phase, balanced):

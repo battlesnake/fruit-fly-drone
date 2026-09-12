@@ -1,0 +1,343 @@
+#!/usr/bin/env python3
+"""Diagnostic overfit of identical physical-history lessons under two native masks.
+
+This is a learning-capacity experiment, not a course-success claim. No teacher,
+recorded history, extra state or probe is deployed. Every update accumulates all
+nine fixed lessons with fresh current-weight neural prefixes. Native flights are
+reported but never roll back these diagnostic optimization steps.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import math
+import sys
+from dataclasses import replace
+from pathlib import Path
+from time import perf_counter
+
+import torch
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "src"))
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+
+import train_pragmatic_course_replay as replay  # noqa: E402
+
+
+def fixed_lessons(cache, fitting_report, device):
+    """Restore the reported windows, including per-side bank substitutions."""
+    unroll = fitting_report["arguments"]["unroll"]
+    banks = {}
+    for item in cache["banks"]:
+        fields = dict(item)
+        fields["gates"] = tuple(replay.AnnularGate(*gate) for gate in fields["gates"])
+        bank = replay.ReplayBank(**fields)
+        if bank.roll_teacher != "current-gate" or bank.reference_outputs is None:
+            raise ValueError("requires current-gate labels with frozen-source preservation")
+        key = (bank.kind, bank.seed)
+        if key in banks:
+            raise ValueError("duplicate bank identity")
+        banks[key] = bank
+    lessons = []
+    for record in fitting_report["source_replay_fit"]["windows"]:
+        columns = []
+        for side, (kind, seed, row, start) in enumerate(
+            zip(
+                record["source_by_side"],
+                record["seed_by_side"],
+                record["rows"],
+                record["starts"],
+                strict=True,
+            )
+        ):
+            bank = banks[kind, seed]
+            stop = start + unroll
+            if (
+                not 0 <= row < bank.current.shape[1]
+                or row % 2 != side
+                or start < 0
+                or stop > len(bank.current)
+                or not bool(bank.active[start:stop, row].all())
+                or int(bank.current[start, row]) != record["phase"] - 1
+            ):
+                raise ValueError("invalid fixed lesson identity or active interval")
+            if record["phase"] == 1 and not bool((bank.current[start:stop, row] == 0).all()):
+                raise ValueError("early preservation lesson crosses the first gate")
+            columns.append(replay.prepare_window(bank, (row,), (start,), unroll, device))
+        if len(columns) != 2:
+            raise ValueError("each lesson must contain both sides")
+        metadata = {k: v for k, v in record.items() if k != "motor_rmse_by_side"}
+        lessons.append((replay.combine_replay_columns(columns), metadata))
+    roles = [(record["phase"], record["requested_source"]) for _, record in lessons]
+    expected = [(1, "native")] + [
+        (phase, kind) for phase in range(2, 6) for kind in ("native", "roll-assisted")
+    ]
+    if roles != expected:
+        raise ValueError("expected one early and eight phase/source late lessons")
+    return lessons, unroll
+
+
+def lesson_weights(lessons):
+    """Half early; a quarter for each requested late source, averaged over phases."""
+    return [0.5 if record["phase"] == 1 else 0.0625 for _, record in lessons]
+
+
+def fit_metrics(summary):
+    windows = summary["windows"]
+    if not all(
+        math.isfinite(value)
+        for record in windows
+        for row in record["motor_rmse_by_side"]
+        for value in row
+    ):
+        raise ValueError("nonfinite fitting errors cannot satisfy a fitting screen")
+    late = torch.tensor([record["motor_rmse_by_side"] for record in windows if record["phase"] > 1])
+    return dict(
+        late_roll_rmse_by_side=late[:, :, 0].square().mean(0).sqrt().tolist(),
+        early_roll_rmse_by_side=[row[0] for row in windows[0]["motor_rmse_by_side"]],
+        maximum_nonroll_rmse=max(
+            value for record in windows for row in record["motor_rmse_by_side"] for value in row[1:]
+        ),
+    )
+
+
+def fitting_reductions(source, current):
+    baseline = source["late_roll_rmse_by_side"]
+    measured = current["late_roll_rmse_by_side"]
+    if (
+        len(baseline) != 2
+        or len(measured) != 2
+        or not all(math.isfinite(value) and value > 0 for value in baseline)
+        or not all(math.isfinite(value) and value >= 0 for value in measured)
+    ):
+        raise ValueError("fitting screen requires finite positive baselines and finite errors")
+    return [1.0 - now / before for before, now in zip(baseline, measured, strict=True)]
+
+
+def edge_anchor_loss(parameter, initial, mask, reference_count):
+    """Use the five-hop edge count for both arms: same prior cost per changed edge."""
+    return 1e-3 * ((parameter[mask] - initial[mask]) / 0.02).square().sum() / reference_count
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--checkpoint", type=Path, required=True)
+    parser.add_argument("--cache", type=Path, required=True)
+    parser.add_argument("--fitting-report", type=Path, required=True)
+    parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument(
+        "--graph", type=Path, default=REPO_ROOT / "data/derived/full-visual-connectome-v1.npz"
+    )
+    parser.add_argument("--hop-budgets", type=int, nargs="+", default=[5, 7])
+    parser.add_argument("--updates", type=int, default=100)
+    parser.add_argument("--interval", type=int, default=25)
+    parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument("--device", default="cuda")
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    if args.output_dir.exists():
+        raise SystemExit("refusing to overwrite a fitting experiment")
+    if (
+        min(args.updates, args.interval, args.learning_rate, *args.hop_budgets) <= 0
+        or not torch.isfinite(torch.tensor(args.learning_rate))
+        or len(set(args.hop_budgets)) != len(args.hop_budgets)
+    ):
+        raise SystemExit("invalid size, learning rate or repeated mask")
+    cache = torch.load(args.cache, map_location="cpu", weights_only=True)
+    fitting_report = json.loads(args.fitting_report.read_text())
+    if (
+        Path(cache["source_checkpoint"]).resolve() != args.checkpoint.resolve()
+        or Path(fitting_report["arguments"]["checkpoint"]).resolve() != args.checkpoint.resolve()
+        or json.loads(json.dumps(cache["geometry"])) != fitting_report["geometry"]
+        or fitting_report["geometry"] != json.loads(json.dumps(replay.GEOMETRY))
+    ):
+        raise SystemExit("cache/report source or geometry mismatch")
+    device = torch.device(args.device)
+    controller, source = replay.load_controller(args, device)
+    lessons, unroll = fixed_lessons(cache, fitting_report, device)
+    reference_mask, _ = replay.roll_preservation_mask(args.graph, device, hop_budget=5)
+    anchor_reference_count = int(reference_mask.sum())
+    del reference_mask
+    weights = lesson_weights(lessons)
+    contrast = fitting_report["arguments"]["contrast_weight"]
+    config = replay.HoverConfig(**source["hover_config"])
+    gate_config = replace(replay.GateConfig(**source["gate_config"]), back_pattern="checkerboard")
+    camera = replay.CameraSpec(
+        width=source["image_resolution"][0],
+        height=source["image_resolution"][1],
+        horizontal_fov_degrees=source["camera_hfov_degrees"],
+    )
+    development = replay.sample_two_gate_cases(
+        fitting_report["arguments"]["development_pairs"],
+        seed=fitting_report["arguments"]["development_seed"],
+        device=device,
+        hover_config=config,
+        **replay.GEOMETRY,
+    )
+
+    def assess():
+        return replay.evaluate(
+            controller,
+            *development,
+            seconds=30.0,
+            warmup_steps=10,
+            camera=camera,
+            hover_config=config,
+            gate_config=gate_config,
+        )
+
+    def measure_fit():
+        summary = replay.replay_fit_summary(
+            controller, lessons, unroll, camera, gate_config, contrast
+        )
+        return dict(**summary, aggregate=fit_metrics(summary))
+
+    args.output_dir.mkdir(parents=True)
+    started = perf_counter()
+    result = dict(
+        experiment="fixed-nine-window-native-plasticity-fit-v1",
+        arguments={k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
+        source_sha256=hashlib.sha256(args.checkpoint.read_bytes()).hexdigest(),
+        scope="training-capacity diagnostic; neither held-out fit nor goal validation",
+        neural_prefix="fresh current-weight replay from zero, ten warmup frames",
+        differentiated_frames=unroll,
+        anchor_reference_hops=5,
+        anchor_fixed_denominator=anchor_reference_count,
+        lesson_weights=weights,
+        checkpoint_promotion_automatic=False,
+        teacher_or_replay_state_deployed=False,
+        stop_rule="at a check: >=50% late-roll RMSE reduction on EACH training side, or update cap",
+        transfer_validation_completed=False,
+        arms=[],
+    )
+
+    def report():
+        result["elapsed_seconds"] = perf_counter() - started
+        (args.output_dir / "report.json").write_text(json.dumps(result, indent=2) + "\n")
+
+    result["source_fit"] = measure_fit()
+    result["source_development"] = assess()
+    initial = controller.edge_magnitude.detach().clone()
+    report()
+    print(
+        json.dumps(
+            dict(
+                stage="source",
+                fit=result["source_fit"]["aggregate"],
+                clean=result["source_development"]["clean_course_success_rate"],
+            )
+        ),
+        flush=True,
+    )
+    for hops in args.hop_budgets:
+        controller.load_state_dict(source["controller"])
+        mask, manifest = replay.roll_preservation_mask(args.graph, device, hop_budget=hops)
+        hook = controller.edge_magnitude.register_hook(lambda gradient, mask=mask: gradient * mask)
+        optimizer = torch.optim.Adam([controller.edge_magnitude], lr=args.learning_rate)
+        arm = dict(hops=hops, mask=manifest, history=[], status="running")
+        result["arms"].append(arm)
+        print(json.dumps(dict(stage="arm", hops=hops, mask=manifest)), flush=True)
+        report()
+        for update in range(1, args.updates + 1):
+            optimizer.zero_grad(set_to_none=True)
+            losses = []
+            for (window, _), weight in zip(lessons, weights, strict=True):
+                loss, _ = replay.replay_window_loss(
+                    controller, window, unroll, camera, gate_config, contrast
+                )
+                if not bool(torch.isfinite(loss)):
+                    arm["status"] = "nonfinite-loss"
+                    report()
+                    raise RuntimeError("nonfinite fixed-bank loss; no update applied")
+                (weight * loss).backward()
+                losses.append(float(loss.detach()))
+            anchor_loss = edge_anchor_loss(
+                controller.edge_magnitude, initial, mask, anchor_reference_count
+            )
+            anchor_loss.backward()
+            gradient = torch.nn.utils.clip_grad_norm_(
+                controller.parameters(), 1.0, error_if_nonfinite=True
+            )
+            optimizer.step()
+            controller.project_parameters()
+            entry = dict(
+                update=update,
+                window_losses_before_update=losses,
+                objective_before_update=sum(
+                    w * loss for w, loss in zip(weights, losses, strict=True)
+                )
+                + float(anchor_loss.detach()),
+                gradient_norm=float(gradient),
+                elapsed_seconds=perf_counter() - started,
+            )
+            arm["history"].append(entry)
+            if update % args.interval == 0 or update == args.updates:
+                if not torch.equal(controller.edge_magnitude.detach()[~mask], initial[~mask]):
+                    raise RuntimeError("an excluded edge changed")
+                entry["fit"] = measure_fit()
+                reductions = fitting_reductions(
+                    result["source_fit"]["aggregate"], entry["fit"]["aggregate"]
+                )
+                entry["late_roll_reduction_by_side"] = reductions
+                entry["development"] = assess()
+                payload = dict(source)
+                payload.update(
+                    controller={k: v.detach().cpu() for k, v in controller.state_dict().items()},
+                    experiment=result["experiment"],
+                    training_update=update,
+                    native_path_manifest=manifest,
+                    selection_metrics=entry["development"],
+                    diagnostic_only=True,
+                    fitting_metrics=entry["fit"]["aggregate"],
+                    source_sha256=result["source_sha256"],
+                )
+                name = f"hops-{hops}-update-{update}.pt"
+                torch.save(payload, args.output_dir / name)
+                entry["checkpoint"] = name
+                print(
+                    json.dumps(
+                        dict(
+                            stage="check",
+                            hops=hops,
+                            update=update,
+                            fit=entry["fit"]["aggregate"],
+                            reductions=reductions,
+                            clean=entry["development"]["clean_course_success_rate"],
+                        )
+                    ),
+                    flush=True,
+                )
+                if min(reductions) >= 0.5:
+                    arm["status"] = "training-fit-threshold-met"
+                    report()
+                    break
+            print(
+                json.dumps(
+                    dict(
+                        stage="update",
+                        hops=hops,
+                        **{k: v for k, v in entry.items() if k not in ("fit", "development")},
+                    )
+                ),
+                flush=True,
+            )
+            report()
+        if arm["status"] == "running":
+            arm["status"] = "update-cap"
+        hook.remove()
+        del optimizer
+        report()
+    result["status"] = "complete"
+    report()
+    print(json.dumps(dict(stage="complete", elapsed_seconds=result["elapsed_seconds"])), flush=True)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
