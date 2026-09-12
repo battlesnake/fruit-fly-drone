@@ -1150,3 +1150,140 @@ sixteen first gates, and has 483 negative / 477 positive eligible gate-five fram
 Thus the predetermined rotation does provide late-gate training on both sides; the
 zero positive exposure in the first two banks must not be generalized to the whole
 run. Its third gradient/proposal update is in progress.
+
+#### Reconsider the training constraint, not the clean-flight definition
+
+Astra's broader review notes that requiring every discontinuous component statistic
+to improve or stay flat on each small training batch can prevent learning. For
+example, bank three's 16/16 first-gate baseline makes even one lost first pass a veto,
+regardless of any increase in complete courses. Zero accepted updates alone are not
+evidence that the brain cannot learn this task. Preserving the source and judging
+separate native development flights protects useful behavior more directly than
+requiring every intermediate training statistic to improve monotonically.
+
+Keep the running experiment and nominated-checkpoint comparison unchanged. A later
+bounded six-to-ten-update alternative could retain finite-state, bounded-step and
+strong ground protections, but rank proposals by one outcome-oriented score combining
+clean completion, clean prefix and failure penalties, with tracking loss secondary.
+Ring/order errors would still be penalized and invalidate clean completion, without
+each category independently vetoing every optimizer step. Pure continuous-loss-only
+acceptance is not the proposed remedy: it can also disagree with actual flight gains.
+The development first-gate heuristic must not permanently veto a substantial increase
+in complete-course success. No relaxed mode is implemented or enabled yet.
+
+The saved update-two diagnostics do **not** prove that its extra wrong-order event
+is only post-crash behavior. It occurs in pair five, where negative-side episode 10
+loses valid tracking at frame 274 but first fails at frame 382; the later ring contact
+does not identify which event failed it first. A useful candidate would require an
+explicit event-sequence check before any exception for post-failure order violations.
+
+#### A simpler reference may suffice for this course family
+
+A CPU-only geometric check found that a horizontal line from launch XY through the
+first gate clears all five annuli in 128/128 courses on the existing teacher bank
+1037983, and 16/16 in each of training banks 1620983–1620985. The 0.50 m course-deviation
+limit is slightly smaller than the 0.53 m clean radius; this family need not demand
+substantial anticipatory turns. This geometric check starts at first-gate height and
+is not a physical or learned flight result.
+
+A subsequent **privileged four-axis teacher** comparison used the actual perturbed
+aircraft/foreleg/stick initial states, randomized masses, all original varied gates,
+50 Hz commands, 100 Hz physical steps and all 30 seconds of latched safety checks:
+
+| Training reference | Clean flights | Maximum crossing radius | 95th-percentile radius |
+| --- | ---: | ---: | ---: |
+| Curved reference through all gates | 128/128 | 0.06446 m | 0.03769 m |
+| Straight XY line through the first gate | 128/128 | 0.51052 m | 0.35337 m |
+
+Both keep world-X heading and have no ring, illegal, ground or invalid events. The
+straight reference uses launch, the first gate and a synthetic reference point 20 m
+farther along that XY line at first-gate height; the original five physical gates do
+not change. The reference still smoothly handles the sampled initial altitude offset.
+No fly controller ran in this CPU comparison. Records are in the local ignored
+`straight-line-teacher-audit.json` under the corrected run. This is a previously used
+teacher bank, **not** a fresh goal holdout, and no controller was trained or exported.
+
+The worst straight-line crossing has only about 0.0195 m radial margin, which native
+altitude/speed errors could consume. After the nominated checkpoint test, Astra
+recommends a matched **curved versus straight roll-only takeover** before changing the
+training reference: let the native controller clear gate one, replace only later
+roll, and keep native pitch/yaw/throttle, live images and uninterrupted neural state.
+Compare clean full-flight completion, both sides, clearance and roll-command effort.
+If straight guidance retains the rescue with less steering, a simpler training-only
+reference is a reasonable alternative to unnecessary curved-path tracking.
+
+Any line slope, desired heading or stored teacher reference remains outside the actor;
+retained intent must emerge inside the native recurrence. Keep the agreed course
+distribution unchanged, and do not call simple line-following proof of anticipation
+or general racing. Native five-gate success, live visual correction, and later
+genuinely turning-course competence are separate claims. This result motivates a
+simpler learning target, not a broader claim or more anatomical parameters.
+
+#### Corrected short-horizon run finished; nominated proposal did not transfer
+
+`pragmatic-on-policy-valid-tracking-001` finished normally after 3,048.76 s, stopping
+at three consecutive rejected updates. All nine scale proposals were rejected and
+**no parameter update was accepted**. Its final unchanged-source development repeat
+was 12/32. The old process's `selected_update=2` / 13/32 record remains the previously
+documented unchanged-source selection artifact, not learned progress.
+
+The one nominated, actually changed `trial-u002-s1.pt` was then evaluated alongside
+the retained source on the same ordinary 32-case development bank (1110983), using
+the current implementation, all original varied gates and the complete 30 s flight:
+
+| Controller | Clean courses | Negative / positive | Clean first passes | Clean prefix gates |
+| --- | ---: | --- | ---: | ---: |
+| Retained source | 12/32 | 9 / 3 | 28/32 | 101 |
+| Nominated update-two scale-one proposal | 10/32 | 8 / 2 | 31/32 | 92 |
+
+Ring-contact episodes rose from 19 to 20 and wrong-order episodes from two to three;
+ground and invalid counts stayed zero. Better first-gate performance did not transfer
+to better complete courses. The proposal is **not promoted**, no fresh holdout is
+spent on it, and the other rejected proposals will not be screened for a lucky result.
+The matched records are `nominated-u002-s1-development-{source,candidate}.json` in
+the same ignored run directory.
+
+#### Curved reference retained after the roll-only comparison
+
+The matched roll-only diagnostic is complete on seed 1110983. The source drives all
+four axes through gate one; only subsequent roll comes from the privileged teacher.
+Native pitch, yaw, throttle, live RGB and the full continuous neural/physical state
+remain in use. All five actual gates, clearance rules and 30 s tails are unchanged.
+
+| Teacher roll reference | Clean courses | Negative / positive | Clean first passes | Ring-contact episodes |
+| --- | ---: | --- | ---: | ---: |
+| Curved | 27/32 | 14 / 13 | 28/32 | 4 |
+| Straight | 24/32 | 11 / 13 | 28/32 | 7 |
+
+Both have zero ground/invalid/wrong-direction events and one wrong-order episode.
+Straight guidance loses three negative-side completions, so its narrower geometric
+margin matters when the other axes remain native. Mean absolute roll-motor effort
+is 0.004405 versus 0.005140 for curved guidance; RMS is 0.007566 versus 0.008316.
+These effort summaries include frames whose current gate is two through five,
+including post-failure tails still in those phases. Their differing occupancy means
+they are descriptive, not a matched clean-flight energy comparison. Neither result
+is native five-gate success. Full records are `straight-roll-takeover-audit.json`.
+
+Keep the simpler reference as a documented alternative, but retain curved tracking
+for the next native trial. Astra concurs: reduced steering has not earned replacing
+the reference after losing three completions.
+
+#### Matched two-second physical credit trial started
+
+The next bounded run is `runs/gate/pragmatic-on-policy-valid-tracking-100-001`, with
+100-frame / two-second gradient chunks instead of 50-frame / one-second chunks.
+The source checkpoint, 19,286-edge plasticity mask, LR 1e-4, eight mirrored training
+pairs, seeds 1620983–1620986 in four-bank rotation, six-update limit, development
+checks at 2/4/6 and all acceptance guards remain unchanged. Total-flight loss
+normalization remains 1/1,500; truncation changes gradient credit, not numerical
+state, actor timing or deployed memory. Actual proposals remain saved locally.
+The already-tested motor-metadata cache and unchanged-controller selection fix are
+also present; neither deliberately changes controller arithmetic or learned state.
+
+The reason to try this is the measured 0.60 s foreleg response plus subsequent
+aircraft motion, not evidence that longer horizons already improve learning. Judge
+the run by admissible whole-flight gains and independent native development, not
+just gradient magnitude or tracking loss. If it again produces only rejected steps,
+an explicitly separate outcome-oriented acceptance experiment is the next branch,
+not more horizon extensions or an immediate expansion of anatomy. The >50% fresh
+native five-gate objective remains unmet.
