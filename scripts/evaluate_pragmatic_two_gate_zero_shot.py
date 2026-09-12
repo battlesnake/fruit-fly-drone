@@ -681,6 +681,10 @@ def evaluate(
         .squeeze(1)
         .cpu()
         .tolist(),
+        "clean_course_success_episode_indices": torch.nonzero(clean_course, as_tuple=False)
+        .squeeze(1)
+        .cpu()
+        .tolist(),
     }
 
 

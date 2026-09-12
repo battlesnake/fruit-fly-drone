@@ -4,6 +4,7 @@ from dataclasses import replace
 
 import torch
 
+import scripts.audit_pragmatic_course_teacher as physical_audit
 import scripts.evaluate_pragmatic_two_gate_zero_shot as sequence
 from flydrone.gate import AnnularGate, GateConfig
 from flydrone.hover import DifferentiableQuad, HoverConfig
@@ -11,6 +12,33 @@ from flydrone.visual_hover import CameraSpec
 from scripts.audit_course_teacher_targets import summarize_targets
 from scripts.audit_pragmatic_course_teacher import gate_center_frustum
 from scripts.evaluate_pragmatic_two_gate_zero_shot import diagnostic_axis_takeover
+
+
+def test_local_physical_roll_teacher_applies_from_start_and_preserves_other_axes(monkeypatch):
+    curved = torch.arange(12, dtype=torch.float32).reshape(3, 4)
+    original = curved.clone()
+    index = torch.tensor([0, 1, 2])
+    gates = tuple(AnnularGate(torch.full((3, 3), float(i)), torch.zeros(3)) for i in range(2))
+    monkeypatch.setattr(physical_audit, "course_teacher_motor", lambda *args: curved)
+    calls = []
+
+    def local(state, gate, config, *, active):
+        calls.append((gate.center.clone(), active.clone()))
+        return torch.tensor([-0.1, 0.2, -0.3])
+
+    monkeypatch.setattr(physical_audit, "current_gate_roll_motor", local)
+    unchanged = physical_audit.physical_teacher_motor(
+        None, None, None, None, gates, index, "curved"
+    )
+    assert torch.equal(unchanged, original) and not calls
+    local_motor = physical_audit.physical_teacher_motor(
+        None, None, None, None, gates, index, "current-gate"
+    )
+    assert torch.equal(local_motor[:, 0], torch.tensor([-0.1, 0.2, -0.3]))
+    assert torch.equal(local_motor[:, 1:], original[:, 1:])
+    assert calls[0][0][:, 0].tolist() == [0.0, 1.0, 1.0]
+    assert calls[0][1].tolist() == [True, True, False]
+    assert torch.equal(curved, original)
 
 
 def test_center_frustum_uses_body_heading_and_excludes_behind_camera():

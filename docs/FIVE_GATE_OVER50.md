@@ -1980,3 +1980,57 @@ next interval check at 75 and the 100-update cap, unless it first meets the decl
 fitting screen. The seven-hop source restart is still pending. No candidate is
 promoted, no new-course replay-transfer collection is launched and no fresh goal
 holdout is used. The original autonomous checkpoint remains unchanged.
+
+#### Unified current-gate roll rule: physical feasibility and deferred matched test
+
+The current replay labels preserve source roll before the first gate and teach the
+local gate-relative roll rule afterward. That imposed supervision boundary might
+make learning harder; it is a hypothesis, not an established explanation for the
+fitting/flight gap. A simpler alternative is to teach the same local roll rule from
+the first physical command, while preserving source pitch/yaw/throttle throughout.
+This still requires visual gate identification and motion inference inside the fly.
+No external phase state or privileged teacher inputs would be deployed in the actor.
+
+Before considering new learning, the existing CPU physical teacher audit now accepts
+`--roll-teacher current-gate`, applied from the first frame including post-completion
+braking. Two matched preflights used **128 cases / 64 pairs at seed 1037983**, the same
+full varied geometry, nominal **35 g** mass, rate-damped curved-teacher pitch/yaw/throttle,
+50 Hz commands through the actual foreleg plant and 100 Hz physics, scoring all 30 s:
+
+- Original curved roll: **128/128 clean**, 64/64 per side; maximum gate-passage radial
+  offset 0.06444 m; mean completion time 15.065 s.
+- Current-gate roll from the start: **128/128 clean**, 64/64 per side; maximum radial
+  offset 0.10968 m; mean completion time 15.098 s.
+
+Both pass all 640 gates with zero ring, illegal-traversal, ground or invalid episodes.
+CPU runtimes were 7.19 s / 5.95 s. These are **all-axis teacher-controlled physics**,
+not fly completions or evidence of learnability. The seed is a reused teacher diagnostic
+bank, not a fresh goal holdout. Reports are ignored local artifacts under
+`runs/gate/pragmatic-fixed-bank-mask-fit-002/`, named
+`curved-teacher-cpu-preflight.json` and `current-gate-from-start-cpu-preflight.json`.
+
+The next diagnostic is prepared in `audit_pragmatic_current_gate_roll.py` with
+`--compare-starts`. **Do not launch it while the fixed-bank fitting process is live.**
+Once that process exits, it compares the retained source in three conditions on the
+same 32 development cases at seed 1110983: native, local roll after gate one, and local
+roll from the first physical command. All share the same initial aircraft/foreleg
+state, ten neural-only warmup frames, continuous native neural updates, native
+pitch/yaw/throttle and full 30-second scoring including the completion tail.
+
+The conservative predeclared from-start screen is at least **26/32 clean**, at least
+**12/16 per side**, at least **28/32 clean first-gate passes**, zero ground/invalid
+episodes and at most **one paired clean completion lost** versus the matched after-first
+condition. Paired losses/gains and net count change are reported separately: a
+failure solely on paired losses would reject this conservative screen, not prove the
+unified teacher ineffective. The old `all_gate_success_episode_indices` reports raw
+passes and is deliberately retained; a new `clean_course_success_episode_indices`
+reports full-episode clean flights for this comparison. Existing clean success scores
+already enforce the full failure rule and are not relaxed.
+
+Passing assistance would justify a bounded unified-label training trial, not count
+as autonomous success. The active five/seven-hop fitting experiment and its labels
+remain unchanged. No matched GPU start comparison or unified-label learning has run.
+All **589 tests pass**, including first-command intervention timing, unchanged native
+PYT, neural-only warmup, continuous recurrence, completion-tail intervention, matched
+initial states, and the distinction between raw passages and clean paired successes.
+Astra's read-only review found no blocking design or implementation issue.

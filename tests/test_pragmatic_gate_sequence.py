@@ -72,12 +72,16 @@ def test_evaluator_distinguishes_clean_completion_from_eventual_passes(
     )[0]
     for key, value in compact.items():
         assert value == pytest.approx(metrics[key])
+    assert metrics["clean_course_success_episode_indices"] == (
+        [] if ground_contact or backtrack else [0, 1]
+    )
     if ground_contact:
         assert metrics["clean_course_success_rate"] == 0.0
         assert metrics["gates_before_failure_mean"] == 0.0
         assert metrics["course_progress_score_mean"] <= -2.0
     else:
         assert metrics["all_gates_pass_rate"] == 1.0
+        assert metrics["all_gate_success_episode_indices"] == [0, 1]
         assert metrics["clean_course_success_rate"] == (0.0 if backtrack else 1.0)
         assert metrics["wrong_direction_episode_rate"] == float(backtrack)
         assert metrics["course_event_penalty_mean"] == (-2.0 if backtrack else 0.0)

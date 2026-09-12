@@ -17,12 +17,13 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import train_variable_height_hover as hover_train  # noqa: E402
-from evaluate_pragmatic_two_gate_zero_shot import sample_two_gate_cases  # noqa: E402
+from evaluate_pragmatic_two_gate_zero_shot import active_gate, sample_two_gate_cases  # noqa: E402
 
 from flydrone.course_teacher import (  # noqa: E402
     CoursePath,
     CourseTeacherConfig,
     course_teacher_motor,
+    current_gate_roll_motor,
 )
 from flydrone.gate import GateConfig, wrap_angle  # noqa: E402
 from flydrone.gate_course import classify_course_step  # noqa: E402
@@ -49,6 +50,19 @@ def gate_center_frustum(state, centers, camera):
     return inside, torch.linalg.vector_norm(relative, dim=1)
 
 
+def physical_teacher_motor(state, path, config, teacher_config, gates, index, roll_teacher):
+    """Privileged physical preflight: optional local roll applies from the first frame."""
+    motor = course_teacher_motor(state, path, config, teacher_config)
+    if roll_teacher == "current-gate":
+        motor = motor.clone()
+        motor[:, 0] = current_gate_roll_motor(
+            state, active_gate(gates, index), config, active=index < len(gates)
+        )
+    elif roll_teacher != "curved":
+        raise ValueError("unknown physical roll teacher")
+    return motor
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", type=Path, required=True)
@@ -60,6 +74,7 @@ def parse_args():
     parser.add_argument("--position-gain", type=float, default=1.5)
     parser.add_argument("--velocity-gain", type=float, default=2.5)
     parser.add_argument("--attitude-gain", type=float, default=3.0)
+    parser.add_argument("--roll-teacher", choices=("curved", "current-gate"), default="curved")
     parser.add_argument(
         "--heading-mode", choices=("tangent", "world-x", "rate-damped"), default="tangent"
     )
@@ -71,6 +86,9 @@ def parse_args():
 @torch.no_grad()
 def main():
     args = parse_args()
+    if args.output.exists():
+        raise SystemExit("refusing to overwrite a physical preflight report")
+    torch.set_num_threads(4)
     started = perf_counter()
     payload = torch.load(args.checkpoint, map_location="cpu", weights_only=True)
     config = HoverConfig(**payload["hover_config"])
@@ -129,6 +147,9 @@ def main():
     collisions = torch.zeros(count, dtype=torch.bool)
     violations = torch.zeros_like(collisions)
     ground = torch.zeros_like(collisions)
+    invalid = torch.zeros_like(collisions)
+    first = torch.zeros_like(collisions)
+    prefix = torch.zeros(count, dtype=torch.long)
     max_tilt = torch.zeros(count)
     saturation = torch.zeros(count)
     center_counts = torch.zeros(2, dtype=torch.long)
@@ -150,7 +171,9 @@ def main():
         max_absolute_yaw = torch.maximum(
             max_absolute_yaw, torch.where(active, wrap_angle(state.euler[:, 2]).abs(), 0)
         )
-        motor = course_teacher_motor(state, path, config, teacher_config)
+        motor = physical_teacher_motor(
+            state, path, config, teacher_config, gates, index, args.roll_teacher
+        )
         for substep in range(2):
             rc, sticks = legs(motor, sticks)
             previous = state.position
@@ -167,12 +190,23 @@ def main():
             collisions |= events.ring_collision.any(dim=1)
             violations |= events.illegal_traversal.any(dim=1)
             ground |= state.position[:, 2] <= 0.03
-            failed |= events.failed | ~hover_train.state_is_valid(state)
+            invalid |= ~hover_train.state_is_valid(state)
+            failed |= events.failed | ground | invalid
+            first |= events.passed[:, 0] & ~failed
+            prefix += (events.passed & ~failed[:, None]).sum(1)
             max_tilt = torch.maximum(max_tilt, torch.linalg.vector_norm(state.euler[:, :2], dim=1))
             saturation += (rc[:, :3].abs().amax(dim=1) > 0.98) | (rc[:, 3] > 0.98)
     clean = passed.all(dim=1) & ~failed
     result = dict(
-        experiment="continuous-hermite-course-teacher-preflight-v1",
+        experiment="current-gate-roll-from-start-physical-preflight-v1"
+        if args.roll_teacher == "current-gate"
+        else "continuous-hermite-course-teacher-preflight-v1",
+        checkpoint=str(args.checkpoint),
+        roll_teacher=args.roll_teacher,
+        roll_teacher_applies_from_first_frame=True,
+        other_axes="privileged curved teacher, not native fly outputs",
+        cpu_only=True,
+        actor_loaded=False,
         seed=args.seed,
         episodes=count,
         seconds=args.seconds,
@@ -183,10 +217,20 @@ def main():
         path_geometry_clean_rate=float(path_clean.float().mean()),
         clean_course_success_rate=float(clean.float().mean()),
         clean_successes=int(clean.sum()),
+        clean_successes_by_side=[
+            int(clean[cases.side < 0].sum()),
+            int(clean[cases.side > 0].sum()),
+        ],
+        clean_first_passes=int(first.sum()),
+        clean_first_by_side=[int(first[cases.side < 0].sum()), int(first[cases.side > 0].sum())],
+        clean_prefix_gates=int(prefix.sum()),
         gate_pass_counts=passed.sum(dim=0).tolist(),
         ring_collision_rate=float(collisions.float().mean()),
         illegal_traversal_rate=float(violations.float().mean()),
         ground_contact_rate=float(ground.float().mean()),
+        invalid_rate=float(invalid.float().mean()),
+        mass_scale_range=[float(cases.mass_scale.min()), float(cases.mass_scale.max())],
+        full_tail_scored=True,
         clean_completion_time_mean_seconds=float(times[clean, -1].mean()) if clean.any() else None,
         pass_radial_mean_metres=float(radial[passed].mean()) if passed.any() else None,
         pass_radial_max_metres=float(radial[passed].max()) if passed.any() else None,
