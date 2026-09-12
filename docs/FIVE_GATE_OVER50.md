@@ -1646,3 +1646,80 @@ improves while native flights deteriorate, stop this branch rather than extendin
 the same replay blindly. Native-first window selection still makes assisted lessons
 a fallback; this known coverage limitation is unchanged for the first pilot. No new
 learning trial or altered deployment has been launched yet.
+
+#### Two-second physical-gradient run finishes without native transfer
+
+The sixth/final update returns to seed 1620984 with 4/16 clean courses (2 per side),
+45 prefix gates, first-side counts [7, 8], ten failed/ring-contact episodes and no
+wrong-order, wrong-direction, ground or invalid events. Its scale 1 / 0.3 / 0.1
+proposals give respectively 3 / 2 / 3 completions and 44 / 45 / 47 prefix gates; all
+lose a completion and are rejected. The first two add one ring/failure episode and
+one wrong-order episode; the smallest keeps the nominal failure counts. The raw
+gradient norm is 20.0866. No sixth-update weights are retained.
+
+Final development is **6/32** clean (5 negative / 1 positive), first passes 29/32,
+prefix gates 81, ring-contact episodes 25 and wrong-order episodes four, with ground
+and invalid counts zero. This repeats the unchanged update-four controller, and the
+report correctly labels it as such; the one-case difference from its prior 5/32
+check is not a learning gain. **The retained source remains selected at 12/32.**
+
+The process completed normally after 4,971.12 s (about 83 minutes), with three
+accepted updates out of six. Longer physical credit produced admissible training
+steps but did not improve varied-course development. No fresh holdout is consumed,
+no goal success is claimed, and the run is not extended. The prepared matched
+native/curved-teacher/neutral-roll audit was launched after this GPU process exited;
+all conditions use the original retained source and full 30-second scoring.
+
+#### Neutral roll fails the matched native-other-axes comparison
+
+The completed 32-case audit on development seed 1110983 gives:
+
+| Post-first-gate roll control | Clean courses | Negative / positive | Ground / invalid episodes |
+| --- | ---: | ---: | ---: |
+| Native, unchanged source | 14/32 | 10 / 4 | 0 / 0 |
+| Curved teacher | 27/32 | 14 / 13 | 0 / 0 |
+| Zero roll-motor difference | 2/32 | 2 / 0 | 4 / 4 |
+
+All conditions pass the first gate cleanly in 28/32 cases (15 negative, 13 positive).
+Conditional full completion after the first gate is 50.0%, 96.4% and 7.1%
+respectively. Native / curved / neutral clean-prefix counts are 102 / 139 / 52;
+ring-contact episodes are 17 / 4 / 19 and wrong-order episodes 2 / 1 / 1. Wrong
+direction is zero throughout. Ground and invalid counts can overlap and must not
+be added as distinct failures. Each condition retains all 30 s of scoring and the
+same native other three axes, live visual inputs and continuous neural state.
+
+The unchanged source's 14/32 here is a repeat measurement, not a newly learned
+improvement over the earlier 12/32. Neutral drive is decisively not a useful target
+for the proposed learning pilot on this bank. This rejects that intervention, not
+every possible open-loop policy. The matched curved rescue remains strong. The
+record is `neutral-roll-takeover-audit.json` under the 100-frame run; the three
+conditions took about 90 s total. The current-gate roll/native-other-three diagnostic
+was launched only after this process exited, with no simultaneous GPU training.
+
+#### Current-gate steering retains the rescue with native other axes
+
+The subsequent current-gate roll diagnostic achieves **26/32** clean courses,
+**13/16 on each side**, with the fly controlling pitch/yaw/throttle throughout.
+Clean first passes stay 28/32; conditional completions are 13/15 negative (86.7%)
+and 13/13 positive (100%). It records 137 clean-prefix gates, five ring-contact
+episodes, one wrong-order episode and no wrong-direction, ground or invalid events.
+All 30 s are scored. The matched curved teacher gives 27/32 and neutral roll 2/32.
+The 32.00 s diagnostic is recorded in `current-gate-roll-native-other-axes.json`
+under the 100-frame run directory.
+
+This meets the predeclared assisted screen: approximately 25/32, at least 80%
+conditional completion per side and no ground/invalid episodes. A roll target
+without the Hermite path or remembered launch line retains most of the curved
+teacher rescue. It remains privileged control, **not learned fly success**: the
+teacher reads current-gate geometry and motion, and its post-first-gate intervention
+is external. The result supports trying to learn the simpler target; it does not
+establish that the native neural circuit can yet reproduce it.
+
+The GPU pilot `pragmatic-current-gate-roll-replay-001` has now started from the
+original retained source using the documented 20-update / LR 1e-5 / 20-frame recipe,
+checks at 10/20, eight native pairs, four assisted pairs and the documented seeds.
+It enables `--supervision late-roll-preserve --roll-teacher current-gate`,
+`--teacher-heading-mode rate-damped`, `--keep-latest-training-weights` and
+`--check-replay-fit`. The completed physical-gradient experiment and both diagnostic
+processes exited before this launch. No fresh goal holdout has been spent; the goal
+remains unproven until unassisted performance transfers to fresh varied courses.
