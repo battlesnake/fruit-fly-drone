@@ -183,11 +183,29 @@ at 3e-6 with all other plasticity restrictions unchanged, using seed 1130983 and
 32-flight development bank. This tests a hypothesis; no improvement is assumed.
 
 The direct-only run reached 9/32 at update 50 (from its 3/32 repeated baseline), with
-28/32 first-gate passes. Later checkpoints are still pending. A matched unit-contrast
+28/32 first-gate passes; update 75 scored 7/32 and update 100 scored 0/32. The best50
+checkpoint is retained. Its successes are asymmetric: 8/16 negative-side and 1/16
+positive-side courses, with no complete mirrored pair. A matched unit-contrast
 control uses the same warm start, training seed, native-only stage, learning rate and
 32-case development set; this is needed to distinguish loss weighting from the effect
 of another training seed. Treat the 9/32 result as development selection, not fresh
-validation or a demonstrated causal effect of the loss change.
+validation or a demonstrated causal effect of the loss change. In fact, the matched
+unit-contrast control reached **11/32 at update 50**, versus direct-only 9/32. Its
+first-gate pass rate was 27/32 and mean prefix 2.81. The available comparison does not
+support attributing the gain to removal of contrast; a further short training pass on
+new courses is a competing explanation. The control also fell to 0/32 at update 100,
+despite 30/32 first-gate passes. Its retained best50 scored 9/16 negative-side and 2/16
+positive-side completions, with one complete mirrored pair.
+
+A 64-flight check of best50 uses seed 1020983, outside this controller's training and
+selection banks, where the original checkpoint previously scored 1/64. This bank was
+an earlier ES development bank; do not describe it as globally never-used or recycle
+it as the final goal holdout. Direct-only best50 achieved **10/64**, versus original
+1/64. Its cumulative passes were 53, 40, 33, 21 and 10, with no ground contacts or
+invalid states. Success was still asymmetric (9/32 negative-side, 1/32 positive-side),
+and ring contact remained frequent. This supports some improvement beyond the small
+selection set, but is nowhere near the >50% goal. The matched unit-contrast best50 is
+being checked on the same bank.
 
 `scripts/export_pragmatic_course_candidate.py` can compile any saved ES trial into a
 normal controller for standalone checks, without replacing a selected checkpoint.
@@ -206,6 +224,25 @@ periodically. Replay buffers, course phase labels and teacher state remain train
 the deployed actor retains only its native recurrence. Measure stale-state prediction
 error and gradient/update alignment before attributing failures to insufficient recurrence
 or changing optimizer momentum. This alternative is not yet implemented.
+
+The next bounded recipe starts from the preserved unit-contrast best50, keeps contrast
+1, edge LR 3e-6, the same mask/scales and frozen biases/taus, and runs 60 updates:
+
+- Collect eight native mirrored pairs and four teacher-driven pairs on new training
+  courses with weights fixed. Store small CPU physical-state histories, gate geometry,
+  actual role indices, valid-before-failure flags and detached teacher targets. Re-render
+  the recorded RGB; do not cache gigabytes of frames or reusable neural states.
+- Each update combines a gate-one pair window and a later-gate pair window, cycling
+  evenly through gates 2–5. Prefer native windows, falling back to teacher windows when
+  both native branches lack that phase. Include approaches, gate transitions and
+  pre-failure windows. Log phase coverage and fallback counts.
+- Branches may start their windows at different times to align phase, but replay each
+  complete original prefix from zero using the ten-frame warmup and current weights,
+  without gradients. Differentiate 20 frames per window. Average both window losses
+  and add the existing anchor once before one optimizer step.
+- Evaluate at 0/20/40/60; refresh native collection after 20 and 40 using the retained
+  controller. Preserve the best clean-course checkpoint, then check fresh courses and
+  both sides. Do not extend an unhelpful chronological run merely because loss falls.
 
 For this monotonic-X teacher, a training lesson ends after missing its expected aperture,
 because the path tracker cannot recover a gate behind it. Evaluation still permits
