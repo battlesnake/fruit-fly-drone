@@ -174,6 +174,18 @@ def changed_next_gate_pair(gates, row, phase, launch_position, half_separation=0
     return tuple(result)
 
 
+def anticipation_roll_targets(teacher_roll, source_roll, mean_target):
+    if mean_target == "teacher":
+        result = teacher_roll
+    elif mean_target == "source":
+        result = source_roll.mean() + teacher_roll - teacher_roll.mean()
+    else:
+        raise ValueError("roll pair-mean target must be teacher or source")
+    if not bool(torch.isfinite(result).all()) or bool((result.abs() > 1).any()):
+        raise ValueError("anticipation roll target is nonfinite or outside the native output range")
+    return result
+
+
 def select_anticipation_window(
     banks, phase, side, unroll, rng, *, heldout_pairs=2, validation=False
 ):
@@ -201,7 +213,9 @@ def select_anticipation_window(
 
 
 @torch.no_grad()
-def make_anticipation_lesson(bank, row, start, unroll, reference, camera, gate_config, config):
+def make_anticipation_lesson(
+    bank, row, start, unroll, reference, camera, gate_config, config, *, mean_target="teacher"
+):
     """Freeze source non-roll targets on each newly rendered counterfactual history."""
     device = reference.bias.device
     phase = int(bank.current[start, row])
@@ -225,6 +239,7 @@ def make_anticipation_lesson(bank, row, start, unroll, reference, camera, gate_c
     path = CoursePath.through_gates(fields[0][0], gates)
     teacher = CourseTeacherConfig(heading_mode="rate-damped")
     visible_change, target_contrast, source_contrast, pair_mean_error = [], [], [], []
+    teacher_pair_mean_error = []
     for frame in range(-10, start + unroll):
         time = max(frame, 0)
         state = QuadState(*(value[time] for value in fields))
@@ -235,11 +250,14 @@ def make_anticipation_lesson(bank, row, start, unroll, reference, camera, gate_c
         if frame >= start:
             taught = course_teacher_motor(state, path, config, teacher)
             target[time] = source_motor
-            target[time, :, 0] = taught[:, 0]
+            target[time, :, 0] = anticipation_roll_targets(
+                taught[:, 0], source_motor[:, 0], mean_target
+            )
             visible_change.append((image[1] - image[0]).abs().mean())
             target_contrast.append(taught[1, 0] - taught[0, 0])
             source_contrast.append(source_motor[1, 0] - source_motor[0, 0])
-            pair_mean_error.append((source_motor[:, 0] - taught[:, 0]).mean())
+            pair_mean_error.append((source_motor[:, 0] - target[time, :, 0]).mean())
+            teacher_pair_mean_error.append((source_motor[:, 0] - taught[:, 0]).mean())
     visible_change = torch.stack(visible_change)
     desired, actual = torch.stack(target_contrast), torch.stack(source_contrast)
     if not bool(torch.isfinite(target[start:]).all()) or not bool(visible_change.max() > 1e-6):
@@ -260,6 +278,10 @@ def make_anticipation_lesson(bank, row, start, unroll, reference, camera, gate_c
         source_roll_contrast_rms=float(actual.square().mean().sqrt()),
         source_contrast_error_rmse=float((actual - desired).square().mean().sqrt()),
         source_pair_mean_error_rmse=float(torch.stack(pair_mean_error).square().mean().sqrt()),
+        source_teacher_pair_mean_error_rmse=float(
+            torch.stack(teacher_pair_mean_error).square().mean().sqrt()
+        ),
+        roll_pair_mean_target=mean_target,
         matched_physical_history=True,
         changed_geometry_fixed_for_entire_prefix=True,
     )

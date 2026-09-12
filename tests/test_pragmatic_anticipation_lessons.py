@@ -165,3 +165,16 @@ def test_zero_response_cannot_masquerade_as_learned_anticipation():
     result = lessons.contrast_error_summary([residual, residual], records, [desired, desired])
     assert result["negative"]["beats_zero_contrast"]
     assert result["negative"]["teacher_alignment_cosine"] == pytest.approx(1.0)
+
+
+def test_centered_targets_preserve_source_pair_mean_and_true_teacher_contrast():
+    teacher = torch.tensor([0.5, 0.1])
+    source = torch.tensor([0.1, 0.3])
+    target = lessons.anticipation_roll_targets(teacher, source, "source")
+    assert torch.allclose(target.mean(), source.mean())
+    assert torch.allclose(target.diff(), teacher.diff())
+    assert torch.equal(lessons.anticipation_roll_targets(teacher, source, "teacher"), teacher)
+    with pytest.raises(ValueError, match="output range"):
+        lessons.anticipation_roll_targets(
+            torch.tensor([0.5, -0.5]), torch.tensor([0.95, 0.95]), "source"
+        )

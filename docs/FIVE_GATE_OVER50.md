@@ -576,3 +576,31 @@ baseline with positive teacher alignment before making that interpretation. Auto
 development completion, with the hard first-gate floor, remains the checkpoint-selection
 criterion. Extend only a promising arm to at most thirty total updates; neither this
 contrast screen nor development selection establishes the >50% held-out goal.
+
+Both ten-update screens finished without improvement. Contrast coefficient 1 produced
+10/32 clean development completions, and coefficient 16 produced 11/32, against
+12/32 for each matched source baseline. Both candidates passed the first gate on
+29/32 versus source 28/32, so loss of initial approach was not the issue. Neither
+candidate was selected; both best checkpoints remain update zero.
+
+Held-out contrast error barely changed: the source's negative/positive-side RMSE
+was 0.004090/0.004522; the two candidates were approximately 0.004091/0.004523 and
+0.004090/0.004523. Neither beat a zero-contrast predictor on either side. The source's
+pair-mean roll error against the full teacher was much larger, 0.021415/0.012915;
+the trials mainly reduced that shared error slightly, not the response to upcoming
+geometry. The matched source check is `source-validation-baseline.json` in the
+contrast1 run directory. These results do not justify extending either arm.
+
+One targeted follow-up, reviewed with Astra, is
+`pragmatic-anticipation-source-mean-001`. It retains coefficient 16 and the same
+source, seeds, lesson order, mask and ten-update bound, but uses
+`--anticipation-mean-target source`. For each matched frame, the roll target is
+`mean(frozen source roll) + teacher roll - mean(teacher roll)`. The true teacher's
+paired difference is unchanged; the common steering command is anchored to the
+existing fly instead of competing with the anticipation lesson. Targets outside the
+native output range are rejected, not independently clipped. Non-roll preservation
+and early lessons are unchanged. This is a training-label change only, not an actor
+helper or decoder. Its validation pair-mean error now measures drift from the source;
+the separate source-to-full-teacher mean error remains recorded. It may still fail
+if preserving the source's mean preserves an inadequate steering policy. The trial
+has started; no improved flight result is claimed yet.

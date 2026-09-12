@@ -360,6 +360,9 @@ def parse_args():
     parser.add_argument("--anticipation-cache", type=Path)
     parser.add_argument("--anticipation-contrast-weight", type=float, default=1.0)
     parser.add_argument(
+        "--anticipation-mean-target", choices=("teacher", "source"), default="teacher"
+    )
+    parser.add_argument(
         "--teacher-heading-mode", choices=("tangent", "world-x", "rate-damped"), default="world-x"
     )
     parser.add_argument("--interval", type=int, default=20)
@@ -540,6 +543,7 @@ def main():
                     camera,
                     gate_config,
                     config,
+                    mean_target=args.anticipation_mean_target,
                 )
                 validation_lessons.append(window)
                 validation_records.append(record)
@@ -554,6 +558,7 @@ def main():
             early_windows_are_entirely_before_first_gate=True,
             counterfactual_columns="minus/plus next-gate placement on one physical history",
             roll_only_contrast_weight=args.anticipation_contrast_weight,
+            roll_pair_mean_target=args.anticipation_mean_target,
             source_validation=lessons.source_contrast_summary(validation_records),
             validation_lessons=validation_records,
             first_gate_floor_is_hard_selection_requirement=True,
@@ -588,6 +593,7 @@ def main():
                     camera,
                     gate_config,
                     config,
+                    mean_target=args.anticipation_mean_target,
                 )
                 roll_contrast_weight = args.anticipation_contrast_weight
             else:
