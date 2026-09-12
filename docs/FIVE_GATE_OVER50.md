@@ -2053,3 +2053,37 @@ Improved fixed-input imitation remains insufficient for autonomous improvement.
 the 100-update cap and the independent seven-hop source restart. No promotion,
 new-course replay-transfer collection, matched start comparison or fresh goal
 holdout is triggered by this result. The retained autonomous source is unchanged.
+
+#### Cached first-gate label-boundary check
+
+A CPU-only check recomputed the local roll teacher on the existing native seed
+1690983 and roll-assisted seed 1790983 physical histories, without collecting new
+data or replaying a brain. Before the first gate, local-versus-source roll-target
+RMSE is **0.02741 / 0.03136** on the native bank (2,359 / 2,467 active frames), and
+**0.02222 / 0.03144** on the assisted bank (1,325 / 1,311 frames). Units are motor
+antagonist differences, not stick angles. The proposed unified rule therefore
+changes supervision meaningfully before gate one; it is not just a different label.
+
+For the 15 native and six assisted first-gate transitions with both adjacent frames
+eligible, the RMS target jump changes from **0.02369 to 0.01940** on native histories
+but **0.01159 to 0.01541** on assisted histories when applying local roll throughout.
+Thus removing the policy boundary does **not** universally smooth gate-crossing
+commands. Gate identity still changes at the crossing. This check supports testing
+one consistent supervision rule, not claiming that a discontinuity caused the current
+learning failures. Recomputed late labels match the cached local teacher within
+2.24e-8 in this CPU check. The small report is retained locally as
+`pragmatic-fixed-bank-mask-fit-002/first-gate-label-boundary-cpu.json`; no training,
+checkpoint selection or goal evaluation is changed.
+
+Astra's broader design review keeps the order: finish the mask comparison, test the
+from-start intervention, then try unified motor labels if assistance passes. The
+previous geometry-auxiliary idea is retained as a **conditional fallback**, not a
+new running branch: use existing descending/VNC premotor neurons within two edges
+upstream of the roll motors; fit and then freeze a training-only linear bearing
+head (`sin(theta)`, `cos(theta)`), and compare unified motor training alone against
+the same training plus a small bearing loss (e.g. 0.1 times source-normalized MSE).
+Keep native motor supervision active and deploy neither the head nor its outputs.
+An auxiliary would be useful only if better geometry coding also improves both
+sides' native roll predictions on unused whole-course histories and then actual
+unassisted flights. Better probe accuracy alone is not a flight solution. This
+fallback is not implemented or scheduled ahead of the simpler unified-rule test.
