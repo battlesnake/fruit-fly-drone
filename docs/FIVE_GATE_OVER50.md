@@ -1186,8 +1186,8 @@ limit is slightly smaller than the 0.53 m clean radius; this family need not dem
 substantial anticipatory turns. This geometric check starts at first-gate height and
 is not a physical or learned flight result.
 
-A subsequent **privileged four-axis teacher** comparison used the actual perturbed
-aircraft/foreleg/stick initial states, randomized masses, all original varied gates,
+A subsequent **privileged four-axis teacher** comparison used the sampled airborne
+aircraft and initial foreleg/stick states, all original varied gates,
 50 Hz commands, 100 Hz physical steps and all 30 seconds of latched safety checks:
 
 | Training reference | Clean flights | Maximum crossing radius | 95th-percentile radius |
@@ -1542,3 +1542,38 @@ and no ground/invalid events. This is a predeclared diagnostic screen, not a new
 goal threshold. If it preserves most of the curved teacher's rescue, consider a
 source-restarted local-feedback learning trial before merely relaxing acceptance
 rules. The current six-update process is unchanged.
+
+#### Mass-distribution correction
+
+The standard mirrored-course sampler sets `mass_scale` to ones, and the multi-gate
+sampler retains that value. Current native course results therefore use **nominal
+mass**, with randomized initial aircraft pose/rates/height and varied gate geometry;
+they do not establish robustness to mass variation. The earlier straight-line
+teacher note and its generated JSON described randomized masses without supporting
+mass measurements. That characterization is withdrawn above; the archived JSON is
+not rewritten. The new CPU teacher preflight will explicitly record the actual mass
+range. This corrects the description, not the benchmark: no actor inputs, mass
+distribution, course geometry, safety checks or completion threshold change.
+
+#### Current-gate roll passes teacher-only physical feasibility
+
+The bounded CPU preflight on the already-used 128-case teacher bank 1037983 clears
+all five gates in **128/128** cases for both conditions: curved all-axis teacher,
+and curved teacher until the first actual pass followed by current-gate roll with
+curved-teacher pitch/yaw/throttle. Both sides are 64/64, all 640 gate passes receive
+clean-prefix credit, and there are no ring, wrong-order, wrong-direction, ground or
+invalid failures over the full 30 s. First-gate passage ticks match between the
+conditions. Initial cases are unchanged, mass scale is exactly one (35 g), commands
+run at 50 Hz and the same foreleg/quad dynamics at 100 Hz. No gains were tuned.
+
+Across all crossings, current-gate roll gives radial mean / p95 / maximum of
+0.02231 / 0.06540 / 0.11181 m, versus 0.01438 / 0.03810 / 0.06444 m for the curved
+teacher. Both have substantial clearance within the 0.53 m clean radius. The check
+took 8.67 s on CPU and loaded no neural actor or renderer; it establishes feasibility
+with privileged control of the other three axes, **not native fly success** and not
+the requested fresh holdout. The generated record is
+`current-gate-roll-cpu-preflight.json` under the 100-frame run directory.
+
+Keep the neutral-roll control first when the current GPU process ends. If that
+does not strongly rescue flight, the local-roll/native-other-three comparison now
+has a physically feasible teacher and remains the next useful diagnostic.
