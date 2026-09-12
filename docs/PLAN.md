@@ -59,6 +59,9 @@ on a small bank are preliminary evidence, not established reliability.
 This clarification governs the earlier architectural options and research milestones
 below. Current implementation status is recorded in
 [the execution plan](HOVER_TO_GATE_PLAN.md) and its linked experiment records.
+The next multi-gate design is recorded in
+[anticipation, direction cues and teacher curriculum](RACING_ANTICIPATION.md), including
+implemented all-gate event checks and the planned hint-fading experiment.
 
 ## 1. Research claim
 

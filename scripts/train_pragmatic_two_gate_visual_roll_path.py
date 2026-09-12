@@ -7,7 +7,7 @@ import argparse
 import copy
 import json
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from time import perf_counter
 from typing import Any
@@ -36,8 +36,10 @@ from flydrone.gate import (  # noqa: E402
     AnnularGate,
     GateConfig,
     classify_gate_crossing,
+    gate_coordinates,
     render_annular_gates_rgb,
 )
+from flydrone.gate_course import classify_course_step  # noqa: E402
 from flydrone.hover import (  # noqa: E402
     ConnectomeController,
     DifferentiableQuad,
@@ -120,6 +122,7 @@ def parse_args() -> argparse.Namespace:
         default="aligned",
     )
     parser.add_argument("--gates", type=int, default=2)
+    parser.add_argument("--gate-back-pattern", choices=("solid", "checkerboard"))
     parser.add_argument("--spacing-min", type=float, default=3.8)
     parser.add_argument("--spacing-max", type=float, default=4.2)
     parser.add_argument("--lateral-step-min", type=float, default=0.0)
@@ -180,16 +183,26 @@ def new_rollout(
         previous = gates[start_gate - 1]
         segment = selected.center - previous.center
         horizontal = segment[:, :2]
-        unit = horizontal / torch.linalg.vector_norm(
+        distance = torch.linalg.vector_norm(
             horizontal,
             dim=1,
             keepdim=True,
         ).clamp_min(1.0e-6)
+        unit = horizontal / distance
         original_height_error = cases.state.position[:, 2] - 1.10
-        cases.state.position[:, :2] = selected.center[:, :2] - 1.40 * unit
+        # A fixed 1.40 m offset starts behind a passed gate on 1 m courses.
+        # Keep the reset between the previous and current gate, not on a path
+        # that must illegally re-traverse a dark aperture to reach its target.
+        approach_distance = (0.5 * distance).clamp_max(1.40)
+        cases.state.position[:, :2] = selected.center[:, :2] - approach_distance * unit
         cases.state.position[:, 2] = (
             selected.center[:, 2] + original_height_error
         ).clamp_min(0.20)
+        previous_signed, _, _ = gate_coordinates(cases.state.position, previous)
+        selected_signed, _, _ = gate_coordinates(cases.state.position, selected)
+        clearance = gate_config.drone_radius + 0.02
+        if bool(((previous_signed < clearance) | (selected_signed > -clearance)).any()):
+            raise ValueError("late-gate reset has no safe gap; use a flown teacher prefix")
     current = torch.full(
         (2 * pairs,),
         start_gate,
@@ -322,18 +335,15 @@ def training_step(
             previous_position = rollout.state.position
             rollout.state = quad(rc, rollout.state, rollout.mass_scale)
             active = (rollout.current < len(rollout.gates)) & ~rollout.failed
-            selected = active_gate(rollout.gates, rollout.current)
-            pass_now, collision_now, miss_now = classify_gate_crossing(
+            events = classify_course_step(
                 previous_position,
                 rollout.state.position,
-                selected,
+                rollout.gates,
+                rollout.current,
                 gate_config,
             )
-            pass_now &= active
-            collision_now &= active
-            miss_now &= active
-            rollout.current = rollout.current + pass_now.long()
-            rollout.failed |= collision_now | miss_now
+            rollout.current = torch.where(active, events.next_gate_index, rollout.current)
+            rollout.failed |= active & events.failed
         rollout.failed |= rollout.state.position[:, 2] <= 0.03
         rollout.failed |= ~hover_train.state_is_valid(rollout.state)
         rollout.state = QuadState(*(value.detach() for value in rollout.state.as_tuple()))
@@ -476,6 +486,7 @@ def save_checkpoint(
     torch.save(
         {
             "experiment": "pragmatic-full-native-gate-course-roll-path-v2",
+            "course_rules": "ordered-directed-all-annuli-v1",
             "controller": {
                 name: value.detach().cpu() for name, value in controller.state_dict().items()
             },
@@ -512,6 +523,9 @@ def score(
     )
     return (
         float(retained),
+        float(metrics["clean_course_paired_success_rate"]),
+        float(metrics["clean_course_success_rate"]),
+        float(metrics["course_progress_score_mean"]),
         float(metrics["all_gates_paired_pass_rate"]),
         min(
             float(metrics["all_gates_negative_course_pass_rate"]),
@@ -560,6 +574,8 @@ def main() -> int:
     optimizer = torch.optim.Adam((controller.edge_magnitude,), lr=args.learning_rate)
     config = HoverConfig(**source_payload["hover_config"])
     gate_config = GateConfig(**source_payload["gate_config"])
+    if args.gate_back_pattern is not None:
+        gate_config = replace(gate_config, back_pattern=args.gate_back_pattern)
     camera = CameraSpec(
         width=source_payload["image_resolution"][0],
         height=source_payload["image_resolution"][1],

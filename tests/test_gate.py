@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from dataclasses import replace
 from pathlib import Path
 
 import torch
@@ -149,6 +150,33 @@ def test_fixed_l1_receptive_fields_see_every_strict_launch_gate() -> None:
     response = controller.sample_retina(image).amax(dim=1)
 
     assert torch.all(response > 0.02)
+
+
+def test_checkerboard_changes_only_back_face_and_preserves_role_hue() -> None:
+    state = DifferentiableQuad().initial_state(1, device=torch.device("cpu"), dtype=torch.float32)
+    state.position[:, 2] = 1.1
+    front_gate = AnnularGate(center=torch.tensor([[2.0, 0.0, 1.1]]), yaw=torch.zeros(1))
+    back_gate = replace(front_gate, yaw=torch.full((1,), math.pi))
+    camera = CameraSpec(width=160, height=100, horizontal_fov_degrees=125.0)
+    solid = GateConfig(back_pattern="solid")
+    checker = GateConfig(back_pattern="checkerboard")
+
+    def render(gate: AnnularGate, config: GateConfig, current: int = 0) -> torch.Tensor:
+        return render_annular_gates_rgb(
+            state, (gate,), current_gate_index=torch.tensor([current]),
+            camera=camera, gate_config=config,
+        )[0]
+
+    assert torch.equal(render(front_gate, solid), render(front_gate, checker))
+    original = render(back_gate, solid)
+    patterned = render(back_gate, checker)
+    gate_pixels = original[1] > 0.5
+    assert (patterned[1][gate_pixels] < 0.3).any()
+    assert (patterned[1][gate_pixels] > 0.6).any()
+    # Hue remains green, and the local pattern preserves mirrored steering cues.
+    assert torch.all(patterned[1][gate_pixels] > patterned[0][gate_pixels])
+    assert torch.allclose(patterned[:, :50], patterned[:, :50].flip(-1), atol=1.0e-5)
+    assert torch.equal(render(back_gate, solid, current=1), render(back_gate, checker, current=1))
 
 
 def test_distillation_teacher_does_not_use_hidden_velocity_or_rates() -> None:

@@ -28,11 +28,10 @@ from train_pragmatic_full_native_gate_imitation import teacher_motor  # noqa: E4
 from flydrone.gate import (  # noqa: E402
     AnnularGate,
     GateConfig,
-    classify_gate_crossing,
-    crossing_coordinates,
     gate_coordinates,
     render_annular_gates_rgb,
 )
+from flydrone.gate_course import classify_course_step  # noqa: E402
 from flydrone.hover import (  # noqa: E402
     ConnectomeController,
     DifferentiableQuad,
@@ -71,6 +70,7 @@ def parse_args() -> argparse.Namespace:
         default="aligned",
     )
     parser.add_argument("--gates", type=int, default=2)
+    parser.add_argument("--gate-back-pattern", choices=("solid", "checkerboard"))
     parser.add_argument("--spacing-min", type=float, default=3.8)
     parser.add_argument("--spacing-max", type=float, default=4.2)
     parser.add_argument(
@@ -309,7 +309,6 @@ def evaluate(
 ) -> dict[str, object]:
     device = cases.side.device
     count = len(cases.side)
-    row = torch.arange(count, device=device)
     quad = DifferentiableQuad(hover_config).to(device)
     stick_plant = ForelegStickPlant(hover_config).to(device)
     state = _clone_quad(cases.state)
@@ -318,6 +317,11 @@ def evaluate(
     current = torch.zeros(count, dtype=torch.long, device=device)
     passed = torch.zeros(count, len(gates), dtype=torch.bool, device=device)
     collision = torch.zeros_like(passed)
+    wrong_order_count = torch.zeros_like(passed, dtype=torch.long)
+    wrong_direction_count = torch.zeros_like(wrong_order_count)
+    course_penalty = torch.zeros(count, device=device)
+    prefix_passes = torch.zeros(count, device=device)
+    failed_prefix = torch.zeros(count, dtype=torch.bool, device=device)
     missed = torch.zeros_like(passed)
     pass_step = torch.full_like(current[:, None].expand(-1, len(gates)), -1)
     crossing_step = torch.full_like(pass_step, -1)
@@ -369,38 +373,29 @@ def evaluate(
             rc, sticks = stick_plant(motor, sticks)
             previous_position = state.position
             state = quad(rc, state, cases.mass_scale)
-            active = current < len(gates)
-            selected = active_gate(gates, current)
-            pass_now, collision_now, miss_now = classify_gate_crossing(
-                previous_position,
-                state.position,
-                selected,
-                gate_config,
+            events = classify_course_step(
+                previous_position, state.position, gates, current, gate_config
             )
-            pass_now &= active
-            collision_now &= active
-            miss_now &= active
-            index = current.clamp_max(len(gates) - 1)
-            crossing_now = pass_now | collision_now | miss_now
-            new_crossing = crossing_now & crossing_lateral[row, index].isnan()
-            if bool(new_crossing.any()):
-                _, lateral, vertical = crossing_coordinates(
-                    previous_position,
-                    state.position,
-                    selected,
-                )
-                crossing_step[row[new_crossing], index[new_crossing]] = policy_step + 1
-                crossing_lateral[row[new_crossing], index[new_crossing]] = lateral[new_crossing]
-                crossing_vertical[row[new_crossing], index[new_crossing]] = vertical[new_crossing]
-            new_pass = pass_now & ~passed[row, index]
-            passed[row[new_pass], index[new_pass]] = True
-            pass_step[row[new_pass], index[new_pass]] = policy_step + 1
-            collision[row[collision_now], index[collision_now]] = True
-            missed[row[miss_now], index[miss_now]] = True
-            current = current + new_pass.long()
+            new_crossing = events.expected_forward_crossing & crossing_lateral.isnan()
+            crossing_step[new_crossing] = policy_step + 1
+            crossing_lateral[new_crossing] = events.crossing_lateral[new_crossing]
+            crossing_vertical[new_crossing] = events.crossing_vertical[new_crossing]
+            new_pass = events.passed & ~passed
+            passed |= events.passed
+            pass_step[new_pass] = policy_step + 1
+            collision |= events.ring_collision
+            wrong_order_count += events.wrong_order.long()
+            wrong_direction_count += events.wrong_direction.long()
+            course_penalty += events.penalty()
+            missed |= events.expected_forward_crossing & ~events.passed & ~events.ring_collision
+            current = events.next_gate_index
+            ground |= state.position[:, 2] <= 0.03
+            valid &= hover_train.state_is_valid(state)
+            failed_prefix |= events.failed | ground | ~valid
+            # Conservatively omit passes in the same physics step as a failure.
+            # Subsequent recovery passes remain in the raw diagnostic only.
+            prefix_passes += (events.passed & ~failed_prefix[:, None]).sum(dim=1)
 
-        ground |= state.position[:, 2] <= 0.03
-        valid &= hover_train.state_is_valid(state)
         maximum_tilt = torch.maximum(
             maximum_tilt,
             torch.linalg.vector_norm(state.euler[:, :2], dim=1),
@@ -409,13 +404,18 @@ def evaluate(
     final_gate_signed, _, _ = gate_coordinates(state.position, gates[-1])
     first = passed[:, 0]
     both = passed.all(dim=1)
-    strict = (
+    clean_course = (
         both
-        & (final_gate_signed >= 0.30)
         & ~collision.any(dim=1)
-        & ~missed.any(dim=1)
+        & ~(wrong_order_count > 0).any(dim=1)
+        & ~(wrong_direction_count > 0).any(dim=1)
         & ~ground
         & valid
+    )
+    strict = (
+        clean_course
+        & (final_gate_signed >= 0.30)
+        & ~missed.any(dim=1)
         & (maximum_tilt <= math.radians(45.0))
         & (saturation_steps / policy_steps <= 0.40)
     )
@@ -484,6 +484,23 @@ def evaluate(
         "first_gate_positive_offset_pass_rate": side_rate(first, cases.side, False),
         "both_gates_pass_rate": float(both.float().mean()),
         "all_gates_pass_rate": float(both.float().mean()),
+        "course_rules": "ordered-directed-all-annuli-v1",
+        "clean_course_success_rate": float(clean_course.float().mean()),
+        "clean_course_paired_success_rate": float(
+            clean_course.reshape(-1, 2).all(dim=1).float().mean()
+        ),
+        "wrong_order_episode_rate": float((wrong_order_count > 0).any(dim=1).float().mean()),
+        "wrong_direction_episode_rate": float(
+            (wrong_direction_count > 0).any(dim=1).float().mean()
+        ),
+        "wrong_order_events_mean": float(wrong_order_count.sum(dim=1).float().mean()),
+        "wrong_direction_events_mean": float(wrong_direction_count.sum(dim=1).float().mean()),
+        "all_gate_ring_collision_rate": float(collision.any(dim=1).float().mean()),
+        "course_event_penalty_mean": float(course_penalty.mean()),
+        "gates_before_failure_mean": float(prefix_passes.mean()),
+        "course_progress_score_mean": float(
+            (prefix_passes + course_penalty - 2.0 * (ground | ~valid)).mean()
+        ),
         "second_gate_pass_given_first_rate": (
             float(both.sum() / first.sum()) if bool(first.any()) else None
         ),
@@ -587,6 +604,8 @@ def main() -> int:
     controller.eval().requires_grad_(False)
     hover_config = HoverConfig(**payload["hover_config"])
     gate_config = GateConfig(**payload["gate_config"])
+    if args.gate_back_pattern is not None:
+        gate_config = replace(gate_config, back_pattern=args.gate_back_pattern)
     if args.inner_radius is not None or args.outer_radius is not None:
         gate_config = replace(
             gate_config,
@@ -644,6 +663,7 @@ def main() -> int:
         "checkpoint": str(args.checkpoint),
         "continuous_state": ["MaleCNS recurrence", "forelegs", "sticks", "aircraft"],
         "actor_gate_index_or_pass_input": False,
+        "gate_back_pattern": gate_config.back_pattern,
         "gate_roles": [
             "current green",
             "next red",

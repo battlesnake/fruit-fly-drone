@@ -35,6 +35,12 @@ class GateConfig:
     maximum_distance: float = 5.2
     minimum_height: float = 0.95
     maximum_height: float = 1.25
+    # Keep old checkpoints' appearance unless a new lesson explicitly enables it.
+    back_pattern: str = "solid"
+
+    def __post_init__(self) -> None:
+        if self.back_pattern not in ("solid", "checkerboard"):
+            raise ValueError("back_pattern must be solid or checkerboard")
 
 
 DEFAULT_GATE_CONFIG = GateConfig()
@@ -239,6 +245,8 @@ def render_annular_gates_rgb(
     feature.  Texture is fixed in world coordinates, so motion in the image is caused
     only by motion of the camera. Passed gates are black, the current gate uses the
     first colour, and subsequent gates use the remaining fixed colour sequence.
+    Ranks beyond the palette share its last colour. Optional checkerboard backs
+    encode traversal direction without changing the role hue or the aperture.
     """
 
     if not gates:
@@ -315,6 +323,14 @@ def render_annular_gates_rgb(
         # A small top/bottom paint cue makes pose observable without breaking the
         # left/right mirror symmetry needed by the paired steering curriculum.
         paint = 0.82 + 0.18 * torch.sigmoid(gate_vertical / 0.06)
+        if gate_config.back_pattern == "checkerboard":
+            # Coarse cells fixed to the gate, with reflection symmetry about its
+            # centreline. Legal approach is signed distance < 0 (numerator > 0).
+            cells = torch.floor(gate_lateral.abs() / 0.22) + torch.floor(
+                gate_vertical.abs() / 0.22
+            )
+            checker = 0.22 + 0.78 * torch.remainder(cells, 2.0)
+            paint = paint * torch.where(plane_numerator < 0.0, checker, 1.0)
         role = gate_number - current_gate_index
         colour_index = role.clamp(0, len(role_colours) - 1)
         colour = colour_table[colour_index]

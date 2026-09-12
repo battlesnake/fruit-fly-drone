@@ -47,6 +47,8 @@ current quantitative results are in the [hover milestone](docs/HOVER_MILESTONE.m
 
 - [`docs/PLAN.md`](docs/PLAN.md) — architecture, simulator decision, curriculum,
   experiments, safety, and milestones.
+- [`docs/RACING_ANTICIPATION.md`](docs/RACING_ANTICIPATION.md) — anticipatory racing lines,
+  directional gate markings, course penalties and the next teacher/hint experiment.
 - [`docs/CONTROL_ARCHITECTURE.md`](docs/CONTROL_ARCHITECTURE.md) — PX4/control-theory
   decomposition, native-circuit hypotheses, module-preserving extraction, and the
   progressively withdrawn teacher curriculum.
