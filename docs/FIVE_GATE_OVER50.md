@@ -360,6 +360,38 @@ and replacing the other three axes does not rescue native roll. This motivates a
 bounded roll-focused learning trial while preserving the source's other motor outputs;
 it does not justify deploying privileged roll assistance or claiming the goal.
 
+### Roll-focused replay with frozen-source preservation
+
+The next 60-update trial is `pragmatic-late-roll-preservation-replay-001`, starting
+from replay best60. `--supervision late-roll-preserve` selects only existing five-hop
+visual-to-roll paths and explicitly removes any selected edges entering the other
+three motor pools. All other edges, biases and time constants stay frozen. Upstream
+recurrence can still influence other axes indirectly, so motor-input freezing is not
+treated as sufficient preservation on its own.
+
+A frozen copy of the starting fly runs during collection on the exact same sensory
+history as the learner. Its four outputs are stored with the physical histories.
+Before gate one, all four learning targets preserve those source outputs. Afterward,
+only the roll target becomes the rate-damped teacher's roll; pitch/yaw/throttle still
+target that same frozen source. No second reference network runs during gradient
+replay, and no reference network or teacher is deployed.
+
+Collection mixes eight fully native pairs with four roll-assisted pairs. In the
+assisted bank the frozen source flies through gate one, then keeps its own three
+non-roll outputs while teacher roll alone acts, matching the successful diagnostic.
+Each update combines an early preservation window with a gate-2–5 learning window.
+LR 3e-6, contrast 1, twenty-frame unrolls and 0/20/40/60 fully native checks remain
+unchanged. Training seed is 1180983; assisted bank seed is 1280983; development seed
+is 1110983. Native banks refresh under retained weights at updates 20 and 40, while
+the preservation source stays fixed at the initial checkpoint.
+
+The actual mask contains 19,286 edges, 7,056 path nodes and all six roll motor neurons;
+none of these selected edges entered the other motor pools. The initial assisted bank
+contains observations at every gate and one failed lesson out of eight; the initial
+native bank contains thirteen failed lessons out of sixteen. The repeated autonomous
+development baseline is 11/32. These collection counts are lesson coverage, not a new
+autonomous evaluation result.
+
 All exploratory checkpoints remain ignored under `runs/`; do not publish them as a new
 best fly until full-flight results justify it. If a checkpoint is promoted, retain the
 MaleCNS attribution and use Git LFS.

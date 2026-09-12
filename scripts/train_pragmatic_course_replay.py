@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import sys
 from dataclasses import dataclass, replace
@@ -24,7 +25,10 @@ from train_pragmatic_course_teacher import (  # noqa: E402
     action_imitation_loss,
     native_sensorimotor_mask,
 )
-from train_pragmatic_gate_visual_roll_path import load_controller  # noqa: E402
+from train_pragmatic_gate_visual_roll_path import (  # noqa: E402
+    load_controller,
+    visual_roll_path_mask,
+)
 
 from flydrone.course_teacher import (  # noqa: E402
     CoursePath,
@@ -65,6 +69,7 @@ class ReplayBank:
     kind: str
     seed: int
     failure_steps: torch.Tensor | None = None
+    reference_outputs: torch.Tensor | None = None
 
     def starts(self, phase, unroll):
         if len(self.current) < unroll:
@@ -85,13 +90,51 @@ class ReplayBank:
             failed_lessons=(
                 int((self.failure_steps >= 0).sum()) if self.failure_steps is not None else None
             ),
+            source_preservation_outputs_stored=self.reference_outputs is not None,
         )
+
+
+def late_roll_preservation_targets(teacher, reference, current):
+    """Training labels only: preserve gate one and all non-roll source outputs."""
+    target = reference.clone()
+    target[:, 0] = torch.where(current >= 1, teacher[:, 0], reference[:, 0])
+    return target
+
+
+def roll_preservation_mask(graph_path, device):
+    mask, manifest = visual_roll_path_mask(graph_path, hop_budget=5, device=device)
+    with np.load(graph_path) as graph:
+        other_motors = graph["output_pool_indices"][graph["output_pool_offsets"][2] :]
+        enters_other_motor = torch.tensor(np.isin(graph["edge_post"], other_motors), device=device)
+    excluded = int((mask & enters_other_motor).sum())
+    mask &= ~enters_other_motor
+    if not bool(mask.any()):
+        raise ValueError("no roll paths remain after excluding other motor inputs")
+    manifest.update(
+        selected_edges=int(mask.sum()),
+        excluded_edges_entering_other_motor_pools=excluded,
+        supervision="late roll teacher plus frozen-source motor preservation",
+    )
+    return mask, manifest
 
 
 @torch.no_grad()
 def collect_bank(
-    controller, pairs, seed, kind, seconds, camera, config, gate_config, heading_mode="world-x"
+    controller,
+    pairs,
+    seed,
+    kind,
+    seconds,
+    camera,
+    config,
+    gate_config,
+    heading_mode="world-x",
+    reference_controller=None,
 ):
+    if kind not in ("native", "teacher", "roll-assisted"):
+        raise ValueError("collection kind must be native, teacher or roll-assisted")
+    if kind == "roll-assisted" and reference_controller is None:
+        raise ValueError("roll-assisted collection requires a frozen source controller")
     device = controller.bias.device
     cases, gates = sample_two_gate_cases(
         pairs, seed=seed, device=device, hover_config=config, **GEOMETRY
@@ -103,34 +146,53 @@ def collect_bank(
     failed = torch.zeros_like(current, dtype=torch.bool)
     failure_steps = torch.full_like(current, -1)
     neural = controller.initial_state(len(current), device=device, dtype=torch.float32)
-    if kind == "native":
+    reference_neural = None
+    if reference_controller is not None:
+        reference_neural = reference_controller.initial_state(
+            len(current), device=device, dtype=torch.float32
+        )
+    if kind == "native" or reference_controller is not None:
         image = render_annular_gates_rgb(
             state, gates, current_gate_index=current, camera=camera, gate_config=gate_config
         )
         for _ in range(10):
-            _, neural = controller(image, state.euler[:, :2], neural)
+            if kind == "native":
+                _, neural = controller(image, state.euler[:, :2], neural)
+            if reference_controller is not None:
+                _, reference_neural = reference_controller(
+                    image, state.euler[:, :2], reference_neural
+                )
     quad, legs = DifferentiableQuad(config).to(device), ForelegStickPlant(config).to(device)
     histories = [[] for _ in state.as_tuple()]
     roles, active_frames, targets = [], [], []
+    references = []
     for step in range(round(seconds * 50)):
         active = ~failed & (current < len(gates))
         if not bool(active.any()):
             break
-        target = course_teacher_motor(state, path, config, teacher)
+        teacher_target = course_teacher_motor(state, path, config, teacher)
+        target = teacher_target
+        if kind == "native" or reference_controller is not None:
+            image = render_annular_gates_rgb(
+                state, gates, current_gate_index=current, camera=camera, gate_config=gate_config
+            )
+        if reference_controller is not None:
+            reference_motor, reference_neural = reference_controller(
+                image, state.euler[:, :2], reference_neural
+            )
+            references.append(reference_motor.cpu().clone())
+            target = late_roll_preservation_targets(teacher_target, reference_motor, current)
         for values, record in zip(state.as_tuple(), histories, strict=True):
             record.append(values.cpu().clone())
         roles.append(current.cpu().clone())
         active_frames.append(active.cpu().clone())
         targets.append(target.cpu().clone())
         if kind == "native":
-            image = render_annular_gates_rgb(
-                state, gates, current_gate_index=current, camera=camera, gate_config=gate_config
-            )
             motor, neural = controller(image, state.euler[:, :2], neural)
         elif kind == "teacher":
-            motor = target
+            motor = teacher_target
         else:
-            raise ValueError("collection kind must be native or teacher")
+            motor = target  # frozen-source flight, with teacher roll only after gate one
         for _ in range(2):
             active_before = ~failed & (current < len(gates))
             rc, sticks = legs(motor, sticks)
@@ -153,6 +215,7 @@ def collect_bank(
         kind,
         seed,
         failure_steps.cpu(),
+        torch.stack(references) if references else None,
     )
     print(json.dumps(dict(stage="collection", **bank.manifest())), flush=True)
     return bank
@@ -270,6 +333,7 @@ def parse_args():
     parser.add_argument("--teacher-pairs", type=int, default=4)
     parser.add_argument("--learning-rate", type=float, default=3e-6)
     parser.add_argument("--contrast-weight", type=float, default=1.0)
+    parser.add_argument("--supervision", choices=("all", "late-roll-preserve"), default="all")
     parser.add_argument(
         "--teacher-heading-mode", choices=("tangent", "world-x", "rate-damped"), default="world-x"
     )
@@ -301,7 +365,12 @@ def main():
         raise SystemExit("contrast weight must be finite and nonnegative")
     device = torch.device(args.device)
     controller, source = load_controller(args, device)
-    edge_mask, _, manifest = native_sensorimotor_mask(args.graph, 5, device)
+    reference_controller = None
+    if args.supervision == "late-roll-preserve":
+        reference_controller = copy.deepcopy(controller).requires_grad_(False)
+        edge_mask, manifest = roll_preservation_mask(args.graph, device)
+    else:
+        edge_mask, _, manifest = native_sensorimotor_mask(args.graph, 5, device)
     controller.edge_magnitude.register_hook(lambda gradient: gradient * edge_mask)
     anchor_edges = controller.edge_magnitude.detach()[edge_mask].clone()
     optimizer = torch.optim.Adam([controller.edge_magnitude], lr=args.learning_rate)
@@ -355,6 +424,10 @@ def main():
             teacher_inputs_are_actor_inputs=False,
             teacher_config=vars(CourseTeacherConfig(heading_mode=args.teacher_heading_mode)),
             replay_prefix="current-weight-from-zero-with-original-10-frame-warmup",
+            supervision=args.supervision,
+            preservation_source_checkpoint=str(args.checkpoint)
+            if reference_controller is not None
+            else None,
         )
         torch.save(payload, args.output_dir / name)
 
@@ -387,6 +460,7 @@ def main():
             config,
             gate_config,
             args.teacher_heading_mode,
+            reference_controller,
         )
         collections.append(bank.manifest())
         return bank
@@ -394,7 +468,11 @@ def main():
     save("best-controller.pt", 0, baseline)
     print(json.dumps(dict(stage="baseline", metrics=baseline)), flush=True)
     report()
-    teacher_bank = collect("teacher", args.teacher_pairs, args.seed + 100000)
+    teacher_bank = collect(
+        "roll-assisted" if reference_controller is not None else "teacher",
+        args.teacher_pairs,
+        args.seed + 100000,
+    )
     native_bank = collect("native", args.native_pairs, args.seed)
     report()
     for update in range(1, args.updates + 1):

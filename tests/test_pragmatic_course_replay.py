@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from contextlib import nullcontext
 from pathlib import Path
 
 import numpy as np
@@ -37,6 +38,32 @@ def test_window_eligibility_excludes_any_post_failure_frame():
     data.active[9:, 0] = False
     assert data.starts(1, 2) == [[4, 5, 6, 7], [7, 8]]
     assert data.starts(1, 20) == [[], []]
+
+
+def test_late_roll_labels_preserve_all_source_axes_until_gate_one_and_other_axes_afterward():
+    reference = torch.arange(12, dtype=torch.float32).reshape(3, 4)
+    teacher = -torch.ones_like(reference)
+    target = replay.late_roll_preservation_targets(teacher, reference, torch.tensor([0, 1, 4]))
+    assert torch.equal(target[0], reference[0])
+    assert torch.equal(target[:, 1:], reference[:, 1:])
+    assert torch.equal(target[1:, 0], teacher[1:, 0])
+    assert reference[1, 0] == 4  # constructing labels does not mutate source records
+
+
+def test_roll_mask_excludes_edges_entering_other_motor_pools(monkeypatch):
+    graph = dict(
+        output_pool_indices=np.array([10, 11, 12, 13]),
+        output_pool_offsets=np.array([0, 1, 2, 3, 4]),
+        edge_post=np.array([1, 10, 11, 12, 13]),
+    )
+    monkeypatch.setattr(replay.np, "load", lambda _: nullcontext(graph))
+    monkeypatch.setattr(
+        replay, "visual_roll_path_mask", lambda *a, **k: (torch.ones(5, dtype=torch.bool), {})
+    )
+    mask, manifest = replay.roll_preservation_mask(None, torch.device("cpu"))
+    assert mask.tolist() == [True, True, True, False, False]
+    assert manifest["selected_edges"] == 3
+    assert manifest["excluded_edges_entering_other_motor_pools"] == 2
 
 
 def test_pair_selection_aligns_phase_and_falls_back_only_when_native_pair_is_missing():
