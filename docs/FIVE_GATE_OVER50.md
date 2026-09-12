@@ -2222,3 +2222,56 @@ issue. The temporary probe and raw results are under
 `/home/mark/tmp/fly-over50-20260912/replay_batch_probe.py` and `.json`. The live original
 mask comparison continues with its already-loaded one-window implementation; no
 optimizer state, target or runtime configuration in that process is changed.
+
+#### Seven-hop update 25; unified-label pilot launched from source
+
+The broader mask's first check reduces late-roll RMSE to **0.011885 / 0.013786**,
+or **44.14% / 51.31%** below source. Early preservation errors are 0.004475 / 0.005562,
+maximum non-roll RMSE is 0.003701, and the pre-update objective is 0.189393. This is
+substantially better fixed-window fitting than any five-hop check, but only one side
+has met the two-sided 50% threshold.
+
+Native flight is **5/32 clean** (zero negative / five positive), with **13/32 clean
+first gates** (two / eleven), 38 clean-prefix gates, 19 ring-contact episodes and one
+wrong-order episode. Wrong-direction, ground and invalid counts are zero. Better
+fitting has again failed to preserve the source's autonomous control, especially
+negative-side first-gate capture. `hops-7-update-25.pt` is not promoted and cannot
+yet nominate the old-label transfer audit.
+
+The mask choice for the isolated unified-label pilot is now settled under the
+already stated rule: seven hops' worst-side fitting improvement is **44.14%**, greater
+than the completed five-hop arm's best **28.79%**. Future seven-hop checks cannot
+erase its best saved result. Consequently, waiting for the rest of that arm is no
+longer necessary to choose the pilot mask. This revises scheduling, not the selection
+rule or the goal criteria.
+
+The new `pragmatic-unified-current-gate-fixed-fit-001` process has been launched with:
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/audit_pragmatic_fixed_replay_fit.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --cache runs/gate/pragmatic-current-gate-mixed-replay-001/source-replay.pt \
+  --fitting-report runs/gate/pragmatic-current-gate-mixed-replay-001/report.json \
+  --output-dir runs/gate/pragmatic-unified-current-gate-fixed-fit-001 \
+  --hop-budgets 7 --updates 100 --interval 25 --learning-rate 1e-4 \
+  --roll-labels unified --late-windows-per-group 4
+```
+
+It restarts the **original source**, not the poorly flying update-25 checkpoint.
+The same nine recorded windows, their weights and source PYT targets are retained;
+only early roll supervision changes. The tested grouping reduces dispatch overhead
+without changing the summed learning objective. The old fit process continues its
+seven-hop arm independently with unchanged labels, optimizer and runtime settings.
+Before the new launch the GPU used 2,497 / 16,303 MiB; the measured batching probe
+supports running both within available memory. Each has its own job handle and
+output directory. No new course collection, teacher assistance in native evaluation,
+fresh goal holdout or automatic controller promotion is introduced.
+
+The unified pilot has completed its source measurements and first optimizer update.
+Source native development is **12/32 clean**. Late source fitting RMSE is
+0.021278 / 0.028311 and early local-teacher RMSE is **0.012212 / 0.012643**, consistent
+with the prior CPU label-change check; maximum non-roll error is 3.3e-6. The first
+grouped objective is **0.881808** and gradient norm 3.77836. Three group losses use
+weights 0.5 / 0.25 / 0.25, representing all original nine lessons. This confirms
+startup and the intended training target, not learned improvement. The first
+unified fit/native check is at update 25. Both process handles remain live.
