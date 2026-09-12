@@ -2622,3 +2622,25 @@ likelihood would therefore omit other executed commands that depend on the updat
 weights. A proper PPO pilot must account for all four executed actions, with
 foreleg-compatible exploration and a training-only privileged critic. Neither an
 external controller nor an exploration-memory process belongs in the deployed actor.
+
+#### Corrected outcome search is live
+
+The corrected process is running in `pragmatic-phase-balanced-motor-es-002`.
+Its unchanged-source development check is **11/32 clean**, 28/32 first gates and
+100 clean-prefix gates, with zero ground/invalid episodes. This differs by one
+clean flight and one prefix gate from the earlier 12/32 source runs. Record this
+variation rather than calling a one-case change learned progress; no FP64 or
+byte-exact reproducibility detour is introduced. A nominee should clearly exceed
+the historical source range before fresh matched evaluation.
+
+The first four generation-one candidates have respectively 0, 0, 1 and 0 clean
+completions out of sixteen training cases. Candidate two has eight ground/invalid
+episodes. Its unpenalized mean race fitness is -0.170741 and its search fitness
+is **-12.670741**, confirming the additional `25 * 8/16` penalty in the real batched
+flight path. The other three have no ground/invalid episodes. These are exploratory
+training outcomes, not standalone development or fresh goal-validation results.
+
+The process is verified live, using 2,288 / 16,303 MiB of GPU memory at the sampled
+instant. First standalone candidate development checks are scheduled after
+generation two. No controller has been promoted; the retained-source decision and
+the full varied-course >50% goal remain unchanged.
