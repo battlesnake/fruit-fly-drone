@@ -143,8 +143,10 @@ def fly_course(
             )
             motor, neural = controller(image, state.euler[:, :2], neural)
             if record_trace:
-                motors.append(motor.detach().cpu())
-                active_frames.append(nominal_tracking.cpu())
+                # These tiny detached traces need no per-frame host synchronization.
+                # Transfer once at rollout end; never retain the neural graph.
+                motors.append(motor.detach())
+                active_frames.append(nominal_tracking.detach())
             preservation = motor.sum() * 0.0
             if reference_motors is not None:
                 preservation = (
@@ -265,7 +267,7 @@ def fly_course(
         final_positions=state.position.tolist(),
     )
     trace = (
-        dict(motors=torch.stack(motors), active=torch.stack(active_frames))
+        dict(motors=torch.stack(motors).cpu(), active=torch.stack(active_frames).cpu())
         if record_trace
         else None
     )

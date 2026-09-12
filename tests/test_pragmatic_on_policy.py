@@ -114,6 +114,28 @@ def test_chunks_detach_gradients_without_resetting_native_flight(monkeypatch):
         assert torch.equal(value, actor.state_dict()[key])
 
 
+@pytest.mark.parametrize("backward", [False, True])
+def test_detached_traces_transfer_to_host_only_after_the_complete_rollout(monkeypatch, backward):
+    cases, gates, options = tiny_setup(monkeypatch)
+    actor = TinyActor()
+    original_cpu = torch.Tensor.cpu
+    copies = []
+
+    def counted_cpu(value, *args, **kwargs):
+        copies.append((actor.calls, tuple(value.shape), value.requires_grad))
+        return original_cpu(value, *args, **kwargs)
+
+    monkeypatch.setattr(torch.Tensor, "cpu", counted_cpu)
+    _, trace, _ = online.fly_course(
+        actor, cases, gates, **options, backward=backward, chunk_steps=4, record_trace=True
+    )
+    assert copies == [(22, (12, 2, 4), False), (22, (12, 2), False)]
+    assert trace["motors"].device.type == trace["active"].device.type == "cpu"
+    assert trace["motors"].grad_fn is trace["active"].grad_fn is None
+    if backward:
+        assert torch.isfinite(actor.roll.grad) and actor.roll.grad.abs() > 1e-9
+
+
 def test_frozen_tracking_mask_prevents_early_crash_from_erasing_loss(monkeypatch):
     cases, gates, options = tiny_setup(monkeypatch, 3)
 

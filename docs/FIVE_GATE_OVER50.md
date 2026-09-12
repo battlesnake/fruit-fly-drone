@@ -1376,3 +1376,15 @@ ordinary FP32 differences near crossing boundaries do not require byte identity.
 Since gradient work remains pairwise, any total speedup will be limited—not sixteen
 times faster. Keep the active horizon run and first outcome-mode comparison
 unchanged; this is a later throughput option, not evidence of improved flying.
+
+The small trace-copy optimization has now been implemented independently of the
+unimplemented B16 batching option. `fly_course` keeps only detached motor and mask
+tensors on their execution device, stacks them after the complete rollout, and then
+returns the same CPU trace interface. That moves two explicit host copies per frame
+to two per rollout (3,000 to two for a 30 s trace), without changing controller,
+physics, loss, gradient truncation, batch size or acceptance arithmetic. The active
+100-frame process already loaded the old implementation and remains unchanged;
+future processes can use this diagnostic-storage optimization without changing the
+experimental recipe. No end-to-end speedup is claimed yet. All **542 tests pass**,
+including tracing with and without backward passes, detached outputs, host copies
+only after the last frame, and preserved trainable gradients.
