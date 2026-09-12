@@ -2494,3 +2494,74 @@ ground/invalid episodes**, with no ring or illegal-traversal events. No candidat
 is promoted and no goal holdout is used. The refreshed coverage pilot is now the
 only live training job; its twenty optimizer updates have completed and its second
 full-flight development check is pending. The source remains selected.
+
+#### Refreshed coverage pilot finished: source still wins
+
+All three rounds completed normally in **600.38 s**. The native development
+trajectory is not a successful learning result:
+
+| Check | Clean courses, negative / positive | Clean first gates, negative / positive | Clean-prefix gates | Ring-contact episodes | Ground / invalid |
+| --- | --- | --- | ---: | ---: | --- |
+| Source | 12/32 (9 / 3) | 28/32 (15 / 13) | 101 | 19 | 0 / 0 |
+| Update 10 | 1/32 (1 / 0) | 1/32 (1 / 0) | 5 | 18 | 0 / 0 |
+| Update 20 | 3/32 (0 / 3) | 8/32 (0 / 8) | 30 | 25 | 0 / 0 |
+| Update 30 | 2/32 (2 / 0) | 24/32 (16 / 8) | 50 | 27 | 0 / 0 |
+
+Update 20 has two wrong-order episodes; update 30 has none. Neither has
+wrong-direction events. First-gate control partly recovers by update 30, but later
+flight does not. The selected update remains **zero**, the original source. No
+fresh goal validation is warranted by these candidates.
+
+The later rounds also do not establish uniformly improved fitting on refreshed
+native histories. In round two, native early roll RMSE improves by 40.46% / 7.81%,
+but the available negative native-late error approximately doubles; positive
+native-late examples are absent. In round three, native early errors improve by
+20.99% / 26.98%, but available positive native-late error worsens by 8.49%; negative
+native-late examples are absent. Assisted late improvements remain asymmetric:
+round two -27.61% / +54.28%, round three +23.26% / -20.21%. These comparisons use
+the identical before/after per-round examples and actual source labels. They do
+not compare different banks as if they were the same test.
+
+The next experiment should target whole-flight outcomes rather than extend this
+same imitation pilot. Recurrent PPO remains an option, but the repository's legacy
+PPO trainer targets an older assisted single-gate actor and is not a drop-in for
+the full five-gate brain. A lower-cost alternative is the existing native motor
+parameter search: its previous six-generation trial started from a 4/32 source,
+not the current 12/32 source. Searching fixed native weights provides temporally
+coherent exploration through the real foreleg dynamics, without external noise
+state in the deployed actor. Any selected candidate still needs standalone,
+full-duration native development and then fresh varied-course validation.
+
+#### Bounded outcome-based search from the stronger source
+
+The next pilot uses the existing 24-coordinate native motor search, not a new
+controller or an extension of the failed replay fit. It starts from
+`pragmatic-phase-balanced-replay-001/best-controller.pt`. All eight opposing motor
+pools may adjust intrinsic biases and excitatory/inhibitory incoming gains, so
+roll and PYT can co-adapt to the actual flight outcome. The native topology,
+transmitter signs, foreleg plant and deployed sensory interface remain unchanged.
+This deliberately differs from the roll-only seven-hop imitation mask; it is a
+small whole-flight parameter search, not a controlled comparison of the masks.
+
+Budget: **six generations, four antithetic directions (eight candidates) each**, two
+candidates per GPU batch, eight varied mirrored training pairs per generation,
+full 30-second flights. Bias perturbation scale is 0.0025, incoming log-gain scale
+0.05, update factor 0.5 and sigma decay 0.98, retaining the existing search defaults.
+Parameter vectors are fixed throughout each flight and compiled into ordinary
+checkpoint weights for standalone development checks.
+
+An opt-in `--course-refresh-generations 1` gives six distinct training seeds,
+2026091370 through 2026091375; the legacy default remains two generations per bank.
+Source and candidates use the same complete gate distribution and scoring. Every
+second generation checks its updated search centre and generation winner on the
+reused 32-case development seed 1110983. Clean completions remain the primary
+selection criterion. The source stays retained unless a standalone candidate
+improves, and a development improvement alone is not a goal result. The pilot also
+has a 20-minute between-generation time cap, not an automatic extension condition.
+
+The search now refuses existing output directories and overlapping training/
+development seeds. **617 tests pass**, including the refresh schedule and existing
+batched-versus-compiled native recurrence and per-candidate clean-course scoring
+tests. No new model download, privileged actor input, teacher assistance or
+deployed exploration memory is introduced. At this entry the pilot is prepared;
+its flight evidence will be recorded separately after launch.

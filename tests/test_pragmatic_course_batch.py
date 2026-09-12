@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
@@ -14,8 +15,16 @@ from evaluate_pragmatic_two_gate_zero_shot import (  # noqa: E402
 from pragmatic_course_batch import ParameterBatchController, repeat_course_bank  # noqa: E402
 from search_gate_motor_interface_es import motor_interface_spec  # noqa: E402
 from search_pragmatic_full_native_gate_es import apply_vector  # noqa: E402
+from search_pragmatic_gate_course_es import training_course_seed  # noqa: E402
 
 from flydrone.hover import ConnectomeController, HoverConfig  # noqa: E402
+
+
+def test_course_search_can_refresh_each_generation_without_changing_legacy_schedule():
+    assert [training_course_seed(100, g, 2) for g in range(1, 7)] == [100, 100, 101, 101, 102, 102]
+    assert [training_course_seed(100, g, 1) for g in range(1, 7)] == list(range(100, 106))
+    with pytest.raises(ValueError, match="must be positive"):
+        training_course_seed(100, 1, 0)
 
 
 def test_candidate_scores_do_not_mix_flights_or_count_failed_completion():

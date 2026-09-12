@@ -46,6 +46,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--training-pairs", type=int, default=4)
     parser.add_argument("--development-pairs", type=int, default=32)
     parser.add_argument("--development-interval", type=int, default=5)
+    parser.add_argument("--course-refresh-generations", type=int, default=2)
     parser.add_argument("--seconds", type=float, default=30.0)
     parser.add_argument("--maximum-minutes", type=float, default=60.0)
     parser.add_argument("--seed", type=int, default=1_010_983)
@@ -87,6 +88,12 @@ def centered_ranks(scores: np.ndarray) -> np.ndarray:
     return (ranks / max(len(scores) - 1, 1) - 0.5).astype(np.float32)
 
 
+def training_course_seed(base_seed, generation, refresh_generations):
+    if generation < 1 or refresh_generations < 1:
+        raise ValueError("generation and course refresh interval must be positive")
+    return base_seed + (generation - 1) // refresh_generations
+
+
 def main() -> int:
     args = parse_args()
     if (
@@ -96,6 +103,8 @@ def main() -> int:
             args.candidate_batch,
             args.training_pairs,
             args.development_pairs,
+            args.development_interval,
+            args.course_refresh_generations,
             args.development_interval,
             args.seconds,
             args.maximum_minutes,
@@ -107,6 +116,14 @@ def main() -> int:
         <= 0
     ):
         raise SystemExit("search sizes, duration and scales must be positive")
+    training_seeds = {
+        training_course_seed(args.seed, generation, args.course_refresh_generations)
+        for generation in range(1, args.generations + 1)
+    }
+    if args.development_seed in training_seeds:
+        raise SystemExit("training and development course seeds must be separate")
+    if args.output_dir.exists():
+        raise SystemExit("refusing to overwrite an existing course-search experiment")
     device = torch.device(args.device)
     controller, source = load_controller(args, device)
     controller.eval().requires_grad_(False)
@@ -239,7 +256,7 @@ def main() -> int:
     for generation in range(1, args.generations + 1):
         if perf_counter() - started > args.maximum_minutes * 60:
             break
-        case_seed = args.seed + (generation - 1) // 2
+        case_seed = training_course_seed(args.seed, generation, args.course_refresh_generations)
         bank = sample_two_gate_cases(
             args.training_pairs,
             seed=case_seed,
