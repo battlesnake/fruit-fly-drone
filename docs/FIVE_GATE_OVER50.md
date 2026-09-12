@@ -2156,3 +2156,27 @@ gate, role and window-start object is reused. All **592 tests pass**, including 
 new relabelling and transfer-label guards, and Astra's read-only code review found no
 blocking issue. The original fitting process retains its already-loaded code and
 labels; the opt-in mode does not alter that running experiment.
+
+#### Five-hop arm complete; seven-hop source restart is live
+
+The five-hop arm reaches its **100-update cap without meeting the fitting screen**.
+Late-roll RMSE ends at **0.013863 / 0.020161**, reductions of **34.85% / 28.79%**.
+Early source-preservation error is 0.004774 / 0.005248 and maximum non-roll RMSE is
+0.003750. The complete objective before update 100 is 0.364817, versus 0.803150 at
+source. These nine training examples remain incompletely fitted under this setup;
+that alone does not establish a hard anatomical capacity limit.
+
+Native update-100 development is **7/32 clean** (one negative / six positive), with
+**20/32 clean first gates** (seven / thirteen), 57 clean-prefix gates, 25 ring-contact
+episodes and two wrong-order episodes. Wrong-direction, ground and invalid episodes
+remain zero. The source's 12/32 completion and 28/32 first capture are not beaten by
+any of this arm's four checks. Its checkpoint remains diagnostic-only and no transfer
+or goal holdout is triggered.
+
+The same process has independently reloaded source weights, removed the five-hop
+gradient hook and created fresh Adam state for **seven hops: 1,097,500 selected edges
+and 92,640 nodes**. Its first objective is 0.803149, back at the source scale rather
+than continued from the five-hop endpoint. It uses the same fixed examples, weighting,
+anchor denominator and 25/50/75/100 checks. The first seven-hop optimizer update is
+verified complete; the unified-label trial remains prepared but unlaunched pending
+the comparison's results.
