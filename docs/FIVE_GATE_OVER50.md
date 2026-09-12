@@ -392,6 +392,90 @@ native bank contains thirteen failed lessons out of sixteen. The repeated autono
 development baseline is 11/32. These collection counts are lesson coverage, not a new
 autonomous evaluation result.
 
+This bounded trial did not improve completion: update 20 tied 11/32 (29/32 first gate),
+update 40 scored 10/32 (26/32 first gate), and update 60 scored 10/32 (28/32 first gate).
+The starting checkpoint remained selected. Non-roll same-history errors stayed small,
+but that preservation did not make the late roll correction sufficiently learnable in
+these 60 short-window updates. Do not promote its latest checkpoint.
+
+### Fast native roll-motor fit
+
+The six roll motor neurons are **neural graph sinks**: they have no outgoing neural
+edges, including no self/cross-motor edges, and receive no direct sensor injection.
+Their 726 incoming synapses originate at 363 presynaptic neurons. Of those incoming
+synapses, 616 belong to the current five-hop visual-to-roll mask. This permits a much
+smaller training computation without adding a deployed readout or ignoring neural
+feedback from the motor neurons.
+
+`src/flydrone/motor_slice.py` computes the same six leaky motor states, fixed biases,
+fixed time constants and sigmoid antagonist-pool means. A causal exponential filter
+implements their membrane recurrence from zero, including the original warmup; it is
+not a collection of independently reset one-frame predictions. The method rejects
+graphs with outgoing motor edges or direct sensory injection into those motor cells.
+Only fitted magnitudes of existing synapses are copied into an ordinary full-controller
+checkpoint. Signs, topology, all other parameters and the deployed actor are unchanged.
+
+`scripts/train_pragmatic_roll_motor_slice.py` collects eight native and eight roll-assisted
+mirrored pairs from replay best60, storing source presynaptic activity on each actual
+sensory history. Targets preserve the source through gate one and teach only late roll.
+The last two whole pairs in each bank are held out from fitting; no frame-level split
+leaks a flight between training and validation. The objective balances early/late
+phases and both sides. The initial bounded run uses 200 Adam updates at 1e-3 on the
+616 visual-path incoming synapses, with biases/time constants frozen.
+
+The run is `pragmatic-roll-sink-fit-001`, using native collection seed 1190983 and
+assisted seed 1200983. A fit is not flight success. Reconstruct the source outputs,
+check the compiled candidate through full-network sensory replay, then evaluate fully
+autonomous flights before considering promotion. The frozen-feature cache, teacher
+labels and small training computation are never deployed as an external controller.
+
 All exploratory checkpoints remain ignored under `runs/`; do not publish them as a new
 best fly until full-flight results justify it. If a checkpoint is promoted, retain the
 MaleCNS attribution and use Git LFS.
+
+The motor-only fits did not improve autonomous completion. Run `pragmatic-roll-sink-fit-002`
+added a reusable feature cache, full-network replay checks, an undeployed linear diagnostic
+probe and separate selected/latest exports. Its held-out motor loss selected update 100,
+but native development flights scored only 3/32; update 200 scored 6/32. A matched fit of
+all 726 incoming roll synapses, instead of the 616 five-hop subset, also scored 6/32.
+The corrections mainly traded negative-side success for positive-side success.
+
+Static native-weight blends of 25%, 50% and 75% of the update-200 correction scored
+9/32, 8/32 and 8/32 respectively on development seed 1110983. They add no runtime
+selector, but still failed to beat the retained source's 11–12/32 on that same bank.
+The retained source's separate 64-case check remains 12/64; none of these motor-only
+experiments changes that best broader result. The unconstrained linear diagnostic
+also failed to improve held-out motor error; this does not establish that the native
+presynaptic activity contains no useful motion information.
+
+### Targeted motion-module plasticity trial
+
+A structural review with Astra found that the existing five-hop roll mask includes
+only 360 of 6,861 T4 cells and none of 6,719 T5 cells. Just 523 of 53,231 existing
+Mi1/Mi4/Mi9/Tm3→T4 and Tm1/Tm2/Tm4/Tm9→T5 input edges are trainable in that mask.
+Those neurons and frozen edges still run in the full brain; the limitation is what
+training may change, not which cells are simulated.
+
+`scripts/train_pragmatic_course_motion_gains.py` tests one bounded alternative:
+32 shared magnitude gains, one per presynaptic type and T4a–d/T5a–d target subtype.
+Every matching existing edge in both eyes participates, without a hop cutoff. Gains
+start at one, multiply the retained checkpoint's actual weights, and stay in [0.5,2].
+Signs, topology, biases, time constants, downstream connections and motor readout are
+frozen. The training parametrization is materialized into ordinary native edge weights
+for checkpoint export; it is not a new deployed decoder or sensory channel.
+
+Run `pragmatic-motion-shared-gains-002` starts from replay best60, with up to 30 updates
+at gain LR 1e-3 and checks at 10/20/30. It reuses twenty-frame differentiated windows,
+eight native pairs, four roll-assisted pairs, source early-roll/non-roll preservation,
+and late rate-damped-teacher roll targets. Training seeds are 1180983/1280983; separate
+validation collection seeds are 1210983/1310983, two mirrored pairs each. Fixed paired
+validation windows cover the five gate phases. Continue only if late-roll RMSE falls
+on both sides while early-roll RMSE stays at most 0.008; this small validation screen
+is not a course success claim. Selection still uses unassisted complete development
+flights on seed 1110983, with a first-gate preservation floor. Any promising candidate
+then needs a fresh course check and frozen-camera control before promotion.
+
+Attempt `001` was stopped before gradient updates to fix two review findings: split
+diagnostic residuals by each frame's actual phase rather than its window's starting
+phase, and enforce the first-gate floor as a hard selection condition rather than
+a score tie-break. Its identity checkpoint and collection are not a trained result.

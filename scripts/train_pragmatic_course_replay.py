@@ -276,7 +276,9 @@ def prepare_window(bank, rows, starts, unroll, device):
     )
 
 
-def replay_window_loss(controller, window, unroll, camera, gate_config, contrast_weight):
+def replay_window_loss(
+    controller, window, unroll, camera, gate_config, contrast_weight, *, diagnostics=False
+):
     states, gates, roles, targets, starts = window
     device = starts.device
     rows = torch.arange(len(starts), device=device)
@@ -306,7 +308,7 @@ def replay_window_loss(controller, window, unroll, camera, gate_config, contrast
     neural = neural.detach()
     scale = neural.new_tensor((0.02, 0.02, 0.01, 0.025))
     active = torch.ones(len(starts), device=device, dtype=torch.bool)
-    losses, axes = [], []
+    losses, axes, residuals = [], [], []
     for frame in range(unroll):
         times = starts + frame
         image, attitude = observations(times)
@@ -316,7 +318,10 @@ def replay_window_loss(controller, window, unroll, camera, gate_config, contrast
         )
         losses.append(loss)
         axes.append(axis.detach())
-    return torch.stack(losses).mean(), torch.stack(axes).mean(dim=0)
+        if diagnostics:
+            residuals.append((prediction - targets[times, rows]).detach())
+    result = (torch.stack(losses).mean(), torch.stack(axes).mean(dim=0))
+    return (*result, torch.stack(residuals)) if diagnostics else result
 
 
 def parse_args():
