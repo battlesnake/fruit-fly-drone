@@ -1931,3 +1931,28 @@ The summary reports combined, native-only and assisted-only reductions. At least
 permits expanded native validation. A combined gain with worse native-bank errors is
 flagged as assisted-state-only improvement instead. No checkpoint is automatically
 promoted, and passing this diagnostic cannot establish the above-50% flight goal.
+
+#### Five-hop fixed-bank check at update 25
+
+The first saved check reduces aggregate late-roll RMSE from 0.021278 / 0.028311 to
+**0.017791 / 0.025499**, or **16.39% negative / 9.93% positive**. Almost all fixed
+late windows improve; the assisted gate-five positive window worsens slightly
+(0.004475 to 0.004545). Early-roll preservation RMSE is 0.001744 / 0.002221 and the
+maximum non-roll RMSE is 0.001859. The full objective before update 25 is 0.611370,
+versus 0.803150 before update one. These remain deliberately fitted training examples.
+
+Native development flight regresses to **6/32 clean** (2 negative / 4 positive)
+versus the source's 12/32 (9 / 3). Clean first-gate passes increase to **30/32**
+(15 / 15) from 28/32 (15 / 13), but clean-prefix passes fall from 101 to 88 and
+ring-contact episodes rise from 19 to 26. There are two wrong-order episodes in
+both, and zero wrong-direction, ground or invalid episodes. All 30 s are scored.
+The completion loss is therefore not explained by fewer first-gate passes; changed
+gate-entry state versus errors in subsequent control are not causally separated.
+
+`hops-5-update-25.pt` is an explicitly diagnostic checkpoint, not promoted. The
+two-sided 50% fitting screen is not met, so the new-course replay-transfer check
+remains unrun and no fresh goal holdout is used. Per the predeclared experiment,
+training continues without development-driven rollback toward the next check at
+50 and the cap at 100. The seven-hop arm has not yet started. This experiment asks
+whether repeated fitting can reproduce the lessons, not whether partial fitting is
+already safe to substitute for the retained autonomous actor.
