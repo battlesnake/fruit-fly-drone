@@ -1,5 +1,21 @@
 # Variable-height hover to annular-gate plan
 
+## Place in the full-course goal — clarified 2026-09-12
+
+Hover, one gate and the recent five-gate experiments are stepping stones toward complete
+racecourse laps, ultimately with video as the fly's sensory input and front-leg-driven
+stick positions as the four acro outputs. The simplified segmented/textured world and
+relative-order gate colours are acceptable for that final task. Current roll/pitch
+observations are temporary learning support. The overarching objective and progression
+are in [the project plan](PLAN.md#end-goal-and-current-priorities--clarified-2026-09-12).
+
+The next geometric challenge is a short course requiring a heading change, followed by
+alternating turns and a reversal, while continuing to vary gate height and spacing.
+Measure uninterrupted completion and turn recovery before scaling to complete laps.
+Retain the current mild five-gate course as a regression task. Use periodic reviews during
+training to question the teacher, objective, input encoding, neural dynamics and output
+authority, and preserve promising alternatives for small comparative experiments.
+
 ## Objective and current starting point
 
 Train the recurrent full-MaleCNS controller to:

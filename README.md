@@ -1,10 +1,18 @@
 # Fly connectome quadcopter pilot
 
 This is a research workspace for a **connectome-constrained artificial pilot**. Its
-recurrent core follows a selected subgraph of the MaleCNS v1.0 fruit-fly connectome.
+current recurrent core follows the full traced MaleCNS v1.0 fruit-fly connectome;
+earlier experiments used selected subgraphs.
 Activity in identified front-leg motor-neuron pools moves two virtual Mode-2 transmitter
 sticks, and the measured stick positions become the four FPV acro commands: roll, pitch,
 yaw, and throttle.
+
+The end goal is to fly complete drone racecourse laps from FPV video, including coordinated
+turns, braking, climbs and descents. The course can keep its simplified appearance:
+distinct surfaces, faint texture fixed in world coordinates, and gates coloured by
+relative order. Current experiments also supply roll/pitch angles as temporary learning
+support; video-only racing remains to be demonstrated. See
+[the end goal and progression](docs/PLAN.md#end-goal-and-current-priorities--clarified-2026-09-12).
 
 ## What this project is—and is not
 

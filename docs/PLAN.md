@@ -1,5 +1,65 @@
 # Plan: a connectome-constrained acro pilot
 
+## End goal and current priorities — clarified 2026-09-12
+
+Train the fly-derived recurrent nervous system to pilot a quadcopter around a complete
+drone racecourse in acro mode. FPV video is the final sensory input; activity in identified
+front-leg motor neurons moves the simulated front legs, their movement deflects the two
+transmitter sticks, and measured stick positions supply roll, pitch, yaw and throttle.
+The current roll/pitch observation is temporary support for learning and should eventually
+be removed. The aircraft can still use its own IMU for its ordinary inner angular-rate
+controller without exposing that telemetry to the fly.
+
+For this project, representative racing means courses combining straights, varying gate
+spacing and orientation, left/right turns, reversals, climbs and descents. The fly must
+learn coordinated roll/pitch/yaw/throttle control, anticipate the following gate, brake
+and accelerate, and retain useful motion and target information when a gate leaves the
+camera view. Begin with one complete lap, then test repeated laps with continuous neural,
+leg, stick and aircraft state. These are proposed course families, not a claim to match a
+particular racing standard or a requirement for competitive lap times at the first proof.
+
+The simplified visual presentation is part of the intended task. Keep surfaces visually
+distinct, with faint texture fixed in world coordinates to provide motion cues, and
+colour gates by relative order: current, next and later. Passed gates become dark and the
+roles advance after a valid crossing. Photorealistic scenery and ordinary race signage
+are optional extensions. Course role assignment belongs to the environment; the actor
+must read it from pixels. Texture seed/phase should vary independently of course layout
+so texture can support motion estimation without identifying a memorized route.
+
+The recent variable five-gate result (17/128 complete flights versus 13/128 for its source)
+is an early progress measure. It covers mild offsets along a mostly forward course and
+does not establish full-course racing or video-only control. The active progression is:
+
+1. Improve uninterrupted completion on the present course distribution and preserve
+   takeoff/hover capability as separate building blocks.
+2. Add short courses with real heading changes: a single bend, alternating bends and a
+   reversal, alongside independent height and spacing changes. Test roll/yaw coordination
+   and throttle control, rather than assuming a roll-only adaptation will cover them.
+3. Combine these elements into held-out complete laps, then join takeoff to the lap and
+   evaluate repeated laps without controller resets or teacher intervention.
+4. Introduce matched roll/pitch-input ablations as competence grows, then train the same
+   native network for video-only flight and evaluate the complete lap again.
+
+Select learning methods by complete-flight outcomes. Short teacher/recovery lessons can
+seed useful behaviour; restricted anatomical-parameter evolution search or recurrent RL
+can optimize the deployed trajectory. A teacher used for a new course must first fly it
+through the actual foreleg/stick plant at the relevant speed. The current staged teacher
+is much slower than successful native flights, so lower imitation error alone is not
+progress toward racing.
+
+During longer training and evaluation runs, periodically reconsider the design using
+flight traces: perception and field-of-view limits, neural timing and memory, motor
+authority, teacher mismatch, curriculum coverage and reward incentives. Record promising
+alternatives and a small experiment that can distinguish them. Retain failed approaches
+as evidence without letting exact replay or extensive certification displace the next
+behavioural demonstration. Compare new controllers on matched unseen layouts using full
+lap completion, cumulative gates, collisions and completion time; a few extra successes
+on a small bank are preliminary evidence, not established reliability.
+
+This clarification governs the earlier architectural options and research milestones
+below. Current implementation status is recorded in
+[the execution plan](HOVER_TO_GATE_PLAN.md) and its linked experiment records.
+
 ## 1. Research claim
 
 The target is a **connectome-constrained artificial pilot**. MaleCNS determines the
@@ -27,7 +87,7 @@ Two useful precedents define the reasonable envelope:
 ## 2. System boundary
 
 ```text
-rendered FPV frames                         roll/pitch + accelerometer
+rendered FPV frames                         temporary roll/pitch support
          |                                             |
 fixed hexagonal resampling and                 fixed normalization and
 R1-R8-like channel response                    push-pull population coding
@@ -102,12 +162,12 @@ emit an **arm request**, but it should never own the sole authority to arm or di
 
 ### Observations and timing
 
-Start with a forward FPV camera at about 60 Hz and neural/motor updates at a fixed rate
-around 100 Hz, then benchmark. Feed roll and pitch using fixed sine/cosine or push-pull
-coding and optionally feed the three-axis accelerometer through fixed sensory
-populations. Preserve every neuron's membrane/rate state between ticks; that state must
-infer motion and remember prior outputs. A gyro would be the most useful later sensor
-ablation for acro control, but is not required for the first specified observation set.
+The current prototype uses 320×200 FPV at 125° horizontal FOV, a 50 Hz policy and 100 Hz
+foreleg/stick/aircraft updates. Roll and pitch enter through fixed sensory coding during
+the initial milestones; the final target uses video alone. Accelerometer and other
+telemetry experiments are optional diagnostics, not requirements for the racing actor.
+Preserve every neuron's membrane/rate state between ticks; that state must infer motion
+and retain useful information between frames.
 Model timestamping, exposure, transport delay, dropped frames, noise, and actuator lag
 before hardware transfer. World pose, velocity, and gate coordinates are
 teacher/critic/evaluation information only.
@@ -159,8 +219,11 @@ and selection rules. Expand only after a reduced graph beats its controls.
 The proposed role-changing gates are a good way to externalize course order through
 vision rather than give the actor a waypoint vector.
 
-The initial world is deliberately austere: grey floor, black background, and fixed gate
-geometry. At any instant:
+The world can remain deliberately austere through the final course task: a textured grey
+floor, a dark background, distinct surfaces where present, and role-coloured gates.
+Textures remain fixed in world coordinates during a flight. The current renderer uses
+green for current, red for next, blue for all later gates and black for passed gates.
+A possible bounded lookahead extension would assign colours as follows:
 
 - gate `0` in the visible task horizon has fixed role color `C0` and is always current;
 - gates `1..N-1` have fixed role colors `C1..C(N-1)`;
@@ -168,11 +231,11 @@ geometry. At any instant:
 - after a valid pass, remaining colored gates shift down one role and the newly exposed
   gate receives `C(N-1)`.
 
-Begin with `N=1`, then increase to two or three when single-gate flight works. Choose
-strongly separated role colors and map RGB through a fixed approximation of R1-R8
+Choose strongly separated role colors and map RGB through a fixed approximation of R1-R8
 photoreceptor channels. An ordinary RGB camera cannot reproduce the fly's UV channels,
 so this is an engineered retinal interface rather than a claim of biological spectral
-vision. Visual randomization is a later robustness phase, not part of the first proof.
+vision. Randomize texture placement independently of the course while retaining this
+visual language; ordinary unmarked racing visuals are not an acceptance requirement.
 
 A valid pass is a directed crossing of the current gate plane with the whole quad inside
 an aperture reduced by collision clearance. Sweep the trajectory between physics steps,
