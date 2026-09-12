@@ -1,0 +1,479 @@
+#!/usr/bin/env python3
+"""Train native course control with phase-balanced, current-weight sensory replay."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from dataclasses import dataclass, replace
+from pathlib import Path
+from time import perf_counter
+
+import numpy as np
+import torch
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "src"))
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+
+import train_variable_height_hover as hover_train  # noqa: E402
+from evaluate_pragmatic_two_gate_zero_shot import evaluate, sample_two_gate_cases  # noqa: E402
+from search_pragmatic_gate_course_es import selection_score  # noqa: E402
+from train_pragmatic_course_teacher import (  # noqa: E402
+    action_imitation_loss,
+    native_sensorimotor_mask,
+)
+from train_pragmatic_gate_visual_roll_path import load_controller  # noqa: E402
+
+from flydrone.course_teacher import (  # noqa: E402
+    CoursePath,
+    CourseTeacherConfig,
+    course_teacher_motor,
+)
+from flydrone.gate import AnnularGate, GateConfig, render_annular_gates_rgb  # noqa: E402
+from flydrone.gate_course import classify_course_step  # noqa: E402
+from flydrone.hover import (  # noqa: E402
+    DifferentiableQuad,
+    ForelegStickPlant,
+    HoverConfig,
+    QuadState,
+)
+from flydrone.visual_hover import CameraSpec  # noqa: E402
+
+GEOMETRY = dict(
+    layout="variable",
+    gate_count=5,
+    spacing_range=(0.9, 1.5),
+    lateral_step_range=(0.0, 0.2),
+    lateral_deviation_limit=0.5,
+    height_step_range=(0.0, 0.08),
+    height_range=(0.9, 1.3),
+    yaw_jitter_degrees=15.0,
+)
+
+
+@dataclass
+class ReplayBank:
+    """Training-only CPU physical histories; never reusable neural states."""
+
+    states: tuple[torch.Tensor, ...]  # time, episode, physical component
+    gates: tuple[AnnularGate, ...]
+    current: torch.Tensor
+    active: torch.Tensor
+    target: torch.Tensor
+    kind: str
+    seed: int
+    failure_steps: torch.Tensor | None = None
+
+    def starts(self, phase, unroll):
+        if len(self.current) < unroll:
+            return [[] for _ in range(self.current.shape[1])]
+        valid_window = self.active.unfold(0, unroll, 1).all(dim=-1)
+        eligible = valid_window & (self.current[: len(valid_window)] == phase)
+        return [torch.nonzero(column).flatten().tolist() for column in eligible.T]
+
+    def manifest(self):
+        return dict(
+            kind=self.kind,
+            seed=self.seed,
+            episodes=self.current.shape[1],
+            recorded_steps=len(self.current),
+            active_frames_by_gate=[
+                int(((self.current == g) & self.active).sum()) for g in range(5)
+            ],
+            failed_lessons=(
+                int((self.failure_steps >= 0).sum()) if self.failure_steps is not None else None
+            ),
+        )
+
+
+@torch.no_grad()
+def collect_bank(
+    controller, pairs, seed, kind, seconds, camera, config, gate_config, heading_mode="world-x"
+):
+    device = controller.bias.device
+    cases, gates = sample_two_gate_cases(
+        pairs, seed=seed, device=device, hover_config=config, **GEOMETRY
+    )
+    state, sticks = cases.state, cases.sticks
+    path = CoursePath.through_gates(state.position, gates)
+    teacher = CourseTeacherConfig(heading_mode=heading_mode)
+    current = torch.zeros(2 * pairs, device=device, dtype=torch.long)
+    failed = torch.zeros_like(current, dtype=torch.bool)
+    failure_steps = torch.full_like(current, -1)
+    neural = controller.initial_state(len(current), device=device, dtype=torch.float32)
+    if kind == "native":
+        image = render_annular_gates_rgb(
+            state, gates, current_gate_index=current, camera=camera, gate_config=gate_config
+        )
+        for _ in range(10):
+            _, neural = controller(image, state.euler[:, :2], neural)
+    quad, legs = DifferentiableQuad(config).to(device), ForelegStickPlant(config).to(device)
+    histories = [[] for _ in state.as_tuple()]
+    roles, active_frames, targets = [], [], []
+    for step in range(round(seconds * 50)):
+        active = ~failed & (current < len(gates))
+        if not bool(active.any()):
+            break
+        target = course_teacher_motor(state, path, config, teacher)
+        for values, record in zip(state.as_tuple(), histories, strict=True):
+            record.append(values.cpu().clone())
+        roles.append(current.cpu().clone())
+        active_frames.append(active.cpu().clone())
+        targets.append(target.cpu().clone())
+        if kind == "native":
+            image = render_annular_gates_rgb(
+                state, gates, current_gate_index=current, camera=camera, gate_config=gate_config
+            )
+            motor, neural = controller(image, state.euler[:, :2], neural)
+        elif kind == "teacher":
+            motor = target
+        else:
+            raise ValueError("collection kind must be native or teacher")
+        for _ in range(2):
+            active_before = ~failed & (current < len(gates))
+            rc, sticks = legs(motor, sticks)
+            previous = state.position
+            state = quad(rc, state, cases.mass_scale)
+            events = classify_course_step(previous, state.position, gates, current, gate_config)
+            current = events.next_gate_index
+            missed = (events.expected_forward_crossing & ~events.passed).any(dim=1)
+            failure_now = events.failed | missed | ~hover_train.state_is_valid(state)
+            failure_steps[active_before & failure_now] = step + 1
+            failed |= failure_now
+    if not roles:
+        raise RuntimeError("collection produced no valid frames")
+    bank = ReplayBank(
+        tuple(torch.stack(record) for record in histories),
+        tuple(AnnularGate(g.center.cpu(), g.yaw.cpu()) for g in gates),
+        torch.stack(roles),
+        torch.stack(active_frames),
+        torch.stack(targets),
+        kind,
+        seed,
+        failure_steps.cpu(),
+    )
+    print(json.dumps(dict(stage="collection", **bank.manifest())), flush=True)
+    return bank
+
+
+def select_pair_window(native, teacher, phase, unroll, rng, window_kind):
+    """Choose both mirrored branches at the same phase, not necessarily the same time."""
+    for bank in (native, teacher):
+        starts = bank.starts(phase, unroll)
+        pairs = [p for p in range(len(starts) // 2) if starts[2 * p] and starts[2 * p + 1]]
+        if not pairs:
+            continue
+        pair = int(rng.choice(pairs))
+        rows = (2 * pair, 2 * pair + 1)
+        selected = []
+        actual_kinds = []
+        for row in rows:
+            options = starts[row]
+            preferred = []
+            if window_kind == "transition":
+                preferred = [t for t in options if bank.current[t + unroll - 1, row] > phase]
+            elif (
+                window_kind == "pre-failure"
+                and bank.failure_steps is not None
+                and bank.failure_steps[row] >= 0
+            ):
+                last = int(torch.nonzero(bank.active[:, row]).flatten()[-1])
+                preferred = [t for t in options if t + unroll - 1 >= last - unroll]
+            selected.append(int(rng.choice(preferred or options)))
+            actual_kinds.append(window_kind if preferred else "approach")
+        return (
+            bank,
+            rows,
+            selected,
+            dict(
+                source=bank.kind,
+                seed=bank.seed,
+                pair=pair,
+                phase=phase + 1,
+                starts=selected,
+                kinds=actual_kinds,
+            ),
+        )
+    raise RuntimeError(f"no paired replay windows for gate {phase + 1}")
+
+
+def prepare_window(bank, rows, starts, unroll, device):
+    stop = max(starts) + unroll
+    return (
+        tuple(value[:stop, list(rows)].to(device) for value in bank.states),
+        tuple(
+            AnnularGate(g.center[list(rows)].to(device), g.yaw[list(rows)].to(device))
+            for g in bank.gates
+        ),
+        bank.current[:stop, list(rows)].to(device),
+        bank.target[:stop, list(rows)].to(device),
+        torch.tensor(starts, device=device),
+    )
+
+
+def replay_window_loss(controller, window, unroll, camera, gate_config, contrast_weight):
+    states, gates, roles, targets, starts = window
+    device = starts.device
+    rows = torch.arange(len(starts), device=device)
+
+    def observations(times):
+        state = QuadState(*(value[times, rows] for value in states))
+        image = render_annular_gates_rgb(
+            state,
+            gates,
+            current_gate_index=roles[times, rows],
+            camera=camera,
+            gate_config=gate_config,
+        )
+        return image, state.euler[:, :2]
+
+    neural = controller.initial_state(len(starts), device=device, dtype=torch.float32)
+    with torch.no_grad():
+        image, attitude = observations(torch.zeros_like(starts))
+        for _ in range(10):
+            _, neural = controller(image, attitude, neural)
+        for time in range(int(starts.max())):
+            times = torch.minimum(torch.full_like(starts, time), starts)
+            image, attitude = observations(times)
+            _, advanced = controller(image, attitude, neural)
+            # A shorter branch waits without receiving extra neural updates.
+            neural = torch.where((time < starts)[:, None], advanced, neural)
+    neural = neural.detach()
+    scale = neural.new_tensor((0.02, 0.02, 0.01, 0.025))
+    active = torch.ones(len(starts), device=device, dtype=torch.bool)
+    losses, axes = [], []
+    for frame in range(unroll):
+        times = starts + frame
+        image, attitude = observations(times)
+        prediction, neural = controller(image, attitude, neural)
+        loss, axis = action_imitation_loss(
+            prediction, targets[times, rows], active, scale, contrast_weight
+        )
+        losses.append(loss)
+        axes.append(axis.detach())
+    return torch.stack(losses).mean(), torch.stack(axes).mean(dim=0)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--graph", type=Path, default=REPO_ROOT / "data/derived/full-visual-connectome-v1.npz"
+    )
+    parser.add_argument("--checkpoint", type=Path, required=True)
+    parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--device", default="cuda")
+    parser.add_argument("--updates", type=int, default=60)
+    parser.add_argument("--unroll", type=int, default=20)
+    parser.add_argument("--native-pairs", type=int, default=8)
+    parser.add_argument("--teacher-pairs", type=int, default=4)
+    parser.add_argument("--learning-rate", type=float, default=3e-6)
+    parser.add_argument("--contrast-weight", type=float, default=1.0)
+    parser.add_argument(
+        "--teacher-heading-mode", choices=("tangent", "world-x", "rate-damped"), default="world-x"
+    )
+    parser.add_argument("--interval", type=int, default=20)
+    parser.add_argument("--seconds", type=float, default=30.0)
+    parser.add_argument("--development-pairs", type=int, default=16)
+    parser.add_argument("--development-seed", type=int, default=1110983)
+    parser.add_argument("--seed", type=int, default=1150983)
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    if (
+        min(
+            args.updates,
+            args.unroll,
+            args.native_pairs,
+            args.teacher_pairs,
+            args.learning_rate,
+            args.interval,
+            args.seconds,
+            args.development_pairs,
+        )
+        <= 0
+    ):
+        raise SystemExit("sizes, intervals and rates must be positive")
+    if not np.isfinite(args.contrast_weight) or args.contrast_weight < 0:
+        raise SystemExit("contrast weight must be finite and nonnegative")
+    device = torch.device(args.device)
+    controller, source = load_controller(args, device)
+    edge_mask, _, manifest = native_sensorimotor_mask(args.graph, 5, device)
+    controller.edge_magnitude.register_hook(lambda gradient: gradient * edge_mask)
+    anchor_edges = controller.edge_magnitude.detach()[edge_mask].clone()
+    optimizer = torch.optim.Adam([controller.edge_magnitude], lr=args.learning_rate)
+    config = HoverConfig(**source["hover_config"])
+    gate_config = replace(GateConfig(**source["gate_config"]), back_pattern="checkerboard")
+    camera = CameraSpec(
+        width=source["image_resolution"][0],
+        height=source["image_resolution"][1],
+        horizontal_fov_degrees=source["camera_hfov_degrees"],
+    )
+    development = sample_two_gate_cases(
+        args.development_pairs,
+        seed=args.development_seed,
+        device=device,
+        hover_config=config,
+        **GEOMETRY,
+    )
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    started = perf_counter()
+    rng = np.random.default_rng(args.seed)
+    history, collections = [], []
+
+    def assess():
+        return evaluate(
+            controller,
+            *development,
+            seconds=args.seconds,
+            warmup_steps=10,
+            camera=camera,
+            hover_config=config,
+            gate_config=gate_config,
+        )
+
+    baseline = assess()
+    best, best_update = baseline, 0
+    best_edges = controller.edge_magnitude.detach().clone()
+    first_floor = max(0.0, baseline["first_gate_pass_rate"] - 0.05)
+
+    def save(name, update, metrics):
+        payload = dict(source)
+        payload.update(
+            controller={
+                key: value.detach().cpu() for key, value in controller.state_dict().items()
+            },
+            experiment="phase-balanced-native-course-replay-v1",
+            training_update=update,
+            native_path_manifest=manifest,
+            gate_config=vars(gate_config),
+            course_geometry=GEOMETRY,
+            selection_metrics=metrics,
+            teacher_inputs_are_actor_inputs=False,
+            teacher_config=vars(CourseTeacherConfig(heading_mode=args.teacher_heading_mode)),
+            replay_prefix="current-weight-from-zero-with-original-10-frame-warmup",
+        )
+        torch.save(payload, args.output_dir / name)
+
+    def report():
+        result = dict(
+            experiment="phase-balanced-native-course-replay-v1",
+            arguments={k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
+            source_development=baseline,
+            selected_development=best,
+            selected_update=best_update,
+            history=history,
+            collections=collections,
+            geometry=GEOMETRY,
+            native_path_manifest=manifest,
+            elapsed_seconds=perf_counter() - started,
+            actor_inputs=["320x200 RGB", "roll", "pitch"],
+            actor_outputs="native foreleg pools -> physical forelegs -> sticks",
+            replay_or_teacher_state_deployed=False,
+        )
+        (args.output_dir / "report.json").write_text(json.dumps(result, indent=2) + "\n")
+
+    def collect(kind, pairs, seed):
+        bank = collect_bank(
+            controller,
+            pairs,
+            seed,
+            kind,
+            args.seconds,
+            camera,
+            config,
+            gate_config,
+            args.teacher_heading_mode,
+        )
+        collections.append(bank.manifest())
+        return bank
+
+    save("best-controller.pt", 0, baseline)
+    print(json.dumps(dict(stage="baseline", metrics=baseline)), flush=True)
+    report()
+    teacher_bank = collect("teacher", args.teacher_pairs, args.seed + 100000)
+    native_bank = collect("native", args.native_pairs, args.seed)
+    report()
+    for update in range(1, args.updates + 1):
+        optimizer.zero_grad(set_to_none=True)
+        windows, loss_values, axis_values = [], [], []
+        kind = ("approach", "transition", "pre-failure")[(update - 1) % 3]
+        for phase in (0, 1 + (update - 1) % 4):
+            bank, rows, starts, record = select_pair_window(
+                native_bank, teacher_bank, phase, args.unroll, rng, kind
+            )
+            window = prepare_window(bank, rows, starts, args.unroll, device)
+            loss, axes = replay_window_loss(
+                controller, window, args.unroll, camera, gate_config, args.contrast_weight
+            )
+            if not bool(torch.isfinite(loss)):
+                raise RuntimeError("nonfinite replay loss; no update applied")
+            (0.5 * loss).backward()
+            windows.append(record)
+            loss_values.append(float(loss.detach()))
+            axis_values.append(axes.tolist())
+            del loss, window
+        anchor = (
+            1e-3 * ((controller.edge_magnitude[edge_mask] - anchor_edges) / 0.02).square().mean()
+        )
+        anchor.backward()
+        gradient = torch.nn.utils.clip_grad_norm_(
+            controller.parameters(), 1.0, error_if_nonfinite=True
+        )
+        before = controller.edge_magnitude.detach()[edge_mask].clone()
+        masked_gradient = controller.edge_magnitude.grad[edge_mask].clone()
+        optimizer.step()
+        controller.project_parameters()
+        delta = controller.edge_magnitude.detach()[edge_mask] - before
+        entry = dict(
+            update=update,
+            windows=windows,
+            losses=loss_values,
+            axis_losses=axis_values,
+            gradient_norm=float(gradient),
+            gradient_update_dot=float((masked_gradient * delta).sum()),
+            elapsed_seconds=perf_counter() - started,
+        )
+        if update % args.interval == 0 or update == args.updates:
+            metrics = assess()
+            entry["development"] = metrics
+            save("latest-controller.pt", update, metrics)
+            if selection_score(metrics, first_floor) > selection_score(best, first_floor):
+                best, best_update = metrics, update
+                best_edges = controller.edge_magnitude.detach().clone()
+                save("best-controller.pt", update, metrics)
+            print(
+                json.dumps(
+                    dict(
+                        stage="development",
+                        update=update,
+                        clean=metrics["clean_course_success_rate"],
+                        first=metrics["first_gate_pass_rate"],
+                        prefix=metrics["gates_before_failure_mean"],
+                    )
+                ),
+                flush=True,
+            )
+            # Refresh collection under retained weights and discard stale optimizer
+            # momentum only when returning to an earlier, better checkpoint.
+            if update < args.updates:
+                if best_update != update:
+                    with torch.no_grad():
+                        controller.edge_magnitude.copy_(best_edges)
+                    optimizer.state.clear()
+                    entry["restored_best_update"] = best_update
+                native_bank = collect("native", args.native_pairs, args.seed + update)
+        history.append(entry)
+        print(json.dumps({k: v for k, v in entry.items() if k != "development"}), flush=True)
+        report()
+    print(
+        json.dumps(dict(stage="complete", selected_update=best_update, selected=best)), flush=True
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

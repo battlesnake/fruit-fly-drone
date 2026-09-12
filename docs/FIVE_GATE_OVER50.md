@@ -82,6 +82,12 @@ are fixed for its entire flight, then compiled into ordinary native checkpoint w
 for standalone development evaluation. Tests compare batched recurrence with compiled
 controllers and check that per-candidate scores preserve the full clean-course rules.
 
+The six-generation batched search from native-best100 completed 48 candidate trials
+and retained a standalone development result of 6/32, versus its 4/32 source, on seed
+1110983. It did not exceed the subsequent imitation result. A generation-one trial
+that scored 4/8 on its search bank scored only 5/32 when separately compiled and
+checked; small search-bank successes are not sufficient for selection or the goal.
+
 ### Continuous-path teacher
 
 `src/flydrone/course_teacher.py` implements a training-only cubic-Hermite course path
@@ -225,7 +231,9 @@ zero under the current weights before its differentiable unroll. Refresh native 
 periodically. Replay buffers, course phase labels and teacher state remain training-only;
 the deployed actor retains only its native recurrence. Measure stale-state prediction
 error and gradient/update alignment before attributing failures to insufficient recurrence
-or changing optimizer momentum. This alternative is not yet implemented.
+or changing optimizer momentum. This alternative is now implemented in
+`scripts/train_pragmatic_course_replay.py`; its first trial completed in
+`runs/gate/pragmatic-phase-balanced-replay-001/`.
 
 The next bounded recipe starts from the preserved unit-contrast best50, keeps contrast
 1, edge LR 3e-6, the same mask/scales and frozen biases/taus, and runs 60 updates:
@@ -246,9 +254,111 @@ The next bounded recipe starts from the preserved unit-contrast best50, keeps co
   controller. Preserve the best clean-course checkpoint, then check fresh courses and
   both sides. Do not extend an unhelpful chronological run merely because loss falls.
 
+The initial collection contains eight native pairs on seed 1150983 and four teacher
+pairs on seed 1250983. All five phases have recorded observations. Gate-five paired
+windows initially require the teacher bank; actual source/phase/window-kind choices
+are logged at every update. Early and late pair selections in this first implementation
+are independent draws and can occasionally select the same course. Tests compare
+unequal-start replay with separate original-prefix replays, check recomputation after
+weight changes, and exclude invalid-tail windows. The actor input path is unchanged.
+
 For this monotonic-X teacher, a training lesson ends after missing its expected aperture,
 because the path tracker cannot recover a gate behind it. Evaluation still permits
 exterior-plane manoeuvres. Loss and gradient checks prevent nonfinite optimizer updates.
+
+The 60-update trial scored 4/32 at update 20 and 6/32 at update 40, restoring its retained
+starting controller and clearing optimizer state before each new native collection.
+Update 60 recovered to **11/32**, versus its repeated source baseline of 10/32. It
+retained 28/32 first-gate passes, with mean clean prefix 3.125 and side completions
+8/16 negative versus 3/16 positive. This one-flight development difference does not
+establish an improvement. On the same seed-1020983 64-flight bank where its source
+scored 10/64, replay best60 achieved **12/64**: 10/32 negative-side and 2/32 positive-side
+completions, cumulative passes [53, 42, 32, 23, 12], and no ground/invalid events.
+This is a small measured improvement with substantial remaining asymmetry, not a
+reliable >50% controller. Neither bank is a final goal holdout.
+
+### Rate-damped heading teacher ablation
+
+The absolute world-X heading target may require unnecessary visual heading estimation
+for these mild forward courses. The optional `rate-damped` teacher uses current yaw
+to convert its desired world force into roll/pitch targets, and applies only body-yaw-rate
+damping on its yaw axis. It does not zero or bypass the fly's yaw output. Ground-truth
+yaw/rates remain privileged teacher data; no deployed inputs or memory are added.
+This is not a general yaw-steering teacher for reversals or a full racing lap.
+
+On the same 128 courses (seed 1037983), both world-X and rate-damped preflights completed
+128/128 in about 15.065 s, with maximum crossing radius about 0.0645 m. Rate-damped
+maximum heading excursion from launch was 0.632 degrees. A separate robustness probe
+adding mirrored initial yaw offsets of 20 degrees and yaw rates of 30 degrees/s also
+completed 128/128, with maximum heading excursion 1.058 degrees. The actual goal
+distribution was not changed by this diagnostic.
+
+Current and next gate centres were inside the camera frustum in all eligible frames
+for both modes and the disturbance probe. This is explicitly a **centre-only geometric
+proxy**, not rendered annulus visibility or an occlusion measurement. It includes only
+frames before failure/fifth-gate passage and centres at least 0.5 m away. Reports are
+`rate-damped-preflight.json`, `world-x-frustum-preflight.json` and
+`rate-damped-offset-preflight.json` under `runs/gate/continuous-course-teacher-001/`.
+These remain teacher results, not evidence of fly success.
+
+`scripts/audit_course_teacher_targets.py` compares labels on identical unmodified fly
+flights, split by gate and side. With native-best100 on 16 flights (seed 1160983),
+normalized source-target RMS errors were:
+
+| Teacher | Roll | Pitch | Yaw | Throttle |
+| --- | ---: | ---: | ---: | ---: |
+| world-X | 1.965 | 0.955 | 1.625 | 0.993 |
+| rate-damped | 1.989 | 0.962 | 0.107 | 0.993 |
+
+All four normalization scales are unchanged. Lower label error is explanatory only,
+not a checkpoint selection or success measure. The resulting matched native-only
+training comparison starts both branches from native-best100, using training seed
+1130983, fresh Adam, LR 3e-6, contrast weight 1, 33,570 native visual edges and frozen
+biases/time constants. Each runs 50 updates with checks at 0/25/50 on development seed
+1110983 (32 flights). Only teacher heading mode differs. Runs are
+`pragmatic-rate-damped-native-001` and `pragmatic-world-x-matched-native-001`.
+
+Both matched branches scored 3/32 at update 25. At update 50, rate-damped scored
+**6/32**, versus the world-X control's **8/32**, retaining 28/32 and 27/32 first-gate
+passes respectively. Their baseline repeats were 4/32 and 3/32. This bounded test did
+not establish a benefit from the easier yaw labels; do not extend it on loss alone.
+The repeated world-X training outcome also differs from its earlier 11/32, so small
+checkpoint-selection gains need independent behavioral checks, not reproducibility
+claims or automatic promotion.
+
+### Diagnostic retained: post-first-gate axis takeover
+
+`scripts/audit_pragmatic_axis_takeover.py` tests whether the late-course roll errors
+are primarily a roll-policy weakness or induced by the other control axes. Every
+condition uses the same frozen replay best60 and starts fully natively. After the
+first gate only, substitute rate-damped teacher motor targets on roll alone, the
+other three axes alone, or all four axes, with a fully native baseline. Native neural
+state still updates continuously from ordinary sensors. The teacher changes only the
+physical motor drive; **assisted completions cannot count toward the goal**.
+
+All four conditions retain the full 30-second window and unchanged course rules.
+Report clean completion conditional on a clean first-gate passage, split by side,
+and gate-by-gate lateral errors. Full takeover is a positive recovery control:
+if it fails, do not attribute partial-takeover failures to a particular neural axis
+before checking the teacher's recovery capability on native first-gate exit states.
+The initial diagnostic uses 32 development courses, seed 1110983, in
+`runs/gate/pragmatic-phase-balanced-replay-001/axis-takeover-32.json`.
+
+The completed diagnostic strongly localizes the current weakness to roll control:
+
+| Post-first-gate control | Clean completions / all 32 | Completions / 28 clean first-gate exits |
+| --- | ---: | ---: |
+| all native | 12/32 | 12/28 |
+| teacher roll; native pitch/yaw/throttle | 27/32 | 27/28 |
+| native roll; teacher pitch/yaw/throttle | 8/32 | 8/28 |
+| teacher all four axes | 28/32 | 28/28 |
+
+All conditions retained 28/32 clean first-gate passages. Positive-side conditional
+success was 3/13 native, 13/13 with teacher roll, 0/13 with teacher other axes, and
+13/13 with full teacher takeover. Thus the recovery positive control succeeds,
+and replacing the other three axes does not rescue native roll. This motivates a
+bounded roll-focused learning trial while preserving the source's other motor outputs;
+it does not justify deploying privileged roll assistance or claiming the goal.
 
 All exploratory checkpoints remain ignored under `runs/`; do not publish them as a new
 best fly until full-flight results justify it. If a checkpoint is promoted, retain the

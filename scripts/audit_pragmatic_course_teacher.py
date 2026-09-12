@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from pathlib import Path
 from time import perf_counter
@@ -23,9 +24,29 @@ from flydrone.course_teacher import (  # noqa: E402
     CourseTeacherConfig,
     course_teacher_motor,
 )
-from flydrone.gate import GateConfig  # noqa: E402
+from flydrone.gate import GateConfig, wrap_angle  # noqa: E402
 from flydrone.gate_course import classify_course_step  # noqa: E402
-from flydrone.hover import DifferentiableQuad, ForelegStickPlant, HoverConfig  # noqa: E402
+from flydrone.hover import (  # noqa: E402
+    DifferentiableQuad,
+    ForelegStickPlant,
+    HoverConfig,
+    rotation_matrix,
+)
+from flydrone.visual_hover import CameraSpec  # noqa: E402
+
+
+def gate_center_frustum(state, centers, camera):
+    """Center-only geometric proxy: not annulus visibility, pixels or occlusion."""
+    relative = centers - state.position
+    body = torch.einsum("bji,bj->bi", rotation_matrix(state.euler), relative)
+    half_width = math.tan(math.radians(camera.horizontal_fov_degrees) / 2)
+    half_height = half_width * camera.height / camera.width
+    inside = (
+        (body[:, 0] > 0)
+        & (body[:, 1].abs() <= body[:, 0] * half_width)
+        & (body[:, 2].abs() <= body[:, 0] * half_height)
+    )
+    return inside, torch.linalg.vector_norm(relative, dim=1)
 
 
 def parse_args():
@@ -39,7 +60,11 @@ def parse_args():
     parser.add_argument("--position-gain", type=float, default=1.5)
     parser.add_argument("--velocity-gain", type=float, default=2.5)
     parser.add_argument("--attitude-gain", type=float, default=3.0)
-    parser.add_argument("--heading-mode", choices=("tangent", "world-x"), default="tangent")
+    parser.add_argument(
+        "--heading-mode", choices=("tangent", "world-x", "rate-damped"), default="tangent"
+    )
+    parser.add_argument("--initial-yaw-offset-degrees", type=float, default=0.0)
+    parser.add_argument("--initial-yaw-rate-degrees-per-second", type=float, default=0.0)
     return parser.parse_args()
 
 
@@ -50,6 +75,11 @@ def main():
     payload = torch.load(args.checkpoint, map_location="cpu", weights_only=True)
     config = HoverConfig(**payload["hover_config"])
     gate_config = GateConfig(**payload["gate_config"])
+    camera = CameraSpec(
+        width=payload["image_resolution"][0],
+        height=payload["image_resolution"][1],
+        horizontal_fov_degrees=payload["camera_hfov_degrees"],
+    )
     teacher_config = CourseTeacherConfig(
         forward_speed=args.speed,
         position_gain=args.position_gain,
@@ -86,6 +116,10 @@ def main():
     path_clean = (index == 5) & ~path_failed
 
     state, sticks = cases.state, cases.sticks
+    signs = torch.tensor([-1.0, 1.0]).repeat(args.pairs)
+    state.euler[:, 2] += signs * math.radians(args.initial_yaw_offset_degrees)
+    state.rates[:, 2] += signs * math.radians(args.initial_yaw_rate_degrees_per_second)
+    initial_yaw = state.euler[:, 2].clone()
     quad, legs = DifferentiableQuad(config), ForelegStickPlant(config)
     index.zero_()
     passed = torch.zeros(count, 5, dtype=torch.bool)
@@ -97,7 +131,25 @@ def main():
     ground = torch.zeros_like(collisions)
     max_tilt = torch.zeros(count)
     saturation = torch.zeros(count)
+    center_counts = torch.zeros(2, dtype=torch.long)
+    eligible_counts = torch.zeros_like(center_counts)
+    max_yaw_excursion = torch.zeros(count)
+    max_absolute_yaw = torch.zeros(count)
+    centers = torch.stack([g.center for g in gates], dim=1)
+    rows = torch.arange(count)
     for step in range(round(args.seconds * 50)):
+        active = ~failed & (index < 5)
+        for role in range(2):
+            target_index = (index + role).clamp(max=4)
+            inside, distance = gate_center_frustum(state, centers[rows, target_index], camera)
+            eligible = active & (index + role < 5) & (distance >= 0.5)
+            center_counts[role] += (inside & eligible).sum()
+            eligible_counts[role] += eligible.sum()
+        excursion = wrap_angle(state.euler[:, 2] - initial_yaw).abs()
+        max_yaw_excursion = torch.maximum(max_yaw_excursion, torch.where(active, excursion, 0))
+        max_absolute_yaw = torch.maximum(
+            max_absolute_yaw, torch.where(active, wrap_angle(state.euler[:, 2]).abs(), 0)
+        )
         motor = course_teacher_motor(state, path, config, teacher_config)
         for substep in range(2):
             rc, sticks = legs(motor, sticks)
@@ -126,6 +178,8 @@ def main():
         seconds=args.seconds,
         hover_config=vars(config),
         teacher_config=vars(teacher_config),
+        initial_yaw_offset_degrees=args.initial_yaw_offset_degrees,
+        initial_yaw_rate_degrees_per_second=args.initial_yaw_rate_degrees_per_second,
         path_geometry_clean_rate=float(path_clean.float().mean()),
         clean_course_success_rate=float(clean.float().mean()),
         clean_successes=int(clean.sum()),
@@ -138,6 +192,24 @@ def main():
         pass_radial_max_metres=float(radial[passed].max()) if passed.any() else None,
         maximum_tilt_degrees=float(torch.rad2deg(max_tilt).max()),
         saturation_fraction=float(saturation.mean()) / (100 * args.seconds),
+        heading_diagnostics=dict(
+            maximum_excursion_from_launch_degrees=float(torch.rad2deg(max_yaw_excursion).max()),
+            maximum_absolute_heading_degrees=float(torch.rad2deg(max_absolute_yaw).max()),
+            period="before failure or fifth-gate passage",
+        ),
+        gate_center_frustum_diagnostics=dict(
+            description="center-only frustum proxy, not rendered annulus visibility or occlusion",
+            minimum_center_distance_metres=0.5,
+            period="before failure or fifth-gate passage",
+            roles=["current", "next"],
+            eligible_frame_counts=eligible_counts.tolist(),
+            center_in_frustum_counts=center_counts.tolist(),
+            center_in_frustum_fractions=[
+                int(inside) / int(total) if total else None
+                for inside, total in zip(center_counts, eligible_counts, strict=True)
+            ],
+            camera=vars(camera),
+        ),
         teacher_is_privileged=True,
         fly_training_or_fly_success=False,
         elapsed_seconds=perf_counter() - started,

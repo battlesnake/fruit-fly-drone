@@ -51,7 +51,9 @@ def parse_args():
     parser.add_argument("--contrast-weight", type=float, default=1.0)
     parser.add_argument("--path-hops", type=int, default=5)
     parser.add_argument("--include-attitude-paths", action="store_true")
-    parser.add_argument("--teacher-heading-mode", choices=("tangent", "world-x"), default="tangent")
+    parser.add_argument(
+        "--teacher-heading-mode", choices=("tangent", "world-x", "rate-damped"), default="tangent"
+    )
     parser.add_argument("--development-pairs", type=int, default=16)
     parser.add_argument("--development-interval", type=int, default=50)
     parser.add_argument("--seconds", type=float, default=30.0)

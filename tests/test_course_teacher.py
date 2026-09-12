@@ -67,3 +67,31 @@ def test_fixed_heading_teacher_keeps_yaw_feedback_and_next_gate_anticipation():
 def test_teacher_rejects_unknown_heading_mode():
     with pytest.raises(ValueError, match="heading_mode"):
         CourseTeacherConfig(heading_mode="constant-zero-output")
+
+
+def test_rate_damped_teacher_has_no_absolute_heading_target_but_opposes_yaw_rate():
+    path, _ = paired_path()
+    state = DifferentiableQuad().initial_state(2, device=torch.device("cpu"), dtype=torch.float32)
+    state.position[:] = torch.tensor([2.6, 0.0, 1.1])
+    state.euler[:, 2] = torch.tensor([-0.4, 0.4])
+    config = CourseTeacherConfig(heading_mode="rate-damped")
+    motor = course_teacher_motor(state, path, HoverConfig(), config)
+    assert torch.allclose(motor[:, 2], torch.zeros(2), atol=1e-6)
+    state.rates[:, 2] = torch.tensor([-0.2, 0.2])
+    motor = course_teacher_motor(state, path, HoverConfig(), config)
+    assert motor[0, 2] > 0 > motor[1, 2]
+
+
+def test_rate_damped_teacher_rotates_horizontal_force_into_current_body_heading():
+    launch = torch.tensor([[0.0, 0.0, 1.1]]).expand(2, -1)
+    gate = AnnularGate(torch.tensor([[3.0, 0.0, 1.1]]).expand(2, -1), torch.zeros(2))
+    path = CoursePath.through_gates(launch, (gate,))
+    state = DifferentiableQuad().initial_state(2, device=torch.device("cpu"), dtype=torch.float32)
+    state.position[:] = launch
+    state.euler[1, 2] = torch.pi / 2
+    motor = course_teacher_motor(
+        state, path, HoverConfig(), CourseTeacherConfig(heading_mode="rate-damped")
+    )
+    # Both need +world-X acceleration: pitch at yaw 0, roll at yaw +90 degrees.
+    assert motor[0, 1] > 0 and abs(float(motor[0, 0])) < 1e-6
+    assert motor[1, 0] > 0 and abs(float(motor[1, 1])) < 1e-6

@@ -70,8 +70,8 @@ class CourseTeacherConfig:
     heading_mode: str = "tangent"
 
     def __post_init__(self) -> None:
-        if self.heading_mode not in ("tangent", "world-x"):
-            raise ValueError("heading_mode must be tangent or world-x")
+        if self.heading_mode not in ("tangent", "world-x", "rate-damped"):
+            raise ValueError("heading_mode must be tangent, world-x or rate-damped")
 
 
 DEFAULT_COURSE_TEACHER_CONFIG = CourseTeacherConfig()
@@ -100,6 +100,11 @@ def course_teacher_motor(
     yaw = torch.atan2(tangent[:, 1], tangent[:, 0])
     if config.heading_mode == "world-x":
         yaw = torch.zeros_like(yaw)
+    elif config.heading_mode == "rate-damped":
+        # Convert the desired world force using the current heading, without
+        # imposing an absolute heading target. Yaw still receives body-rate
+        # damping below; this is not a forced-zero student motor channel.
+        yaw = state.euler[:, 2]
     cy, sy = torch.cos(yaw), torch.sin(yaw)
     force_norm = torch.linalg.vector_norm(force, dim=1).clamp_min(1.0e-6)
     desired_roll = torch.asin(((force[:, 0] * sy - force[:, 1] * cy) / force_norm).clamp(-0.5, 0.5))

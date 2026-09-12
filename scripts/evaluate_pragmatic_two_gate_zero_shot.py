@@ -25,6 +25,11 @@ from search_pragmatic_full_native_gate_es import (  # noqa: E402
 )
 from train_pragmatic_full_native_gate_imitation import teacher_motor  # noqa: E402
 
+from flydrone.course_teacher import (  # noqa: E402
+    CoursePath,
+    CourseTeacherConfig,
+    course_teacher_motor,
+)
 from flydrone.gate import (  # noqa: E402
     AnnularGate,
     GateConfig,
@@ -307,6 +312,11 @@ def side_rate(values: Tensor, side: Tensor, negative: bool) -> float:
     return float(values[mask].float().mean())
 
 
+def diagnostic_axis_takeover(native: Tensor, teacher: Tensor, current: Tensor, axes: Tensor):
+    """Privileged diagnostic only: replace selected motor axes after gate one."""
+    return torch.where((current >= 1)[:, None] & axes[None], teacher, native)
+
+
 def compact_policy_metrics(
     first: Tensor,
     clean: Tensor,
@@ -352,6 +362,7 @@ def evaluate(
     teacher_drives: bool = False,
     frozen_vision: bool = False,
     compact_policies: int | None = None,
+    diagnostic_teacher_axes: tuple[bool, bool, bool, bool] | None = None,
 ) -> dict[str, object] | list[dict[str, float | int]]:
     device = cases.side.device
     count = len(cases.side)
@@ -362,6 +373,13 @@ def evaluate(
     quad = DifferentiableQuad(hover_config).to(device)
     stick_plant = ForelegStickPlant(hover_config).to(device)
     state = _clone_quad(cases.state)
+    takeover_path = None
+    takeover_axes = None
+    if diagnostic_teacher_axes is not None:
+        if len(diagnostic_teacher_axes) != 4 or teacher_drives or compact_policies is not None:
+            raise ValueError("axis takeover requires four axes and ordinary native evaluation")
+        takeover_path = CoursePath.through_gates(state.position, gates)
+        takeover_axes = torch.tensor(diagnostic_teacher_axes, device=device, dtype=torch.bool)
     sticks = _clone_sticks(cases.sticks)
     neural = controller.initial_state(count, device=device, dtype=torch.float32)
     current = torch.zeros(count, dtype=torch.long, device=device)
@@ -372,6 +390,7 @@ def evaluate(
     course_penalty = torch.zeros(count, device=device)
     prefix_passes = torch.zeros(count, device=device)
     failed_prefix = torch.zeros(count, dtype=torch.bool, device=device)
+    clean_first = torch.zeros_like(failed_prefix)
     prefix_centering = torch.zeros(count, device=device)
     missed = torch.zeros_like(passed)
     pass_step = torch.full_like(current[:, None].expand(-1, len(gates)), -1)
@@ -419,6 +438,13 @@ def evaluate(
             )
         else:
             motor, neural = controller(actor_image, state.euler[:, :2], neural)
+        if takeover_path is not None:
+            # The fly still receives only its ordinary sensors, and its native
+            # recurrence continues even when privileged teacher muscles act.
+            target = course_teacher_motor(
+                state, takeover_path, hover_config, CourseTeacherConfig(heading_mode="rate-damped")
+            )
+            motor = diagnostic_axis_takeover(motor, target, current, takeover_axes)
         saturation_steps += (sticks.position.abs() > 0.98).any(dim=1)
         for _ in range(physics_steps):
             rc, sticks = stick_plant(motor, sticks)
@@ -443,6 +469,7 @@ def evaluate(
             ground |= state.position[:, 2] <= 0.03
             valid &= hover_train.state_is_valid(state)
             failed_prefix |= events.failed | ground | ~valid
+            clean_first |= events.passed[:, 0] & ~failed_prefix
             # Conservatively omit passes in the same physics step as a failure.
             # Subsequent recovery passes remain in the raw diagnostic only.
             prefix_passes += (events.passed & ~failed_prefix[:, None]).sum(dim=1)
@@ -495,8 +522,12 @@ def evaluate(
         gate_number: int,
         *,
         absolute: bool = False,
+        negative_side: bool | None = None,
     ) -> float | None:
-        selected = values[:, gate_number][gate_crossed[:, gate_number]]
+        mask = gate_crossed[:, gate_number]
+        if negative_side is not None:
+            mask = mask & ((cases.side < 0) if negative_side else (cases.side > 0))
+        selected = values[:, gate_number][mask]
         if not bool(selected.numel()):
             return None
         return float((selected.abs() if absolute else selected).mean())
@@ -527,6 +558,12 @@ def evaluate(
                 ),
             }
         )
+        per_gate[-1]["crossing_lateral_absolute_mean_by_side_metres"] = {
+            side: finite_gate_mean(
+                crossing_lateral, gate_number, absolute=True, negative_side=negative
+            )
+            for side, negative in (("negative", True), ("positive", False))
+        }
     first_times = pass_step[:, 0][first].float() / POLICY_HZ
     second_times = pass_step[:, 1][both].float() / POLICY_HZ
     second_crossed = crossing_lateral[:, 1].isfinite()
@@ -542,6 +579,10 @@ def evaluate(
         "frozen_vision_after_seconds": 0.5 if frozen_vision else None,
         "gate_count": len(gates),
         "per_gate": per_gate,
+        "privileged_axis_takeover_after_first_gate": diagnostic_teacher_axes,
+        "clean_first_gate_pass_rate": float(clean_first.float().mean()),
+        "clean_first_gate_negative_pass_rate": side_rate(clean_first, cases.side, True),
+        "clean_first_gate_positive_pass_rate": side_rate(clean_first, cases.side, False),
         "first_gate_pass_rate": float(first.float().mean()),
         "first_gate_paired_pass_rate": float(pair_first.float().mean()),
         "first_gate_negative_offset_pass_rate": side_rate(first, cases.side, True),
