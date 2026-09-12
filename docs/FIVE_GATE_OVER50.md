@@ -1035,3 +1035,38 @@ direct/nested checkpoint loads and explicit metadata refresh. The full suite pas
 **529 tests**. No checkpoint format, precision, neural dynamics, physical dynamics or
 learned weights change. The already-running corrected training process loaded the
 old implementation; leave it uninterrupted and use the cache in subsequent processes.
+
+#### Corrected update-one outcome and next comparison
+
+The first corrected update completed in 904.6 s including the initial development
+baseline. All three proposals were rejected; weights and optimizer state were restored.
+The 16-course training bank produced:
+
+| Proposal scale | Clean completions | Clean prefix gates | First passes, negative / positive | Ring contacts | Wrong-order episodes |
+| --- | ---: | ---: | --- | ---: | ---: |
+| Source nominal | 2 | 28 | 7 / 3 | 12 | 2 |
+| 1.0 | 2 | 31 | 7 / 6 | 13 | 4 |
+| 0.3 | 2 | 32 | 7 / 5 | 13 | 3 |
+| 0.1 | 1 | 26 | 7 / 3 | 13 | 2 |
+
+Ground, invalid and wrong-direction counts remained zero. The larger steps improved
+early passes but added collisions and illegal traversals; the rejection is a real
+flight tradeoff, not just a disagreement with the continuous objective. The smallest
+step also lost a full completion. No proposal is promoted. The preset broader run
+continues to bank 1620984, with its first post-training development check at update 2.
+
+Astra's renewed design review recommends a matched **100-frame / two-second gradient
+horizon** as the next comparison if this run does not improve full flights. Under
+50-frame truncation, an action has at most one second, and on average roughly half a
+second, of downstream gradient credit before a boundary; much of the physical effect
+arrives after the measured 0.60 s foreleg response plus aircraft response. Keep the
+retained starting checkpoint, eight-pair batches, four-bank rotation, 19,286-edge mask,
+LR 1e-4, full-distribution geometry and all acceptance guards fixed. Compare late-gate
+outcomes and held-out development, not just tracking loss. First finish the running
+bounded trial; do not interrupt it for this comparison or change its parameters.
+
+Longer credit cannot supply positive-side late-gate experience absent from the native
+flights. Report eligible phase exposure by side in both runs. Missing exposure or a
+failed horizon trial would not prove insufficient anatomical capacity. Opening more
+wiring or adding privileged representation targets remains a later branch, not a
+simultaneous change in this comparison. The >50% fresh-evaluation goal remains unmet.
