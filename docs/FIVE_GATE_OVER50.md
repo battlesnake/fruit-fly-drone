@@ -655,3 +655,75 @@ prefix is used in training. The 1000× probe is not adopted as a learning rate.
 Retain the ordinary first-gate selection floor and require actual flight improvement
 before extending this run. The audit/replay refactor passed 509 regression tests;
 tests do not establish course performance.
+
+The larger-step run finished. Update 5 tied source completion at 12/32, improved
+first-gate passes from 28/32 to 31/32, and shifted completions from 9 negative / 3
+positive to 8 / 4. The selector retained update 5. Update 10 regressed to 9/32, with
+30/32 first-gate passes, so the run will not be extended. Held-out negative-side
+contrast error worsened to 0.004973 at update 5 and 0.005771 at update 10; positive-side
+error fell slightly to 0.004479/0.004449 but remained negatively aligned. Neither
+side beat zero contrast. A larger update can improve one lesson, but the balanced
+training did not turn that into a higher development completion rate.
+
+Because update 5 improved the initial approach and course-side balance, it was checked
+on the existing separate 64-case bank, seed 1020983. It completed **15/64**, versus
+source **12/64**, and passed the first gate on **60/64**, versus 53/64. Cumulative
+gate passes changed from [53, 42, 32, 23, 12] to [60, 50, 41, 28, 15]; completion
+split changed from 10 negative / 2 positive to 11 / 4. Neither evaluation had ground
+contacts or invalid states. This is a modest improvement, not evidence of >50% success
+or of consistent teacher-aligned anticipation.
+
+That bank is independent of these anticipation fits, but was previously used in the
+broader research; it is not a fresh final goal holdout. The report is
+`independent-64.json` in the larger-step run directory. The second matched 64-case
+bank, seed 2026091201, did **not** confirm higher completion: candidate **10/64**,
+source **11/64**. First-gate improvement did repeat, 58/64 versus 52/64. Cumulative
+passes were [58, 53, 37, 18, 10] versus [52, 42, 32, 17, 11], with no ground contacts
+or invalid states for either. Reports are `fresh-64.json` and `fresh-source-64.json`;
+geometry and rules are unchanged. Across the two banks the exploratory totals are
+25/128 versus 23/128 completions, not convincing evidence of a new overall winner
+and far below the goal. These two checks must not be relabelled as one preregistered
+fresh 128-case final holdout.
+
+Retain the earlier phase-balanced controller as the overall comparison/training
+source. Preserve update 5 as a branch with replicated improvement through the first
+two gates, not a demonstrated solution to the five-gate task. Do not extend the
+centered imitation run: its larger changes expose incomplete later-course transfer,
+and update 10 was worse. The short physical-tracking experiment below is the next
+implementation step; no GPU training jobs from these trials remain running.
+
+### Next control-responsibility experiment: physical lateral tracking
+
+The design review with Astra identifies a more direct fallback than another motion
+gain or latent-feature probe. The pragmatic imitation/replay gradients never pass
+through the forelegs and aircraft: a better instantaneous motor label need not
+produce a better trajectory. If the larger anticipation steps do not improve complete
+flights, test **short closed-loop lateral-control learning** on the retained source.
+This proposal is not implemented yet, and does not replace the eventual racing or
+hint-fading goals.
+
+- Keep the existing 19,286 visual-to-roll edges, fixed topology/signs, frozen biases
+  and time constants, and the same deployed observations and motor interface.
+- Use six clean native approach lessons covering current gates 2–4 and both base
+  sides. Carry or reconstruct the actual foreleg/stick state from each native prefix;
+  do not silently initialize the virtual sticks at a mid-flight lesson boundary.
+  Recompute neural prefixes under current weights.
+- Differentiate one second through the brain, rendered observations, physical
+  forelegs and quad. All four native outputs remain live. Give the existing roll
+  pathway the responsibility for reducing lateral position error along the Hermite
+  path and terminal lateral-velocity error relative to its tangent. The path is a
+  training target only. Retain early source-preservation lessons and source non-roll
+  preservation; reject apparent improvements that materially reduce forward progress.
+- Initially select windows ending before the next crossing. Soft annulus rendering
+  supplies visual gradients, but visibility, checkerboard and role/event switches are
+  not globally smooth. Check one proposed update with actual short-rollout finite
+  differences before running ten updates and native course checks at 5/10. Use
+  activation checkpointing if needed to fit the longer gradient window, without
+  changing forward neural timing or adding external memory.
+
+The success test remains uninterrupted full-distribution five-gate flight. Better
+short-horizon tracking alone would justify a coverage/horizon investigation, not
+promotion or a new deployed decoder. A training-only bearing/exit-line auxiliary on
+existing descending neurons remains an alternative, but is lower priority than asking
+the current controller directly whether its actions improve flight. The existing
+velocity-information probe does not presently justify another motion-only trial.
