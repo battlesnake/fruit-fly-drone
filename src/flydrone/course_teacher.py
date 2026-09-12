@@ -130,3 +130,42 @@ def course_teacher_motor(
         ((rates / rate_limits).clamp(-1.0, 1.0), throttle[:, None].clamp(0.0, 1.0)), dim=1
     )
     return motor_target_for_rc(rc, quad)
+
+
+def current_gate_roll_motor(
+    state: QuadState,
+    gate: AnnularGate,
+    quad: HoverConfig,
+    *,
+    active: Tensor,
+) -> Tensor:
+    """Privileged diagnostic target: intercept the current gate in the yaw frame.
+
+    Returns only the roll antagonist difference. No launch line, previous gate,
+    absolute heading target or path is used. The teacher nevertheless reads true
+    relative geometry, velocity and roll rate; those are NOT new actor inputs.
+    An eventual student would need to infer motion from its own visual history.
+
+    A bounded, approximate collision-course law supplies lateral velocity; damping
+    and nominal drag compensation supply acceleration. Bound denominator and velocity
+    near the gate. Once the gate is behind or the course is over, brake lateral
+    drift instead of chasing the now-invisible target. No recovery is guaranteed.
+    """
+    delta = gate.center - state.position
+    cy, sy = state.euler[:, 2].cos(), state.euler[:, 2].sin()
+    forward = cy * delta[:, 0] + sy * delta[:, 1]
+    lateral = -sy * delta[:, 0] + cy * delta[:, 1]
+    forward_velocity = cy * state.velocity[:, 0] + sy * state.velocity[:, 1]
+    lateral_velocity = -sy * state.velocity[:, 0] + cy * state.velocity[:, 1]
+    ratio = (lateral / forward.clamp_min(0.5)).clamp(-1.0, 1.0)
+    intercept_velocity = forward_velocity.clamp(0.0, 0.8) * ratio
+    desired_velocity = torch.where(active & (forward > 0), intercept_velocity, 0.0)
+    acceleration = 2.5 * (desired_velocity - lateral_velocity)
+    acceleration += quad.linear_drag * lateral_velocity / quad.mass
+    acceleration = acceleration.clamp(-5.0, 5.0)
+    desired_roll = torch.atan2(-acceleration, torch.full_like(acceleration, 9.81))
+    roll_rate = 3.0 * (desired_roll - state.euler[:, 0]) - 0.15 * state.rates[:, 0]
+    rc = torch.zeros_like(state.actuator)
+    rc[:, 0] = (roll_rate / quad.max_roll_pitch_rate).clamp(-1.0, 1.0)
+    rc[:, 3] = 0.5
+    return motor_target_for_rc(rc, quad)[:, 0]

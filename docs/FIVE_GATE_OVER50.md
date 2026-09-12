@@ -1515,3 +1515,30 @@ and may introduce harmful target jumps at gate transitions. First test teacher
 feasibility and roll-only assistance with the other three axes native; assisted
 success would not satisfy the goal. Keep the curved reference and all current
 course/scoring rules unchanged until comparative evidence supports a change.
+
+The local-feedback alternative is now prepared, but **has not been flight-tested**:
+`current_gate_roll_motor` in `src/flydrone/course_teacher.py`, exercised through
+`scripts/audit_pragmatic_current_gate_roll.py`. It rotates relative gate position
+and velocity into the current yaw-aligned horizontal frame, requests a bounded
+intercept velocity, applies velocity damping plus nominal drag compensation, and
+uses the existing rate/foreleg mapping. The forward-distance denominator is floored
+at 0.5 m and velocity/acceleration are bounded. Behind the gate or after completion,
+it requests lateral braking. This is an approximate collision-course law, not an
+exact constant-bearing guarantee and not an externally decoded actor feature.
+
+The diagnostic replaces only roll after gate one, keeps the other three neural
+outputs and neural state live, and uses ordinary full-30-s evaluation. The evaluator
+still constructs its usual path object, but the new target never reads it. True
+geometry, velocity, roll rate and the gate-index intervention remain teacher-only
+privileges, so its result cannot count toward the native goal. Thirteen focused
+tests pass, including mirrored/global-heading invariance, bounded near-plane
+behavior and actual two-second lateral braking through the foreleg/quad dynamics.
+Those checks establish basic implementation behavior, not gate-flight success.
+
+Astra recommends activating this diagnostic only if neutral roll does not already
+provide a strong rescue. A useful initial screen is about 25/32 clean assisted
+courses, at least 80% conditional completion after a clean first gate on each side,
+and no ground/invalid events. This is a predeclared diagnostic screen, not a new
+goal threshold. If it preserves most of the curved teacher's rescue, consider a
+source-restarted local-feedback learning trial before merely relaxing acceptance
+rules. The current six-update process is unchanged.
