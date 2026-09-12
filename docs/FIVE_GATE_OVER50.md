@@ -1847,8 +1847,8 @@ signs, topology and direct inputs to the other motor pools stay fixed. Every les
 recomputes its complete current-weight neural prefix before differentiation; stale
 source neural states are not reused.
 
-Checks at 25/50/100 report the nine fitting errors, early/non-roll preservation and
-the usual fully native 32-case development flights over all 30 s. There is no
+Checks every 25 updates (25/50/75/100) report the nine fitting errors, early/non-roll
+preservation and the usual fully native 32-case development flights over all 30 s. There is no
 development-driven rollback or automatic checkpoint promotion. An arm stops early
 at a check only if aggregate late-roll RMSE falls at least 50% on **each** training
 side; otherwise it reaches the 100-update cap. Nonfinite computation stops the run.
@@ -1956,3 +1956,27 @@ training continues without development-driven rollback toward the next check at
 50 and the cap at 100. The seven-hop arm has not yet started. This experiment asks
 whether repeated fitting can reproduce the lessons, not whether partial fitting is
 already safe to substitute for the retained autonomous actor.
+
+#### Five-hop fixed-bank check at update 50
+
+Repeated fitting continues to reduce the measured errors: late-roll RMSE is now
+**0.016171 / 0.023721**, a **24.00% negative / 16.21% positive** reduction from source.
+Every late-window/side error is below its source value, although some improvements
+are small. This is still far short of the two-sided 50% fitting threshold. Early-roll
+preservation errors rise to **0.003158 / 0.003795** and maximum non-roll error to
+**0.003120**. The complete objective before update 50 is 0.516149, versus 0.803150
+before update one. No fitting statistic here is held out.
+
+Full native development remains **6/32 clean**, now **zero negative / six positive**,
+versus two / four at update 25 and nine / three for the retained source. First-gate
+passes are 29/32 (15 negative / 14 positive), clean-prefix gates 78, ring-contact
+episodes 24 and wrong-order episodes two. Wrong-direction, ground and invalid counts
+are all zero. Thus improved fixed-example fitting has not produced an overall
+autonomous gain, and the loss of all negative-side completions is not hidden by the
+positive-side improvement.
+
+`hops-5-update-50.pt` remains diagnostic-only. The existing process continues to the
+next interval check at 75 and the 100-update cap, unless it first meets the declared
+fitting screen. The seven-hop source restart is still pending. No candidate is
+promoted, no new-course replay-transfer collection is launched and no fresh goal
+holdout is used. The original autonomous checkpoint remains unchanged.
