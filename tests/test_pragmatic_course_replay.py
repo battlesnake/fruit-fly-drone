@@ -50,6 +50,94 @@ def test_late_roll_labels_preserve_all_source_axes_until_gate_one_and_other_axes
     assert reference[1, 0] == 4  # constructing labels does not mutate source records
 
 
+def test_from_start_labels_change_only_roll_including_launch():
+    reference = torch.arange(12, dtype=torch.float32).reshape(3, 4)
+    original = reference.clone()
+    teacher = -torch.ones_like(reference)
+    target = replay.late_roll_preservation_targets(
+        teacher, reference, torch.tensor([0, 1, 4]), roll_from_start=True
+    )
+    assert torch.equal(target[:, 0], teacher[:, 0])
+    assert torch.equal(target[:, 1:], reference[:, 1:])
+    assert torch.equal(reference, original)
+
+
+@pytest.mark.parametrize("kind", ["native", "roll-assisted"])
+@pytest.mark.parametrize("from_start", [False, True])
+def test_collection_timing_keeps_native_actions_and_source_other_axes(
+    monkeypatch, kind, from_start
+):
+    class Actor(torch.nn.Module):
+        def __init__(self, output):
+            super().__init__()
+            self.bias = torch.nn.Parameter(torch.zeros(1))
+            self.output = torch.tensor(output)
+            self.calls = 0
+
+        def initial_state(self, count, **kwargs):
+            return torch.zeros(count, 1, **kwargs)
+
+        def forward(self, image, attitude, neural):
+            assert image.shape == (2, 3, 1, 1)
+            assert attitude.shape == (2, 2)
+            self.calls += 1
+            return self.output.expand(2, -1), neural + 1
+
+    motors = []
+
+    class Legs:
+        def __init__(self, config):
+            pass
+
+        def to(self, device):
+            return self
+
+        def __call__(self, motor, sticks):
+            motors.append(motor.clone())
+            return motor, sticks
+
+    class Quad(Legs):
+        def __call__(self, rc, state, mass):
+            return state
+
+    monkeypatch.setattr(replay, "render_annular_gates_rgb", lambda *a, **k: torch.zeros(2, 3, 1, 1))
+    monkeypatch.setattr(
+        replay,
+        "replay_teacher_motor",
+        lambda *a: torch.tensor([[0.2, 0.3, 0.4, 0.5]]).expand(2, -1),
+    )
+    monkeypatch.setattr(replay, "ForelegStickPlant", Legs)
+    monkeypatch.setattr(replay, "DifferentiableQuad", Quad)
+    learner, reference = Actor([-0.1, -0.2, -0.3, -0.4]), Actor([0.11, 0.12, 0.13, 0.14])
+    result = replay.collect_bank(
+        learner,
+        1,
+        5,
+        kind,
+        0.04,
+        CameraSpec(),
+        replay.HoverConfig(),
+        GateConfig(),
+        reference_controller=reference,
+        roll_teacher="current-gate",
+        roll_from_start=from_start,
+    )
+    expected = reference.output.clone()
+    if from_start:
+        expected[0] = 0.2
+    assert torch.equal(result.target, expected.expand(2, 2, -1))
+    action = learner.output if kind == "native" else expected
+    assert all(torch.equal(motor, action.expand(2, -1)) for motor in motors)
+    assert reference.calls == 12
+    assert learner.calls == (12 if kind == "native" else 0)
+    assert result.manifest()["roll_from_start"] is from_start
+
+
+def test_from_start_collection_requires_source_preservation():
+    with pytest.raises(ValueError, match="from-start roll requires"):
+        replay.collect_bank(None, 1, 1, "native", 1, None, None, None, roll_from_start=True)
+
+
 @pytest.mark.parametrize("roll_teacher", ["curved", "neutral", "current-gate"])
 def test_roll_teacher_variants_change_only_roll_labels_and_keep_source_preservation(
     monkeypatch, roll_teacher
@@ -133,6 +221,49 @@ def test_balanced_early_windows_never_cross_into_teacher_roll_labels():
         assert record["kinds"] == ["approach", "approach"]
         for side, start in enumerate(record["starts"]):
             assert torch.equal(window[2][start : start + 3, side], torch.zeros(3, dtype=torch.long))
+
+
+@pytest.mark.parametrize("stage", ["launch", "early-approach", "middle", "late-approach"])
+def test_early_stage_sampling_covers_distinct_approach_parts(stage):
+    native = bank(steps=30)
+    native.current[15:, 0] = 1
+    native.current[27:, 1] = 1
+    window, record = replay.select_balanced_window(
+        native,
+        native,
+        0,
+        3,
+        np.random.default_rng(1),
+        "approach",
+        torch.device("cpu"),
+        early_stage=stage,
+    )
+    assert record["early_stage"] == stage
+    for side, stop in enumerate((15, 27)):
+        options = list(range(stop - 2))
+        eligible = replay.early_stage_options(options, stage)
+        start = record["starts"][side]
+        assert start in eligible
+        if stage == "launch":
+            assert start == 0
+        assert bool((window[2][start : start + 3, side] == 0).all())
+
+
+def test_early_stage_does_not_invent_launch_or_relabel_short_failed_flight():
+    assert replay.early_stage_options([1, 2, 3], "launch") == []
+    assert replay.early_stage_options([], "middle") == []
+    assert replay.early_stage_options([0], "late-approach") == []
+    with pytest.raises(ValueError, match="unknown early replay stage"):
+        replay.early_stage_options([0], "pre-crossing")
+
+
+def test_approach_thirds_cover_every_eligible_start():
+    options = list(range(300))
+    parts = [
+        replay.early_stage_options(options, stage)
+        for stage in ("early-approach", "middle", "late-approach")
+    ]
+    assert [start for part in parts for start in part] == options
 
 
 def test_missing_native_side_uses_only_that_assisted_side_and_preserves_physical_history():

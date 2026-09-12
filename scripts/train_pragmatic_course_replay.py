@@ -77,6 +77,7 @@ class ReplayBank:
     failure_steps: torch.Tensor | None = None
     reference_outputs: torch.Tensor | None = None
     roll_teacher: str = "curved"
+    roll_from_start: bool = False
 
     def starts(self, phase, unroll):
         if len(self.current) < unroll:
@@ -99,6 +100,7 @@ class ReplayBank:
             ),
             source_preservation_outputs_stored=self.reference_outputs is not None,
             roll_teacher=self.roll_teacher,
+            roll_from_start=self.roll_from_start,
             active_frames_by_gate_and_side=[
                 [
                     int(((self.current[:, side::2] == g) & self.active[:, side::2]).sum())
@@ -109,10 +111,14 @@ class ReplayBank:
         )
 
 
-def late_roll_preservation_targets(teacher, reference, current):
-    """Training labels only: preserve gate one and all non-roll source outputs."""
+def late_roll_preservation_targets(teacher, reference, current, *, roll_from_start=False):
+    """Training labels only: preserve non-roll outputs and, by default, gate-one roll."""
     target = reference.clone()
-    target[:, 0] = torch.where(current >= 1, teacher[:, 0], reference[:, 0])
+    target[:, 0] = (
+        teacher[:, 0]
+        if roll_from_start
+        else torch.where(current >= 1, teacher[:, 0], reference[:, 0])
+    )
     return target
 
 
@@ -168,11 +174,14 @@ def collect_bank(
     heading_mode="world-x",
     reference_controller=None,
     roll_teacher="curved",
+    roll_from_start=False,
 ):
     if kind not in ("native", "teacher", "roll-assisted"):
         raise ValueError("collection kind must be native, teacher or roll-assisted")
     if kind == "roll-assisted" and reference_controller is None:
         raise ValueError("roll-assisted collection requires a frozen source controller")
+    if roll_from_start and (reference_controller is None or kind == "teacher"):
+        raise ValueError("from-start roll requires frozen-source native/roll-assisted collection")
     if roll_teacher not in ("curved", "neutral", "current-gate"):
         raise ValueError("unknown roll teacher")
     if roll_teacher != "curved" and (reference_controller is None or kind == "teacher"):
@@ -227,7 +236,9 @@ def collect_bank(
                 image, state.euler[:, :2], reference_neural
             )
             references.append(reference_motor.cpu().clone())
-            target = late_roll_preservation_targets(teacher_target, reference_motor, current)
+            target = late_roll_preservation_targets(
+                teacher_target, reference_motor, current, roll_from_start=roll_from_start
+            )
         for values, record in zip(state.as_tuple(), histories, strict=True):
             record.append(values.cpu().clone())
         roles.append(current.cpu().clone())
@@ -238,7 +249,7 @@ def collect_bank(
         elif kind == "teacher":
             motor = teacher_target
         else:
-            motor = target  # frozen-source flight, with teacher roll only after gate one
+            motor = target  # source PYT, teacher roll at the explicitly selected takeover time
         for _ in range(2):
             active_before = ~failed & (current < len(gates))
             rc, sticks = legs(motor, sticks)
@@ -263,6 +274,7 @@ def collect_bank(
         failure_steps.cpu(),
         torch.stack(references) if references else None,
         roll_teacher=roll_teacher,
+        roll_from_start=roll_from_start,
     )
     print(json.dumps(dict(stage="collection", **bank.manifest())), flush=True)
     return bank
@@ -323,7 +335,25 @@ def prepare_window(bank, rows, starts, unroll, device):
     )
 
 
-def select_balanced_window(primary, fallback, phase, unroll, rng, window_kind, device):
+def early_stage_options(options, stage):
+    """Cover launch explicitly, plus all thirds of eligible approach starts.
+
+    The last third may precede failure rather than a successful crossing. No
+    privileged stage indicator is provided to the deployed actor.
+    """
+    if stage not in ("launch", "early-approach", "middle", "late-approach"):
+        raise ValueError("unknown early replay stage")
+    if not options:
+        return []
+    if stage == "launch":
+        return [0] if 0 in options else []
+    chunks = np.array_split(options, 3)
+    return chunks[("early-approach", "middle", "late-approach").index(stage)].tolist()
+
+
+def select_balanced_window(
+    primary, fallback, phase, unroll, rng, window_kind, device, *, early_stage=None
+):
     """Prefer paired resets, then independent same-phase rows, then per-side fallback.
 
     Early windows stay entirely before gate one. Late windows may cross a gate.
@@ -331,6 +361,8 @@ def select_balanced_window(primary, fallback, phase, unroll, rng, window_kind, d
     supervised comparisons, not controlled mirrored-geometry interventions.
     """
     banks = (primary,) if primary is fallback else (primary, fallback)
+    if early_stage is not None and phase != 0:
+        raise ValueError("early stage requires phase zero")
     eligible = {}
     for bank in banks:
         starts = bank.starts(phase, unroll)
@@ -339,6 +371,8 @@ def select_balanced_window(primary, fallback, phase, unroll, rng, window_kind, d
                 [t for t in options if bool((bank.current[t : t + unroll, row] == 0).all())]
                 for row, options in enumerate(starts)
             ]
+            if early_stage is not None:
+                starts = [early_stage_options(options, early_stage) for options in starts]
         eligible[id(bank)] = starts
     starts = eligible[id(primary)]
     pairs = [p for p in range(len(starts) // 2) if starts[2 * p] and starts[2 * p + 1]]
@@ -385,6 +419,8 @@ def select_balanced_window(primary, fallback, phase, unroll, rng, window_kind, d
         entirely_pre_first_gate=phase == 0,
         difference_loss_is_controlled_geometry_contrast=False,
     )
+    if early_stage is not None:
+        record["early_stage"] = early_stage
     return window, record
 
 

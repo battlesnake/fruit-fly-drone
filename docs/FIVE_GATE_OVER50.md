@@ -2275,3 +2275,138 @@ grouped objective is **0.881808** and gradient norm 3.77836. Three group losses 
 weights 0.5 / 0.25 / 0.25, representing all original nine lessons. This confirms
 startup and the intended training target, not learned improvement. The first
 unified fit/native check is at update 25. Both process handles remain live.
+
+#### Fixed-window endpoints: improved fitting, failed autonomous control
+
+The original mask comparison has finished normally. The seven-hop arm stops at
+update 50 because both late-roll fitting reductions exceed 50%: **53.21% / 72.62%**,
+with RMSE **0.009955 / 0.007753**. Early preservation RMSE is 0.001094 / 0.006633 and
+maximum non-roll RMSE is 0.003003. This establishes useful fitting capacity, not
+control: autonomous development is **0/32 clean**, four clean first gates (zero
+negative / four positive), eleven clean-prefix gates, twelve ring-contact episodes
+and five wrong-order episodes. Ground, invalid and wrong-direction counts are zero.
+The source remains selected; this endpoint is diagnostic only.
+
+The isolated unified-label pilot is also failing in flight:
+
+| Update | Late-roll reduction, negative / positive | Early-roll reduction, negative / positive | Clean courses | Clean first gates | Ground / invalid episodes |
+| --- | --- | --- | ---: | ---: | --- |
+| 25 | 39.52% / 46.05% | -9.41% / 37.88% | 2/32 (0 / 2) | 15/32 (10 / 5) | 0 / 0 |
+| 50 | 51.30% / 70.50% | 2.22% / 70.90% | 0/32 | 0/32 | 4 / 4 |
+
+At update 25 there are 27 clean-prefix gates, 24 ring-contact episodes and five
+wrong-order episodes. At update 50 those counts are zero, three and zero. Neither
+check has wrong-direction events. Update-50 late RMSE is 0.010361 / 0.008351;
+early local-teacher RMSE is 0.011941 / 0.003679 and maximum non-roll RMSE is 0.005891.
+These early errors are **teacher-fitting** errors, not preservation errors. The
+pilot remains bounded at 100 updates and has not met its two-sided early threshold.
+No checkpoint is promoted. Fitting improvements cannot override flight failures.
+
+#### New-course fixed-input transfer: some learning, insufficient generalization
+
+The completed old-label seven-hop update-50 checkpoint was eligible for the already
+prepared transfer audit. `pragmatic-fixed-replay-transfer-001` collected its two
+reserved seeds once: 2026091303 source-native and 2026091304 source-roll-assisted,
+eight mirrored pairs each. These seeds are now used diagnostic courses, not future
+goal holdouts. Both actors replay the same entire physical histories with independent
+current neural states; this is not a candidate-driven autonomous flight test.
+
+All phase/side/source coverage requirements were met. Late-roll RMSE reductions are:
+
+| Input-history source | Negative | Positive |
+| --- | ---: | ---: |
+| Source-native | 19.01% | 25.01% |
+| Source-roll-assisted | -11.35% | 36.86% |
+| Equal-group combined | 11.17% | 27.42% |
+
+The two-sided 20% combined screen fails. No expanded native validation is nominated.
+On native pre-first-gate histories, source preservation error is approximately zero
+while the candidate's roll error is **0.017537 / 0.015719**. Corresponding assisted
+history errors are **0.018191 / 0.017042**. This demonstrates substantial early-policy
+drift outside the one fitted preservation window. Late learning transfers somewhat,
+but neither the fixed-input screen nor actual autonomous performance is adequate.
+
+#### The fixed early lesson covers very little of the approach
+
+A CPU-only inspection of the original recorded history and local teacher found:
+
+| Course side | Sole supervised early interval | First-gate pass | Fraction of pre-first active frames | Mean local roll target |
+| --- | --- | --- | --- | ---: |
+| Negative | 1.34–1.74 s | 6.04 s | 6.62% | -0.02970 |
+| Positive | 4.24–4.64 s | 6.12 s | 6.54% | -0.02147 |
+
+These are native seed 1690983 rows 0/1, starts 67/212, twenty supervised frames each.
+Both windows have negative mean roll targets despite opposite course sides; they
+sample different stages of the manoeuvre. There is no direct launch supervision,
+and fourteen other native episodes are absent from the fixed early lesson. In the
+first half-second the local roll means are approximately +0.00018 / +0.01896, whereas
+source roll means are +0.04915 / -0.02076. Roll output is a rate-control motor drive,
+not an angle: these signs alone do not diagnose a wrong teacher.
+
+This is evidence of narrow coverage, not proof that coverage explains every failure.
+In particular, the unified pilot also struggles to fit its negative-side early
+window. Nevertheless, making a new all-flight roll policy from one 400 ms example
+per side is not an adequate test of the overall approach.
+
+#### Next bounded learning trial: refreshed whole-approach roll imitation
+
+Astra recommends broadening learner-state coverage before adding geometry auxiliaries
+or switching to PPO. The new `train_pragmatic_course_coverage.py` reuses the existing
+collector, recurrent replay, renderer, physics and native evaluator. It does not
+introduce a deployed controller, mode machine, extra observation or memory buffer.
+
+The pilot restarts the original source, with **three rounds of ten updates**:
+
+- Each round collects eight fresh learner-native pairs and four fresh roll-assisted
+  pairs, with learner weights fixed throughout collection. Assisted flight uses
+  local current-gate roll from the first command and frozen-source PYT. Native
+  collection uses all four learner outputs; its labels use local roll and the
+  frozen source evaluated on those same actual sensory histories.
+- Every update has four equal-weight paired windows: native early, assisted early,
+  native late and assisted late. Early sampling covers launch (start zero) and all
+  three thirds of eligible approach starts. The final third is
+  called **late approach**, not assumed to precede a successful crossing. Late
+  phases rotate gates two through five. Missing native sides may use assisted
+  examples, explicitly recorded as substitutions; no courses are redrawn to obtain
+  successes. Both signs and all phases are reported without relabeling assistance
+  as native exposure.
+- All four pairs are batched with pair adjacency preserved. Each has its own full
+  current-weight neural prefix and twenty supervised frames. No cached neural
+  states are reused. The same seven-hop mask, fixed signs/topology, fixed biases and
+  time constants, 1e-4 learning rate, single clipping/Adam step and five-hop-count
+  anchor denominator remain. The actor still advances at 50 Hz, physics at 100 Hz.
+- Collections refresh under the latest learner each round, without restoring a
+  previous checkpoint between rounds. Updates four and nine also sample a retained
+  older collection when available, preserving some earlier exposures. Before/after
+  fitting is measured on identical per-round diagnostic windows, separated by actual
+  source, phase, side and axis. These are training examples, not goal holdouts.
+- Full 30-second, unassisted 32-case development checks happen every round. Retain
+  the checkpoint with most clean completions, then best worst-side count, then
+  prefix progress. Do not reject a better overall/better-balanced policy merely
+  because one side declines. All saved checkpoints remain diagnostic pending fresh
+  validation; the original source is retained if none improves.
+
+Training seeds are 2026091310/11, 2026091330/31 and 2026091350/51. Development remains
+the reused seed 1110983. A practical reason to nominate a checkpoint for a fresh
+128-case balanced evaluation is at least four additional clean development
+completions, with zero ground/invalid episodes; this is not the goal itself. The
+goal still needs **more than 64/128 clean autonomous completions on fresh varied
+courses**, with both sides represented and no teacher assistance. If refreshed
+native-state fitting improves across rounds without flight improvement, do not
+extend imitation indefinitely: outcome-based recurrent PPO is the next design
+candidate, not an already implemented solution.
+
+All **616 tests pass**, including from-start takeover versus native action isolation,
+unchanged source PYT, stage sampling, pair-preserving diagnostic batching, and a
+mocked multi-round run verifying fresh collection under latest weights, frozen
+reference weights, retained older exposures and native-only checkpoint selection.
+These tests validate the training plumbing, not successful flight. At this entry
+the coverage pilot is implemented but has not yet launched.
+
+Astra's pre-launch review caught two sampling gaps, both corrected: selecting only
+time zero for launch left most of the first approach third unsupervised, and older
+bank updates four/eight aliased the four-phase cycle, excluding some fresh later-gate
+lessons. Explicit first-third sampling and older updates four/nine now retain all
+early stages and all later phases in every ten-update fresh round. Regression tests
+check the actual schedule and full eligible-start coverage. Shorter custom rounds
+also avoid replacing the only fresh occurrence of a phase.
