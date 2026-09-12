@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from dataclasses import replace
 from pathlib import Path
@@ -55,6 +56,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--gain-scale", type=float, default=0.05)
     parser.add_argument("--learning-rate", type=float, default=0.5)
     parser.add_argument("--sigma-decay", type=float, default=0.98)
+    parser.add_argument("--ground-invalid-cost", type=float, default=25.0)
     parser.add_argument("--spacing-min", type=float, default=0.9)
     parser.add_argument("--spacing-max", type=float, default=1.5)
     parser.add_argument("--lateral-step-max", type=float, default=0.2)
@@ -94,6 +96,21 @@ def training_course_seed(base_seed, generation, refresh_generations):
     return base_seed + (generation - 1) // refresh_generations
 
 
+def outcome_search_fitness(metrics, ground_invalid_cost):
+    """One extra strong penalty per unsafe episode, not twice for ground+invalid."""
+    rate = metrics["ground_or_invalid_rate"]
+    base = metrics["course_race_fitness"]
+    if not math.isfinite(ground_invalid_cost) or ground_invalid_cost < 0:
+        raise ValueError("ground/invalid cost must be finite and nonnegative")
+    if not math.isfinite(base) or not math.isfinite(rate) or not 0 <= rate <= 1:
+        raise ValueError("invalid outcome fitness metrics")
+    return base - ground_invalid_cost * rate
+
+
+def safe_development_candidate(metrics):
+    return metrics["ground_contact_rate"] == 0 and metrics["invalid_rate"] == 0
+
+
 def main() -> int:
     args = parse_args()
     if (
@@ -124,6 +141,8 @@ def main() -> int:
         raise SystemExit("training and development course seeds must be separate")
     if args.output_dir.exists():
         raise SystemExit("refusing to overwrite an existing course-search experiment")
+    if not math.isfinite(args.ground_invalid_cost) or args.ground_invalid_cost < 0:
+        raise SystemExit("ground/invalid cost must be finite and nonnegative")
     device = torch.device(args.device)
     controller, source = load_controller(args, device)
     controller.eval().requires_grad_(False)
@@ -202,6 +221,9 @@ def main() -> int:
                     first=metrics["first_gate_pass_rate"],
                     prefix=metrics["gates_before_failure_mean"],
                     fitness=metrics["course_race_fitness"],
+                    search_fitness=outcome_search_fitness(metrics, args.ground_invalid_cost),
+                    ground=metrics["ground_contact_rate"],
+                    invalid=metrics["invalid_rate"],
                     elapsed_seconds=round(perf_counter() - started, 2),
                     **extra,
                 )
@@ -245,6 +267,8 @@ def main() -> int:
             source_development=source_metrics,
             selected_development=best_metrics,
             first_gate_floor=first_gate_floor,
+            search_fitness="course_race_fitness - ground_invalid_cost * ground_or_invalid_rate",
+            unsafe_development_candidates_eligible=False,
             center=center.tolist(),
             best_vector=best_vector.tolist(),
             history=history,
@@ -288,7 +312,9 @@ def main() -> int:
                     "candidate", result, generation=generation,
                     candidate=offset + local, course_seed=case_seed,
                 )
-        values = np.asarray([result["course_race_fitness"] for result in metrics])
+        values = np.asarray([
+            outcome_search_fitness(result, args.ground_invalid_cost) for result in metrics
+        ])
         utilities = torch.tensor(centered_ranks(values), device=device)
         gradient = ((utilities[0::2] - utilities[1::2])[:, None] * epsilon).mean(dim=0) / sigma
         center = (center + args.learning_rate * spec.scales * gradient).clamp(
@@ -303,6 +329,7 @@ def main() -> int:
             sigma=sigma,
             candidates=metrics,
             candidate_vectors=candidates.tolist(),
+            candidate_search_fitness=values.tolist(),
             center_metrics=center_metrics,
             center_vector=center.tolist(),
         )
@@ -312,8 +339,10 @@ def main() -> int:
                 result = assess(vector, development)
                 log("development", result, generation=generation, candidate=label)
                 checks.append(dict(candidate=label, metrics=result))
-                if selection_score(result, first_gate_floor) > selection_score(
-                    best_metrics, first_gate_floor
+                if (
+                    safe_development_candidate(result)
+                    and selection_score(result, first_gate_floor)
+                    > selection_score(best_metrics, first_gate_floor)
                 ):
                     best_metrics, best_vector = result, vector.clone()
             record["development"] = checks

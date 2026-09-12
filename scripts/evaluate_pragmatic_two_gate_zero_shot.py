@@ -326,6 +326,9 @@ def compact_policy_metrics(
     side: Tensor,
     gate_count: int,
     policy_count: int,
+    *,
+    ground: Tensor,
+    valid: Tensor,
 ) -> list[dict[str, float | int]]:
     """Keep independent candidate scores when several policies share a GPU batch."""
     if policy_count < 1 or len(first) % (2 * policy_count):
@@ -344,6 +347,9 @@ def compact_policy_metrics(
             course_failure_rate=float(failed[take].float().mean()),
             gates_before_failure_mean=float(prefix[take].mean()),
             course_race_fitness=float(fitness[take].mean()),
+            ground_contact_rate=float(ground[take].float().mean()),
+            invalid_rate=float((~valid[take]).float().mean()),
+            ground_or_invalid_rate=float((ground[take] | ~valid[take]).float().mean()),
         ))
     return summaries
 
@@ -502,6 +508,7 @@ def evaluate(
         return compact_policy_metrics(
             first, clean_course, failed_prefix, prefix_passes, prefix_centering,
             cases.side, len(gates), compact_policies,
+            ground=ground, valid=valid,
         )
     strict = (
         clean_course
@@ -657,6 +664,7 @@ def evaluate(
             float(second_radial[second_crossed].mean()) if bool(second_crossed.any()) else None
         ),
         "ground_contact_rate": float(ground.float().mean()),
+        "ground_or_invalid_rate": float((ground | ~valid).float().mean()),
         "invalid_rate": float((~valid).float().mean()),
         "maximum_tilt_mean_degrees": float(torch.rad2deg(maximum_tilt).mean()),
         "stick_saturation_fraction_mean": float((saturation_steps / policy_steps).mean()),

@@ -2565,3 +2565,60 @@ batched-versus-compiled native recurrence and per-candidate clean-course scoring
 tests. No new model download, privileged actor input, teacher assistance or
 deployed exploration memory is introduced. At this entry the pilot is prepared;
 its flight evidence will be recorded separately after launch.
+
+#### Pre-search ground-penalty correction and revised launch
+
+The first search process (`pragmatic-phase-balanced-motor-es-001`) reproduced the
+12/32 source baseline, then was intentionally stopped by SIGINT during its first
+candidate batch. No generation or candidate result was completed or recorded.
+Its files are retained; nothing is overwritten or promoted. This was a deliberate
+correction, not a timeout interpreted as a stopped job.
+
+Astra agrees with searching all 24 coordinates from this stronger source before
+building a new PPO implementation, but identified a missing training penalty:
+the existing search fitness charged ground/invalid events only the generic -2
+failure term. Clean-course scoring already disqualified such flights, but that
+was not a strong explicit search penalty.
+
+The revised search now ranks candidates and chooses its training winner by:
+
+`course_race_fitness - 25 * ground_or_invalid_rate`
+
+The full and compact evaluators report the same per-candidate latched union of
+ground contact or invalid state. A ground touch that also sets invalid is charged
+once by this **additional** cost, not twice; the ordinary -2 failure term remains.
+Even an unsafe flight with five recorded passes cannot make up its -25 cost from
+gate progress. Candidates with any ground or invalid episode in standalone
+development cannot replace the source. Ring/order events retain the existing
+failure handling; no new per-component monotonicity constraints are introduced.
+Full-duration clean-course success definitions are unchanged.
+
+All **619 tests pass**, including union accounting, strong unsafe penalties and
+separation of batched candidates. Astra's review found no blocking issue. Before
+any completed search generation, the planned direction budget was increased to
+**eight antithetic directions (sixteen candidates) per generation**, retaining six
+generations, eight mirrored training pairs and two candidates per GPU batch. The
+between-generation time cap is correspondingly **40 minutes**. It may overrun that
+limit by the duration of the already-started generation; it is not a hard watchdog.
+The per-generation course refresh remains one and the same training seed range is
+retained, explicitly including the partly sampled seed from the interrupted run.
+
+The corrected restart uses a separate output directory:
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/search_pragmatic_gate_course_es.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output-dir runs/gate/pragmatic-phase-balanced-motor-es-002 \
+  --generations 6 --directions 8 --candidate-batch 2 --training-pairs 8 \
+  --development-pairs 16 --development-interval 2 --course-refresh-generations 1 \
+  --seed 2026091370 --development-seed 1110983 --maximum-minutes 40 \
+  --ground-invalid-cost 25
+```
+
+If this bounded search produces no useful native improvement, the next design
+candidate remains recurrent PPO. Astra notes an important constraint: the seven-hop
+roll mask also changes native PYT through shared recurrence. A roll-only policy
+likelihood would therefore omit other executed commands that depend on the updated
+weights. A proper PPO pilot must account for all four executed actions, with
+foreleg-compatible exploration and a training-only privileged critic. Neither an
+external controller nor an exploration-memory process belongs in the deployed actor.

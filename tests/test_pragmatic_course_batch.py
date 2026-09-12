@@ -15,7 +15,11 @@ from evaluate_pragmatic_two_gate_zero_shot import (  # noqa: E402
 from pragmatic_course_batch import ParameterBatchController, repeat_course_bank  # noqa: E402
 from search_gate_motor_interface_es import motor_interface_spec  # noqa: E402
 from search_pragmatic_full_native_gate_es import apply_vector  # noqa: E402
-from search_pragmatic_gate_course_es import training_course_seed  # noqa: E402
+from search_pragmatic_gate_course_es import (  # noqa: E402
+    outcome_search_fitness,
+    safe_development_candidate,
+    training_course_seed,
+)
 
 from flydrone.hover import ConnectomeController, HoverConfig  # noqa: E402
 
@@ -36,11 +40,42 @@ def test_candidate_scores_do_not_mix_flights_or_count_failed_completion():
         torch.tensor([5.0, 5.0, 0.0, 0.0]),
         torch.tensor([-1.0, 1.0, -1.0, 1.0]),
         5, 2,
+        ground=torch.zeros(4, dtype=torch.bool), valid=torch.ones(4, dtype=torch.bool),
     )
     assert summaries[0]["clean_course_success_rate"] == 1.0
     assert abs(summaries[0]["course_race_fitness"] - 10.2) < 1e-5
     assert summaries[1]["clean_course_success_rate"] == 0.0
     assert summaries[1]["course_race_fitness"] == -1.0
+
+
+def test_ground_failure_is_penalized_once_per_episode_and_kept_separate_per_candidate():
+    summaries = compact_policy_metrics(
+        torch.ones(4, dtype=torch.bool),
+        torch.tensor([False, False, True, True]),
+        torch.tensor([True, True, False, False]),
+        torch.full((4,), 5.0), torch.full((4,), 5.0),
+        torch.tensor([-1.0, 1.0, -1.0, 1.0]), 5, 2,
+        ground=torch.tensor([True, False, False, False]),
+        valid=torch.tensor([False, False, True, True]),
+    )
+    unsafe, safe = summaries
+    assert unsafe["ground_contact_rate"] == 0.5
+    assert unsafe["invalid_rate"] == unsafe["ground_or_invalid_rate"] == 1
+    assert safe["ground_or_invalid_rate"] == 0
+    assert outcome_search_fitness(unsafe, 25) == unsafe["course_race_fitness"] - 25
+    assert outcome_search_fitness(unsafe, 25) < -20  # even after all five raw passes
+    assert outcome_search_fitness(safe, 25) == safe["course_race_fitness"]
+    assert not safe_development_candidate(unsafe)
+    assert safe_development_candidate(safe)
+
+
+def test_search_fitness_rejects_missing_or_nonfinite_safety_metrics():
+    with pytest.raises(KeyError):
+        outcome_search_fitness({"course_race_fitness": 1}, 25)
+    with pytest.raises(ValueError):
+        outcome_search_fitness(
+            {"course_race_fitness": 1, "ground_or_invalid_rate": float("nan")}, 25
+        )
 
 
 def test_repeated_course_bank_preserves_geometry_and_separates_pairs():
