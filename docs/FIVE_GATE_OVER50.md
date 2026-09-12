@@ -821,3 +821,54 @@ the gap, and no trained checkpoint was selected; its failed full-flight results 
 Any future claimed short-window improvement must use the corrected guard. The final
 suite passed **516 tests**, including this crossing regression and touch-then-recover
 ground rejection. No GPU jobs from this experiment remain running.
+
+### Whole-flight native physical training
+
+The next trial changes the training trajectory and acceptance scope, not the actor.
+`scripts/pragmatic_on_policy.py` runs uninterrupted native flights from launch, with
+the ordinary ten-frame static neural warmup, 50 Hz RGB/brain and 100 Hz foreleg/quad
+steps. Weights stay fixed throughout each complete 30-second training batch. Gradients
+accumulate through fifty-frame physical segments, detaching neural, leg and all six
+quad-state components between segments without resetting their numerical values.
+One optimizer update follows the complete batch. Every new update starts fresh native
+flights under the current weights; there are no teacher-driven or old-source physical
+starts, and no externally supplied actor memory.
+
+Astra recommended this bounded experiment over another replay-only diagnostic. It
+addresses native state exposure, coverage of the whole first approach and reachable
+later phases, and whole-flight acceptance together. It does not isolate which of those
+changes caused any eventual improvement. Keep the existing 19,286 roll-path edges,
+LR 1e-4, and frozen biases/time constants for this comparison.
+
+The continuous objective averages squared lateral path error (0.5 m scale) plus
+0.25 times squared tangent-relative lateral-velocity error (0.5 m/s scale), adds
+0.05 times normalized non-roll preservation, and retains the smooth ground-clearance
+loss throughout the full flight. Path geometry remains training-only. A nominal
+pre-update native pass records actual executed commands and its clean-active time mask.
+Both are frozen for the gradient pass and every proposed update's full native replay.
+In particular, **earlier candidate failure cannot erase difficult tracking samples**.
+Ground, ring, order, direction and invalid-state failures remain latched after recovery
+or completion. Exterior-plane misses are legal, exactly as in full-course evaluation;
+this is not the pre-crossing-only training screen used in the previous experiment.
+
+`scripts/train_pragmatic_course_on_policy.py` tests restored proposal scales 1/0.3/0.1
+on the same full training flights. Acceptance requires lower continuous objective,
+nondecreasing clean-first counts on both sides, clean-prefix count and completions,
+and no increase in any latched failure category. A failed proposal restores both
+weights and optimizer state. These small training-bank guards do not prove generalization;
+ordinary 32-case native development evaluation still selects checkpoints.
+
+The initial run is `runs/gate/pragmatic-on-policy-50-001`, starting from the retained
+phase-balanced source for two updates. Each update samples two mirrored pairs on seed
+1520983 plus the update index minus one, processed as two-episode microbatches to bound
+GPU memory. Assess native development after update 2 before considering an extension
+to at most ten updates, with checks at 5/10. Three consecutive rejected updates or a
+material clean-first development regression stops a run. If this approach stalls, a
+matched hundred-frame truncation is the next horizon comparison, not a new anatomical
+expansion. The six new focused tests cover unchanged numerical state across truncation,
+native motor gradients, frozen tracking masks, all failure-category guards, legal
+exterior misses, and primary-evaluator agreement on contact after the last gate.
+The complete regression suite passed **522 tests**. Astra's read-only implementation
+review found no substantive blocker. The script deliberately aborts on exceptions;
+it is not an in-process retry/resume trainer. Exception-safe restoration of pending
+Adam state would be required before adding that recovery behavior.
