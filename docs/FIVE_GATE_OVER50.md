@@ -1880,3 +1880,14 @@ records still contained axis/side labels that `replay_fit_summary` supplies itse
 causing a duplicate-key exception. The loader now removes those regenerated fields,
 and a regression test exercises a saved record through the actual summary wrapper.
 The empty attempt directory is retained; the corrected run uses a new `-002` directory.
+
+The corrected `pragmatic-fixed-bank-mask-fit-002` process has now completed its source
+measurements and its first five-hop optimizer update. The source again scores 12/32
+native clean courses. Restored fixed-window late-roll RMSE is 0.021278 / 0.028311,
+consistent with the mixed pilot's original examples; early-roll errors are below
+3e-7 and maximum non-roll error is 3.3e-6. This is an ordinary FP32 reconstruction
+check, not a byte-exact criterion. The first complete nine-window training objective
+is 0.803150 before the update. All **569 tests pass** with the report-restoration
+regression included, and the fixes are pushed. The five-hop arm is active; the
+seven-hop source restart follows in the same single GPU process. The next native
+flight/fit check is at update 25. No improvement is claimed from startup or training loss.
