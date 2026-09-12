@@ -31,3 +31,29 @@ def test_path_mask_can_include_existing_attitude_without_adding_edges(monkeypatc
     assert all_edges.tolist() == [True, True, True, True, False]
     assert nodes.tolist() == [True, True, True, True, False]
     assert manifest["attitude_neurons"] == 1
+
+
+def test_direct_only_loss_balances_common_and_differential_motor_errors():
+    target = torch.zeros(2, 4)
+    active = torch.ones(2, dtype=torch.bool)
+    scale = torch.ones(4)
+    common = torch.ones(2, 4)
+    differential = common.clone()
+    differential[0] = -1.0
+    for weight, expected_ratio in ((0.0, 1.0), (1.0, 5.0)):
+        common_loss, _ = imitation.action_imitation_loss(common, target, active, scale, weight)
+        differential_loss, _ = imitation.action_imitation_loss(
+            differential, target, active, scale, weight
+        )
+        assert torch.allclose(differential_loss, expected_ratio * common_loss)
+
+
+def test_unpaired_active_flight_still_gets_direct_imitation_loss():
+    prediction = torch.ones(2, 4)
+    prediction[1] = 999.0
+    loss, axis = imitation.action_imitation_loss(
+        prediction, torch.zeros_like(prediction), torch.tensor([True, False]),
+        torch.ones(4), 1.0,
+    )
+    assert loss == 1.0
+    assert torch.equal(axis, torch.ones(4))

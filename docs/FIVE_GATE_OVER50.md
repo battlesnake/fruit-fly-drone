@@ -149,9 +149,50 @@ borderline gate pass; one repeat of the same pilot checkpoint scored 4/16. Do no
 the project on bitwise replay, but require larger fresh banks for the goal.
 
 Reports/checkpoints are under `runs/gate/pragmatic-fixed-heading-imitation-001/`.
-Two extensions compare 100 teacher + 100 handoff + 100 native updates at 1e-5 against
-200 entirely native teacher-labelled updates at 3e-6, both with frozen biases/taus
-and the same visual-path mask. Their final results are pending.
+Two completed extensions compared 100 teacher + 100 handoff + 100 native updates at
+1e-5 against 200 entirely native teacher-labelled updates at 3e-6, both with frozen
+biases/taus and the same visual-path mask:
+
+| Extension | Best development checkpoint | Final checkpoint |
+| --- | ---: | ---: |
+| teacher/handoff/native | update 100: 4/16 | update 300: 1/16 |
+| fully native, gentler updates | update 100: 5/16 | update 200: 1/16 |
+
+The selected native checkpoint retained 14/16 first-gate passes and reached an average
+clean prefix of 3.25 gates. Its report is
+`runs/gate/pragmatic-fixed-heading-native-001/report.json`. Later updates regressed,
+so use `best-controller.pt`, not `latest-controller.pt`.
+
+On a new 32-flight bank (seed 1110983), that checkpoint achieved **4/32**, versus the
+original's **2/32** on identical courses. This is preliminary generalization evidence,
+not proof that 31.25% from the small selection bank is its true success rate. That bank
+is now a development bank for the six-generation batched motor search in
+`runs/gate/pragmatic-fixed-heading-batched-es-001/`; do not reuse it as the final goal
+holdout. The search retains the full geometry, all four native outputs and course rules.
+
+### Direct-loss ablation
+
+For a matched pair, direct MSE plus unit-weight pair-difference MSE equals common-mode
+error squared plus five times differential-mode error squared. In native flight the
+two members can also reach different phases, so contrast is not necessarily a clean
+visual-steering lesson. Astra identified this as a possible contributor to shared
+late-course lateral drift. `--contrast-weight 0` now permits a direct-only comparison;
+unit tests verify the common/differential weighting. The default remains 1 for earlier
+run recipes. A 100-update native-only trial starts from the preserved native-best100
+at 3e-6 with all other plasticity restrictions unchanged, using seed 1130983 and the
+32-flight development bank. This tests a hypothesis; no improvement is assumed.
+
+The direct-only run reached 9/32 at update 50 (from its 3/32 repeated baseline), with
+28/32 first-gate passes. Later checkpoints are still pending. A matched unit-contrast
+control uses the same warm start, training seed, native-only stage, learning rate and
+32-case development set; this is needed to distinguish loss weighting from the effect
+of another training seed. Treat the 9/32 result as development selection, not fresh
+validation or a demonstrated causal effect of the loss change.
+
+`scripts/export_pragmatic_course_candidate.py` can compile any saved ES trial into a
+normal controller for standalone checks, without replacing a selected checkpoint.
+This also permits validation of a strong candidate between scheduled development
+generations instead of losing it from consideration.
 
 ### Alternative retained: balanced replay with current-weight neural history
 

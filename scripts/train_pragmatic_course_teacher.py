@@ -48,6 +48,7 @@ def parse_args():
     parser.add_argument("--unroll", type=int, default=20)
     parser.add_argument("--learning-rate", type=float, default=3.0e-5)
     parser.add_argument("--bias-learning-rate", type=float, default=1.0e-5)
+    parser.add_argument("--contrast-weight", type=float, default=1.0)
     parser.add_argument("--path-hops", type=int, default=5)
     parser.add_argument("--include-attitude-paths", action="store_true")
     parser.add_argument("--teacher-heading-mode", choices=("tangent", "world-x"), default="tangent")
@@ -57,6 +58,21 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=1_040_983)
     parser.add_argument("--development-seed", type=int, default=1_050_983)
     return parser.parse_args()
+
+
+def action_imitation_loss(prediction, target, active, motor_scale, contrast_weight):
+    """Direct motor error, optionally emphasizing differences within mirrored pairs.
+
+    Weight 1 adds four extra units of differential-mode error to the direct loss;
+    it is not neutral balancing. Native paired flights may also be at different phases.
+    """
+    error = ((prediction - target) / motor_scale).square()
+    axis = error[active].mean(dim=0)
+    paired = active.reshape(-1, 2).all(dim=1)
+    residual = ((prediction - target) / motor_scale).reshape(-1, 2, 4)
+    difference = residual[:, 1] - residual[:, 0]
+    contrast = difference[paired].square().mean() if bool(paired.any()) else axis.sum() * 0
+    return axis.mean() + contrast_weight * contrast, axis
 
 
 def native_sensorimotor_mask(graph_path, hops, device, include_attitude=False):
@@ -104,6 +120,8 @@ def main():
         raise SystemExit("batch sizes, unroll, intervals and rates must be positive")
     if args.bias_learning_rate < 0.0:
         raise SystemExit("bias learning rate must be nonnegative (zero freezes biases)")
+    if not np.isfinite(args.contrast_weight) or args.contrast_weight < 0.0:
+        raise SystemExit("contrast weight must be finite and nonnegative")
     updates = args.teacher_updates + args.handoff_updates + args.native_updates
     if min(args.teacher_updates, args.handoff_updates, args.native_updates) < 0 or updates < 1:
         raise SystemExit("at least one nonnegative training stage is required")
@@ -249,19 +267,11 @@ def main():
             with torch.no_grad():
                 target = course_teacher_motor(state, path, config, teacher_config)
             active = ~failed & (current < 5)
-            error = ((prediction - target) / motor_scale).square()
             if bool(active.any()):
-                loss_axis = error[active].mean(dim=0)
-                # Contrast teaches course-dependent steering without imposing a roll sign.
-                pair_active = active.reshape(-1, 2).all(dim=1)
-                pred_pair, target_pair = prediction.reshape(-1, 2, 4), target.reshape(-1, 2, 4)
-                contrast = (
-                    (pred_pair[:, 1] - pred_pair[:, 0]) - (target_pair[:, 1] - target_pair[:, 0])
-                ) / motor_scale
-                pair_loss = (
-                    contrast[pair_active].square().mean() if pair_active.any() else error.sum() * 0
+                action_loss, loss_axis = action_imitation_loss(
+                    prediction, target, active, motor_scale, args.contrast_weight
                 )
-                losses.append(loss_axis.mean() + pair_loss)
+                losses.append(action_loss)
                 per_axis.append(loss_axis.detach())
             with torch.no_grad():
                 applied = (1.0 - beta) * target + beta * prediction.detach()
