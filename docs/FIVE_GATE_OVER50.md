@@ -2479,3 +2479,18 @@ lose collection eligibility, and there are no positive-side later-gate histories
 Later positive lessons must therefore come from explicitly marked assistance or
 retained older banks. The refresh is exposing the changed learner's failure
 distribution; it does not justify claiming progress in autonomous completions.
+
+#### Unified fixed-window trial finished at its cap
+
+The independent unified trial has exited normally after 100 updates (2,013.68 s
+total). Final late-roll RMSE is **0.006580 / 0.007410**, reductions **69.08% / 73.83%**.
+Early local-roll RMSE is **0.004680 / 0.006458**, reductions **61.68% / 48.92%**;
+maximum non-roll RMSE is 0.004511. It finishes at the update cap, not the two-sided
+early/late fitting threshold. Being close to that fitting threshold is not a
+reason to extend this unsuccessful branch.
+
+The final native check is **0/32 clean**, zero first-gate/prefix passes and **29/32
+ground/invalid episodes**, with no ring or illegal-traversal events. No candidate
+is promoted and no goal holdout is used. The refreshed coverage pilot is now the
+only live training job; its twenty optimizer updates have completed and its second
+full-flight development check is pending. The source remains selected.
