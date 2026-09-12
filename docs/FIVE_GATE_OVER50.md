@@ -1438,3 +1438,49 @@ weights, as planned. The first-gate stop condition is not triggered. Subsequent
 banks must establish whether this early training gain develops into broader native
 flight improvement. Neither the >50% goal nor the value of outcome-mode fallback
 has been settled by this one accepted step.
+
+#### Third bank supplies both-side late experience; another smaller step accepted
+
+On bank 1620985, the update-two controller passes all sixteen first gates and
+completes 2/16 full courses, one on each side. It has 39 clean-prefix gates, fourteen
+ring-contact episodes and three wrong-order episodes, with ground/invalid/direction
+counts zero. Eligible tracking frames by gate are [2565, 1130, 670, 416, 362] on the
+negative side and [2654, 1283, 716, 621, 330] on the positive side. Both sides now
+supply gate-five training; no easier courses have been substituted.
+
+Update three's scale-one proposal loses a completion (1/16, prefix 38) and is
+rejected. Scale 0.3 is accepted: 2/16 completions, prefix 41, all sixteen first
+passes, thirteen ring-contact episodes and one wrong-order episode. Ground, invalid
+and wrong-direction counts stay zero. It retains positive-side completion 9, loses
+negative-side completion 12 and gains negative-side completion 2. This is an
+aggregate improvement, not preservation of every prior successful flight.
+Continuous loss rises 0.215057→0.234027, while the flight-first rule favors the two
+additional clean-prefix gates and reduced failure counts. No development check was
+scheduled at update three. At 2,309.73 s elapsed, the run continues to the fourth
+predetermined bank with two genuinely accepted parameter updates; the selected best
+remains the original source.
+
+The first three nominal banks allocate respectively 61.56%, 50.37% and 38.10% of
+eligible tracking loss to gate-one approach, versus 7.57%, 3.10% and 5.13% to gate
+five. These are measured **loss contributions**, not gradient norms or proof of
+which phase drives learning. They come from the logged phase loss means weighted
+by eligible frame counts. No phase weighting or objective changes are made here.
+
+#### Bounded fixed-input sensitivity check does not justify a precision detour
+
+Astra ran one CPU-only FP32 check on the retained source: two mirrored initial
+scenes, ten static warmup steps, then a single approximately 1e-6-RMS membrane
+perturbation in one copy of each brain, followed by ten seconds of identical fixed
+RGB and roll/pitch inputs. No aircraft physics or gate events run. Peak roll-motor
+differences are 5.66e-7 and 1.79e-7, at least 8,800 times smaller than a 0.005
+reference correction. All other motor-axis differences also remain below 4.2e-7.
+Identical unperturbed copies have zero motor differences. Some neuronal differences
+grow without producing material motor amplification.
+
+This provides no evidence of control-scale motor sensitivity to that single tiny
+state perturbation at those operating points. It does not establish closed-loop
+stability, cover moving images or repeated perturbations, or identify event
+thresholds as the cause of replay differences. No further sensitivity investigation
+is planned now; keep judging native flight transfer. The 33.21 s check is recorded
+in `cpu-fixed-input-membrane-sensitivity.json` under the 100-frame run. Controller
+files and the live GPU experiment were untouched.
