@@ -2441,3 +2441,41 @@ the source, not this checkpoint. Both jobs have separate weights, optimizer stat
 and output directories. Verified simultaneous GPU usage was 7,117 / 16,303 MiB
 during the coverage baseline, leaving headroom for the measured eight-row replay
 batch. No claim is made about isolated benchmark speed under shared GPU load.
+
+#### Coverage round one: 1/32 clean, source retained
+
+The first ten optimizer updates completed with the intended stage rotation and
+explicit negative-side fifth-gate substitution. The eight-episode assisted bank,
+seed 2026091311, has active-frame gate/side counts [1256,1302], [673,720], [649,675],
+[557,569], [423,610]; one episode ends training eligibility at a failure/miss.
+Again, these are collection statistics, not full-tail autonomous successes.
+
+The full native update-10 check is **1/32 clean** (one negative / zero positive),
+with one clean first-gate pass, five clean-prefix gates and **18 ring-contact
+episodes**. Ground, invalid, wrong-order and wrong-direction counts are zero.
+The source's 12/32 remains selected. `update-10.pt` is diagnostic, not promoted.
+
+On the identical per-round fitting probes, roll RMSE changes are:
+
+| Actual history source / phase | Negative before → after | Positive before → after |
+| --- | --- | --- |
+| Native early | 0.019976 → 0.021889 | 0.030983 → 0.024503 |
+| Native late | 0.027033 → 0.026253 | 0.023519 → 0.031499 |
+| Assisted early | 0.019166 → 0.016986 | 0.026506 → 0.020762 |
+| Assisted late | 0.020091 → 0.009956 | 0.011917 → 0.022221 |
+
+These are equal-window RMS aggregates by **actual** source; the negative late
+groups contain three native and five assisted windows because the missing native
+fifth-gate probe is counted as assisted. Other groups contain four windows per
+side. Non-roll source agreement starts near numerical zero, as expected. After
+training, aggregate non-roll RMSE across these groups ranges approximately
+0.00023–0.00208. Early negative fitting and positive late fitting have worsened:
+this is not evidence of uniformly successful imitation, much less flight mastery.
+
+The bounded pilot continues to its second round without restoring old weights.
+Its fresh learner-native seed 2026091330 has gate/side active-frame counts
+[2230,2928], [109,0], [167,0], [178,0], [209,0]. All sixteen episodes eventually
+lose collection eligibility, and there are no positive-side later-gate histories.
+Later positive lessons must therefore come from explicitly marked assistance or
+retained older banks. The refresh is exposing the changed learner's failure
+distribution; it does not justify claiming progress in autonomous completions.
