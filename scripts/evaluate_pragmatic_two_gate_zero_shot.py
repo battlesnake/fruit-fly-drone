@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Evaluate the full-MaleCNS single-gate actor on two uninterrupted gates."""
+"""Evaluate the full-MaleCNS single-gate actor on uninterrupted gate sequences."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import argparse
 import json
 import math
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import torch
@@ -28,9 +29,9 @@ from flydrone.gate import (  # noqa: E402
     AnnularGate,
     GateConfig,
     classify_gate_crossing,
+    crossing_coordinates,
     gate_coordinates,
     render_annular_gates_rgb,
-    wrap_angle,
 )
 from flydrone.hover import (  # noqa: E402
     ConnectomeController,
@@ -65,6 +66,24 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=630_983)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--layout", choices=("aligned", "s-turn"), default="aligned")
+    parser.add_argument("--gates", type=int, default=2)
+    parser.add_argument("--spacing-min", type=float, default=3.8)
+    parser.add_argument("--spacing-max", type=float, default=4.2)
+    parser.add_argument(
+        "--inner-radius",
+        type=float,
+        help="optional beginner-course aperture radius override",
+    )
+    parser.add_argument(
+        "--outer-radius",
+        type=float,
+        help="optional beginner-course ring outer radius override",
+    )
+    parser.add_argument(
+        "--frozen-vision",
+        action="store_true",
+        help="freeze the RGB frame after 0.5 s while the rest of the actor stays live",
+    )
     parser.add_argument(
         "--teacher",
         action="store_true",
@@ -93,8 +112,19 @@ def sample_two_gate_cases(
     device: torch.device,
     hover_config: HoverConfig,
     layout: str = "aligned",
-) -> tuple[MirroredGateCases, tuple[AnnularGate, AnnularGate]]:
-    """Sample mirrored courses whose first gate matches the learned task."""
+    spacing_range: tuple[float, float] = (3.8, 4.2),
+    gate_count: int = 2,
+) -> tuple[MirroredGateCases, tuple[AnnularGate, ...]]:
+    """Sample mirrored courses whose first gate matches the learned task.
+
+    Aligned courses may contain any positive number of equally spaced gates.  The
+    two-gate S-turn remains the only intentionally non-collinear layout.
+    """
+
+    if gate_count < 1:
+        raise ValueError("gate_count must be positive")
+    if layout == "s-turn" and gate_count != 2:
+        raise ValueError("s-turn currently supports exactly two gates")
 
     cases = sample_mirrored_cases(
         pairs,
@@ -102,36 +132,40 @@ def sample_two_gate_cases(
         device=device,
         hover_config=hover_config,
     )
+    if gate_count == 1:
+        return cases, (cases.gate,)
     side = cases.side
-    spacing = torch.empty(pairs, device=device).uniform_(3.8, 4.2).repeat_interleave(2)
-    centre = cases.gate.center.clone()
-    centre[:, 0] += spacing
-    centre[:, 2] = 1.10
-    if layout == "aligned":
-        first_displacement = cases.gate.center - cases.state.position
-        centre[:, 1] = cases.gate.center[:, 1] + spacing * (
-            first_displacement[:, 1] / first_displacement[:, 0]
-        )
-    elif layout == "s-turn":
-        lateral = torch.empty(pairs, device=device).uniform_(0.03, 0.08).repeat_interleave(2)
-        centre[:, 1] = -side * lateral
-    else:
-        raise ValueError(f"unknown two-gate layout: {layout}")
-    displacement = centre - cases.gate.center
-    bearing = torch.atan2(displacement[:, 1], displacement[:, 0])
-    if layout == "aligned":
-        first_bearing = torch.atan2(first_displacement[:, 1], first_displacement[:, 0])
-        obliquity = wrap_angle(cases.gate.yaw - first_bearing)
-        yaw = bearing + obliquity
-    else:
-        obliquity = (
-            torch.empty(pairs, device=device)
-            .uniform_(math.radians(2.0), math.radians(7.0))
-            .repeat_interleave(2)
-        )
-        yaw = bearing - side * obliquity
-    second = AnnularGate(center=centre, yaw=yaw)
-    return cases, (cases.gate, second)
+    spacing = torch.empty(pairs, device=device).uniform_(*spacing_range).repeat_interleave(2)
+    first_displacement = cases.gate.center - cases.state.position
+    gates: list[AnnularGate] = [cases.gate]
+    for gate_number in range(1, gate_count):
+        centre = cases.gate.center.clone()
+        centre[:, 0] += gate_number * spacing
+        centre[:, 2] = 1.10
+        if layout == "aligned":
+            centre[:, 1] = cases.gate.center[:, 1] + gate_number * spacing * (
+                first_displacement[:, 1] / first_displacement[:, 0]
+            )
+            yaw = cases.gate.yaw.clone()
+        elif layout == "s-turn":
+            lateral = (
+                torch.empty(pairs, device=device)
+                .uniform_(0.03, 0.08)
+                .repeat_interleave(2)
+            )
+            centre[:, 1] = -side * lateral
+            displacement = centre - cases.gate.center
+            bearing = torch.atan2(displacement[:, 1], displacement[:, 0])
+            obliquity = (
+                torch.empty(pairs, device=device)
+                .uniform_(math.radians(2.0), math.radians(7.0))
+                .repeat_interleave(2)
+            )
+            yaw = bearing - side * obliquity
+        else:
+            raise ValueError(f"unknown gate layout: {layout}")
+        gates.append(AnnularGate(center=centre, yaw=yaw))
+    return cases, tuple(gates)
 
 
 def active_gate(
@@ -154,7 +188,7 @@ def side_rate(values: Tensor, side: Tensor, negative: bool) -> float:
 def evaluate(
     controller: ConnectomeController,
     cases: MirroredGateCases,
-    gates: tuple[AnnularGate, AnnularGate],
+    gates: tuple[AnnularGate, ...],
     *,
     seconds: float,
     warmup_steps: int,
@@ -162,6 +196,7 @@ def evaluate(
     hover_config: HoverConfig,
     gate_config: GateConfig,
     teacher_drives: bool = False,
+    frozen_vision: bool = False,
 ) -> dict[str, object]:
     device = cases.side.device
     count = len(cases.side)
@@ -176,10 +211,17 @@ def evaluate(
     collision = torch.zeros_like(passed)
     missed = torch.zeros_like(passed)
     pass_step = torch.full_like(current[:, None].expand(-1, len(gates)), -1)
+    crossing_step = torch.full_like(pass_step, -1)
+    crossing_lateral = torch.full(
+        (count, len(gates)), float("nan"), device=device
+    )
+    crossing_vertical = torch.full_like(crossing_lateral, float("nan"))
     ground = torch.zeros(count, dtype=torch.bool, device=device)
     valid = torch.ones_like(ground)
     maximum_tilt = torch.zeros(count, device=device)
     saturation_steps = torch.zeros(count, device=device)
+    freeze_step = round(0.5 * POLICY_HZ)
+    frozen_image: Tensor | None = None
 
     initial_image = render_annular_gates_rgb(
         state,
@@ -201,6 +243,9 @@ def evaluate(
             camera=camera,
             gate_config=gate_config,
         )
+        if policy_step == freeze_step:
+            frozen_image = image.clone()
+        actor_image = frozen_image if frozen_vision and frozen_image is not None else image
         if teacher_drives:
             motor = teacher_motor(
                 state,
@@ -209,7 +254,7 @@ def evaluate(
                 mode="staged",
             )
         else:
-            motor, neural = controller(image, state.euler[:, :2], neural)
+            motor, neural = controller(actor_image, state.euler[:, :2], neural)
         saturation_steps += (sticks.position.abs() > 0.98).any(dim=1)
         for _ in range(physics_steps):
             rc, sticks = stick_plant(motor, sticks)
@@ -227,6 +272,17 @@ def evaluate(
             collision_now &= active
             miss_now &= active
             index = current.clamp_max(len(gates) - 1)
+            crossing_now = pass_now | collision_now | miss_now
+            new_crossing = crossing_now & crossing_lateral[row, index].isnan()
+            if bool(new_crossing.any()):
+                _, lateral, vertical = crossing_coordinates(
+                    previous_position,
+                    state.position,
+                    selected,
+                )
+                crossing_step[row[new_crossing], index[new_crossing]] = policy_step + 1
+                crossing_lateral[row[new_crossing], index[new_crossing]] = lateral[new_crossing]
+                crossing_vertical[row[new_crossing], index[new_crossing]] = vertical[new_crossing]
             new_pass = pass_now & ~passed[row, index]
             passed[row[new_pass], index[new_pass]] = True
             pass_step[row[new_pass], index[new_pass]] = policy_step + 1
@@ -257,27 +313,109 @@ def evaluate(
     pair_first = first.reshape(-1, 2).all(dim=1)
     pair_both = both.reshape(-1, 2).all(dim=1)
     pair_strict = strict.reshape(-1, 2).all(dim=1)
+    gate_pass_rates = passed.float().mean(dim=0)
+    gate_crossed = crossing_lateral.isfinite()
+    gate_radial = torch.sqrt(crossing_lateral.square() + crossing_vertical.square())
+
+    def finite_gate_mean(
+        values: Tensor,
+        gate_number: int,
+        *,
+        absolute: bool = False,
+    ) -> float | None:
+        selected = values[:, gate_number][gate_crossed[:, gate_number]]
+        if not bool(selected.numel()):
+            return None
+        return float((selected.abs() if absolute else selected).mean())
+
+    per_gate = []
+    for gate_number in range(len(gates)):
+        reached = gate_crossed[:, gate_number]
+        times = crossing_step[:, gate_number][reached].float() / POLICY_HZ
+        per_gate.append(
+            {
+                "gate_number": gate_number + 1,
+                "pass_rate": float(gate_pass_rates[gate_number]),
+                "plane_crossing_rate": float(reached.float().mean()),
+                "crossing_lateral_mean_metres": finite_gate_mean(
+                    crossing_lateral, gate_number
+                ),
+                "crossing_lateral_absolute_mean_metres": finite_gate_mean(
+                    crossing_lateral, gate_number, absolute=True
+                ),
+                "crossing_vertical_absolute_mean_metres": finite_gate_mean(
+                    crossing_vertical, gate_number, absolute=True
+                ),
+                "crossing_radial_mean_metres": finite_gate_mean(
+                    gate_radial, gate_number
+                ),
+                "plane_crossing_time_mean_seconds": (
+                    float(times.mean()) if bool(times.numel()) else None
+                ),
+            }
+        )
     first_times = pass_step[:, 0][first].float() / POLICY_HZ
     second_times = pass_step[:, 1][both].float() / POLICY_HZ
+    second_crossed = crossing_lateral[:, 1].isfinite()
+    second_crossing_times = crossing_step[:, 1][second_crossed].float() / POLICY_HZ
+    second_radial = torch.sqrt(
+        crossing_lateral[:, 1].square() + crossing_vertical[:, 1].square()
+    )
     return {
         "episodes": count,
         "mirrored_pairs": count // 2,
         "seconds": seconds,
         "observation_warmup_seconds": warmup_steps / POLICY_HZ,
+        "frozen_vision_after_seconds": 0.5 if frozen_vision else None,
+        "gate_count": len(gates),
+        "per_gate": per_gate,
         "first_gate_pass_rate": float(first.float().mean()),
         "first_gate_paired_pass_rate": float(pair_first.float().mean()),
         "first_gate_negative_offset_pass_rate": side_rate(first, cases.side, True),
         "first_gate_positive_offset_pass_rate": side_rate(first, cases.side, False),
         "both_gates_pass_rate": float(both.float().mean()),
+        "all_gates_pass_rate": float(both.float().mean()),
+        "second_gate_pass_given_first_rate": (
+            float(both.sum() / first.sum()) if bool(first.any()) else None
+        ),
+        "all_gates_pass_given_first_rate": (
+            float(both.sum() / first.sum()) if bool(first.any()) else None
+        ),
         "both_gates_paired_pass_rate": float(pair_both.float().mean()),
+        "all_gates_paired_pass_rate": float(pair_both.float().mean()),
         "both_gates_negative_course_pass_rate": side_rate(both, cases.side, True),
         "both_gates_positive_course_pass_rate": side_rate(both, cases.side, False),
         "strict_two_gate_success_rate": float(strict.float().mean()),
+        "strict_all_gate_success_rate": float(strict.float().mean()),
         "strict_two_gate_paired_success_rate": float(pair_strict.float().mean()),
         "first_gate_ring_collision_rate": float(collision[:, 0].float().mean()),
         "second_gate_ring_collision_rate": float(collision[:, 1].float().mean()),
         "first_gate_miss_rate": float(missed[:, 0].float().mean()),
         "second_gate_miss_rate": float(missed[:, 1].float().mean()),
+        "second_gate_plane_crossing_rate": float(second_crossed.float().mean()),
+        "second_gate_crossing_lateral_mean_metres": (
+            float(crossing_lateral[:, 1][second_crossed].mean())
+            if bool(second_crossed.any())
+            else None
+        ),
+        "second_gate_crossing_lateral_absolute_mean_metres": (
+            float(crossing_lateral[:, 1][second_crossed].abs().mean())
+            if bool(second_crossed.any())
+            else None
+        ),
+        "second_gate_crossing_vertical_mean_metres": (
+            float(crossing_vertical[:, 1][second_crossed].mean())
+            if bool(second_crossed.any())
+            else None
+        ),
+        "second_gate_crossing_vertical_absolute_mean_metres": (
+            float(crossing_vertical[:, 1][second_crossed].abs().mean())
+            if bool(second_crossed.any())
+            else None
+        ),
+        "second_gate_crossing_radial_mean_metres": (
+            float(second_radial[second_crossed].mean()) if bool(second_crossed.any()) else None
+        ),
         "ground_contact_rate": float(ground.float().mean()),
         "invalid_rate": float((~valid).float().mean()),
         "maximum_tilt_mean_degrees": float(torch.rad2deg(maximum_tilt).mean()),
@@ -288,6 +426,21 @@ def evaluate(
         "second_pass_time_mean_seconds": (
             float(second_times.mean()) if bool(second_times.numel()) else None
         ),
+        "second_plane_crossing_time_mean_seconds": (
+            float(second_crossing_times.mean())
+            if bool(second_crossing_times.numel())
+            else None
+        ),
+        "ended_before_first_gate": int((current == 0).sum()),
+        "ended_between_gates": int((current == 1).sum()),
+        "ended_after_second_gate": int((current == 2).sum()),
+        "ended_at_gate_index_counts": [
+            int((current == gate_number).sum()) for gate_number in range(len(gates) + 1)
+        ],
+        "all_gate_success_episode_indices": torch.nonzero(both, as_tuple=False)
+        .squeeze(1)
+        .cpu()
+        .tolist(),
     }
 
 
@@ -295,6 +448,10 @@ def main() -> int:
     args = parse_args()
     if args.pairs < 1 or args.seconds <= 0 or args.observation_warmup_steps < 0:
         raise SystemExit("pairs/seconds must be positive and warmup must be nonnegative")
+    if args.spacing_min <= 0 or args.spacing_max < args.spacing_min:
+        raise SystemExit("spacing range must be positive and ordered")
+    if args.gates < 1 or (args.layout == "s-turn" and args.gates != 2):
+        raise SystemExit("gates must be positive; s-turn supports exactly two")
     for path in (args.graph, args.checkpoint):
         if not path.is_file():
             raise SystemExit(f"missing input: {path}")
@@ -309,6 +466,22 @@ def main() -> int:
     controller.eval().requires_grad_(False)
     hover_config = HoverConfig(**payload["hover_config"])
     gate_config = GateConfig(**payload["gate_config"])
+    if args.inner_radius is not None or args.outer_radius is not None:
+        gate_config = replace(
+            gate_config,
+            inner_radius=(
+                args.inner_radius
+                if args.inner_radius is not None
+                else gate_config.inner_radius
+            ),
+            outer_radius=(
+                args.outer_radius
+                if args.outer_radius is not None
+                else gate_config.outer_radius
+            ),
+        )
+    if not gate_config.drone_radius < gate_config.inner_radius < gate_config.outer_radius:
+        raise SystemExit("gate radii must satisfy drone < inner < outer")
     camera = CameraSpec(
         width=payload["image_resolution"][0],
         height=payload["image_resolution"][1],
@@ -320,6 +493,8 @@ def main() -> int:
         device=device,
         hover_config=hover_config,
         layout=args.layout,
+        spacing_range=(args.spacing_min, args.spacing_max),
+        gate_count=args.gates,
     )
     metrics = evaluate(
         controller,
@@ -331,9 +506,10 @@ def main() -> int:
         hover_config=hover_config,
         gate_config=gate_config,
         teacher_drives=args.teacher,
+        frozen_vision=args.frozen_vision,
     )
     result = {
-        "experiment": "pragmatic-full-native-two-gate-zero-shot-v1",
+        "experiment": "pragmatic-full-native-gate-sequence-zero-shot-v1",
         "purpose": (
             "training-only teacher preflight"
             if args.teacher
@@ -343,11 +519,23 @@ def main() -> int:
         "checkpoint": str(args.checkpoint),
         "continuous_state": ["MaleCNS recurrence", "forelegs", "sticks", "aircraft"],
         "actor_gate_index_or_pass_input": False,
-        "gate_roles": ["current green", "next red", "passed black"],
+        "gate_roles": [
+            "current green",
+            "next red",
+            "later blue",
+            "passed black",
+        ],
         "geometry": {
             "layout": args.layout,
             "first_gate_matches_single_gate_training_distribution": True,
-            "second_gate_spacing_metres": [3.8, 4.2],
+            "second_gate_spacing_metres": [args.spacing_min, args.spacing_max],
+            "gate_count": args.gates,
+            "uniform_inter_gate_spacing_metres": [args.spacing_min, args.spacing_max],
+            "inner_radius_metres": gate_config.inner_radius,
+            "outer_radius_metres": gate_config.outer_radius,
+            "clean_aperture_radius_metres": (
+                gate_config.inner_radius - gate_config.drone_radius
+            ),
             "second_gate_absolute_lateral_offset_metres": (
                 [0.03, 0.08] if args.layout == "s-turn" else None
             ),

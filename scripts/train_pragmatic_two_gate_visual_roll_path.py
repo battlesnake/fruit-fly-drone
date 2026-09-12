@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import sys
 from dataclasses import dataclass
@@ -58,6 +59,7 @@ class CourseRollout:
     gates: tuple[AnnularGate, AnnularGate]
     mass_scale: Tensor
     neural: Tensor
+    source_neural: Tensor
     side: Tensor
     current: Tensor
     failed: Tensor
@@ -83,12 +85,18 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--path-hop-budget", type=int, default=5)
+    parser.add_argument(
+        "--last-hop-only",
+        action="store_true",
+        help="train only selected anatomical edges entering the six roll motor neurons",
+    )
     parser.add_argument("--teacher-updates", type=int, default=250)
     parser.add_argument("--native-updates", type=int, default=250)
     parser.add_argument("--training-pairs", type=int, default=2)
     parser.add_argument("--unroll", type=int, default=10)
     parser.add_argument("--learning-rate", type=float, default=1.0e-4)
     parser.add_argument("--contrast-weight", type=float, default=4.0)
+    parser.add_argument("--gate-one-preservation-weight", type=float, default=1.0)
     parser.add_argument("--anchor-weight", type=float, default=1.0e-3)
     parser.add_argument("--gradient-clip-norm", type=float, default=1.0)
     parser.add_argument("--observation-warmup-steps", type=int, default=10)
@@ -96,6 +104,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--evaluation-pairs", type=int, default=8)
     parser.add_argument("--evaluation-seconds", type=float, default=22.0)
     parser.add_argument("--layout", choices=("aligned", "s-turn"), default="aligned")
+    parser.add_argument(
+        "--lesson",
+        choices=("all", "second-gate"),
+        default="second-gate",
+        help="which active course segment contributes imitation gradients",
+    )
     parser.add_argument("--seed", type=int, default=640_983)
     parser.add_argument("--evaluation-seed", type=int, default=650_983)
     return parser.parse_args()
@@ -103,6 +117,7 @@ def parse_args() -> argparse.Namespace:
 
 def new_rollout(
     controller: ConnectomeController,
+    source_controller: ConnectomeController,
     *,
     pairs: int,
     seed: int,
@@ -122,6 +137,9 @@ def new_rollout(
     )
     current = torch.zeros(2 * pairs, dtype=torch.long, device=device)
     neural = controller.initial_state(2 * pairs, device=device, dtype=torch.float32)
+    source_neural = source_controller.initial_state(
+        2 * pairs, device=device, dtype=torch.float32
+    )
     image = render_annular_gates_rgb(
         cases.state,
         gates,
@@ -132,12 +150,18 @@ def new_rollout(
     with torch.no_grad():
         for _ in range(warmup_steps):
             _, neural = controller(image, cases.state.euler[:, :2], neural)
+            _, source_neural = source_controller(
+                image,
+                cases.state.euler[:, :2],
+                source_neural,
+            )
     return CourseRollout(
         state=cases.state,
         sticks=cases.sticks,
         gates=gates,
         mass_scale=cases.mass_scale,
         neural=neural,
+        source_neural=source_neural,
         side=cases.side,
         current=current,
         failed=torch.zeros(2 * pairs, dtype=torch.bool, device=device),
@@ -153,28 +177,38 @@ def masked_mean(values: Tensor, mask: Tensor) -> Tensor:
 
 def training_step(
     controller: ConnectomeController,
+    source_controller: ConnectomeController,
     optimizer: torch.optim.Optimizer,
     rollout: CourseRollout,
+    preservation_rollout: CourseRollout,
     source_edges: Tensor,
     selected_mask: Tensor,
     *,
     unroll: int,
-    native_physics: bool,
+    physics_mode: str,
     contrast_weight: float,
+    gate_one_preservation_weight: float,
     anchor_weight: float,
     gradient_clip_norm: float,
     camera: CameraSpec,
     config: HoverConfig,
     gate_config: GateConfig,
-) -> tuple[dict[str, float], CourseRollout]:
+    lesson: str,
+) -> tuple[dict[str, float], CourseRollout, CourseRollout]:
     quad = DifferentiableQuad(config).to(rollout.neural.device)
     stick_plant = ForelegStickPlant(config).to(rollout.neural.device)
     direct_losses = []
     contrast_losses = []
+    preservation_losses = []
     target_rms = []
     prediction_rms = []
+    lesson_samples = 0
     for _ in range(unroll):
         active = (rollout.current < len(rollout.gates)) & ~rollout.failed
+        lesson_active = active
+        if lesson == "second-gate":
+            lesson_active = lesson_active & (rollout.current == 1)
+        lesson_samples += int(lesson_active.sum())
         image = render_annular_gates_rgb(
             rollout.state,
             rollout.gates,
@@ -187,21 +221,40 @@ def training_step(
             rollout.state.euler[:, :2],
             rollout.neural,
         )
+        with torch.no_grad():
+            source_motor, rollout.source_neural = source_controller(
+                image,
+                rollout.state.euler[:, :2],
+                rollout.source_neural,
+            )
         selected = active_gate(rollout.gates, rollout.current)
         target = teacher_motor(rollout.state, selected, config, mode="staged")
         direct_error = ((prediction[:, 0] - target[:, 0]) / 0.10).square()
-        direct_losses.append(masked_mean(direct_error, active))
+        direct_losses.append(masked_mean(direct_error, lesson_active))
         prediction_pair = prediction[:, 0].reshape(-1, 2)
         target_pair = target[:, 0].reshape(-1, 2)
-        pair_active = active.reshape(-1, 2).all(dim=1)
+        pair_active = lesson_active.reshape(-1, 2).all(dim=1)
         contrast_error = (
             (prediction_pair[:, 1] - prediction_pair[:, 0])
             - (target_pair[:, 1] - target_pair[:, 0])
         ).div(0.15).square()
         contrast_losses.append(masked_mean(contrast_error, pair_active))
-        target_rms.append(masked_mean(target[:, 0].square(), active).sqrt().detach())
-        prediction_rms.append(masked_mean(prediction[:, 0].square(), active).sqrt().detach())
-        applied_motor = prediction.detach() if native_physics else target
+        target_rms.append(
+            masked_mean(target[:, 0].square(), lesson_active).sqrt().detach()
+        )
+        prediction_rms.append(
+            masked_mean(prediction[:, 0].square(), lesson_active).sqrt().detach()
+        )
+        if physics_mode == "recovery":
+            applied_motor = torch.where(
+                (rollout.current == 0)[:, None],
+                source_motor,
+                target,
+            )
+        elif physics_mode == "native":
+            applied_motor = prediction.detach()
+        else:
+            raise ValueError(f"unknown physics mode: {physics_mode}")
         for _ in range(PHYSICS_HZ // POLICY_HZ):
             rc, rollout.sticks = stick_plant(applied_motor, rollout.sticks)
             previous_position = rollout.state.position
@@ -230,29 +283,109 @@ def training_step(
         )
         rollout.age += 1
 
+    preservation_samples = 0
+    for _ in range(unroll):
+        active = (preservation_rollout.current == 0) & ~preservation_rollout.failed
+        preservation_samples += int(active.sum())
+        image = render_annular_gates_rgb(
+            preservation_rollout.state,
+            preservation_rollout.gates,
+            current_gate_index=preservation_rollout.current,
+            camera=camera,
+            gate_config=gate_config,
+        )
+        prediction, preservation_rollout.neural = controller(
+            image,
+            preservation_rollout.state.euler[:, :2],
+            preservation_rollout.neural,
+        )
+        with torch.no_grad():
+            source_motor, preservation_rollout.source_neural = source_controller(
+                image,
+                preservation_rollout.state.euler[:, :2],
+                preservation_rollout.source_neural,
+            )
+        preservation_error = ((prediction[:, 0] - source_motor[:, 0]) / 0.05).square()
+        preservation_losses.append(masked_mean(preservation_error, active))
+        for _ in range(PHYSICS_HZ // POLICY_HZ):
+            rc, preservation_rollout.sticks = stick_plant(
+                source_motor,
+                preservation_rollout.sticks,
+            )
+            previous_position = preservation_rollout.state.position
+            preservation_rollout.state = quad(
+                rc,
+                preservation_rollout.state,
+                preservation_rollout.mass_scale,
+            )
+            active = (preservation_rollout.current == 0) & ~preservation_rollout.failed
+            selected = active_gate(
+                preservation_rollout.gates,
+                preservation_rollout.current,
+            )
+            pass_now, collision_now, miss_now = classify_gate_crossing(
+                previous_position,
+                preservation_rollout.state.position,
+                selected,
+                gate_config,
+            )
+            pass_now &= active
+            collision_now &= active
+            miss_now &= active
+            preservation_rollout.current += pass_now.long()
+            preservation_rollout.failed |= collision_now | miss_now
+        preservation_rollout.failed |= preservation_rollout.state.position[:, 2] <= 0.03
+        preservation_rollout.failed |= ~hover_train.state_is_valid(
+            preservation_rollout.state
+        )
+        preservation_rollout.state = QuadState(
+            *(value.detach() for value in preservation_rollout.state.as_tuple())
+        )
+        preservation_rollout.sticks = StickState(
+            preservation_rollout.sticks.joint_position.detach(),
+            preservation_rollout.sticks.joint_velocity.detach(),
+            preservation_rollout.sticks.position.detach(),
+            preservation_rollout.sticks.velocity.detach(),
+        )
+        preservation_rollout.age += 1
+
     direct = torch.stack(direct_losses).mean()
     contrast = torch.stack(contrast_losses).mean()
+    gate_one_preservation = torch.stack(preservation_losses).mean()
     anchor = (
         ((controller.edge_magnitude[selected_mask] - source_edges[selected_mask]) / 0.25)
         .square()
         .mean()
     )
-    loss = direct + contrast_weight * contrast + anchor_weight * anchor
-    optimizer.zero_grad(set_to_none=True)
-    loss.backward()
-    gradient_norm = torch.nn.utils.clip_grad_norm_(
-        (controller.edge_magnitude,), gradient_clip_norm
+    loss = (
+        direct
+        + contrast_weight * contrast
+        + gate_one_preservation_weight * gate_one_preservation
+        + anchor_weight * anchor
     )
-    optimizer.step()
-    controller.project_parameters()
+    gradient_norm = controller.edge_magnitude.new_zeros(())
+    if lesson_samples or optimizer.state:
+        optimizer.zero_grad(set_to_none=True)
+        loss.backward()
+        gradient_norm = torch.nn.utils.clip_grad_norm_(
+            (controller.edge_magnitude,), gradient_clip_norm
+        )
+        optimizer.step()
+        controller.project_parameters()
     rollout.neural = rollout.neural.detach()
+    rollout.source_neural = rollout.source_neural.detach()
+    preservation_rollout.neural = preservation_rollout.neural.detach()
+    preservation_rollout.source_neural = preservation_rollout.source_neural.detach()
     return (
         {
             "loss": float(loss.detach()),
             "roll_direct": float(direct.detach()),
             "roll_contrast": float(contrast.detach()),
+            "gate_one_roll_preservation": float(gate_one_preservation.detach()),
             "selected_edge_anchor": float(anchor.detach()),
             "gradient_norm": float(gradient_norm.detach()),
+            "lesson_samples": lesson_samples,
+            "gate_one_preservation_samples": preservation_samples,
             "target_roll_motor_rms": float(torch.stack(target_rms).mean()),
             "predicted_roll_motor_rms": float(torch.stack(prediction_rms).mean()),
             "rollout_age_seconds": rollout.age / POLICY_HZ,
@@ -262,6 +395,7 @@ def training_step(
             "rollout_failed_fraction": float(rollout.failed.float().mean()),
         },
         rollout,
+        preservation_rollout,
     )
 
 
@@ -293,13 +427,25 @@ def save_checkpoint(
             "gate_config": vars(gate_config),
             "stage": stage,
             "update": update,
+            "same_update_gate_one_replay": True,
+            "last_hop_only": args.last_hop_only,
         },
         path,
     )
 
 
-def score(metrics: dict[str, object]) -> tuple[float, ...]:
+def score(
+    metrics: dict[str, object],
+    *,
+    first_gate_floor: float = 0.0,
+    first_gate_paired_floor: float = 0.0,
+) -> tuple[float, ...]:
+    retained = (
+        float(metrics["first_gate_pass_rate"]) >= first_gate_floor
+        and float(metrics["first_gate_paired_pass_rate"]) >= first_gate_paired_floor
+    )
     return (
+        float(retained),
         float(metrics["both_gates_paired_pass_rate"]),
         min(
             float(metrics["both_gates_negative_course_pass_rate"]),
@@ -318,11 +464,22 @@ def main() -> int:
         raise SystemExit("CUDA was requested but is unavailable")
     responsibility.seed_everything(args.seed)
     controller, source_payload = load_controller(args, device)
+    source_controller = copy.deepcopy(controller).eval().requires_grad_(False)
     selected_mask, path_manifest = visual_roll_path_mask(
         args.graph,
         hop_budget=args.path_hop_budget,
         device=device,
     )
+    if args.last_hop_only:
+        roll_motor_nodes = controller.pool_indices[
+            int(controller.pool_offsets[0]) : int(controller.pool_offsets[2])
+        ]
+        selected_mask &= torch.isin(controller.edge_post, roll_motor_nodes)
+        path_manifest = {
+            **path_manifest,
+            "selection": "last-hop edges entering roll motor neurons",
+            "trainable_edges": int(selected_mask.sum()),
+        }
     source_edges = controller.edge_magnitude.detach().clone()
     gradient_mask = selected_mask.to(dtype=controller.edge_magnitude.dtype)
     controller.edge_magnitude.register_hook(lambda gradient: gradient * gradient_mask)
@@ -352,7 +509,16 @@ def main() -> int:
         gate_config=gate_config,
     )
     print(json.dumps({"stage": "baseline", "path": path_manifest, "flight": baseline}), flush=True)
-    best_score = score(baseline)
+    first_gate_floor = max(0.0, float(baseline["first_gate_pass_rate"]) - 0.125)
+    first_gate_paired_floor = max(
+        0.0,
+        float(baseline["first_gate_paired_pass_rate"]) - 0.125,
+    )
+    best_score = score(
+        baseline,
+        first_gate_floor=first_gate_floor,
+        first_gate_paired_floor=first_gate_paired_floor,
+    )
     best_path = args.output_dir / "best-controller.pt"
     save_checkpoint(
         best_path,
@@ -367,12 +533,13 @@ def main() -> int:
     history: list[dict[str, Any]] = []
     started = perf_counter()
     rollout_seed = args.seed
+    preservation_seed = args.seed + 1_000_000
     global_update = 0
-    for stage, updates, native_physics in (
-        ("teacher_paths", args.teacher_updates, False),
-        ("native_paths", args.native_updates, True),
+    for stage, updates, physics_mode in (
+        ("recovery_paths", args.teacher_updates, "recovery"),
+        ("native_paths", args.native_updates, "native"),
     ):
-        if native_physics:
+        if physics_mode == "native":
             selected_payload = torch.load(best_path, map_location="cpu", weights_only=True)
             controller.load_state_dict(selected_payload["controller"])
             optimizer = torch.optim.Adam(
@@ -392,8 +559,21 @@ def main() -> int:
         rollout_seed += 1
         rollout = new_rollout(
             controller,
+            source_controller,
             pairs=args.training_pairs,
             seed=rollout_seed,
+            device=device,
+            config=config,
+            camera=camera,
+            gate_config=gate_config,
+            warmup_steps=args.observation_warmup_steps,
+            layout=args.layout,
+        )
+        preservation_rollout = new_rollout(
+            controller,
+            source_controller,
+            pairs=args.training_pairs,
+            seed=preservation_seed,
             device=device,
             config=config,
             camera=camera,
@@ -416,6 +596,7 @@ def main() -> int:
                 rollout_seed += 1
                 rollout = new_rollout(
                     controller,
+                    source_controller,
                     pairs=args.training_pairs,
                     seed=rollout_seed,
                     device=device,
@@ -425,20 +606,48 @@ def main() -> int:
                     warmup_steps=args.observation_warmup_steps,
                     layout=args.layout,
                 )
-            metrics, rollout = training_step(
+            preservation_reset = (
+                preservation_rollout.age + args.unroll
+                > round(args.evaluation_seconds * POLICY_HZ)
+                or bool(
+                    (
+                        preservation_rollout.failed
+                        | (preservation_rollout.current != 0)
+                    ).all()
+                )
+            )
+            if preservation_reset:
+                preservation_seed += 1
+                preservation_rollout = new_rollout(
+                    controller,
+                    source_controller,
+                    pairs=args.training_pairs,
+                    seed=preservation_seed,
+                    device=device,
+                    config=config,
+                    camera=camera,
+                    gate_config=gate_config,
+                    warmup_steps=args.observation_warmup_steps,
+                    layout=args.layout,
+                )
+            metrics, rollout, preservation_rollout = training_step(
                 controller,
+                source_controller,
                 optimizer,
                 rollout,
+                preservation_rollout,
                 source_edges,
                 selected_mask,
                 unroll=args.unroll,
-                native_physics=native_physics,
+                physics_mode=physics_mode,
                 contrast_weight=args.contrast_weight,
+                gate_one_preservation_weight=args.gate_one_preservation_weight,
                 anchor_weight=args.anchor_weight,
                 gradient_clip_norm=args.gradient_clip_norm,
                 camera=camera,
                 config=config,
                 gate_config=gate_config,
+                lesson=args.lesson,
             )
             evaluate_now = stage_update % args.evaluation_interval == 0 or stage_update == updates
             entry: dict[str, Any] = {
@@ -460,7 +669,11 @@ def main() -> int:
                     gate_config=gate_config,
                 )
                 entry["native_flight"] = flight
-                candidate_score = score(flight)
+                candidate_score = score(
+                    flight,
+                    first_gate_floor=first_gate_floor,
+                    first_gate_paired_floor=first_gate_paired_floor,
+                )
                 if candidate_score > best_score:
                     best_score = candidate_score
                     save_checkpoint(
@@ -496,6 +709,14 @@ def main() -> int:
         "actor_gate_index_or_pass_input": False,
         "continuous_state": ["MaleCNS recurrence", "forelegs", "sticks", "aircraft"],
         "layout": args.layout,
+        "lesson": args.lesson,
+        "gate_one_preservation_weight": args.gate_one_preservation_weight,
+        "gate_one_retention_floor": {
+            "pass_rate": first_gate_floor,
+            "paired_pass_rate": first_gate_paired_floor,
+        },
+        "same_update_gate_one_replay": True,
+        "last_hop_only": args.last_hop_only,
         "path": path_manifest,
         "baseline": baseline,
         "best": best,

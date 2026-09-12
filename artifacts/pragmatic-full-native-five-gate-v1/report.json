@@ -1,0 +1,86 @@
+{
+  "actor": {
+    "external_gate_index_or_pass_input": false,
+    "external_history_or_state_machine": false,
+    "inputs": [
+      "320x200 linear RGB at 125 degree HFOV",
+      "roll",
+      "pitch"
+    ],
+    "uninterrupted_state": [
+      "165122-neuron MaleCNS recurrence",
+      "forelegs",
+      "virtual sticks",
+      "aircraft"
+    ]
+  },
+  "checkpoint": {
+    "git_storage": "ignored exploratory run; use Git LFS if promoted",
+    "local_path": "runs/gate/pragmatic-two-gate-aligned-roll-path-001/best-controller.pt",
+    "sha256": "e099fb4f87a81ea7565d0c6bc693a3d236ef27b06df003d23dccd2ea5efa1099",
+    "size_mib_approx": 77
+  },
+  "course": {
+    "clean_aperture_radius_metres": 0.53,
+    "gate_count": 5,
+    "gate_inner_radius_metres": 0.62,
+    "gate_outer_radius_metres": 0.76,
+    "gate_roles": [
+      "current green",
+      "next red",
+      "later blue",
+      "passed black"
+    ],
+    "layout": "aligned",
+    "uniform_inter_gate_spacing_metres": [
+      0.9,
+      1.1
+    ]
+  },
+  "development": {
+    "all_five_passes": 6,
+    "episodes": 32,
+    "negative_course_all_five_passes": 5,
+    "positive_course_all_five_passes": 1,
+    "seed": 930983
+  },
+  "experiment": "pragmatic-full-native-gate-sequence-zero-shot-v1",
+  "fresh": {
+    "all_five_passes": 4,
+    "cumulative_gate_passes": [
+      53,
+      42,
+      32,
+      19,
+      4
+    ],
+    "episodes": 64,
+    "ground_contacts": 0,
+    "invalid_flights": 0,
+    "negative_course_all_five_passes": 3,
+    "positive_course_all_five_passes": 1,
+    "seed": 940983,
+    "seconds": 22.0
+  },
+  "frozen_vision_control": {
+    "all_five_passes": 5,
+    "cumulative_gate_passes": [
+      23,
+      16,
+      10,
+      6,
+      5
+    ],
+    "freeze_after_seconds": 0.5,
+    "negative_course_all_five_passes": 5,
+    "positive_course_all_five_passes": 0,
+    "seed": 940983
+  },
+  "interpretation": {
+    "behavior_first_goal_met": true,
+    "causal_vision_evidence_source": "prior paired single-gate live/frozen result",
+    "reliable_racing_established": false,
+    "straight_course_only": true
+  },
+  "purpose": "rapid behavioral proof of several uninterrupted gates; not formal promotion"
+}

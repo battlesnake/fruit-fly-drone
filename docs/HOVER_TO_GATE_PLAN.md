@@ -54,6 +54,36 @@ rate, then enable the implemented shallow S-turn. Continue to mix the single-gat
 select on both first-gate retention and paired two-gate completion. Do not add a gate index,
 waypoint, pass bit or external memory to the actor.
 
+### Beginner five-gate proof — 2026-09-12
+
+The same frozen two-gate actor can now be evaluated on an arbitrary aligned sequence. A
+beginner course places five unchanged annuli 0.9–1.1 m apart, so the last plane remains
+3.6–4.4 m beyond the first. The current gate is green, the next red, later gates blue, and
+passed gates black. Renderer bookkeeping still does not enter the actor.
+
+On 64 new mirrored flights (seed 940983), 53 crossed gate one and the cumulative pass
+counts were 53, 42, 32, 19 and 4. All five were completed on both course directions, with
+no ground contacts or invalid states under live vision. A preceding 32-flight development
+bank produced 6 complete five-gate flights. This satisfies the behavior-first question of
+whether one uninterrupted fly/foreleg/aircraft system can cross several changing gates.
+It is not yet reliable racing: the course is straight, fresh five-gate success was only
+6.25%, and there were no complete mirrored pairs.
+
+Freezing RGB after 0.5 seconds reduced gate-one success from 53/64 to 23/64 and eliminated
+all positive-side completions, but five negative-side trajectories still coasted through
+the aligned sequence. Accordingly, use the earlier paired single-gate ablation as the
+causal visual-steering evidence; do not present this aligned five-gate frozen comparison as
+an independent completion-rate win. See the
+[`five-gate record`](../artifacts/pragmatic-full-native-five-gate-v1/).
+
+Two follow-up attempts produced useful diagnostics but no replacement checkpoint. A
+same-update gate-one replay learner stopped broad plasticity from destroying the first
+gate, and restricting learning to the 616 existing synapses entering the six roll motor
+neurons improved selection-course centering. Neither beat the source on fresh total
+two-gate completions. A six-neuron constant roll-bias probe also reduced signed drift but
+traded away first-gate and opposite-side performance. Retain the source and next train a
+state-dependent between-gate correction before widening spacing or adding turns.
+
 ## Fixed actor boundary
 
 Throughout both goals, the deployed actor receives:
