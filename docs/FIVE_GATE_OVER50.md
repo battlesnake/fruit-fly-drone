@@ -2644,3 +2644,104 @@ The process is verified live, using 2,288 / 16,303 MiB of GPU memory at the samp
 instant. First standalone candidate development checks are scheduled after
 generation two. No controller has been promoted; the retained-source decision and
 the full varied-course >50% goal remain unchanged.
+
+#### Generation one complete; prepare a bounded PPO fallback without changing the search
+
+The first generation's updated centre scores **4/16 clean training flights**,
+14/16 first-gate passes, 47 clean-prefix gates and zero ground/invalid episodes on
+seed 2026091370. Its fitness is 2.985954. The best sampled candidate has only 2/16
+clean training completions. These counts do not establish improvement over source
+on that training bank, because this generation did not run a matched source
+control there; standalone development remains scheduled after generation two.
+The six-generation outcome search continues with unchanged settings.
+
+While it runs, a small CPU-only preparation module,
+`scripts/pragmatic_correlated_exploration.py`, checks the exploration mathematics
+and the existing foreleg plant's response. It is **not a PPO trainer**, and it is
+not imported into the deployed controller or the active search.
+
+For the proposed fallback, use fixed four-axis latent noise scales and an AR(1)
+residual. Let `u` be the saved pre-tanh latent command and `mu` the current-weight
+`atanh(native_motor)` output. At a true episode start the conditional mean is `mu`
+and standard deviation is `sigma`. Subsequently they are
+`mu_t + rho * (u_(t-1) - mu_(t-1))` and `sigma * sqrt(1-rho^2)`. This accounts for
+the past command instead of treating correlated samples as independent Gaussian
+draws. Both current and previous means must receive gradients. This formulation
+follows the history-conditioned autoregressive-policy construction; our first
+pilot would fix the noise parameters rather than learn them.
+[Autoregressive Policies, equations 9–11](https://arxiv.org/abs/1903.11524)
+
+Our implementation stores and scores the latent command, sends `tanh(u)` to the
+forelegs, and provides a stable tanh-Jacobian calculation. For old/new policy
+ratios that identical Jacobian cancels, so integration should subtract latent log
+densities directly. Sum the four axis log densities before making one PPO ratio
+per command; do not clip axes independently or multiply an entire flight's ratios
+into one clipping term. With fixed covariance, conditional KL is one half of the
+sum of squared conditional-mean changes divided by conditional variances. Clipped
+surrogate optimization and KL monitoring follow the usual PPO framework.
+[PPO](https://arxiv.org/abs/1707.06347)
+
+Integration constraints from Astra's review, not yet implemented as a trainer:
+
+- Preserve the native 50 Hz brain/command rate and 100 Hz physical forelegs. A
+  correlation time of 0.6 seconds means `rho = exp(-0.02/0.6) = 0.967216`, not a
+  slower brain or a held native command.
+- No noise during the ten static neural warmup frames. The first physical
+  command draws a stationary residual. Neither a gate transition nor a TBPTT
+  boundary restarts noise. At a replay chunk boundary, recompute the preceding
+  mean with gradient; earlier prefix detachment still makes the recurrent
+  gradient a truncated approximation, not exact full-flight backpropagation.
+- Use nonzero exploration on all four actions because shared trainable pathways
+  can change PYT as well as roll. Keep advantages and behavior log probabilities
+  fixed during optimization. Fixed noise entropy has no actor-gradient benefit.
+- A separate training-only critic may use physical and actuator state, course
+  geometry, failures, remaining time, previous residual and current native means.
+  Do not feed the just-drawn innovation into a state-value baseline. These compact
+  features do not fully identify the entire neural state. Undiscounted complete-
+  flight reward-to-go minus a detached baseline is a simple first choice; any
+  later GAE must carry credit across TBPTT chunks and respect the full clean tail.
+- Monitor deterministic mean displacement as well as conditional KL. A small
+  average conditional KL under strongly correlated noise does not establish good
+  deterministic flight. Check the `atanh` boundary clamp and zero-noise equivalence
+  on actual native outputs before training. Full autonomous evaluation has no
+  noise sampler, action-history buffer, critic or privileged observations.
+
+#### CPU foreleg exploration bandwidth measurement
+
+The probe uses the retained source's actual HoverConfig, 256 independent foreleg
+instances for 30 seconds, 50 Hz commands and 100 Hz physical updates, initialized
+at hover-stick equilibrium. It uses the same random innovations across conditions,
+four stationary latent standard deviations **[0.006, 0.002, 0.001, 0.0025]**, and
+excludes the first two seconds from measurement. It loads configuration only:
+there is no brain forward pass, quad flight, camera, course or optimizer.
+
+| Noise correlation time | Measured latent roll RMS | Measured roll RC perturbation RMS | Versus independent noise |
+| --- | ---: | ---: | ---: |
+| Independent, 0 s | 0.005991 | 0.004201 | 1.00x |
+| 0.1 s | 0.005961 | 0.012451 | 2.96x |
+| 0.3 s | 0.005944 | 0.017784 | 4.23x |
+| 0.6 s | 0.005930 | 0.020257 | 4.82x |
+
+The comparable input RMS but much larger physical output supports using coherent
+exploration with this foreleg plant. No stick saturation occurred in this isolated
+probe, which does **not** establish safe flight or a suitable final exploration
+amplitude. A subsequent PPO pilot would still need source-flight amplitude checks.
+The small raw report is local at
+`/home/mark/tmp/fly-over50-20260912/foreleg-ar1-exploration-probe.json`.
+
+Astra's code review found no blocking mathematics or equilibrium-initialization
+issue. All **627 tests pass**: new checks compare the conditional sequence density
+and gradients with a dense temporal Gaussian, verify the previous-mean derivative,
+stationary first sample, stable squash handling and joint four-axis KL. No third-
+party implementation was downloaded or copied; the linked papers are references,
+not newly redistributed datasets or model weights.
+
+One implementation idea to preserve for that fallback: replay complete episode
+microbatches in chronological order with weights fixed throughout each microbatch.
+Accumulate gradients over short detached neural chunks, then make one optimizer
+step after the complete microbatch. This avoids replaying the entire prefix again
+for every short window, while still producing current-weight recurrent states.
+Each chunk needs one overlapping previous-mean evaluation with gradient for the
+AR likelihood. A new optimizer step must be followed by a new from-zero episode
+replay, never continuation from stale recurrent state. This is a proposed memory/
+throughput tradeoff to benchmark, not a claim that a full PPO training loop exists.
