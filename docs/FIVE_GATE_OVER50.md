@@ -1601,3 +1601,48 @@ values and the process proceeds to its sixth/final update. The selected source i
 still update zero. These proposals keep the outcome-mode fallback scientifically
 relevant, but do not overturn the next-action priority: neutral-roll control, then
 local roll with native other axes if needed, before another long learning run.
+
+#### Optional simpler targets are available for the existing replay learner
+
+`train_pragmatic_course_replay.py` now accepts `--roll-teacher curved|neutral|current-gate`,
+with the existing curved target still the default. Non-curved choices require
+`--supervision late-roll-preserve` and a frozen source; incompatible all-teacher or
+anticipation modes are rejected. Native and roll-assisted collection can therefore
+use the same target law that was screened by the diagnostic. Before the first gate,
+all four labels preserve the source; afterward, only roll changes. The other three
+curved-teacher outputs are discarded in favor of source outputs before any
+non-curved assisted flight is driven.
+
+The selected law is recorded in collection and checkpoint metadata. Current-weight
+neural-prefix replay, sensor inputs, graph mask, first-gate/source preservation,
+physical forelegs and full native evaluation remain unchanged. All **550 tests pass**,
+including label-only axis replacement and rejection of unsupported collection modes.
+No new learning job has started: activation still depends on the neutral/current-gate
+assistance results, and the ongoing sixth native physical-gradient update is untouched.
+
+Astra's review highlights that the older 60-update preservation replay restored the
+retained source and cleared Adam at unsuccessful development checks 20 and 40. It
+was therefore three short attempts, not necessarily sixty continuous fitting steps.
+The trainer now has opt-in `--keep-latest-training-weights`, which leaves best-export
+selection intact but avoids that automatic training rollback. Its default behavior
+is unchanged. `--check-replay-fit` also reports motor RMSE by phase, side and axis on
+five fixed paired windows, with current-weight neural-prefix recomputation. These
+are explicitly examples from the training collections, **not held-out validation**.
+The added fitting/reporting changes pass 26 focused regression tests.
+
+If neutral or current-gate assistance meets the declared rescue screen, the proposed
+learning pilot restarts from the retained source with the same 19,286-edge mask,
+frozen bias/time constants, **20 updates at LR 1e-5 and 20-frame unrolls**, checks at
+10/20, latest-training-weight continuation and fixed replay-fit reporting. Start
+with training seed 1690983 and assisted seed 1790983; development stays the already
+used 1110983 bank. This changes optimization as well as teacher labels, so it is a
+practical pilot, not a teacher-label-only causal comparison. The foreleg lag does
+not by itself justify longer action-imitation unrolls, since replay detaches physics.
+
+Continue toward sixty updates only if late-roll fitting improves on both sides
+while early/all-other-axis preservation and native flight remain useful. If fitting
+barely moves, inspect optimization before rejecting the teacher idea. If imitation
+improves while native flights deteriorate, stop this branch rather than extending
+the same replay blindly. Native-first window selection still makes assisted lessons
+a fallback; this known coverage limitation is unchanged for the first pilot. No new
+learning trial or altered deployment has been launched yet.

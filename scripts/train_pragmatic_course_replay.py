@@ -20,7 +20,11 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import train_variable_height_hover as hover_train  # noqa: E402
-from evaluate_pragmatic_two_gate_zero_shot import evaluate, sample_two_gate_cases  # noqa: E402
+from evaluate_pragmatic_two_gate_zero_shot import (  # noqa: E402
+    active_gate,
+    evaluate,
+    sample_two_gate_cases,
+)
 from search_pragmatic_gate_course_es import selection_score  # noqa: E402
 from train_pragmatic_course_teacher import (  # noqa: E402
     action_imitation_loss,
@@ -35,6 +39,7 @@ from flydrone.course_teacher import (  # noqa: E402
     CoursePath,
     CourseTeacherConfig,
     course_teacher_motor,
+    current_gate_roll_motor,
 )
 from flydrone.gate import AnnularGate, GateConfig, render_annular_gates_rgb  # noqa: E402
 from flydrone.gate_course import classify_course_step  # noqa: E402
@@ -71,6 +76,7 @@ class ReplayBank:
     seed: int
     failure_steps: torch.Tensor | None = None
     reference_outputs: torch.Tensor | None = None
+    roll_teacher: str = "curved"
 
     def starts(self, phase, unroll):
         if len(self.current) < unroll:
@@ -92,6 +98,7 @@ class ReplayBank:
                 int((self.failure_steps >= 0).sum()) if self.failure_steps is not None else None
             ),
             source_preservation_outputs_stored=self.reference_outputs is not None,
+            roll_teacher=self.roll_teacher,
         )
 
 
@@ -99,6 +106,28 @@ def late_roll_preservation_targets(teacher, reference, current):
     """Training labels only: preserve gate one and all non-roll source outputs."""
     target = reference.clone()
     target[:, 0] = torch.where(current >= 1, teacher[:, 0], reference[:, 0])
+    return target
+
+
+def replay_teacher_motor(state, path, gates, current, config, teacher_config, roll_teacher):
+    """Training labels only; optional roll targets leave the curved other axes intact.
+
+    Non-curved collection requires frozen-source preservation below, so those
+    other teacher axes are discarded before they can drive the collected flight.
+    The learner still receives only the original rendered image and attitude.
+    """
+    if roll_teacher not in ("curved", "neutral", "current-gate"):
+        raise ValueError("unknown roll teacher")
+    target = course_teacher_motor(state, path, config, teacher_config)
+    if roll_teacher != "curved":
+        target = target.clone()
+        target[:, 0] = (
+            0.0
+            if roll_teacher == "neutral"
+            else current_gate_roll_motor(
+                state, active_gate(gates, current), config, active=current < len(gates)
+            )
+        )
     return target
 
 
@@ -131,11 +160,18 @@ def collect_bank(
     gate_config,
     heading_mode="world-x",
     reference_controller=None,
+    roll_teacher="curved",
 ):
     if kind not in ("native", "teacher", "roll-assisted"):
         raise ValueError("collection kind must be native, teacher or roll-assisted")
     if kind == "roll-assisted" and reference_controller is None:
         raise ValueError("roll-assisted collection requires a frozen source controller")
+    if roll_teacher not in ("curved", "neutral", "current-gate"):
+        raise ValueError("unknown roll teacher")
+    if roll_teacher != "curved" and (reference_controller is None or kind == "teacher"):
+        raise ValueError(
+            "non-curved roll targets require frozen-source native/roll-assisted collection"
+        )
     device = controller.bias.device
     cases, gates = sample_two_gate_cases(
         pairs, seed=seed, device=device, hover_config=config, **GEOMETRY
@@ -171,7 +207,9 @@ def collect_bank(
         active = ~failed & (current < len(gates))
         if not bool(active.any()):
             break
-        teacher_target = course_teacher_motor(state, path, config, teacher)
+        teacher_target = replay_teacher_motor(
+            state, path, gates, current, config, teacher, roll_teacher
+        )
         target = teacher_target
         if kind == "native" or reference_controller is not None:
             image = render_annular_gates_rgb(
@@ -217,6 +255,7 @@ def collect_bank(
         seed,
         failure_steps.cpu(),
         torch.stack(references) if references else None,
+        roll_teacher=roll_teacher,
     )
     print(json.dumps(dict(stage="collection", **bank.manifest())), flush=True)
     return bank
@@ -355,6 +394,25 @@ def replay_window_loss(
     return (*result, torch.stack(residuals)) if diagnostics else result
 
 
+@torch.no_grad()
+def replay_fit_summary(controller, lessons, unroll, camera, gate_config, contrast_weight):
+    """Fixed training-example fit, NOT a held-out or autonomous-flight result."""
+    records = []
+    for window, record in lessons:
+        _, _, residuals = replay_window_loss(
+            controller, window, unroll, camera, gate_config, contrast_weight, diagnostics=True
+        )
+        records.append(
+            dict(
+                **record,
+                axis_order=["roll", "pitch", "yaw", "throttle"],
+                side_order=["negative", "positive"],
+                motor_rmse_by_side=residuals.square().mean(dim=0).sqrt().cpu().tolist(),
+            )
+        )
+    return dict(scope="fixed examples from training collections, not held-out", windows=records)
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -382,6 +440,22 @@ def parse_args():
     parser.add_argument(
         "--teacher-heading-mode", choices=("tangent", "world-x", "rate-damped"), default="world-x"
     )
+    parser.add_argument(
+        "--roll-teacher",
+        choices=("curved", "neutral", "current-gate"),
+        default="curved",
+        help="non-curved targets require late-roll-preserve; never change deployed actor inputs",
+    )
+    parser.add_argument(
+        "--keep-latest-training-weights",
+        action="store_true",
+        help="continue fitting across development checks; best-controller export stays protected",
+    )
+    parser.add_argument(
+        "--check-replay-fit",
+        action="store_true",
+        help="report fixed training-window motor errors by phase and side at development checks",
+    )
     parser.add_argument("--interval", type=int, default=20)
     parser.add_argument("--seconds", type=float, default=30.0)
     parser.add_argument("--development-pairs", type=int, default=16)
@@ -408,7 +482,11 @@ def main():
         raise SystemExit("sizes, intervals and rates must be positive")
     if not np.isfinite(args.contrast_weight) or args.contrast_weight < 0:
         raise SystemExit("contrast weight must be finite and nonnegative")
+    if args.roll_teacher != "curved" and args.supervision != "late-roll-preserve":
+        raise SystemExit("non-curved roll targets require --supervision late-roll-preserve")
     anticipation = args.supervision == "late-roll-anticipation"
+    if anticipation and args.check_replay_fit:
+        raise SystemExit("anticipation already has its own replay validation")
     if anticipation and (
         args.anticipation_cache is None
         or args.teacher_heading_mode != "rate-damped"
@@ -451,6 +529,7 @@ def main():
     history, collections = [], []
     anticipation_manifest = None
     validation_lessons, validation_records = [], []
+    fit_lessons, source_fit = [], None
 
     def assess():
         return evaluate(
@@ -482,12 +561,14 @@ def main():
             selection_metrics=metrics,
             teacher_inputs_are_actor_inputs=False,
             teacher_config=vars(CourseTeacherConfig(heading_mode=args.teacher_heading_mode)),
+            roll_teacher=args.roll_teacher,
             replay_prefix="current-weight-from-zero-with-original-10-frame-warmup",
             supervision=args.supervision,
             preservation_source_checkpoint=str(args.checkpoint)
             if reference_controller is not None
             else None,
             anticipation_manifest=anticipation_manifest,
+            source_replay_fit=source_fit,
         )
         torch.save(payload, args.output_dir / name)
 
@@ -507,6 +588,7 @@ def main():
             actor_outputs="native foreleg pools -> physical forelegs -> sticks",
             replay_or_teacher_state_deployed=False,
             anticipation_manifest=anticipation_manifest,
+            source_replay_fit=source_fit,
         )
         (args.output_dir / "report.json").write_text(json.dumps(result, indent=2) + "\n")
 
@@ -522,6 +604,7 @@ def main():
             gate_config,
             args.teacher_heading_mode,
             reference_controller,
+            roll_teacher=args.roll_teacher,
         )
         collections.append(bank.manifest())
         return bank
@@ -588,6 +671,18 @@ def main():
             args.seed + 100000,
         )
         native_bank = collect("native", args.native_pairs, args.seed)
+        if args.check_replay_fit:
+            fit_rng = np.random.default_rng(args.seed + 200000)
+            for phase in range(5):
+                bank, rows, starts, record = select_pair_window(
+                    native_bank, teacher_bank, phase, args.unroll, fit_rng, "approach"
+                )
+                window = prepare_window(bank, rows, starts, args.unroll, device)
+                fit_lessons.append((window, record))
+            source_fit = replay_fit_summary(
+                controller, fit_lessons, args.unroll, camera, gate_config, args.contrast_weight
+            )
+            print(json.dumps(dict(stage="source_replay_fit", **source_fit)), flush=True)
     report()
     for update in range(1, args.updates + 1):
         optimizer.zero_grad(set_to_none=True)
@@ -656,6 +751,10 @@ def main():
             elapsed_seconds=perf_counter() - started,
         )
         if update % args.interval == 0 or update == args.updates:
+            if fit_lessons:
+                entry["replay_fit"] = replay_fit_summary(
+                    controller, fit_lessons, args.unroll, camera, gate_config, args.contrast_weight
+                )
             if anticipation:
                 with torch.no_grad():
                     residuals = [
@@ -704,7 +803,7 @@ def main():
             # Refresh collection under retained weights and discard stale optimizer
             # momentum only when returning to an earlier, better checkpoint.
             if update < args.updates and not anticipation:
-                if best_update != update:
+                if best_update != update and not args.keep_latest_training_weights:
                     with torch.no_grad():
                         controller.edge_magnitude.copy_(best_edges)
                     optimizer.state.clear()

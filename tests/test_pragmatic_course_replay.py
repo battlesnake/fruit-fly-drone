@@ -50,6 +50,65 @@ def test_late_roll_labels_preserve_all_source_axes_until_gate_one_and_other_axes
     assert reference[1, 0] == 4  # constructing labels does not mutate source records
 
 
+@pytest.mark.parametrize("roll_teacher", ["curved", "neutral", "current-gate"])
+def test_roll_teacher_variants_change_only_roll_labels_and_keep_source_preservation(
+    monkeypatch, roll_teacher
+):
+    curved = torch.arange(12, dtype=torch.float32).reshape(3, 4)
+    original = curved.clone()
+    reference = -torch.ones_like(curved)
+    current = torch.tensor([0, 1, 2])
+    gates = tuple(
+        AnnularGate(torch.full((3, 3), float(index)), torch.zeros(3)) for index in range(2)
+    )
+    monkeypatch.setattr(replay, "course_teacher_motor", lambda *args: curved)
+    calls = []
+
+    def local(state, gate, config, *, active):
+        calls.append((gate.center.clone(), active.clone()))
+        return torch.tensor([0.1, 0.2, 0.3])
+
+    monkeypatch.setattr(replay, "current_gate_roll_motor", local)
+    target = replay.replay_teacher_motor(None, None, gates, current, None, None, roll_teacher)
+    assert torch.equal(curved, original)
+    assert torch.equal(target[:, 1:], original[:, 1:])
+    expected = {
+        "curved": original[:, 0],
+        "neutral": torch.zeros(3),
+        "current-gate": torch.tensor([0.1, 0.2, 0.3]),
+    }[roll_teacher]
+    assert torch.equal(target[:, 0], expected)
+    preserved = replay.late_roll_preservation_targets(target, reference, current)
+    assert torch.equal(preserved[0], reference[0])
+    assert torch.equal(preserved[:, 1:], reference[:, 1:])
+    assert torch.equal(preserved[1:, 0], expected[1:])
+    if roll_teacher == "current-gate":
+        assert calls[0][0][:, 0].tolist() == [0.0, 1.0, 1.0]
+        assert calls[0][1].tolist() == [True, True, False]
+    else:
+        assert not calls
+
+
+def test_noncurved_collection_cannot_silently_drive_other_teacher_axes():
+    arguments = (None, 1, 1, "native", 1, None, None, None)
+    with pytest.raises(ValueError, match="frozen-source"):
+        replay.collect_bank(*arguments, roll_teacher="neutral")
+    with pytest.raises(ValueError, match="unknown roll teacher"):
+        replay.collect_bank(*arguments, roll_teacher="unrecognized")
+
+
+def test_fixed_fit_summary_preserves_phase_side_axis_meaning(monkeypatch):
+    residuals = torch.tensor([[[1.0, 2.0, 3.0, 4.0], [2.0, 4.0, 6.0, 8.0]]]).repeat(3, 1, 1)
+    monkeypatch.setattr(replay, "replay_window_loss", lambda *a, **k: (None, None, residuals))
+    result = replay.replay_fit_summary(None, [(None, {"phase": 3, "seed": 10})], 3, None, None, 1.0)
+    record = result["windows"][0]
+    assert result["scope"] == "fixed examples from training collections, not held-out"
+    assert record["phase"] == 3
+    assert record["side_order"] == ["negative", "positive"]
+    assert record["axis_order"] == ["roll", "pitch", "yaw", "throttle"]
+    assert record["motor_rmse_by_side"] == [[1.0, 2.0, 3.0, 4.0], [2.0, 4.0, 6.0, 8.0]]
+
+
 def test_roll_mask_excludes_edges_entering_other_motor_pools(monkeypatch):
     graph = dict(
         output_pool_indices=np.array([10, 11, 12, 13]),
