@@ -2034,3 +2034,22 @@ All **589 tests pass**, including first-command intervention timing, unchanged n
 PYT, neural-only warmup, continuous recurrence, completion-tail intervention, matched
 initial states, and the distinction between raw passages and clean paired successes.
 Astra's read-only review found no blocking design or implementation issue.
+
+#### Five-hop fixed-bank check at update 75
+
+Late-roll fitting RMSE falls to **0.014426 / 0.021964**, reductions of **32.20% /
+22.42%** from source, still below the two-sided 50% fitting screen. Early-roll
+preservation RMSE rises to 0.003978 / 0.004682 and maximum non-roll RMSE to 0.003617.
+The complete objective before update 75 is 0.427314.
+
+Native development deteriorates to **5/32 clean** (one negative / four positive),
+versus source 12/32. Clean first-gate passes fall to **22/32** (11 / 11); clean-prefix
+gate passes total **53**, ring-contact episodes **24**, wrong-order episodes **three**,
+and wrong-direction, ground and invalid episodes **zero**. All 30 s are scored.
+Unlike the previous checks, this checkpoint also loses substantial first-gate capture.
+Improved fixed-input imitation remains insufficient for autonomous improvement.
+
+`hops-5-update-75.pt` stays diagnostic-only. The same live process continues toward
+the 100-update cap and the independent seven-hop source restart. No promotion,
+new-course replay-transfer collection, matched start comparison or fresh goal
+holdout is triggered by this result. The retained autonomous source is unchanged.
