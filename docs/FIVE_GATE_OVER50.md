@@ -1122,3 +1122,31 @@ events: first inspect whether the extra violation occurred after an existing ter
 failure or introduced a new pre-failure gate skip. This mode is **not implemented or
 enabled**. If the nominated proposal does not transfer, proceed with the already
 specified matched 100-frame gradient-horizon comparison instead.
+
+#### Development repeat is not a trained improvement
+
+Update two has now finished: scales 1 / 0.3 / 0.1 all retain three training
+completions, with prefixes 47 / 42 / 40, ring counts 12 / 11 / 10 and wrong-order
+counts 2 / 2 / 3. All are rejected. The ensuing development repeat scores **13/32**
+(10 negative / 3 positive) versus the launch baseline's 11/32 (8 / 3), both with
+28/32 clean-first passes. This is **not a learned gain**: a CPU comparison of every
+persisted controller tensor confirms that the saved `best-controller.pt` has exactly
+the same controller state as the retained source. No weight update has been accepted.
+
+The running trainer's old selector labelled that better repeat `selected_update=2`.
+Treat it as an unchanged-source repeat, not a new trained controller. Future runs now
+track actual accepted parameter changes and the last controller version evaluated;
+repeating an unchanged controller cannot select a new best checkpoint. Repeat metrics
+remain recorded and explicitly labelled. This fixes selection bookkeeping without
+changing FP32 arithmetic, gradients, acceptance rules, dynamics or observations, and
+does not alter the already-running process. All **533 regression tests pass**.
+The nominated *changed* `trial-u002-s1.pt` remains a separate pending development
+comparison; it is not the unchanged `best-controller.pt` just described. The broader
+run has advanced to its third predetermined bank.
+
+Bank three (1620985) supplies the missing side coverage without selecting cases by
+success: the unchanged source completes 3/16 (1 negative / 2 positive), passes all
+sixteen first gates, and has 483 negative / 477 positive eligible gate-five frames.
+Thus the predetermined rotation does provide late-gate training on both sides; the
+zero positive exposure in the first two banks must not be generalized to the whole
+run. Its third gradient/proposal update is in progress.

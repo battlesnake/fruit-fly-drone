@@ -56,6 +56,17 @@ def training_bank_seed(base, update, banks=0):
     return base + ((update - 1) % banks if banks else update - 1)
 
 
+def should_select_development(
+    metrics, best, first_floor, *, controller_change_update, last_evaluated_change_update
+):
+    """Do not present a better repeat of unchanged weights as a learned checkpoint."""
+    return (
+        controller_change_update > last_evaluated_change_update
+        and metrics["clean_first_gate_pass_rate"] >= first_floor
+        and replay.selection_score(metrics, first_floor) > replay.selection_score(best, first_floor)
+    )
+
+
 def combine_metrics(metrics):
     """Equal-size mirrored microbatches; counts add and per-episode losses average."""
     if not metrics or any(m["episodes"] != 2 for m in metrics):
@@ -174,6 +185,7 @@ def main():
     args.output_dir.mkdir(parents=True)
     baseline = assess()
     best, best_update, rejections = baseline, 0, 0
+    controller_change_update = last_evaluated_change_update = 0
     first_floor = max(0, baseline["clean_first_gate_pass_rate"] - 0.05)
     digest = hashlib.sha256(args.checkpoint.read_bytes()).hexdigest()
     history = []
@@ -216,6 +228,8 @@ def main():
             source_development=baseline,
             selected_development=best,
             selected_update=best_update,
+            controller_change_update=controller_change_update,
+            last_evaluated_change_update=last_evaluated_change_update,
             history=history,
             elapsed_seconds=perf_counter() - started,
             actor_inputs=["320x200 RGB", "roll", "pitch"],
@@ -344,6 +358,8 @@ def main():
         if accepted is not None:
             with torch.no_grad():
                 controller.edge_magnitude.copy_(accepted)
+            if not torch.equal(accepted, before):
+                controller_change_update = update
             rejections = 0
         else:
             optimizer.load_state_dict(old_optimizer)
@@ -355,6 +371,7 @@ def main():
             gradient_flight=combine_metrics(gradient_runs),
             raw_gradient_norm=grad_norm,
             accepted_scale=accepted_scale,
+            controller_change_update=controller_change_update,
             trials=trials,
             raw_gradient_dot_step=float(
                 (raw_gradient * (controller.edge_magnitude.detach() - before)).sum()
@@ -364,12 +381,20 @@ def main():
         if update in args.development_updates or update == args.updates or stop:
             metrics = assess()
             entry["development"] = metrics
+            entry["development_repeats_unchanged_controller"] = (
+                controller_change_update == last_evaluated_change_update
+            )
             save("latest-controller.pt", update, metrics)
-            if metrics["clean_first_gate_pass_rate"] >= first_floor and replay.selection_score(
-                metrics, first_floor
-            ) > replay.selection_score(best, first_floor):
+            if should_select_development(
+                metrics,
+                best,
+                first_floor,
+                controller_change_update=controller_change_update,
+                last_evaluated_change_update=last_evaluated_change_update,
+            ):
                 best, best_update = metrics, update
                 save("best-controller.pt", update, metrics)
+            last_evaluated_change_update = controller_change_update
             if metrics["clean_first_gate_pass_rate"] < first_floor:
                 stop = True
                 entry["stop_reason"] = "material clean-first development regression"
@@ -380,6 +405,10 @@ def main():
                         update=update,
                         clean=metrics["clean_course_success_rate"],
                         first=metrics["clean_first_gate_pass_rate"],
+                        controller_change_update=controller_change_update,
+                        repeats_unchanged_controller=entry[
+                            "development_repeats_unchanged_controller"
+                        ],
                     )
                 ),
                 flush=True,

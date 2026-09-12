@@ -11,7 +11,11 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 import pragmatic_on_policy as online  # noqa: E402
-from train_pragmatic_course_on_policy import combine_metrics, training_bank_seed  # noqa: E402
+from train_pragmatic_course_on_policy import (  # noqa: E402
+    combine_metrics,
+    should_select_development,
+    training_bank_seed,
+)
 
 from flydrone.gate import AnnularGate, GateConfig  # noqa: E402
 from flydrone.hover import (  # noqa: E402
@@ -284,6 +288,31 @@ def test_training_course_rotation_is_predetermined_and_supports_new_banks():
     ]
     with pytest.raises(ValueError):
         training_bank_seed(100, 0, 4)
+
+
+@pytest.mark.parametrize(
+    ("changed", "evaluated", "expected"), [(0, 0, False), (2, 0, True), (2, 2, False), (3, 2, True)]
+)
+def test_development_selection_requires_a_new_controller_not_a_better_repeat(
+    changed, evaluated, expected
+):
+    source = dict(
+        clean_course_success_rate=11 / 32,
+        clean_course_negative_success_rate=8 / 16,
+        clean_course_positive_success_rate=3 / 16,
+        first_gate_pass_rate=28 / 32,
+        clean_first_gate_pass_rate=28 / 32,
+        gates_before_failure_mean=3.0,
+        course_race_fitness=0.1,
+    )
+    improved = dict(source, clean_course_success_rate=13 / 32)
+    options = dict(controller_change_update=changed, last_evaluated_change_update=evaluated)
+    assert should_select_development(improved, source, 0.825, **options) is expected
+    # A new weight set still has to pass the existing performance and first-gate rules.
+    assert not should_select_development(source, source, 0.825, **options)
+    assert not should_select_development(
+        dict(improved, clean_first_gate_pass_rate=0.5), source, 0.825, **options
+    )
 
 
 def test_tracking_validity_ends_after_miss_but_flight_and_frozen_candidate_mask_continue(
