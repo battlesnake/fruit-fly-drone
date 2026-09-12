@@ -9,6 +9,7 @@ from flydrone.gate import AnnularGate, GateConfig
 from flydrone.hover import HoverConfig
 from flydrone.visual_hover import CameraSpec
 from scripts.train_pragmatic_course_replay import ReplayBank
+from scripts.train_pragmatic_course_teacher import action_imitation_loss
 
 
 def small_bank():
@@ -119,3 +120,48 @@ def test_lesson_rejects_copied_role_history_after_the_modified_gate_plane():
         lessons.make_anticipation_lesson(
             bank, 0, 5, 3, reference, CameraSpec(), GateConfig(), HoverConfig()
         )
+
+
+def test_early_preservation_excludes_heldout_courses_and_gate_transition_frames():
+    bank = small_bank()
+    bank.reference_outputs = torch.ones_like(bank.target)
+    result = lessons.early_training_banks([bank], heldout_pairs=1)[0]
+    assert result.current.shape[1] == 2
+    assert not bool(result.active[5:].any())
+    assert result.starts(0, 3) == [[0, 1, 2], [0, 1, 2]]
+    assert torch.equal(result.target, bank.reference_outputs[:, :2])
+
+
+def test_roll_only_contrast_emphasis_leaves_nonroll_and_pair_mean_penalties_unchanged():
+    prediction = torch.tensor([[0.1, 0.2, 0.3, 0.4], [0.2, -0.1, -0.2, -0.3]])
+    active, scale = torch.ones(2, dtype=torch.bool), torch.ones(4)
+    target = torch.zeros_like(prediction)
+    baseline, axes = action_imitation_loss(prediction, target, active, scale, 1)
+    stronger, new_axes = action_imitation_loss(
+        prediction, target, active, scale, 1, roll_contrast_weight=16
+    )
+    assert torch.equal(axes, new_axes)
+    assert float(stronger - baseline) == pytest.approx(15 * 0.1**2 / 4, abs=1e-7)
+    prediction[:, 0] = 0.3  # equal roll in both branches: no contrast penalty change
+    ordinary, _ = action_imitation_loss(prediction, target, active, scale, 1)
+    emphasized, _ = action_imitation_loss(
+        prediction, target, active, scale, 1, roll_contrast_weight=16
+    )
+    assert torch.equal(ordinary, emphasized)
+
+
+def test_zero_response_cannot_masquerade_as_learned_anticipation():
+    desired = torch.tensor([0.01, -0.02])
+    residual = torch.zeros(2, 2, 4)
+    residual[:, 1, 0] = -desired  # prediction contrast is exactly zero
+    records = [dict(base_side="negative"), dict(base_side="positive")]
+    result = lessons.contrast_error_summary([residual, residual], records, [desired, desired])
+    assert not result["negative"]["beats_zero_contrast"]
+    assert result["positive"]["teacher_alignment_cosine"] == 0
+    assert (
+        result["positive"]["contrast_error_rmse"] == result["positive"]["zero_contrast_error_rmse"]
+    )
+    residual.zero_()  # prediction now equals the teacher
+    result = lessons.contrast_error_summary([residual, residual], records, [desired, desired])
+    assert result["negative"]["beats_zero_contrast"]
+    assert result["negative"]["teacher_alignment_cosine"] == pytest.approx(1.0)

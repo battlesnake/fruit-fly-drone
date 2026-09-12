@@ -62,7 +62,9 @@ def parse_args():
     return parser.parse_args()
 
 
-def action_imitation_loss(prediction, target, active, motor_scale, contrast_weight):
+def action_imitation_loss(
+    prediction, target, active, motor_scale, contrast_weight, *, roll_contrast_weight=None
+):
     """Direct motor error, optionally emphasizing differences within mirrored pairs.
 
     Weight 1 adds four extra units of differential-mode error to the direct loss;
@@ -74,7 +76,13 @@ def action_imitation_loss(prediction, target, active, motor_scale, contrast_weig
     residual = ((prediction - target) / motor_scale).reshape(-1, 2, 4)
     difference = residual[:, 1] - residual[:, 0]
     contrast = difference[paired].square().mean() if bool(paired.any()) else axis.sum() * 0
-    return axis.mean() + contrast_weight * contrast, axis
+    loss = axis.mean() + contrast_weight * contrast
+    if roll_contrast_weight is not None and bool(paired.any()):
+        loss = (
+            loss
+            + (roll_contrast_weight - contrast_weight) * difference[paired, 0].square().mean() / 4
+        )
+    return loss, axis
 
 
 def native_sensorimotor_mask(graph_path, hops, device, include_attitude=False):

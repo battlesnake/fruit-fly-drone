@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
 import json
 import sys
 from dataclasses import dataclass, replace
@@ -277,7 +278,15 @@ def prepare_window(bank, rows, starts, unroll, device):
 
 
 def replay_window_loss(
-    controller, window, unroll, camera, gate_config, contrast_weight, *, diagnostics=False
+    controller,
+    window,
+    unroll,
+    camera,
+    gate_config,
+    contrast_weight,
+    *,
+    diagnostics=False,
+    roll_contrast_weight=None,
 ):
     states, gates, roles, targets, starts = window
     device = starts.device
@@ -314,7 +323,12 @@ def replay_window_loss(
         image, attitude = observations(times)
         prediction, neural = controller(image, attitude, neural)
         loss, axis = action_imitation_loss(
-            prediction, targets[times, rows], active, scale, contrast_weight
+            prediction,
+            targets[times, rows],
+            active,
+            scale,
+            contrast_weight,
+            roll_contrast_weight=roll_contrast_weight,
         )
         losses.append(loss)
         axes.append(axis.detach())
@@ -338,7 +352,13 @@ def parse_args():
     parser.add_argument("--teacher-pairs", type=int, default=4)
     parser.add_argument("--learning-rate", type=float, default=3e-6)
     parser.add_argument("--contrast-weight", type=float, default=1.0)
-    parser.add_argument("--supervision", choices=("all", "late-roll-preserve"), default="all")
+    parser.add_argument(
+        "--supervision",
+        choices=("all", "late-roll-preserve", "late-roll-anticipation"),
+        default="all",
+    )
+    parser.add_argument("--anticipation-cache", type=Path)
+    parser.add_argument("--anticipation-contrast-weight", type=float, default=1.0)
     parser.add_argument(
         "--teacher-heading-mode", choices=("tangent", "world-x", "rate-damped"), default="world-x"
     )
@@ -368,10 +388,22 @@ def main():
         raise SystemExit("sizes, intervals and rates must be positive")
     if not np.isfinite(args.contrast_weight) or args.contrast_weight < 0:
         raise SystemExit("contrast weight must be finite and nonnegative")
+    anticipation = args.supervision == "late-roll-anticipation"
+    if anticipation and (
+        args.anticipation_cache is None
+        or args.teacher_heading_mode != "rate-damped"
+        or not np.isfinite(args.anticipation_contrast_weight)
+        or args.anticipation_contrast_weight < 0
+    ):
+        raise SystemExit(
+            "anticipation needs a source cache, rate-damped teacher and valid contrast weight"
+        )
+    if args.output_dir.exists():
+        raise SystemExit("refusing to overwrite an existing replay experiment directory")
     device = torch.device(args.device)
     controller, source = load_controller(args, device)
     reference_controller = None
-    if args.supervision == "late-roll-preserve":
+    if args.supervision != "all":
         reference_controller = copy.deepcopy(controller).requires_grad_(False)
         edge_mask, manifest = roll_preservation_mask(args.graph, device)
     else:
@@ -397,6 +429,8 @@ def main():
     started = perf_counter()
     rng = np.random.default_rng(args.seed)
     history, collections = [], []
+    anticipation_manifest = None
+    validation_lessons, validation_records = [], []
 
     def assess():
         return evaluate(
@@ -433,6 +467,7 @@ def main():
             preservation_source_checkpoint=str(args.checkpoint)
             if reference_controller is not None
             else None,
+            anticipation_manifest=anticipation_manifest,
         )
         torch.save(payload, args.output_dir / name)
 
@@ -451,6 +486,7 @@ def main():
             actor_inputs=["320x200 RGB", "roll", "pitch"],
             actor_outputs="native foreleg pools -> physical forelegs -> sticks",
             replay_or_teacher_state_deployed=False,
+            anticipation_manifest=anticipation_manifest,
         )
         (args.output_dir / "report.json").write_text(json.dumps(result, indent=2) + "\n")
 
@@ -473,24 +509,100 @@ def main():
     save("best-controller.pt", 0, baseline)
     print(json.dumps(dict(stage="baseline", metrics=baseline)), flush=True)
     report()
-    teacher_bank = collect(
-        "roll-assisted" if reference_controller is not None else "teacher",
-        args.teacher_pairs,
-        args.seed + 100000,
-    )
-    native_bank = collect("native", args.native_pairs, args.seed)
+    if anticipation:
+        import pragmatic_anticipation_lessons as lessons
+
+        cache = torch.load(args.anticipation_cache, map_location="cpu", weights_only=True)
+        with args.checkpoint.open("rb") as stream:
+            if hashlib.file_digest(stream, "sha256").hexdigest() != cache["source_sha256"]:
+                raise ValueError("anticipation cache belongs to a different source checkpoint")
+        if len(cache["banks"]) != 2 or {b["seed"] for b in cache["banks"]} & {
+            args.development_seed
+        }:
+            raise ValueError("need separate native/assisted cache banks and development courses")
+        banks = [lessons.bank_from_motor_cache(bank) for bank in cache["banks"]]
+        native_bank, teacher_bank = lessons.early_training_banks(banks)
+        if native_bank.kind != "native" or teacher_bank.kind != "roll-assisted":
+            raise ValueError("anticipation cache bank ordering is not native/roll-assisted")
+        collections.extend(bank.manifest() for bank in banks)
+        validation_rng = np.random.default_rng(args.seed + 10000)
+        for phase in (1, 2, 3):
+            for side in (0, 1):
+                bank, row, start = lessons.select_anticipation_window(
+                    banks, phase, side, args.unroll, validation_rng, validation=True
+                )
+                window, record = lessons.make_anticipation_lesson(
+                    bank,
+                    row,
+                    start,
+                    args.unroll,
+                    reference_controller,
+                    camera,
+                    gate_config,
+                    config,
+                )
+                validation_lessons.append(window)
+                validation_records.append(record)
+        anticipation_manifest = dict(
+            cache=str(args.anticipation_cache),
+            source_sha256=cache["source_sha256"],
+            collection_seeds=[bank.seed for bank in banks],
+            heldout_pairs_per_bank=2,
+            training_pairs_per_bank=[b.current.shape[1] // 2 for b in (native_bank, teacher_bank)],
+            fixed_physical_cache_current_weight_neural_replay=True,
+            next_gate_placement_separation_metres=0.30,
+            early_windows_are_entirely_before_first_gate=True,
+            counterfactual_columns="minus/plus next-gate placement on one physical history",
+            roll_only_contrast_weight=args.anticipation_contrast_weight,
+            source_validation=lessons.source_contrast_summary(validation_records),
+            validation_lessons=validation_records,
+            first_gate_floor_is_hard_selection_requirement=True,
+        )
+        print(json.dumps(dict(stage="anticipation_lessons", **anticipation_manifest)), flush=True)
+    else:
+        teacher_bank = collect(
+            "roll-assisted" if reference_controller is not None else "teacher",
+            args.teacher_pairs,
+            args.seed + 100000,
+        )
+        native_bank = collect("native", args.native_pairs, args.seed)
     report()
     for update in range(1, args.updates + 1):
         optimizer.zero_grad(set_to_none=True)
         windows, loss_values, axis_values = [], [], []
         kind = ("approach", "transition", "pre-failure")[(update - 1) % 3]
-        for phase in (0, 1 + (update - 1) % 4):
-            bank, rows, starts, record = select_pair_window(
-                native_bank, teacher_bank, phase, args.unroll, rng, kind
-            )
-            window = prepare_window(bank, rows, starts, args.unroll, device)
+        late_phase = 1 + ((update - 1) // 2) % 3 if anticipation else 1 + (update - 1) % 4
+        for phase in (0, late_phase):
+            roll_contrast_weight = None
+            if anticipation and phase > 0:
+                side = (update - 1) % 2
+                bank, row, start = lessons.select_anticipation_window(
+                    banks, phase, side, args.unroll, rng
+                )
+                window, record = lessons.make_anticipation_lesson(
+                    bank,
+                    row,
+                    start,
+                    args.unroll,
+                    reference_controller,
+                    camera,
+                    gate_config,
+                    config,
+                )
+                roll_contrast_weight = args.anticipation_contrast_weight
+            else:
+                bank, rows, starts, record = select_pair_window(
+                    native_bank, teacher_bank, phase, args.unroll, rng, kind
+                )
+                window = prepare_window(bank, rows, starts, args.unroll, device)
             loss, axes = replay_window_loss(
-                controller, window, args.unroll, camera, gate_config, args.contrast_weight
+                controller,
+                window,
+                args.unroll,
+                camera,
+                gate_config,
+                args.contrast_weight,
+                roll_contrast_weight=roll_contrast_weight,
             )
             if not bool(torch.isfinite(loss)):
                 raise RuntimeError("nonfinite replay loss; no update applied")
@@ -521,10 +633,36 @@ def main():
             elapsed_seconds=perf_counter() - started,
         )
         if update % args.interval == 0 or update == args.updates:
+            if anticipation:
+                with torch.no_grad():
+                    residuals = [
+                        replay_window_loss(
+                            controller,
+                            window,
+                            args.unroll,
+                            camera,
+                            gate_config,
+                            args.contrast_weight,
+                            diagnostics=True,
+                            roll_contrast_weight=args.anticipation_contrast_weight,
+                        )[2]
+                        for window in validation_lessons
+                    ]
+                    entry["anticipation_validation"] = lessons.contrast_error_summary(
+                        residuals,
+                        validation_records,
+                        [
+                            lessons.window_target_contrast(window, args.unroll)
+                            for window in validation_lessons
+                        ],
+                    )
             metrics = assess()
             entry["development"] = metrics
             save("latest-controller.pt", update, metrics)
-            if selection_score(metrics, first_floor) > selection_score(best, first_floor):
+            eligible = not anticipation or metrics["first_gate_pass_rate"] >= first_floor
+            if eligible and selection_score(metrics, first_floor) > selection_score(
+                best, first_floor
+            ):
                 best, best_update = metrics, update
                 best_edges = controller.edge_magnitude.detach().clone()
                 save("best-controller.pt", update, metrics)
@@ -542,7 +680,7 @@ def main():
             )
             # Refresh collection under retained weights and discard stale optimizer
             # momentum only when returning to an earlier, better checkpoint.
-            if update < args.updates:
+            if update < args.updates and not anticipation:
                 if best_update != update:
                     with torch.no_grad():
                         controller.edge_magnitude.copy_(best_edges)

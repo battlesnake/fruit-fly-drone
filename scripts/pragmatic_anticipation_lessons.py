@@ -50,6 +50,91 @@ def bank_from_motor_cache(bank):
     )
 
 
+def early_training_banks(banks, heldout_pairs=2):
+    """Exclude held-out whole courses and transition frames from source preservation."""
+    result = []
+    for bank in banks:
+        count = bank.current.shape[1] - 2 * heldout_pairs
+        if count < 2 or bank.reference_outputs is None:
+            raise ValueError("early preservation needs training pairs and stored source outputs")
+        result.append(
+            replace(
+                bank,
+                states=tuple(field[:, :count] for field in bank.states),
+                gates=tuple(AnnularGate(g.center[:count], g.yaw[:count]) for g in bank.gates),
+                current=bank.current[:, :count],
+                active=bank.active[:, :count] & (bank.current[:, :count] == 0),
+                target=bank.reference_outputs[:, :count],
+                reference_outputs=bank.reference_outputs[:, :count],
+                failure_steps=None,
+            )
+        )
+    return result
+
+
+def window_target_contrast(window, unroll):
+    targets, starts = window[3], window[4]
+    times = starts[None] + torch.arange(unroll, device=starts.device)[:, None]
+    sampled = targets[times, torch.arange(len(starts), device=starts.device)[None]]
+    return sampled[:, 1, 0] - sampled[:, 0, 0]
+
+
+def source_contrast_summary(records):
+    result = {}
+    for side in ("negative", "positive"):
+        group = [r for r in records if r["base_side"] == side]
+        teacher_sq = np.mean([r["teacher_roll_contrast_rms"] ** 2 for r in group])
+        source_sq = np.mean([r["source_roll_contrast_rms"] ** 2 for r in group])
+        error_sq = np.mean([r["source_contrast_error_rmse"] ** 2 for r in group])
+        dot = (teacher_sq + source_sq - error_sq) / 2
+        pair_mean_errors = [r.get("source_pair_mean_error_rmse") for r in group]
+        result[side] = dict(
+            contrast_error_rmse=float(np.sqrt(error_sq)),
+            zero_contrast_error_rmse=float(np.sqrt(teacher_sq)),
+            teacher_alignment_cosine=float(dot / max(np.sqrt(teacher_sq * source_sq), 1e-12)),
+            beats_zero_contrast=bool(error_sq < teacher_sq),
+            pair_mean_roll_error_rmse=(
+                float(np.sqrt(np.mean(np.square(pair_mean_errors))))
+                if all(value is not None for value in pair_mean_errors)
+                else None
+            ),
+        )
+    return result
+
+
+def contrast_error_summary(residuals, records, target_contrasts):
+    """Report by physical base-course side, not by counterfactual column number."""
+    result = {}
+    for side in ("negative", "positive"):
+        selected = [
+            (error, target)
+            for error, record, target in zip(residuals, records, target_contrasts, strict=True)
+            if record["base_side"] == side
+        ]
+        if not selected:
+            raise ValueError(f"no held-out anticipation lessons for base side {side}")
+        errors = torch.cat([item[0] for item in selected], dim=0)
+        desired = torch.cat([item[1] for item in selected], dim=0)
+        if not bool(torch.isfinite(errors).all()):
+            raise ValueError("nonfinite anticipation diagnostic residuals")
+        contrast = errors[:, 1, 0] - errors[:, 0, 0]
+        prediction = desired + contrast
+        zero_error = desired.square().mean().sqrt()
+        error = contrast.square().mean().sqrt()
+        denominator = (desired.square().mean() * prediction.square().mean()).sqrt().clamp_min(1e-12)
+        result[side] = dict(
+            contrast_error_rmse=float(error),
+            zero_contrast_error_rmse=float(zero_error),
+            teacher_alignment_cosine=float((desired * prediction).mean() / denominator),
+            beats_zero_contrast=bool(error < zero_error),
+            pair_mean_roll_error_rmse=float(errors[:, :, 0].mean(dim=1).square().mean().sqrt()),
+            roll_error_rmse=float(errors[:, :, 0].square().mean().sqrt()),
+            nonroll_source_rmse=float(errors[:, :, 1:].square().mean().sqrt()),
+            paired_frames=len(contrast),
+        )
+    return result
+
+
 def changed_next_gate_pair(gates, row, phase, launch_position, half_separation=0.15):
     """Two legal next-gate positions; all other geometry remains identical."""
     if phase not in (1, 2, 3) or not 0 < half_separation <= 0.2:
@@ -139,7 +224,7 @@ def make_anticipation_lesson(bank, row, start, unroll, reference, camera, gate_c
     neural = reference.initial_state(2, device=device, dtype=torch.float32)
     path = CoursePath.through_gates(fields[0][0], gates)
     teacher = CourseTeacherConfig(heading_mode="rate-damped")
-    visible_change, target_contrast, source_contrast = [], [], []
+    visible_change, target_contrast, source_contrast, pair_mean_error = [], [], [], []
     for frame in range(-10, start + unroll):
         time = max(frame, 0)
         state = QuadState(*(value[time] for value in fields))
@@ -154,6 +239,7 @@ def make_anticipation_lesson(bank, row, start, unroll, reference, camera, gate_c
             visible_change.append((image[1] - image[0]).abs().mean())
             target_contrast.append(taught[1, 0] - taught[0, 0])
             source_contrast.append(source_motor[1, 0] - source_motor[0, 0])
+            pair_mean_error.append((source_motor[:, 0] - taught[:, 0]).mean())
     visible_change = torch.stack(visible_change)
     desired, actual = torch.stack(target_contrast), torch.stack(source_contrast)
     if not bool(torch.isfinite(target[start:]).all()) or not bool(visible_change.max() > 1e-6):
@@ -173,6 +259,7 @@ def make_anticipation_lesson(bank, row, start, unroll, reference, camera, gate_c
         teacher_roll_contrast_rms=float(desired.square().mean().sqrt()),
         source_roll_contrast_rms=float(actual.square().mean().sqrt()),
         source_contrast_error_rmse=float((actual - desired).square().mean().sqrt()),
+        source_pair_mean_error_rmse=float(torch.stack(pair_mean_error).square().mean().sqrt()),
         matched_physical_history=True,
         changed_geometry_fixed_for_entire_prefix=True,
     )

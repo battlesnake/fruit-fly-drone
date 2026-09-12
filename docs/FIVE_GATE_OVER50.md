@@ -548,4 +548,31 @@ left/right rule, and inspect held-out contrast alongside ordinary native develop
 flights at 10/20/30. Enforce the first-gate floor when selecting; do not continue past
 this bound without a flight improvement. Any winner still requires a fresh full-course
 check. The lesson builder is implemented and audited; this training integration has
-not yet run.
+now been added to `train_pragmatic_course_replay.py` as `--supervision late-roll-anticipation`.
+
+Two matched ten-update screening trials are `pragmatic-anticipation-contrast1-001`
+and `pragmatic-anticipation-contrast16-001`. Both start from retained replay best60,
+use the same sink-fit-002 physical-history cache and lesson-selection seed 1260983,
+and keep fresh Adam, LR 3e-6 and the existing roll-path mask. The last two whole pairs
+in each cache bank are excluded from both the early-preservation and anticipation
+gradient lessons. The remaining six pairs per bank supply the lessons. Fixed held-out
+lessons use a separate selection stream, seed 1270983. Current-weight neural prefixes
+are regenerated; there is no cached learner memory and no on-policy bank refresh
+within this bounded comparison.
+
+The sole difference between arms is the counterfactual **roll** contrast coefficient,
+1 versus 16. The higher coefficient corresponds to a 0.005 rather than 0.02 motor-drive
+contrast scale. Absolute motor errors, other-axis contrast and early-preservation
+weights do not change. Early windows stay entirely before gate one; anticipation
+windows cycle gates 2/3/4 with negative/positive base-course sides alternating, giving
+five lessons on each side at the ten-update check. Their paired columns are two
+next-gate placements, not two physical course sides.
+
+Validation reports roll contrast error, pair-mean roll error, non-roll source error,
+teacher alignment and the zero-contrast predictor's error. Because the source sometimes
+has a worse contrast error than simply outputting no difference, an apparent reduction
+alone is insufficient evidence of learned anticipation. Require beating the zero
+baseline with positive teacher alignment before making that interpretation. Autonomous
+development completion, with the hard first-gate floor, remains the checkpoint-selection
+criterion. Extend only a promising arm to at most thirty total updates; neither this
+contrast screen nor development selection establishes the >50% held-out goal.
