@@ -2180,3 +2180,45 @@ than continued from the five-hop endpoint. It uses the same fixed examples, weig
 anchor denominator and 25/50/75/100 checks. The first seven-hop optimizer update is
 verified complete; the unified-label trial remains prepared but unlaunched pending
 the comparison's results.
+
+#### Faster fixed-window training without a new learning objective
+
+A bounded source-only GPU probe evaluated the prepared unified-label objective and
+its gradients with no optimizer updates. The early lesson stays separate at weight
+0.5. Consecutive late lessons can be batched because all have weight 0.0625, twenty
+supervised frames, and adjacent negative/positive rows. For a group of G lessons,
+the batched mean loss multiplied by `G * 0.0625` preserves their summed contribution,
+including the within-pair contrast loss. Each row retains its own complete neural
+prefix and waits without state advancement after reaching its own window start.
+
+The warmup-completed, CUDA-synchronized probe ran alongside the existing fit process:
+
+| Late lessons per batch | Groups per update | Update-equivalent time | Peak allocated GPU MiB | Gradient relative L2 difference |
+| --- | ---: | ---: | ---: | ---: |
+| 1 | 9 | 43.58 s | 1,362 | reference |
+| 2 | 5 | 28.78 s | 2,264 | 2.71e-6 |
+| 4 | 3 | 16.15 s | 4,176 | 4.89e-5 |
+
+The source objective is 0.881805980 individually and 0.881808646 with four late
+lessons per batch (about 3e-6 relative difference). Gradient norms are 3.7779045 and
+3.7779324. The roughly **2.7x observed speedup** is a practical shared-GPU measurement,
+not an isolated hardware benchmark or promise of identical timings in later runs.
+Peak reserved memory in the four-lesson probe is 6,762 MiB; these figures belong to
+the probe process, not combined whole-GPU use. Its FP32 scalar cosine calculation
+wandered slightly above one and is not used as evidence; loss, norm and relative-L2
+comparisons support the batching decision. No trained checkpoint was produced.
+
+The existing fitter now accepts `--late-windows-per-group 1|2|4`, defaulting to the
+original one. The planned unified-label pilot will use four. All groups accumulate
+before one anchor contribution, one gradient-clipping operation and one Adam update.
+Original individual-window fitting measurements remain unchanged at checks. Batched
+reports list the actual group indices/weights and group losses rather than inventing
+per-window training losses from a group mean. This is numerically equivalent FP32
+batching, not a byte-identical execution claim.
+
+All **598 tests pass**, including retained pair ordering, histories, weights and
+summed recurrent loss/gradient comparisons. Astra's code review found no blocking
+issue. The temporary probe and raw results are under
+`/home/mark/tmp/fly-over50-20260912/replay_batch_probe.py` and `.json`. The live original
+mask comparison continues with its already-loaded one-window implementation; no
+optimizer state, target or runtime configuration in that process is changed.

@@ -123,6 +123,80 @@ def test_unified_early_error_reduction_is_not_source_preservation_error():
     ) == pytest.approx([0.5, 0.75])
 
 
+@pytest.mark.parametrize("size", [1, 2, 4])
+def test_training_groups_keep_pair_order_histories_and_original_weights(size):
+    lessons, unroll = audit.fixed_lessons(*fixtures(), torch.device("cpu"))
+    groups = audit.training_groups(lessons, size)
+    assert len(groups) == 1 + 8 // size
+    assert groups[0][0] is lessons[0][0] and groups[0][1:] == (0.5, [0])
+    assert sum(weight for _, weight, _ in groups) == 1.0
+    assert [index for _, _, indices in groups for index in indices] == list(range(9))
+    for combined, weight, indices in groups[1:]:
+        assert weight == 0.0625 * len(indices)
+        for pair, index in enumerate(indices):
+            original = lessons[index][0]
+            section = slice(2 * pair, 2 * pair + 2)
+            assert torch.equal(combined[4][section], original[4])
+            assert torch.equal(combined[1][0].center[section], original[1][0].center)
+            for side, start in enumerate(original[4]):
+                stop = int(start) + unroll
+                assert torch.equal(
+                    combined[0][0][:stop, 2 * pair + side], original[0][0][:stop, side]
+                )
+                assert torch.equal(
+                    combined[3][:stop, 2 * pair + side], original[3][:stop, side]
+                )
+
+
+@pytest.mark.parametrize("size", [2, 4])
+def test_grouped_full_prefix_replay_preserves_summed_loss_and_gradient(monkeypatch, size):
+    lessons, unroll = audit.fixed_lessons(*fixtures(), torch.device("cpu"))
+    for window, _ in lessons:
+        window[3].mul_(0.001)
+
+    class Actor(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.gain = torch.nn.Parameter(torch.tensor([0.02, 0.03, -0.02, 0.01]))
+            self.bias = torch.nn.Parameter(torch.tensor([0.01, -0.01, 0.02, -0.02]))
+
+        def initial_state(self, count, **kwargs):
+            return torch.zeros(count, 4, **kwargs)
+
+        def forward(self, image, attitude, neural):
+            advanced = torch.tanh(0.7 * neural + image[:, 0, 0, 0, None] * self.gain + self.bias)
+            return 0.1 * advanced, advanced
+
+    monkeypatch.setattr(
+        audit.replay, "render_annular_gates_rgb",
+        lambda state, *args, **kwargs: state.position[:, 0, None, None, None].expand(-1, 3, 1, 1),
+    )
+    actor = Actor()
+
+    def accumulated(group_size):
+        actor.zero_grad(set_to_none=True)
+        total = 0.0
+        for window, weight, _ in audit.training_groups(lessons, group_size):
+            loss, _ = audit.replay.replay_window_loss(actor, window, unroll, None, None, 1.0)
+            (weight * loss).backward()
+            total += weight * float(loss.detach())
+        return total, torch.cat([parameter.grad.flatten() for parameter in actor.parameters()])
+
+    separate_loss, separate_gradient = accumulated(1)
+    grouped_loss, grouped_gradient = accumulated(size)
+    assert grouped_loss == pytest.approx(separate_loss, rel=1e-5)
+    torch.testing.assert_close(grouped_gradient, separate_gradient, rtol=1e-5, atol=1e-5)
+
+
+def test_grouping_rejects_unapproved_size_or_unequal_weights():
+    lessons, _ = audit.fixed_lessons(*fixtures(), torch.device("cpu"))
+    with pytest.raises(ValueError, match="1, 2 or 4"):
+        audit.training_groups(lessons, 3)
+    lessons[1][1]["phase"] = 1
+    with pytest.raises(ValueError, match="equally weighted"):
+        audit.training_groups(lessons, 4)
+
+
 @pytest.mark.parametrize("fault", ["inactive", "early-crossing", "wrong-side", "missing-role"])
 def test_fixed_lesson_validation_rejects_invalid_training_intervals(fault):
     cache, report = fixtures()

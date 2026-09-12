@@ -90,6 +90,26 @@ def lesson_weights(lessons):
     return [0.5 if record["phase"] == 1 else 0.0625 for _, record in lessons]
 
 
+def training_groups(lessons, late_windows_per_group):
+    """Batch equally weighted late windows, retaining each adjacent two-side pair."""
+    if late_windows_per_group not in (1, 2, 4):
+        raise ValueError("late-window group size must be 1, 2 or 4")
+    weights = lesson_weights(lessons)
+    groups = []
+    for indices in [[0]] + [
+        list(range(start, min(start + late_windows_per_group, len(lessons))))
+        for start in range(1, len(lessons), late_windows_per_group)
+    ]:
+        windows = [lessons[index][0] for index in indices]
+        if any(len(window[4]) != 2 for window in windows):
+            raise ValueError("each fixed lesson must retain its two ordered side rows")
+        if len({weights[index] for index in indices}) != 1:
+            raise ValueError("only equally weighted windows may share a group")
+        combined = windows[0] if len(windows) == 1 else replay.combine_replay_columns(windows)
+        groups.append((combined, sum(weights[index] for index in indices), indices))
+    return groups
+
+
 @torch.no_grad()
 def unify_early_roll_labels(lessons, config):
     """Change only pre-first roll labels on the exact same physical histories.
@@ -177,6 +197,10 @@ def parse_args():
         "--roll-labels", choices=("late-preserve", "unified"), default="late-preserve",
         help="unified changes only early roll targets on the original fixed histories/windows",
     )
+    parser.add_argument(
+        "--late-windows-per-group", type=int, choices=(1, 2, 4), default=1,
+        help="batch equally weighted late windows without changing the summed objective",
+    )
     parser.add_argument("--device", default="cuda")
     return parser.parse_args()
 
@@ -210,6 +234,7 @@ def main():
     anchor_reference_count = int(reference_mask.sum())
     del reference_mask
     weights = lesson_weights(lessons)
+    groups = training_groups(lessons, args.late_windows_per_group)
     contrast = fitting_report["arguments"]["contrast_weight"]
     gate_config = replace(replay.GateConfig(**source["gate_config"]), back_pattern="checkerboard")
     camera = replay.CameraSpec(
@@ -255,6 +280,10 @@ def main():
         anchor_reference_hops=5,
         anchor_fixed_denominator=anchor_reference_count,
         lesson_weights=weights,
+        training_groups=[
+            dict(lesson_indices=indices, weight=weight) for _, weight, indices in groups
+        ],
+        gradient_accumulation="all groups then one anchor, clipping operation and optimizer step",
         checkpoint_promotion_automatic=False,
         teacher_or_replay_state_deployed=False,
         roll_labels=args.roll_labels,
@@ -300,7 +329,7 @@ def main():
         for update in range(1, args.updates + 1):
             optimizer.zero_grad(set_to_none=True)
             losses = []
-            for (window, _), weight in zip(lessons, weights, strict=True):
+            for window, weight, _ in groups:
                 loss, _ = replay.replay_window_loss(
                     controller, window, unroll, camera, gate_config, contrast
                 )
@@ -321,14 +350,17 @@ def main():
             controller.project_parameters()
             entry = dict(
                 update=update,
-                window_losses_before_update=losses,
                 objective_before_update=sum(
-                    w * loss for w, loss in zip(weights, losses, strict=True)
+                    group[1] * loss for group, loss in zip(groups, losses, strict=True)
                 )
                 + float(anchor_loss.detach()),
                 gradient_norm=float(gradient),
                 elapsed_seconds=perf_counter() - started,
             )
+            entry[
+                "window_losses_before_update" if args.late_windows_per_group == 1
+                else "group_losses_before_update"
+            ] = losses
             arm["history"].append(entry)
             if update % args.interval == 0 or update == args.updates:
                 if not torch.equal(controller.edge_magnitude.detach()[~mask], initial[~mask]):
