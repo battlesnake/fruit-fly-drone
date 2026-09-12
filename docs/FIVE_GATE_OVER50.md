@@ -1782,3 +1782,45 @@ Continue beyond ten updates only if late fitting moves meaningfully on both side
 and early/other-axis preservation plus native flight avoid substantial deterioration.
 This is an optimization-and-data-mixture pilot, not a learning-rate-only attribution.
 The retained source and fresh varied-course goal validation remain protected.
+
+The pilot is running as `pragmatic-current-gate-mixed-replay-001`, with
+`--keep-latest-training-weights` enabled alongside both collection flags. Its actual
+baseline is 12/32 clean (9 negative / 3 positive), 28 first passes, 100 clean-prefix
+gates, 19 ring-contact episodes, two wrong-order episodes and no ground/invalid
+episodes. The native bank contains 943 recorded frames from 16 episodes; the assisted
+bank contains 1,010 from eight episodes. Native gate-five active frames split
+498 negative / zero positive, whereas the assisted split is 629 / 327. Consequently
+the gate-five native-late slot keeps its native negative row and substitutes only
+the positive row. That update's direct loss weights are 0.5 early native,
+0.125 late native and 0.375 late assisted; the separately logged contrast term
+couples the sides. The nine fixed fitting checks and tensor-only replay cache have
+been created. These collection counts are not full-flight success results.
+
+#### Mixed pilot completes without two-sided fitting or flight improvement
+
+The process finishes normally after 284.63 s. Update five ties the source's 12/32
+clean courses, with an 8 negative / 4 positive split, 27 first passes, 95 clean-prefix
+gates, 20 ring-contact episodes and two wrong-order episodes. The experiment's local
+selector saves that checkpoint on its side-balance tie-break, **not an increase in
+total completion**. Update ten drops to 6/32 (5 negative / 1 positive), 23 first
+passes, 78 prefix gates, 24 ring-contact episodes and five wrong-order episodes.
+Both checks have zero ground/invalid episodes. The global retained source is unchanged;
+neither pilot export is promoted and no fresh goal holdout is used.
+
+Across the eight fixed late fitting windows (equal window MSE, then square root),
+negative / positive roll RMSE is 0.021278 / 0.028311 at source, 0.021041 / 0.027875
+at update five and 0.020071 / 0.028533 at ten. Final reductions are 5.68% negative
+and **-0.78% positive**: the latter worsens. Early-roll RMSE reaches 0.001336 /
+0.001986, and maximum non-roll RMSE across the nine checks reaches 0.001715. These
+remain same-history motor errors, not held-out flights. This misses the declared
+two-sided fitting screen while native flight deteriorates, so the identical recipe
+is not extended. Explicit assisted sampling plus this higher learning rate did not
+solve the fitting problem in ten updates; it does not establish a capacity limit.
+
+A read-only structural check counts 19,286 trainable existing visual-to-roll edges
+at five hops, 1,097,500 at seven, 2,491,540 at nine and 2,620,304 at twelve, always
+excluding edges into the other motor pools. This large jump is a reason to measure
+training capacity deliberately rather than casually widening a supposedly small
+mask. The full neural graph already runs in every case; these counts concern
+plasticity only. The CPU diagnostic completed separately under AIRA in about four
+CPU seconds, without another GPU job.
