@@ -1577,3 +1577,27 @@ the requested fresh holdout. The generated record is
 Keep the neutral-roll control first when the current GPU process ends. If that
 does not strongly rescue flight, the local-roll/native-other-three comparison now
 has a physically feasible teacher and remains the next useful diagnostic.
+
+#### Update five rejects two completion gains for an order-count regression
+
+Returning to training seed 1620983, the current controller completes 3/16 courses
+(negative-side episodes 2, 10, 12), with 32 prefix gates, first-side counts [7, 4],
+eleven failed/ring-contact episodes and three wrong-order episodes. Ground, invalid
+and wrong-direction counts are zero. Scale one loses a completion (2/16) and adds
+two failed/ring-contact episodes, so it is rejected.
+
+Scales 0.3 and 0.1 each preserve the three clean episodes and add negative-side
+episode zero, giving **4/16**, prefix 34 and unchanged first-side and failure/ring
+counts. Both are rejected solely because wrong-order episodes increase three→four.
+Continuous loss is 0.213296 and 0.208499 respectively, against nominal 0.213783.
+The existing outcome-mode proxy would improve 25→32 for either proposal, but the
+running flight-first experiment correctly retains its declared rules. No independent
+development check is made for these rejected proposals; all completions on this
+bank remain negative-side, and no transfer or post-failure-only explanation is
+assumed. The raw gradient norm is 2.40874.
+
+At 3,924.12 s elapsed, weights and optimizer state are restored to their pre-update
+values and the process proceeds to its sixth/final update. The selected source is
+still update zero. These proposals keep the outcome-mode fallback scientifically
+relevant, but do not overturn the next-action priority: neutral-roll control, then
+local roll with native other axes if needed, before another long learning run.
