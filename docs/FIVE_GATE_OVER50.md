@@ -479,3 +479,73 @@ Attempt `001` was stopped before gradient updates to fix two review findings: sp
 diagnostic residuals by each frame's actual phase rather than its window's starting
 phase, and enforce the first-gate floor as a hard selection condition rather than
 a score tie-break. Its identity checkpoint and collection are not a trained result.
+
+The corrected motion trial stopped at update 10: source and candidate both completed
+12/32 development courses and passed gate one on 28/32. The split changed from
+9 negative / 3 positive completions to 8 / 4; the development selector retained update
+10 on that balance tie-break, not on improved total completion. Held-out late-roll
+RMSE worsened slightly on both sides (0.033210→0.033244 and 0.019604→0.019639), so the
+planned continuation screen stopped the trial. Do not promote it over the retained
+source on this evidence. No gain reached its bounds; the learned range was about
+0.9936–1.0070. This closes this small shared-gain trial, not all motion-circuit learning.
+
+### Information near the motor neurons and an anticipation lesson
+
+`scripts/audit_pragmatic_motor_parent_information.py` probes the already recorded
+363 motor-parent activities in the sink-fit-002 cache. Linear probes fit six mirrored
+pairs per bank and check two whole held-out pairs, with the same phase/side weighting
+as the motor fit. Privileged quantities are diagnostic targets only; nothing is
+injected into the actor or deployed as a decoder. The report is
+`runs/gate/pragmatic-roll-sink-fit-002/parent-information-probe.json`.
+
+Across ridge strengths 0.001–0.1, body-lateral-velocity RMSE is 0.033–0.043 m/s from
+native parent activity versus 0.111–0.114 m/s from current roll/pitch alone. This is
+useful predictive information beyond current attitude, not proof of causal visual
+motion estimation. Current-gate-bearing prediction is much weaker: 0.349–0.365 rad
+versus an attitude-only 0.418–0.419 rad. Hybrid roll-target error is 0.0123–0.0140;
+the retained native source was already around 0.0126 on the weighted held-out task.
+These recorded-flight correlations are not fresh autonomous course results.
+
+The next idea, reviewed with Astra, is **matched-state anticipation supervision**:
+hold the current gate and complete physical history fixed while placing the visible
+next gate at two different lateral positions. Re-render the full prefix for each
+branch, recompute its Hermite teacher, and teach the paired roll difference while
+preserving source non-roll outputs. This specifically tests use of upcoming geometry
+instead of confounding it with differing velocities or attitudes in mirrored flights.
+
+`scripts/pragmatic_anticipation_lessons.py` constructs pairs of next-gate placements
+0.30 m apart only where both satisfy the existing 0.20 m adjacent deviation-step and
+0.50 m deviation limits around the **sloping launch-to-first-gate centreline**. These
+are not bounds on raw world-Y differences. Other gate positions, angles and heights stay unchanged,
+and requires the differentiated window to stay in the same current-gate phase.
+Changed geometry is fixed from the beginning of each neural replay, not teleported
+into an existing state. Source non-roll targets are recomputed on each branch's
+actual modified sensory history. Whole base courses remain separated between fit
+and diagnostic splits; the current pre-training audit does not claim learned flight.
+
+The initial lesson audit rejected all twelve requested lessons because the new builder
+incorrectly checked raw world-Y differences. This was corrected before any anticipation
+training, with a sloped-centreline regression and a guard that the changed next gate
+remains ahead throughout the copied history. Neither the sampler nor goal evaluation
+was changed. The corrected audit is `anticipation-lesson-audit-v2.json` in the same run
+directory. Counterfactual columns mean minus/plus next-gate placement; base course side
+is recorded separately and must be balanced during learning.
+
+The corrected audit produced all twelve requested lessons, six fit-side and six
+held-out, with no rejections. Every pair has a visible image change. On held-out
+lessons, teacher roll-contrast RMS ranges from 0.00099 to 0.00522 motor-drive units;
+native contrast error ranges from 0.00067 to 0.00629. Thus upcoming geometry already
+affects the fly's roll output, but not consistently in the teacher-required way.
+This supports a learning experiment, not a claim of improved autonomous anticipation.
+
+The next bounded training recipe is thirty updates from the retained replay source
+on the existing 19,286 visual-to-roll edges at LR 3e-6, with biases and time constants
+frozen. Mix an ordinary gate-one preservation window with one matched-state lesson,
+cycling evenly over current gates 2–4 and both **base-course sides**. Keep current-weight
+full-prefix replay and the twenty-frame differentiated window. Preserve source
+non-roll outputs, use the actual Hermite teacher contrast sign rather than a fixed
+left/right rule, and inspect held-out contrast alongside ordinary native development
+flights at 10/20/30. Enforce the first-gate floor when selecting; do not continue past
+this bound without a flight improvement. Any winner still requires a fresh full-course
+check. The lesson builder is implemented and audited; this training integration has
+not yet run.
