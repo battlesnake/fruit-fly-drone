@@ -1070,3 +1070,55 @@ flights. Report eligible phase exposure by side in both runs. Missing exposure o
 failed horizon trial would not prove insufficient anatomical capacity. Opening more
 wiring or adding privileged representation targets remains a later branch, not a
 simultaneous change in this comparison. The >50% fresh-evaluation goal remains unmet.
+
+The update-one case-level check strengthens the reason to keep those guards. Nominal
+and gradient reflight agree on all sixteen clean-prefix counts before any optimizer
+step. Each larger proposal loses the source's clean negative-side episode 6 (five
+gates become three), gains a different negative-side completion, and turns episode
+8's legal exterior miss into a ring contact. Thus the added collisions are not merely
+the cost of reaching farther on previously failed positive-side courses. No exact
+floating-point replay claim or additional reproducibility work is needed for this
+observed tradeoff.
+
+Update two's nominal bank (1620984) is now recorded: the unchanged source completes
+3/16, clears the first gate in 13/16 with side counts [7, 6], and accumulates 40 clean
+prefix gates. There are eleven ring-contact episodes, one wrong-order episode, and
+no ground, invalid or wrong-direction events. Eligible gate-five exposure is 539
+negative-side frames and **zero positive-side frames**, following [394, 0] in bank
+one. Positive gate-four exposure increases from 189 to 446 frames. These are thirty-two
+predetermined source flights, not evidence that the learner has improved; do not
+replace difficult cases with source-success-selected courses. Update-two gradients
+have completed; full update/development results are still pending.
+
+#### One nominated rejected proposal, before changing the guard
+
+Update-two scale 1 is a different case from update one. Its **actual saved**
+`trial-u002-s1.pt` retains all three source completions, increases clean prefix from
+40 to 47, and first-side counts from [7, 6] to [7, 7]. No individual episode loses
+any clean-prefix gates. Positive-side episodes 1, 3, 7, 9 and 11 improve respectively
+from 0→1, 3→4, 2→3, 1→4 and 1→2 clean gates. Negative-side episodes 0 and 10 change
+from exterior misses to ring contacts without a prefix gain; positive-side episode
+3 changes a ring hit at gate four into four clean passes followed by an exterior
+miss at gate five. Total ring-contact/failure count rises 11→12 and wrong-order
+count 1→2, with ground/invalid/wrong-direction still zero. The current guard correctly
+rejects it under its declared rules; do not retroactively change that run's acceptance.
+
+This reveals a possible training barrier between missing outside a gate and learning
+to clear its aperture. Astra recommends nominating **only this checkpoint** for one
+matched, ordinary 32-case native development comparison after the live run ends,
+before spending on the hundred-frame comparison or redesigning acceptance. Re-evaluate
+the retained source alongside it with the same current implementation, full geometry,
+30 s tails and seed 1110983. Do not screen every rejected proposal afterward. Training
+prefix gains are not evidence of transfer; retain the existing development-gain and
+side/first-retention requirements before spending a fresh evaluation bank.
+
+If that check is genuinely promising, consider a separate, bounded training-only
+prefix-expansion mode: preserve every previously clean episode through the full tail,
+require nondecreasing clean prefix per episode with a strict gain somewhere, preserve
+per-episode ground/invalid protections, and allow additional ring contacts only in
+previously incomplete episodes. New collisions still make those episodes absolute
+failures in full-course scoring. Do not silently extend the exception to wrong-order
+events: first inspect whether the extra violation occurred after an existing terminal
+failure or introduced a new pre-failure gate skip. This mode is **not implemented or
+enabled**. If the nominated proposal does not transfer, proceed with the already
+specified matched 100-frame gradient-horizon comparison instead.
