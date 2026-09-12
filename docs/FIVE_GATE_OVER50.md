@@ -2410,3 +2410,34 @@ lessons. Explicit first-third sampling and older updates four/nine now retain al
 early stages and all later phases in every ten-update fresh round. Regression tests
 check the actual schedule and full eligible-start coverage. Shorter custom rounds
 also avoid replacing the only fresh occurrence of a phase.
+
+#### Coverage pilot launched; final fixed-window run still bounded
+
+The reviewed trainer is committed as `ccba208` and pushed to master. The new
+`pragmatic-whole-approach-coverage-001` job is live with this command:
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/train_pragmatic_course_coverage.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output-dir runs/gate/pragmatic-whole-approach-coverage-001 \
+  --rounds 3 --updates-per-round 10 --learning-rate 1e-4
+```
+
+Its full native development baseline reproduces **12/32 clean**. The first fresh
+native collection, seed 2026091310, records sixteen episodes and has active-frame
+counts by gate/side of [2631,2646], [1170,959], [948,650], [445,658], [0,467]. Thus
+there is no negative-side fifth-gate training exposure in this bank; the sampler
+must use explicitly labeled assistance there. Fifteen episodes end training
+eligibility at a failure/missed crossing. These collection counts are not full-tail
+autonomous evaluation results, and no replacement courses are sampled.
+
+The independent unified fixed-window run is still approaching its original
+100-update limit. Its update-75 late reductions are **65.80% / 72.07%**, early
+reductions **41.15% / 68.68%**, maximum non-roll RMSE 0.006220. Native development
+is again **0/32 clean**, with no first-gate passes and **22/32 ground/invalid
+episodes**. Ring, wrong-order and wrong-direction counts are zero. This remains a
+failed controller despite improved fitting; the new coverage pilot starts from
+the source, not this checkpoint. Both jobs have separate weights, optimizer state
+and output directories. Verified simultaneous GPU usage was 7,117 / 16,303 MiB
+during the coverage baseline, leaving headroom for the measured eight-row replay
+batch. No claim is made about isolated benchmark speed under shared GPU load.
