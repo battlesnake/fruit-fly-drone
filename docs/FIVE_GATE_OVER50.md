@@ -958,3 +958,59 @@ Its repeated source development baseline is 11/32, with 28/32 clean-first passes
 the earlier runs obtained 12/32 from the same source. Retain the run's actual matched
 baseline when judging its gains. Astra's read-only review of the rotation, per-side
 reporting, proposal persistence and development schedule found no blocker.
+
+#### Tracking-reference validity after an exterior miss
+
+The broader run was intentionally interrupted **before its first optimizer update**.
+The nominal 16 flights had 2 completions, 28 clean-prefix gates and 10 clean-first
+passes (7 negative / 3 positive), with no ground or invalid states. Two negative-side
+flights legally missed their expected gate outside the annulus, then kept flying far
+beyond it without a course failure. Their current-gate phases lasted 815 frames at
+gate five and 1,204 at gate two. The forward-only Hermite reference kept teaching
+lateral tracking beyond those uncleared gates, although it specifies no recovery
+back through them. With one-second truncated gradients, much of that tail cannot
+credit the earlier approach that needed correction.
+
+The two affected **pairs** account for about 84.4% of the total nominal tracking loss
+(pair losses 3.239694 and 5.161709; eight-pair mean 1.244633). That includes their
+valid prefixes; it is not a measured post-miss-only percentage. No positive-side
+flight supplied gate-five frames. The partial evidence is preserved locally in
+`runs/gate/pragmatic-on-policy-broader-001/interrupted-objective-diagnosis.json`.
+Three pair-gradient logs completed before the interrupt; no optimizer update or
+trained proposal from this run was applied/exported. Its source checkpoint is retained.
+
+Astra recommends fixing this objective-coverage issue before spending further updates
+or comparing horizons. `fly_course` now maintains a separate nominal tracking-validity
+latch. It retains the first expected crossing's frame, but stops monotonic-path targets
+on subsequent frames if that crossing did not cleanly pass the gate. Actual physics,
+rendered role changes, all 30 seconds of flight, safety penalties and clean-course
+evaluation continue unchanged. Exterior misses remain legal. The nominal eligibility
+mask remains frozen across gradient/proposal evaluations: an earlier candidate miss
+cannot delete additional training samples. Logs distinguish actual phase occupancy
+from eligible tracking exposure and measure excluded post-miss tracking loss directly.
+The post-miss diagnostic describes the current trajectory: it equals excluded loss
+for nominal passes, but need not be excluded in a candidate using a frozen mask.
+
+The next run will restart from the retained source with this single objective correction
+and the same broader banks, mask, rate, six-update limit and 2/4/6 development checks.
+Nominal per-update metrics are now saved before gradients, so another interrupted
+trial will retain its evidence without reconstruction from console output.
+
+The corrected run is `runs/gate/pragmatic-on-policy-valid-tracking-001`.
+The final regression suite passed **525 tests**, and Astra reviewed the separation
+between reference eligibility and flight legality. Its nominal first bank again has
+2/16 completions, 28 prefix gates and first-side counts [7, 3]. On this same nominal
+pass, eligible tracking loss is 0.254000 and excluded post-miss loss is 1.001583,
+about **79.8%** of their combined value. Thus the problematic tail dominance is now
+measured directly rather than inferred from whole-pair losses. These are unchanged
+source flights, not improved control. The per-update nominal record is saved as
+`nominal-u001.json`; the corrected gradient/update trial is still running.
+
+A read-only timing check provides context for a later horizon test. Source membrane
+time constants are about 21 ms (all-node range 20.18–22.19 ms), not hundreds of ms.
+But the existing virtual foreleg's 0→0.1 roll-stick step reaches 90% at 0.60 s and
+settles within 2% at 0.76 s; actual stick positions are 0.0308 at 0.20 s, 0.0818 at
+0.50 s and 0.1011 at 1.00 s. Aircraft attitude and position respond after that motion.
+This supports testing two-second rather than one-second gradient credit if needed;
+it does not establish that horizon length caused the failures. Neither neural timing
+nor the foreleg/quad plant is changed by this check.

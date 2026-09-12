@@ -284,3 +284,44 @@ def test_training_course_rotation_is_predetermined_and_supports_new_banks():
     ]
     with pytest.raises(ValueError):
         training_bank_seed(100, 0, 4)
+
+
+def test_tracking_validity_ends_after_miss_but_flight_and_frozen_candidate_mask_continue(
+    monkeypatch,
+):
+    cases, _, options = tiny_setup(monkeypatch, 3)
+    cases.state.position[:, 1] = 3.0
+    gates = tuple(
+        AnnularGate(torch.tensor([[0.15 + i, 0.0, 1.1]]).repeat(2, 1), torch.zeros(2))
+        for i in range(5)
+    )
+
+    class ExteriorTouchAndReturn(torch.nn.Module):
+        def __init__(self, config):
+            super().__init__()
+            self.calls = 0
+
+        def forward(self, rc, state, mass):
+            self.calls += 1
+            position = state.position.clone()
+            position[:, 0] = 0.2 if self.calls == 1 else 0.1
+            return QuadState(position, *state.as_tuple()[1:])
+
+    monkeypatch.setattr(online, "DifferentiableQuad", ExteriorTouchAndReturn)
+    nominal, trace, _ = online.fly_course(TinyActor(), cases, gates, **options, record_trace=True)
+    assert trace["active"].tolist() == [[True, True], [False, False], [False, False]]
+    assert nominal["tracking_reference_end_steps"] == [1, 1]
+    assert nominal["failed_episodes"] == 0  # reference validity must not alter course rules
+    assert nominal["phase_frames"] == [6, 0, 0, 0, 0]  # all six flight observations still occur
+    assert nominal["tracking_phase_frames_by_side"] == [[1, 0, 0, 0, 0], [1, 0, 0, 0, 0]]
+    assert nominal["tracking_loss"] > 0  # retain the crossing frame itself
+    assert nominal["current_trajectory_post_miss_tracking_loss"] > 0
+    assert nominal["tracking_mask_source"] == "current nominal eligibility"
+    # If the proposal misses before its nominal reference did, do not remove any
+    # additional samples from the already frozen training objective.
+    candidate, _, _ = online.fly_course(
+        TinyActor(), cases, gates, **options, reference_active=torch.ones(3, 2, dtype=torch.bool)
+    )
+    assert candidate["tracking_loss"] == pytest.approx(3 * nominal["tracking_loss"])
+    assert candidate["tracking_mask_source"] == "frozen nominal reference"
+    assert candidate["failed_episodes"] == 0

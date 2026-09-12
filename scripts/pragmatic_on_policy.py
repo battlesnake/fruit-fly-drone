@@ -87,10 +87,14 @@ def fly_course(
     passed = torch.zeros(count, len(gates), dtype=torch.bool, device=device)
     prefix = torch.zeros(count, device=device)
     failure_steps = torch.full_like(current, -1)
+    tracking_valid = torch.ones_like(failed)
+    tracking_end_steps = torch.full_like(current, -1)
     phase_frames = torch.zeros(len(gates), dtype=torch.long, device=device)
     phase_frames_by_episode = torch.zeros(count, len(gates), dtype=torch.long, device=device)
+    tracking_phase_frames = torch.zeros_like(phase_frames_by_episode)
     phase_indices = torch.arange(len(gates), device=device)
     phase_tracking = torch.zeros(len(gates), device=device)
+    excluded_tracking_loss = torch.zeros((), device=device)
     minimum_height = state.position[:, 2].clone()
     path = CoursePath.through_gates(state.position, gates)
     quad, legs = DifferentiableQuad(config).to(device), ForelegStickPlant(config).to(device)
@@ -106,6 +110,10 @@ def fly_course(
     with torch.set_grad_enabled(backward):
         for frame in range(steps):
             active = ~failed & (current < len(gates))
+            # Monotonic-X tracking does not specify a recovery after an uncleared
+            # gate plane. That is a label-validity boundary, NOT a flight failure.
+            nominal_tracking = active & tracking_valid
+            post_miss_active = active & ~tracking_valid
             phase = current.clone()
             image = render_annular_gates_rgb(
                 state, gates, current_gate_index=current, camera=camera, gate_config=gate_config
@@ -113,7 +121,7 @@ def fly_course(
             motor, neural = controller(image, state.euler[:, :2], neural)
             if record_trace:
                 motors.append(motor.detach().cpu())
-                active_frames.append(active.cpu())
+                active_frames.append(nominal_tracking.cpu())
             preservation = motor.sum() * 0.0
             if reference_motors is not None:
                 preservation = (
@@ -134,6 +142,9 @@ def fly_course(
                     event = classify_course_step(
                         previous.detach(), state.position.detach(), gates, current, gate_config
                     )
+                    missed_expected = (event.expected_forward_crossing & ~event.passed).any(1)
+                    tracking_end_steps[tracking_valid & missed_expected] = frame + 1
+                    tracking_valid &= ~missed_expected
                     current = event.next_gate_index
                     passed |= event.passed
                     ring |= event.ring_collision.any(1)
@@ -154,7 +165,9 @@ def fly_course(
             ).square()
             tracking_each = lateral + 0.25 * velocity
             # A candidate failure must not erase expensive nominal tracking samples.
-            tracking_mask = active if reference_active is None else reference_active[frame]
+            tracking_mask = (
+                nominal_tracking if reference_active is None else reference_active[frame]
+            )
             tracking = (tracking_each * tracking_mask).mean()
             terms = torch.stack((tracking, 0.05 * preservation, clearance))
             frame_loss = terms.sum() / steps
@@ -164,7 +177,10 @@ def fly_course(
                 selected = active[:, None] & (phase[:, None] == phase_indices[None])
                 phase_frames_by_episode += selected.long()
                 phase_frames += selected.sum(0)
-                phase_tracking += (tracking_each.detach()[:, None] * selected).sum(0)
+                taught = tracking_mask[:, None] & (phase[:, None] == phase_indices[None])
+                tracking_phase_frames += taught.long()
+                phase_tracking += (tracking_each.detach()[:, None] * taught).sum(0)
+                excluded_tracking_loss += (tracking_each.detach() * post_miss_active).mean() / steps
             if (frame + 1) % chunk_steps == 0 or frame + 1 == steps:
                 if backward:
                     (gradient_scale * chunk_loss).backward()
@@ -210,8 +226,17 @@ def fly_course(
             phase_frames_by_episode[cases.side > 0].sum(0).tolist(),
         ],
         clean_prefix_by_side=[int(prefix[cases.side < 0].sum()), int(prefix[cases.side > 0].sum())],
-        phase_tracking_mean=(phase_tracking / phase_frames.clamp_min(1)).tolist(),
+        phase_tracking_mean=(phase_tracking / tracking_phase_frames.sum(0).clamp_min(1)).tolist(),
         failure_steps=failure_steps.tolist(),
+        tracking_reference_end_steps=tracking_end_steps.tolist(),
+        current_trajectory_post_miss_tracking_loss=float(excluded_tracking_loss),
+        tracking_mask_source="current nominal eligibility"
+        if reference_active is None
+        else "frozen nominal reference",
+        tracking_phase_frames_by_side=[
+            tracking_phase_frames[cases.side < 0].sum(0).tolist(),
+            tracking_phase_frames[cases.side > 0].sum(0).tolist(),
+        ],
         minimum_height_metres=minimum_height.tolist(),
         clean_episode_indices=torch.nonzero(clean).flatten().tolist(),
         final_positions=state.position.tolist(),

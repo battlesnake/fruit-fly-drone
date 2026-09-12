@@ -184,7 +184,7 @@ def main():
             controller={
                 key: value.detach().cpu() for key, value in controller.state_dict().items()
             },
-            experiment="native-whole-flight-tbptt-v1",
+            experiment="native-whole-flight-tbptt-v2",
             training_update=update,
             native_path_manifest=manifest,
             course_geometry=replay.GEOMETRY,
@@ -199,12 +199,13 @@ def main():
             if proposal_scale is None
             else "training-only proposal, not promoted",
             training_proposal_scale=proposal_scale,
+            nominal_tracking_rule="retain-first-unclean-expected-crossing-frame-stop-after",
         )
         torch.save(payload, args.output_dir / name)
 
     def report():
         data = dict(
-            experiment="native-whole-flight-tbptt-v1",
+            experiment="native-whole-flight-tbptt-v2",
             arguments={
                 key: str(value) if isinstance(value, Path) else value
                 for key, value in vars(args).items()
@@ -223,6 +224,7 @@ def main():
             actor_privileged_inputs=False,
             deployed_extra_state=False,
             fixed_nominal_tracking_masks=True,
+            nominal_tracking_rule="retain-first-unclean-expected-crossing-frame-stop-after",
         )
         (args.output_dir / "report.json").write_text(json.dumps(data, indent=2) + "\n")
 
@@ -252,6 +254,9 @@ def main():
             nominal.append(metrics)
             references.append({key: value.to(device) for key, value in trace.items()})
         before_metrics = combine_metrics(nominal)
+        (args.output_dir / f"nominal-u{update:03d}.json").write_text(
+            json.dumps(dict(update=update, seed=seed, metrics=before_metrics), indent=2) + "\n"
+        )
         print(
             json.dumps(dict(stage="nominal", update=update, seed=seed, metrics=before_metrics)),
             flush=True,
