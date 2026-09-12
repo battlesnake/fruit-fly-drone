@@ -57,14 +57,25 @@ def training_bank_seed(base, update, banks=0):
 
 
 def should_select_development(
-    metrics, best, first_floor, *, controller_change_update, last_evaluated_change_update
+    metrics,
+    best,
+    first_floor,
+    *,
+    controller_change_update,
+    last_evaluated_change_update,
+    acceptance_mode="continuous",
 ):
     """Do not present a better repeat of unchanged weights as a learned checkpoint."""
     return (
         controller_change_update > last_evaluated_change_update
-        and metrics["clean_first_gate_pass_rate"] >= first_floor
+        and (acceptance_mode == "outcome" or metrics["clean_first_gate_pass_rate"] >= first_floor)
         and replay.selection_score(metrics, first_floor) > replay.selection_score(best, first_floor)
     )
+
+
+def stop_for_development_first_regression(metrics, first_floor, *, acceptance_mode):
+    """Outcome trials have a fixed budget; first-gate changes alone do not stop them."""
+    return acceptance_mode != "outcome" and metrics["clean_first_gate_pass_rate"] < first_floor
 
 
 def combine_metrics(metrics):
@@ -111,7 +122,10 @@ def main():
     parser.add_argument("--chunk-steps", type=int, default=50)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
     parser.add_argument(
-        "--acceptance-mode", choices=("continuous", "flight-first"), default="continuous"
+        "--acceptance-mode",
+        choices=("continuous", "flight-first", "outcome"),
+        default="continuous",
+        help="outcome permits course-statistic tradeoffs but rejects any ground/invalid episode",
     )
     parser.add_argument("--training-pairs", type=int, default=2)
     parser.add_argument(
@@ -127,6 +141,11 @@ def main():
     parser.add_argument("--development-pairs", type=int, default=16)
     parser.add_argument("--seconds", type=float, default=30.0)
     args = parser.parse_args()
+    experiment = (
+        "native-whole-flight-tbptt-outcome-v1"
+        if args.acceptance_mode == "outcome"
+        else "native-whole-flight-tbptt-v2"
+    )
     if args.output_dir.exists():
         raise SystemExit("refusing to overwrite an existing on-policy run")
     if (
@@ -196,7 +215,7 @@ def main():
             controller={
                 key: value.detach().cpu() for key, value in controller.state_dict().items()
             },
-            experiment="native-whole-flight-tbptt-v2",
+            experiment=experiment,
             training_update=update,
             native_path_manifest=manifest,
             course_geometry=replay.GEOMETRY,
@@ -207,17 +226,21 @@ def main():
             deployed_extra_state=False,
             training_only_gradient_chunk_steps=args.chunk_steps,
             training_acceptance_mode=args.acceptance_mode,
+            training_outcome_score=(
+                "5 * clean_completions + clean_prefix_gates - 2 * failed_episodes"
+            ),
             selection_scope="development"
             if proposal_scale is None
             else "training-only proposal, not promoted",
             training_proposal_scale=proposal_scale,
             nominal_tracking_rule="retain-first-unclean-expected-crossing-frame-stop-after",
+            outcome_mode_requires_zero_ground_and_invalid=True,
         )
         torch.save(payload, args.output_dir / name)
 
     def report():
         data = dict(
-            experiment="native-whole-flight-tbptt-v2",
+            experiment=experiment,
             arguments={
                 key: str(value) if isinstance(value, Path) else value
                 for key, value in vars(args).items()
@@ -239,6 +262,10 @@ def main():
             deployed_extra_state=False,
             fixed_nominal_tracking_masks=True,
             nominal_tracking_rule="retain-first-unclean-expected-crossing-frame-stop-after",
+            training_outcome_score=(
+                "5 * clean_completions + clean_prefix_gates - 2 * failed_episodes"
+            ),
+            outcome_mode_requires_zero_ground_and_invalid=True,
         )
         (args.output_dir / "report.json").write_text(json.dumps(data, indent=2) + "\n")
 
@@ -268,11 +295,31 @@ def main():
             nominal.append(metrics)
             references.append({key: value.to(device) for key, value in trace.items()})
         before_metrics = combine_metrics(nominal)
+        nominal_safety_violation = bool(
+            before_metrics["ground_contacts"] or before_metrics["invalid_episodes"]
+        )
         (args.output_dir / f"nominal-u{update:03d}.json").write_text(
-            json.dumps(dict(update=update, seed=seed, metrics=before_metrics), indent=2) + "\n"
+            json.dumps(
+                dict(
+                    update=update,
+                    seed=seed,
+                    metrics=before_metrics,
+                    ground_or_invalid=nominal_safety_violation,
+                ),
+                indent=2,
+            )
+            + "\n"
         )
         print(
-            json.dumps(dict(stage="nominal", update=update, seed=seed, metrics=before_metrics)),
+            json.dumps(
+                dict(
+                    stage="nominal",
+                    update=update,
+                    seed=seed,
+                    metrics=before_metrics,
+                    ground_or_invalid=nominal_safety_violation,
+                )
+            ),
             flush=True,
         )
         optimizer.zero_grad(set_to_none=True)
@@ -331,6 +378,7 @@ def main():
                     metrics, before_metrics, mode=args.acceptance_mode
                 )
                 trial_record = dict(scale=scale, metrics=metrics, accepted=keep, **projection)
+                trial_record["outcome_score"] = online.whole_flight_outcome_score(metrics)
                 if args.save_trial_proposals:
                     name = f"trial-u{update:03d}-s{scale:g}.pt"
                     save(name, update, metrics, proposal_scale=scale)
@@ -368,6 +416,8 @@ def main():
             update=update,
             seed=seed,
             nominal=before_metrics,
+            nominal_outcome_score=online.whole_flight_outcome_score(before_metrics),
+            nominal_ground_or_invalid=nominal_safety_violation,
             gradient_flight=combine_metrics(gradient_runs),
             raw_gradient_norm=grad_norm,
             accepted_scale=accepted_scale,
@@ -391,11 +441,14 @@ def main():
                 first_floor,
                 controller_change_update=controller_change_update,
                 last_evaluated_change_update=last_evaluated_change_update,
+                acceptance_mode=args.acceptance_mode,
             ):
                 best, best_update = metrics, update
                 save("best-controller.pt", update, metrics)
             last_evaluated_change_update = controller_change_update
-            if metrics["clean_first_gate_pass_rate"] < first_floor:
+            if stop_for_development_first_regression(
+                metrics, first_floor, acceptance_mode=args.acceptance_mode
+            ):
                 stop = True
                 entry["stop_reason"] = "material clean-first development regression"
             print(

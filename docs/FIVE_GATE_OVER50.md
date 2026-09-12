@@ -1287,3 +1287,45 @@ just gradient magnitude or tracking loss. If it again produces only rejected ste
 an explicitly separate outcome-oriented acceptance experiment is the next branch,
 not more horizon extensions or an immediate expansion of anatomy. The >50% fresh
 native five-gate objective remains unmet.
+
+#### Optional outcome-based update acceptance prepared, not enabled
+
+While the matched 100-frame comparison runs, a separate opt-in
+`--acceptance-mode outcome` has been implemented and reviewed by Astra. It uses the
+training score `5 * clean completions + clean-prefix gates - 2 * failed episodes`,
+with continuous loss only breaking score ties. Prefix credit already stops at the
+first latched failure; a completion requires all 30 seconds to remain clean. Ring
+contacts and illegal traversals still fail a flight and are separately reported,
+but their counts no longer each veto an otherwise better aggregate training score.
+The rule does not add another ring/order penalty on top of the failure penalty.
+
+Every proposed update must have **zero ground-contact and zero invalid episodes**,
+and finite objectives. This holds even if its nominal bank already has such events;
+the nominal safety condition is recorded, not used to redraw easier cases. The
+physical near-ground loss, all course rules, full-flight tails, bounded optimizer
+steps, starting anatomy and actor interfaces remain unchanged. No teacher is added
+to the actor. The existing `continuous` and `flight-first` modes retain their rules.
+
+This score is explicitly a training proxy: several partial-course improvements can
+outweigh losing a completion. Development selection remains clean-completion-first,
+then favors the worse course side, and still requires genuinely changed weights.
+In outcome mode, a first-gate regression alone does not veto a better completion
+result or stop the bounded experiment. The retained source remains available, and
+the normal fresh native evaluation is still required before claiming the goal.
+Avoiding every gate can also score above crashing immediately; monitor stalled or
+exterior-miss flights instead of treating score improvements as successful navigation.
+
+The full suite passes **540 tests**, including physical event sequences that hit a
+ring, skip a gate or traverse backwards before eventually passing all five. These
+recoveries retain zero clean prefix/completion, and a ground touch after all five
+passes removes the completion bonus. Tests also cover hard ground/invalid rejection,
+score ties, finite losses, completion-first development and unchanged-source repeats.
+Outcome runs carry the distinct `native-whole-flight-tbptt-outcome-v1` experiment label.
+
+This mode is **not enabled in the live matched comparison**, whose first nominal
+bank has the same 2/16 completions and 28 prefix gates as the 50-frame comparison.
+Its longer backward passes are running within the RTX 5080's memory capacity; no
+optimizer proposal has yet been assessed. If that bounded comparison also fails to
+produce transferable progress, start a separately named source-restarted outcome
+trial, keeping the 100-frame horizon, curved reference, banks and other settings
+fixed. Do not reinterpret rejected proposals from the current run as accepted steps.

@@ -14,11 +14,34 @@ from flydrone.gate_course import classify_course_step
 from flydrone.hover import DifferentiableQuad, ForelegStickPlant, QuadState, StickState
 
 
+def whole_flight_outcome_score(metrics):
+    """Training proxy only; clean-prefix credit already stops at the first failure.
+
+    Counts refer to equal-size complete-flight banks. Several prefix gains can
+    outweigh a lost completion, so development selection remains completion-first.
+    """
+    return (
+        5 * metrics["clean_completions"]
+        + metrics["clean_prefix_gates"]
+        - 2 * metrics["failed_episodes"]
+    )
+
+
 def whole_flight_trial_admissible(candidate, baseline, *, mode="continuous"):
-    """A lower smooth loss cannot buy away clean flight performance on this bank."""
-    if mode not in ("continuous", "flight-first"):
+    """Explicit training rules; none changes the definition of clean evaluation."""
+    if mode not in ("continuous", "flight-first", "outcome"):
         raise ValueError("unknown whole-flight acceptance mode")
     improves = candidate["continuous_objective"] < baseline["continuous_objective"] - 1e-6
+    if mode == "outcome":
+        outcome = whole_flight_outcome_score(candidate)
+        previous = whole_flight_outcome_score(baseline)
+        return (
+            math.isfinite(candidate["objective"])
+            and math.isfinite(candidate["continuous_objective"])
+            and candidate["ground_contacts"] == 0
+            and candidate["invalid_episodes"] == 0
+            and (outcome > previous or (outcome == previous and improves))
+        )
     if mode == "flight-first":
         outcome = (candidate["clean_completions"], candidate["clean_prefix_gates"])
         previous = (baseline["clean_completions"], baseline["clean_prefix_gates"])

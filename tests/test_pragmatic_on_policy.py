@@ -14,6 +14,7 @@ import pragmatic_on_policy as online  # noqa: E402
 from train_pragmatic_course_on_policy import (  # noqa: E402
     combine_metrics,
     should_select_development,
+    stop_for_development_first_regression,
     training_bank_seed,
 )
 
@@ -166,6 +167,8 @@ def test_contacts_after_last_gate_still_fail_the_complete_flight(monkeypatch):
     assert metrics["clean_first_passes"] == 2
     assert metrics["clean_completions"] == 0
     assert metrics["ground_contacts"] == 2
+    # Even all five passes cannot keep the completion bonus after a tail crash.
+    assert online.whole_flight_outcome_score(metrics) == 6
     monkeypatch.setattr(primary, "DifferentiableQuad", CompleteThenTouch)
     monkeypatch.setattr(primary, "render_annular_gates_rgb", online.render_annular_gates_rgb)
     verified = primary.evaluate(
@@ -199,6 +202,47 @@ def test_exterior_plane_misses_are_not_turned_into_training_failures(monkeypatch
     assert metrics["final_positions"][0][0] > 0.06
     assert metrics["failed_episodes"] == 0
     assert metrics["clean_prefix_gates"] == 0
+
+
+@pytest.mark.parametrize("fault", ["wrong_order", "wrong_direction", "ring_contacts"])
+def test_illegal_or_contact_first_then_recovery_never_earns_clean_outcome(monkeypatch, fault):
+    cases, _, options = tiny_setup(monkeypatch, 3)
+    first_y = 0.7 if fault == "ring_contacts" else 2.0
+    gates = tuple(
+        AnnularGate(
+            torch.tensor([[1.0 + i, first_y if i == 0 else 0.0, 1.1]]).repeat(2, 1),
+            torch.zeros(2),
+        )
+        for i in range(5)
+    )
+    paths = {
+        "wrong_order": [(2.5, 0), (2.5, 2), (0, 2), (1.5, 2), (1.5, 0), (6, 0)],
+        "wrong_direction": [(1.5, 0), (1.5, 2), (0, 2), (1.5, 2), (1.5, 0), (6, 0)],
+        "ring_contacts": [(1.5, 0), (0, 0), (0, 0.7), (1.5, 0.7), (1.5, 0), (6, 0)],
+    }
+
+    class FailThenClearAll(torch.nn.Module):
+        def __init__(self, config):
+            super().__init__()
+            self.calls = 0
+
+        def forward(self, rc, state, mass):
+            position = state.position.clone()
+            position[:, :2] = position.new_tensor(paths[fault][self.calls])
+            self.calls += 1
+            return QuadState(position, *state.as_tuple()[1:])
+
+    monkeypatch.setattr(online, "DifferentiableQuad", FailThenClearAll)
+    metrics, _, chunks = online.fly_course(
+        TinyActor(), cases, gates, **options, chunk_steps=1, record_chunks=True
+    )
+    # All five physical gates are eventually passed in sequence, but only after
+    # the initial violation. Neither recovery nor role changes reset the failure.
+    assert chunks[-1]["role"].tolist() == [5, 5]
+    assert metrics[fault] == metrics["failed_episodes"] == 2
+    assert metrics["clean_completions"] == metrics["clean_prefix_gates"] == 0
+    assert metrics["ground_contacts"] == metrics["invalid_episodes"] == 0
+    assert online.whole_flight_outcome_score(metrics) == -4
 
 
 def admissible_metrics():
@@ -269,6 +313,66 @@ def test_flight_first_mode_can_prioritize_real_gate_gains_over_tracking_surrogat
         online.whole_flight_trial_admissible(candidate, base, mode="unknown")
 
 
+def test_outcome_mode_allows_course_tradeoffs_without_redefining_clean_flights():
+    base = dict(
+        admissible_metrics(),
+        clean_completions=2,
+        clean_prefix_gates=14,
+        failed_episodes=2,
+        ring_contacts=2,
+        clean_first_by_side=[3, 3],
+    )
+    candidate = dict(
+        base,
+        continuous_objective=2.0,
+        clean_completions=3,
+        clean_prefix_gates=18,
+        failed_episodes=3,
+        ring_contacts=3,
+        wrong_order=2,
+        wrong_direction=1,
+        clean_first_by_side=[2, 4],
+    )
+    assert online.whole_flight_outcome_score(base) == 20
+    assert online.whole_flight_outcome_score(candidate) == 27
+    assert online.whole_flight_trial_admissible(candidate, base, mode="outcome")
+    assert not online.whole_flight_trial_admissible(candidate, base, mode="flight-first")
+    # A training-score gain still cannot buy a single ground/invalid episode,
+    # even when the nominal source already had the same safety count.
+    for key in ("ground_contacts", "invalid_episodes"):
+        unsafe = dict(candidate, **{key: 1})
+        assert not online.whole_flight_trial_admissible(unsafe, base, mode="outcome")
+        assert not online.whole_flight_trial_admissible(
+            unsafe, dict(base, **{key: 1}), mode="outcome"
+        )
+
+
+def test_outcome_is_a_proxy_that_can_trade_one_completion_for_several_prefix_gains():
+    base = dict(admissible_metrics(), clean_completions=2, clean_prefix_gates=13, failed_episodes=2)
+    candidate = dict(base, clean_completions=1, clean_prefix_gates=21, failed_episodes=3)
+    assert online.whole_flight_outcome_score(candidate) == 20
+    assert online.whole_flight_outcome_score(base) == 19
+    assert online.whole_flight_trial_admissible(candidate, base, mode="outcome")
+    # Avoiding every gate can beat a crash-at-launch score, but not this source.
+    idle = dict(base, clean_completions=0, clean_prefix_gates=0, failed_episodes=0)
+    assert not online.whole_flight_trial_admissible(idle, base, mode="outcome")
+
+
+def test_outcome_mode_uses_tracking_only_for_ties_and_requires_finite_loss():
+    base = admissible_metrics()
+    better_tracking = dict(base, objective=0.5, continuous_objective=0.5)
+    assert online.whole_flight_trial_admissible(better_tracking, base, mode="outcome")
+    assert not online.whole_flight_trial_admissible(base, base, mode="outcome")
+    assert not online.whole_flight_trial_admissible(
+        dict(better_tracking, clean_prefix_gates=6), base, mode="outcome"
+    )
+    for key in ("objective", "continuous_objective"):
+        for value in (float("nan"), float("inf"), -float("inf")):
+            assert not online.whole_flight_trial_admissible(
+                dict(better_tracking, clean_prefix_gates=8, **{key: value}), base, mode="outcome"
+            )
+
+
 def test_training_course_rotation_is_predetermined_and_supports_new_banks():
     assert [training_bank_seed(100, update, 4) for update in range(1, 7)] == [
         100,
@@ -313,6 +417,44 @@ def test_development_selection_requires_a_new_controller_not_a_better_repeat(
     assert not should_select_development(
         dict(improved, clean_first_gate_pass_rate=0.5), source, 0.825, **options
     )
+
+
+def test_outcome_development_is_completion_first_despite_training_proxy_tradeoffs():
+    source = dict(
+        clean_course_success_rate=12 / 32,
+        clean_course_negative_success_rate=9 / 16,
+        clean_course_positive_success_rate=3 / 16,
+        first_gate_pass_rate=28 / 32,
+        clean_first_gate_pass_rate=28 / 32,
+        gates_before_failure_mean=3.0,
+        course_race_fitness=3.0,
+    )
+    improved = dict(
+        source,
+        clean_course_success_rate=18 / 32,
+        clean_course_positive_success_rate=9 / 16,
+        first_gate_pass_rate=25 / 32,
+        clean_first_gate_pass_rate=25 / 32,
+    )
+    options = dict(
+        controller_change_update=2, last_evaluated_change_update=0, acceptance_mode="outcome"
+    )
+    assert should_select_development(improved, source, 0.825, **options)
+    assert not should_select_development(
+        dict(improved, clean_course_success_rate=11 / 32, course_race_fitness=100),
+        source,
+        0.825,
+        **options,
+    )
+    assert not should_select_development(
+        improved, source, 0.825, **dict(options, controller_change_update=0)
+    )
+    assert not stop_for_development_first_regression(improved, 0.825, acceptance_mode="outcome")
+    for mode in ("continuous", "flight-first"):
+        assert stop_for_development_first_regression(improved, 0.825, acceptance_mode=mode)
+        assert not should_select_development(
+            improved, source, 0.825, **dict(options, acceptance_mode=mode)
+        )
 
 
 def test_tracking_validity_ends_after_miss_but_flight_and_frozen_candidate_mask_continue(
