@@ -2970,3 +2970,54 @@ throughput and the collection/critic/training loop still remain to be implemente
 or measured. The single bounded source-centred parameter-scale screen described
 above remains an option before committing to that larger training run; neither
 branch is allowed to treat these noisy flights as deployed fly success.
+
+#### Final bounded motor-coordinate scale screen
+
+The next test implements Astra's suggested scale check in
+`scripts/audit_pragmatic_motor_search_scale.py`. It is fixed at **four Gaussian
+24-coordinate directions**, each evaluated with both signs at **0.1x and 0.25x**
+the previous bias/log-gain perturbation scales. Directions are shared across
+scales; all sixteen vectors remain centred on the unchanged source. There is no
+optimizer or centre update. Original scales are 0.0025 for bias and 0.05 for
+incoming log gain. The same graph, signs, sensor interface, foreleg physics,
+320x200/125-degree camera and full 30-second varied five-gate scoring remain.
+
+Course seed **2026091393** supplies 32 matched training cases, independent of the
+previous action-noise calibration. Direction seed is **2026091394**. The source
+gets its own standalone control on this bank. Candidate pairs share a 64-row GPU
+batch, with independent neural/physical state for every flight. Existing compact
+metrics retain per-candidate clean/first/prefix/failure/ground/invalid and fitness;
+detailed ring/order diagnostics are recorded on standalone source/nominee checks.
+The extra -25 ground/invalid union penalty is still reported, and any ground or
+invalid episode makes a candidate ineligible.
+
+Nominate at most **one** candidate that adds at least **four clean completions**
+over the matched source. Completion is primary, with side balance and prefix as
+tie-breakers, not a per-side nonregression veto. That nominee must reproduce the
+four-case gain when its vector is compiled into ordinary native weights and run
+standalone on the same training bank. If it fails, do not try a runner-up. Only
+a confirmed nominee receives matched standalone source/nominee checks on reused
+development seed 1110983. Require the same four-case development gain and zero
+ground/invalid episodes before authorizing a brief smaller-scale follow-up.
+
+No nominee, failed confirmation or inadequate development gain closes this limited
+motor-coordinate branch and sends work to the prepared outcome-learning pilot.
+All tested vectors and outcomes are retained in the report; only a development-
+qualified candidate gets a controller file. Four cases is a coarse experimental
+screen, not statistical proof, promotion or the >50% goal. A useful nominee still
+needs further training and/or fresh varied-course native validation.
+
+Planned command:
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/audit_pragmatic_motor_search_scale.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output-dir runs/gate/pragmatic-motor-scale-screen-001 \
+  --seed 2026091393 --direction-seed 2026091394 --development-seed 1110983
+```
+
+All **658 tests pass**, including the fixed antithetic directions, gain/safety
+criteria and mocked complete control flow for no nominee, failed confirmation,
+failed development and successful development. Astra's implementation review
+found no launch blocker. The fixed screen has now been launched with the command
+above; launch is not a result and does not change the retained native baseline.
