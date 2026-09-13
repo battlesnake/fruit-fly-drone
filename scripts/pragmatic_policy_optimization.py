@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import math
+from time import perf_counter
 
 import torch
 from pragmatic_full_policy_gradient import replay_full_policy_gradient
@@ -98,6 +99,7 @@ def replay_round(controller, data, advantages, *, camera, gate_config, microbatc
     count = int(data.valid.sum())
     parts = []
     for start in range(0, data.valid.shape[1], microbatch):
+        started = perf_counter()
         rows = range(start, min(start + microbatch, data.valid.shape[1]))
         batch = data.select(rows, device)
         n = int(batch.valid.sum())
@@ -115,7 +117,10 @@ def replay_round(controller, data, advantages, *, camera, gate_config, microbatc
         if progress:
             progress(dict(stage="backward-microbatch" if backward else "trust-microbatch",
                           first_episode=start, episodes=len(rows),
-                          joint_kl_mean=stats["joint_kl_mean"]))
+                          joint_kl_mean=stats["joint_kl_mean"],
+                          wall_seconds=perf_counter()-started,
+                          cuda_peak_reserved_mib=(torch.cuda.max_memory_reserved(device)/2**20
+                                                  if device.type == "cuda" else None)))
     return aggregate_replays(parts)
 
 
@@ -166,6 +171,105 @@ def actor_proposal(controller, optimizer, mask, replay_fn, stationary_std):
         raise
     finally:
         optimizer.zero_grad(set_to_none=True)
+
+
+def scaled_parameters(base, delta, scale, mask):
+    """Start from base and account for actual FP32 rounding and native bounds."""
+    result = base.clone()
+    proposed = base[mask] + scale * delta[mask]
+    result[mask] = proposed.clamp(0, 8)
+    return result, int((proposed != result[mask]).sum())
+
+
+def steepest_parameters(base, gradient, mask, target):
+    """Parameter-only sizing against actual projected contraction, not loss."""
+    gradient = gradient * mask
+    squared = float(gradient.square().sum())
+    if not 0 < squared < float("inf") or not 0 < target < float("inf"):
+        raise ValueError("need finite nonzero gradient and positive target")
+    low, high = 0., 2 * target / squared
+    best, best_error = None, float("inf")
+    bracketed = False
+    for attempt in range(24):
+        eta = .5 * (low + high) if bracketed else high
+        proposed, projections = scaled_parameters(base, -gradient, eta, mask)
+        contraction = float((gradient * (proposed-base)).sum())
+        error = abs(contraction+target)
+        if error < best_error:
+            best_error = error
+            best = proposed, dict(eta=eta, projected_magnitudes=projections,
+                                  predicted_loss_change=contraction,
+                                  target_predicted_decrease=target, sizing_attempts=attempt+1)
+        if error <= .1 * target:
+            return best
+        if -contraction < target:
+            low = eta
+            if not bracketed:
+                high *= 2
+        else:
+            high = eta
+            bracketed = True
+    raise ValueError("projected FP32 step could not resolve target within 10 percent")
+
+
+def steepest_actor_proposal(controller, mask, replay_fn, stationary_std, *,
+                            predicted_decrease=5e-5):
+    """Full-history gradient, projected steepest step, and at most one half retry.
+
+    The caller must use untruncated current-weight replay including warmup.
+    Both trials start at the same base and use the same raw masked gradient.
+    Acceptance needs actual surrogate descent as well as behavior-relative trust.
+    No actor optimizer state exists; failures restore parameters and clear grads.
+    """
+    parameter = controller.edge_magnitude
+    before = parameter.detach().clone()
+    parameter.grad = None
+    try:
+        before_stats = replay_fn(True)
+        if not math.isfinite(before_stats["loss"]):
+            raise FloatingPointError("nonfinite pre-update surrogate")
+        if parameter.grad is None:
+            raise ValueError("actor replay produced no gradient")
+        gradient = parameter.grad.detach() * mask
+        if not bool(gradient.isfinite().all()):
+            raise FloatingPointError("nonfinite steepest actor gradient")
+        attempts = []
+        for target in (predicted_decrease, .5 * predicted_decrease):
+            proposed, sizing = steepest_parameters(before, gradient, mask, target)
+            with torch.no_grad():
+                parameter.copy_(proposed)
+            if not bool(parameter.isfinite().all()):
+                raise FloatingPointError("nonfinite steepest actor parameter")
+            after_stats = replay_fn(False)
+            change = after_stats["loss"] - before_stats["loss"]
+            if not math.isfinite(change):
+                raise FloatingPointError("nonfinite post-update surrogate")
+            decision = trust_decision(after_stats, stationary_std)
+            required = max(5e-6, .1 * -sizing["predicted_loss_change"])
+            descent = change <= -required
+            accepted = decision["accepted"] and descent
+            attempts.append(dict(
+                **sizing, after=after_stats, observed_loss_change=change,
+                required_loss_decrease=required, surrogate_descent=descent,
+                trust_accepted=decision["accepted"], accepted=accepted,
+                proposed_edge_delta_l2=float((proposed-before).norm()),
+                changed_edge_count=int((proposed != before).sum()),
+                native_mean_shift_in_stationary_std=decision["native_mean_shift_in_stationary_std"],
+            ))
+            if accepted:
+                break
+        if not accepted:
+            with torch.no_grad():
+                parameter.copy_(before)
+        return dict(before=before_stats, **attempts[-1], gradient_norm=float(gradient.norm()),
+                    stop_round=not accepted or decision["stop_round"], attempts=attempts,
+                    update_method="full-history projected steepest; no momentum")
+    except BaseException:
+        with torch.no_grad():
+            parameter.copy_(before)
+        raise
+    finally:
+        parameter.grad = None
 
 
 def native_score(metrics):

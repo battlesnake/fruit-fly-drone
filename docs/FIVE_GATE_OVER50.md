@@ -3377,3 +3377,70 @@ All **693 tests pass**, including actual-contraction sizing with blocked edges
 at native bounds, both probe modes, archive reuse and source restoration after
 deliberate replay failures. Ruff/whitespace checks pass; Astra reviewed the new
 sizing/reuse branches and found no launch blocker.
+
+#### Projected steepest descent works locally; corrected learning pilot
+
+`pragmatic-steepest-probe-001` completed normally in **81.6 s**, again restoring
+the retained source and exporting no controller. On the same eight archived
+flights, the target `1e-4` step still increased the objective by **3.49e-5**.
+The smaller target `5e-5` step produced actual projected contraction **−4.71e-5**
+and measured objective change **−2.259e-5**. This is about eight times the
+repeated-zero interpretation tolerance (**2.831e-6**). It also passed the policy
+movement bounds: mean joint KL **7.807e-5**, p99 **.001855**, and per-axis
+latent-mean displacement below **.004 stationary standard deviations**.
+It changed 23,464 existing magnitudes with total parameter displacement
+**5.787e-7 L2**. This establishes a usable local update, **not better flying**.
+
+Astra recommends proceeding to actual learning rather than another isolated
+gradient audit. The corrected pilot uses:
+
+- The retained phase-balanced source and unchanged seven-hop native edge mask,
+  320×200 / 125° RGB plus roll/pitch inputs, foreleg/stick outputs, rewards,
+  course distribution, critic and correlated exploration.
+- **Three rounds of 32 newly sampled 30 s flights**. Course seeds are reserved
+  as **2026091440–2026091442**, noise seeds **2026091450–2026091452**. Reused
+  development seed **1110983** remains selection-only, not a fresh goal holdout.
+- At most **two full-history projected-steepest updates per round**, without
+  actor Adam moments or gradient clipping. Warmup and every recurrent boundary
+  are differentiated; 20-frame chunks are activation-checkpoint boundaries,
+  **not gradient truncations**. No new deployed state or controller inputs.
+- Each proposal targets an actual rounded/projected predicted decrease `5e-5`.
+  Require measured surrogate improvement of at least
+  `max(5e-6, 0.1 × actual predicted decrease)` and the existing behavior-relative
+  KL/mean-shift limits. On finite rejection, try exactly once more at target
+  `2.5e-5`, from the same base using the same gradient. Two rejected trials
+  restore the actor and stop that round's optimization. Nonfinite failures
+  restore the actor and stop the pilot.
+- Start with **eight whole episodes per gradient microbatch** and report GPU
+  peak reservation. If gradient replay runs out of GPU memory before any
+  accepted update, clear partial gradients and retry once with microbatch four.
+  No fallback while evaluating a changed proposal or after accepted learning.
+- Continue training from latest accepted weights; development chooses exports
+  without resetting training. Record accepted displacement alongside native
+  outcomes. Six very small accepted steps with flat flight scores would **not**
+  establish that this corrected learning approach cannot work.
+
+The original Adam/TBPTT mode remains available for reproducing earlier runs;
+`--actor-update steepest` requires `--full-history`. Actor exports contain no
+critic or exploration state. Training/model artifacts remain local and ignored.
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/train_pragmatic_course_ppo.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output-dir runs/gate/pragmatic-course-ppo-steepest-001 \
+  --actor-update steepest --full-history --predicted-decrease 5e-5 \
+  --microbatch 8 --chunk-steps 20 --rounds 3 --proposals 2 \
+  --training-pairs 16 --development-pairs 16 \
+  --seed 2026091440 --noise-seed 2026091450 --development-seed 1110983
+```
+
+The goal remains **unmet**. A development nominee still needs the separately
+specified fresh, varied, unassisted native evaluation; surrogate descent and
+reused development scores do not prove more than 50% clean five-gate completion.
+
+Prelaunch verification: **713 tests passed** in 9.36 s. New checks cover actual
+projected step sizing, descent/trust acceptance, exactly one same-base retry,
+parameter restoration and gradient clearing after rejection/nonfinite errors,
+full-history mode routing, absence of actor Adam state, unchanged-policy
+selection protection, and simulated partial-gradient CUDA OOM fallback 8→4.
+Ruff and whitespace checks pass.

@@ -23,18 +23,10 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import train_pragmatic_course_replay as replay  # noqa: E402
-from pragmatic_policy_optimization import replay_round  # noqa: E402
+from pragmatic_policy_optimization import replay_round, scaled_parameters  # noqa: E402
 from pragmatic_policy_rollout import collect_policy_rollout  # noqa: E402
 
 SCALES = (0., 0., 1., .5, .25, .125, -.125, 0.)
-
-
-def scaled_parameters(base, delta, scale, mask):
-    """Always start at the source; include FP32 rounding and native projection."""
-    result = base.clone()
-    proposed = base[mask] + scale * delta[mask]
-    result[mask] = proposed.clamp(0, 8)
-    return result, int((proposed != result[mask]).sum())
 
 
 def summarize_direction(entries):

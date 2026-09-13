@@ -8,7 +8,9 @@ and export. The existing fly recurrence is the actor's only persistent state.
 from __future__ import annotations
 
 import argparse
+import gc
 import json
+import math
 import sys
 from dataclasses import replace
 from pathlib import Path
@@ -29,6 +31,7 @@ from pragmatic_policy_optimization import (  # noqa: E402
     replay_round,
     round_advantages,
     select_new_native,
+    steepest_actor_proposal,
 )
 from pragmatic_policy_rollout import collect_policy_rollout  # noqa: E402
 
@@ -50,6 +53,10 @@ def parse_args():
     parser.add_argument("--microbatch", type=int, default=4)
     parser.add_argument("--chunk-steps", type=int, default=20)
     parser.add_argument("--learning-rate", type=float, default=1e-6)
+    parser.add_argument("--actor-update", choices=("adam", "steepest"), default="adam")
+    parser.add_argument("--full-history", action="store_true",
+                        help="Differentiate warmup and all recurrent history; checkpoint chunks.")
+    parser.add_argument("--predicted-decrease", type=float, default=5e-5)
     return parser.parse_args()
 
 
@@ -58,6 +65,10 @@ def main():
     if min(args.rounds, args.proposals, args.training_pairs, args.development_pairs,
            args.microbatch, args.chunk_steps, args.learning_rate) <= 0:
         raise SystemExit("positive sizes and learning rate required")
+    if not math.isfinite(args.predicted_decrease) or args.predicted_decrease <= 0:
+        raise SystemExit("finite positive predicted decrease required")
+    if args.actor_update == "steepest" and not args.full_history:
+        raise SystemExit("steepest updates require --full-history")
     if args.development_seed in range(args.seed, args.seed + args.rounds):
         raise SystemExit("training and development seeds must differ")
     if args.output_dir.exists():
@@ -68,7 +79,8 @@ def main():
     controller.edge_magnitude.requires_grad_(True)
     mask, manifest = replay.roll_preservation_mask(args.graph, device, hop_budget=7)
     manifest["supervision"] = "joint correlated-action outcome PPO; no teacher"
-    optimizer = torch.optim.Adam([controller.edge_magnitude], lr=args.learning_rate)
+    optimizer = (torch.optim.Adam([controller.edge_magnitude], lr=args.learning_rate)
+                 if args.actor_update == "adam" else None)
     config = replay.HoverConfig(**source["hover_config"])
     gate_config = replace(replay.GateConfig(**source["gate_config"]), back_pattern="checkerboard")
     camera = replay.CameraSpec(*source["image_resolution"], source["camera_hfov_degrees"])
@@ -85,6 +97,8 @@ def main():
                   actor_inputs="RGB 320x200/125deg and roll/pitch only",
                   actor_memory="existing connectome recurrence only",
                   critic_is_training_only=True, exploration_is_training_only=True,
+                  actor_update=args.actor_update, full_history=args.full_history,
+                  effective_microbatch=args.microbatch, oom_fallbacks=0,
                   selected_round=0, accepted_steps=0, policy_revision=0,
                   rounds=[], goal_verified=False)
 
@@ -109,6 +123,7 @@ def main():
                        teacher_config=None, roll_teacher=None, preservation_source_checkpoint=None,
                        parent_checkpoint=str(args.checkpoint),
                        critic_is_training_only=True, exploration_is_training_only=True)
+        payload.update(actor_update=args.actor_update, full_history=args.full_history)
         torch.save(payload, args.output_dir / name)
 
     report()
@@ -150,14 +165,43 @@ def main():
             progress(dict(stage="collection-complete", round=round_number, metrics=data.metrics))
 
             def replay_fn(backward, data=data, advantages=advantages):
+                try:
+                    return replay_round(controller, data, advantages, camera=camera,
+                                        gate_config=gate_config,
+                                        microbatch=result["effective_microbatch"],
+                                        chunk_steps=args.chunk_steps, backward=backward,
+                                        progress=progress, full_history=args.full_history)
+                except torch.cuda.OutOfMemoryError:
+                    # One fallback, only while computing a gradient before learning
+                    # has accepted any parameter update. Discard partial gradients.
+                    if (not backward or result["accepted_steps"] != 0
+                            or result["effective_microbatch"] <= 4):
+                        raise
+                    result["effective_microbatch"] = 4
+                    result["oom_fallbacks"] += 1
+                # Leave the exception handler before freeing the failed graph.
+                controller.edge_magnitude.grad = None
+                gc.collect()
+                torch.cuda.empty_cache()
+                report()
+                progress(dict(stage="oom-fallback", microbatch=4))
                 return replay_round(controller, data, advantages, camera=camera,
-                                    gate_config=gate_config, microbatch=args.microbatch,
+                                    gate_config=gate_config, microbatch=4,
                                     chunk_steps=args.chunk_steps, backward=backward,
-                                    progress=progress)
+                                    progress=progress, full_history=args.full_history)
 
             for proposal in range(1, args.proposals + 1):
                 proposed_at = perf_counter()
-                stats = actor_proposal(controller, optimizer, mask, replay_fn, data.stationary_std)
+                if device.type == "cuda":
+                    torch.cuda.reset_peak_memory_stats(device)
+                if args.actor_update == "steepest":
+                    stats = steepest_actor_proposal(
+                        controller, mask, replay_fn, data.stationary_std,
+                        predicted_decrease=args.predicted_decrease,
+                    )
+                else:
+                    stats = actor_proposal(controller, optimizer, mask, replay_fn,
+                                           data.stationary_std)
                 stats.update(proposal=proposal, wall_seconds=perf_counter()-proposed_at)
                 entry["proposals"].append(stats)
                 result["accepted_steps"] += int(stats["accepted"])
@@ -178,7 +222,8 @@ def main():
                 save_native("best-controller.pt", round_number, metrics)
             last_evaluated_revision = result["policy_revision"]
             save_native("last-controller.pt", round_number, metrics)
-            torch.save(dict(actor_optimizer=optimizer.state_dict(), critic=critic.state_dict(),
+            torch.save(dict(actor_optimizer=optimizer.state_dict() if optimizer else None,
+                            actor_update=args.actor_update, critic=critic.state_dict(),
                             critic_optimizer=critic_optimizer.state_dict(), round=round_number),
                        args.output_dir / "training-state.pt")
             report()

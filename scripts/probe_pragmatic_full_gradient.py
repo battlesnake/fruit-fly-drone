@@ -22,41 +22,14 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import train_pragmatic_course_replay as replay  # noqa: E402
 from audit_pragmatic_policy_direction import scaled_parameters, summarize_direction  # noqa: E402
-from pragmatic_policy_optimization import replay_round, trust_decision  # noqa: E402
+from pragmatic_policy_optimization import (  # noqa: E402
+    replay_round,
+    steepest_parameters,
+    trust_decision,
+)
 from pragmatic_policy_rollout import PolicyRollout  # noqa: E402
 
 SCALES = (0., .125, .03125, 0.)
-
-
-def steepest_parameters(base, gradient, mask, target):
-    """Parameter-only sizing against actual projected FP32 contraction, not loss."""
-    gradient = gradient * mask
-    squared = float(gradient.square().sum())
-    if not 0 < squared < float("inf") or not 0 < target < float("inf"):
-        raise ValueError("need finite nonzero gradient and positive target")
-    low, high = 0., 2 * target / squared
-    best, best_error = None, float("inf")
-    bracketed = False
-    for attempt in range(24):
-        eta = .5 * (low + high) if bracketed else high
-        proposed, projections = scaled_parameters(base, -gradient, eta, mask)
-        contraction = float((gradient * (proposed-base)).sum())
-        error = abs(contraction+target)
-        if error < best_error:
-            best_error = error
-            best = proposed, dict(eta=eta, projected_magnitudes=projections,
-                                  predicted_loss_change=contraction,
-                                  target_predicted_decrease=target, sizing_attempts=attempt+1)
-        if error <= .1 * target:
-            return best
-        if -contraction < target:
-            low = eta
-            if not bracketed:
-                high *= 2
-        else:
-            high = eta
-            bracketed = True
-    raise ValueError("projected FP32 step could not resolve target within 10 percent")
 
 
 def main():
