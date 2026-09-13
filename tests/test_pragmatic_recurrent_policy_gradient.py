@@ -166,3 +166,12 @@ def test_gradient_scale_supports_weighted_microbatch_accumulation():
                                      chunk_steps=2, warmup_steps=2, gradient_scale=scale)
         gradients.append(actor.weight.grad.clone())
     assert torch.allclose(gradients[1], 0.25 * gradients[0], rtol=1e-5, atol=1e-5)
+
+
+def test_optional_kl_samples_include_only_valid_commands():
+    actor = ToyActor()
+    args = example(actor)
+    result = replay_joint_policy_gradient(actor, *args, stationary_std=[0.02]*4, rho=.8,
+                                          warmup_steps=2, backward=False, include_kl_samples=True)
+    assert len(result["joint_kl_samples"]) == int(args[-1].sum())
+    assert sum(result["joint_kl_samples"]) / 12 == pytest.approx(result["joint_kl_mean"])

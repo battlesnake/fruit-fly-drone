@@ -38,7 +38,7 @@ may still occur later. No value bootstrap is used beyond the complete episode.
 def replay_joint_policy_gradient(
     controller, observe, latents, old_means, old_log_prob, advantages, valid,
     *, stationary_std, rho, chunk_steps=20, warmup_steps=10, clip=0.1, backward=True,
-    gradient_scale=1.0,
+    gradient_scale=1.0, include_kl_samples=False,
 ):
     """Replay complete physical observation histories under CURRENT weights.
 
@@ -55,6 +55,8 @@ AR conditional's previous native mean is not accidentally detached.
     microbatches before ONE optimizer step, set gradient_scale to this batch's valid
     count divided by the combined count; otherwise each call is independently normalized.
 On error the caller must discard any partially accumulated gradients.
+Set include_kl_samples to aggregate exact quantiles across microbatches; averaging
+microbatch p99 values is not a global p99.
 """
     if latents.ndim != 3 or latents.shape[-1] != 4 or old_means.shape != latents.shape:
         raise ValueError("latents and old means must have shape (time, episodes, 4)")
@@ -125,6 +127,7 @@ On error the caller must discard any partially accumulated gradients.
                 ))
                 log_prob = joint_log_prob(latents[time], conditional, std[time], squashed=False)
                 ratio = (log_prob - old_log_prob[time]).exp()
+                finite_actor &= log_prob.isfinite().all() & ratio.isfinite().all()
                 unclipped = ratio * advantages[time]
                 clipped = ratio.clamp(1 - clip, 1 + clip) * advantages[time]
                 losses.append(-torch.minimum(unclipped, clipped)[valid[time]].sum() / sample_count)
@@ -150,7 +153,9 @@ On error the caller must discard any partially accumulated gradients.
     kl = torch.stack(kls)[valid]
     ratio = torch.stack(ratios)[valid]
     displacement = (torch.stack(means) - old_means)[valid]
-    return dict(
+    if not bool(kl.isfinite().all() & displacement.isfinite().all()):
+        raise FloatingPointError("nonfinite policy diagnostics; discard accumulated gradients")
+    result = dict(
         loss=float(loss_sum), valid_commands=sample_count,
         joint_kl_mean=float(kl.mean()), joint_kl_p99=float(torch.quantile(kl, 0.99)),
         joint_kl_max=float(kl.max()), joint_ratio_mean=float(ratio.mean()),
@@ -161,3 +166,6 @@ On error the caller must discard any partially accumulated gradients.
         replay_forward_calls=warmup_steps + times + (times - 1) // chunk_steps,
         recurrent_gradient_is_truncated=chunk_steps < times,
     )
+    if include_kl_samples:
+        result["joint_kl_samples"] = kl.detach().cpu().tolist()
+    return result

@@ -3021,3 +3021,111 @@ criteria and mocked complete control flow for no nominee, failed confirmation,
 failed development and successful development. Astra's implementation review
 found no launch blocker. The fixed screen has now been launched with the command
 above; launch is not a result and does not change the retained native baseline.
+
+#### Scale screen closed; real recurrent outcome-gradient replay is practical
+
+`pragmatic-motor-scale-screen-001` completed normally in **431.5 seconds**. The
+matched source achieved **6/32 clean (5 negative / 1 positive)**. The eight 0.1x
+candidates achieved [6, 8, 4, 7, 6, 5, 5, 7] clean flights; the eight 0.25x
+candidates achieved [6, 2, 4, 3, 9, 8, 5, 2]. All had zero ground/invalid episodes.
+The best, index 12, reached **9/32 (8 / 1)**, below the predeclared **10/32**
+nomination threshold. No standalone confirmation, development check or model
+export was authorized. This closes the limited 24-coordinate motor search;
+the unchanged source remains retained. These are training-bank results, not
+fresh goal validation.
+
+The next implementation is `pragmatic_policy_rollout.py`: actual full-flight
+collection of physical observation histories, four-axis unsquashed AR latents,
+behavior means/densities, rewards and Monte Carlo returns. Actor inputs remain
+RGB and roll/pitch only. A separate 76-feature privileged critic may use physical
+state, gate geometry/role, time and previous exploration residual for training;
+its features are sampled **before** the current innovation and never enter the
+actor. Ground/invalid includes the causing command and then freezes that row to
+finite pre-contact padding. Ring/order failure alone does not terminate a row,
+so later ground costs remain visible. Clean completion earns its +5 only at
+the end of all 30 seconds, not when gate five is first crossed.
+
+Two real GPU probes used the same four training episodes, course seed
+**2026091395**, noise seed **2026091396**. Both collected 30 seconds; neither took
+an optimizer step or changed weights. The 100-frame prefix gradient took **1.33 s**.
+The complete **1,500-frame replay took 18.57 s for 6,000 command samples**, with
+**2,524 MiB peak reserved GPU memory**. Mean joint conditional KL against the
+unchanged behavior policy was **5.85e-8**, p99 **7.89e-7**, ratio mean **0.999997**,
+and all selected gradients were finite. Full collection took **25.38 s** and
+produced zero clean completions, two first-gate passes and zero ground/invalid
+events on these four cases. It is a cost/correctness probe, not a flight result.
+Neural values remain recurrent across the full flight; gradients still truncate
+at 20 frames, with preceding-frame overlap for the AR conditional derivative.
+
+Reports are `pragmatic-policy-replay-probe-001/report.json` and
+`pragmatic-policy-replay-probe-002/report.json`. The first report inherited an old
+mask metadata label mentioning teacher preservation; no teacher was actually
+used. The driver and second report label the outcome-gradient supervision
+correctly. Reports and models remain ignored local experiment artifacts.
+
+#### First bounded native PPO pilot
+
+The new `train_pragmatic_course_ppo.py` and `pragmatic_policy_optimization.py`
+implement the first actual outcome-learning loop, starting from the unchanged
+phase-balanced source. Astra reviewed the design and emphasized fixed behavior
+histories, globally frozen advantages and current-weight recurrent replay.
+
+- **Three rounds**, each collecting **32 fresh varied training episodes**
+  (16 mirrored pairs), seeds **2026091400–2026091402**, with noise seeds
+  **2026091410–2026091412**. Full 30-second flights and existing geometry/rules.
+- Fixed AR exploration: stationary latent sigma **[.006, .002, .001, .0025]**,
+  time constant **.6 s**. Exploration is removed during native evaluation/export.
+- Train only the **1,097,500 existing seven-hop visual-to-roll-path magnitudes**;
+  topology, transmitter signs, biases and time constants remain fixed. Existing
+  magnitude bounds [0,8] remain; no teacher targets or source-distance penalty.
+- At most **two Adam proposals per round**, LR **1e-6**. Accumulate all eight
+  four-episode microbatches before one step, weighting by valid command counts;
+  then mask and clip the combined gradient norm at 1. Twenty-frame TBPTT affects
+  gradients, not returns or numerical recurrent history.
+- Round one uses zero baseline. Later rounds predict with the previously fitted
+  separate **76→128→128→1 critic**. Normalize advantages once over the whole
+  round's valid samples and freeze them before fitting this round's critic to
+  full Monte Carlo returns (five epochs, batch 1024, Adam 3e-4). Critic input
+  normalization is initialized from round one and frozen throughout the pilot.
+- After every proposal, replay all recorded behavior histories under the new
+  weights. Both proposals are compared against the **round-start behavior**.
+  Mean joint conditional KL >.005 stops further proposals after an otherwise
+  accepted step. Mean KL >.01, true global p99 KL >.10, or any-axis native latent
+  mean displacement RMS >.5 stationary sigma rejects that step and restores
+  **both parameters and Adam state**. Nonfinite loss/state/gradient/likelihood
+  rejects and stops the pilot. Global p99 uses individual valid KL samples,
+  never an average of microbatch quantiles.
+- Standalone deterministic source and after-round development use 32 cases on
+  reused seed **1110983**. Rank clean completions first, side balance then prefix
+  only as tie-breakers; zero ground/invalid is required for selection. Continue
+  training from the latest accepted weights, not the development winner.
+  A gain of at least **four clean development flights** nominates a candidate
+  for further work/fresh validation. Smaller improvements can be retained as
+  exploratory checkpoints but do not authorize a goal claim.
+
+The pilot reports accepted steps, KL, native mean movement and actual native
+flight outcomes. If six proposals hardly move or all are rejected, that is an
+optimization-scale finding, not evidence that PPO or outcome learning cannot
+work. A critic or lower replay loss is not success. The objective still requires
+**above 50% on at least 128 fresh varied, unassisted native flights**, with matched
+source and both course sides represented; this reused development bank cannot
+satisfy it.
+
+Launch command after implementation tests and advisor review:
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/train_pragmatic_course_ppo.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output-dir runs/gate/pragmatic-course-ppo-001 \
+  --seed 2026091400 --noise-seed 2026091410 --development-seed 1110983
+```
+
+Implementation verification: **676 tests pass**. New coverage checks collector
+reward/evaluator agreement, terminal-causing commands and finite padding,
+pre-innovation critic features, full-round gradient weighting, exact global KL
+quantiles, frozen advantages/critic normalization, magnitude projection, trust
+rejection with parameter **and Adam** rollback, and complete trainer selection.
+Astra found a source-alias selection issue during review; it is fixed and tested:
+policy revision advances only for an accepted nonzero parameter change, and a
+repeat evaluation of unchanged weights cannot update the selected checkpoint or
+manufacture a nomination. Ruff and whitespace checks pass.
