@@ -4130,3 +4130,83 @@ freezing from the subsequent sink-PPO plasticity. The outcome collector's full-t
 safety semantics are unchanged. The 800-test suite passed again in **11.70 s**;
 an additional regression covers a completed representation row followed by a
 synthetic ground proposal. Ten targeted representation/driver tests pass.
+
+#### First premotor-bearing run completed: no native improvement
+
+`pragmatic-premotor-bearing-001`, launched from **d312d20**, completed normally
+in **674.75 s**. All **150 supervised updates** and **24/24 sink-PPO proposals**
+completed. This was actual full-connectome learning, not an auxiliary-only probe.
+
+| Native development | Clean / 32 | Negative / positive | Clean-prefix gates |
+| --- | ---: | ---: | ---: |
+| Source | 12 | 9 / 3 | 101 |
+| Round 1 | 11 | 8 / 3 | 98 |
+| Round 2 | 9 | 8 / 1 | 97 |
+| Round 3 | 10 | 7 / 3 | 94 |
+
+All representation collections, native noisy training banks and native evaluations
+had **zero ground/invalid** episodes. No candidate was promoted, no fresh goal
+validation was warranted, and the retained source remains unchanged. The >50%
+varied-course objective is still unmet.
+
+Frozen source decoder train sin/cos MSE was **.05485 / .02352**, with whole-pair
+held-out MSE **.06073 / .03007**. Its combined normalization **.03918** was not
+floor-dominated. Mean before→after normalized MSE on paired held-out windows was
+**.71802→.68036**, **3.03659→3.03047**, **.33391→.37910** across the three rounds.
+Round 1 thus showed a modest **5.2%** aggregate reduction; round 2 was almost flat;
+round 3 worsened. These are different rounds' histories/windows, not a common
+longitudinal test set. Phase-specific changes were mixed. Round 3 had **no held-out
+positive-side native later-gate window**; its six checks therefore repeated native
+launch instead of covering six distinct kind/phase groups. The missing coverage
+was logged, and its aggregate must not be described as fully phase-balanced.
+All training-window kind/phase groups remained available.
+
+Maximum per-axis command RMS displacement on those held-out windows was only
+**.00824σ / .02348σ / .01790σ**. The outcome banks scored **6/32 (5/1)**,
+**5/32 (4/1)** and **3/32 (1/2)** clean. Final sink-PPO surrogate improvements
+were **.001757 / .001600 / .001718**, with roll shifts **.04556 / .03382 /
+.05016σ** relative to the respective collecting policies. Decoding has not
+improved enough to make inaccessible motor readout the leading explanation yet.
+
+#### One matched stronger representation test, then reassess the representation
+
+Astra recommends **one learning-strength comparison**, not a learning-rate sweep:
+restart the retained source and change only representation Adam rate to **1e-4**
+(from **1e-5**). Keep three rounds, 50 updates/round, mask, losses, foreleg plant,
+native sink-PPO settings and course schedule unchanged. **Reuse the exact frozen
+head, feature normalization and source-MSE normalization from run 001** using
+`--reuse-head-run`. The loader checks source identity and ordered anatomical
+readout identity; copied fit metrics are explicitly attributed to the original run.
+
+Reuse course **2026091600–2026091608** and noise **2026091630–2026091632** for
+the matched comparison. These are reused training seeds, not fresh evidence of
+generalization. Development remains reused seed 1110983. Minor FP32 flight
+variation is not treated as a reproducibility blocker.
+
+Held-out reporting now visits each available paired kind/phase group once rather
+than repeating launch when another group is absent. This changes diagnostic
+accounting, not optimization sampling, labels, rewards or task rules. Collection
+progress messages now show the original outcome-bank metrics rather than the
+selected-replay placeholder; the original metrics were already correctly saved.
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/train_pragmatic_premotor_bearing.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output-dir runs/gate/pragmatic-premotor-bearing-002 \
+  --reuse-head-run runs/gate/pragmatic-premotor-bearing-001 --learning-rate 1e-4 \
+  --rounds 3 --representation-pairs 4 --representation-updates 50 \
+  --training-pairs 16 --development-pairs 16 --proposals 8 \
+  --seed 2026091600 --noise-seed 2026091630 --development-seed 1110983
+```
+
+Roughly **20% or greater** held-out bearing improvement, checked by side/phase,
+would make native outcome results informative about motor accessibility. Better
+coding without native gains would support changing how existing downstream
+connections consume the signal. Another negligible/mixed representation change
+means this setup remains ineffective; **do not keep extending tiny-dose pilots**.
+Native safety/completion and the original fresh-validation obligation remain
+decisive, not the auxiliary error threshold.
+
+The full suite passed **802 tests in 10.69 s**, including same-source/ordered-neuron
+head reuse and missing held-out group accounting. Bearing diagnostics additionally
+report each branch separately (negative then positive side in paired windows).

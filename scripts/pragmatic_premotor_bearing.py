@@ -353,6 +353,7 @@ def choose_windows(banks, rng, update, *, unroll=20, heldout=False):
             starts=list(starts),
             rows=list(rows),
             coverage=coverage,
+            available_paired_groups=len(candidates),
         ),
     )
 
@@ -379,7 +380,8 @@ def bearing_window_loss(
         raise ValueError("each supervised branch needs visible active bearing labels")
     error = (torch.stack(predicted) - labels).square() / head.source_mse
     # Equal branch/side weight despite different visible-frame counts.
-    bearing = ((error * visible[..., None]).sum((0, 2)) / (2 * visible.sum(0))).mean()
+    bearing_by_branch = (error * visible[..., None]).sum((0, 2)) / (2 * visible.sum(0))
+    bearing = bearing_by_branch.mean()
     times = window[4][None, :] + torch.arange(unroll, device=device)[:, None]
     reference = torch.atanh(window[3][times, indices].clamp(-0.999999, 0.999999))
     command_error = (torch.stack(commands) - reference) / reference.new_tensor(COMMAND_SIGMAS)
@@ -390,6 +392,7 @@ def bearing_window_loss(
     return loss, dict(
         loss=float(loss.detach()),
         normalized_bearing_mse=float(bearing.detach()),
+        normalized_bearing_mse_by_branch=bearing_by_branch.detach().tolist(),
         command_mse_in_sigma=axes.detach().tolist(),
         visible_frames=int(visible.sum()),
         supervised_frames=unroll,

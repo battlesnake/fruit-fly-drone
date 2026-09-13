@@ -43,6 +43,11 @@ def parse_args():
     parser.add_argument("--representation-pairs", type=int, default=4)
     parser.add_argument("--representation-updates", type=int, default=50)
     parser.add_argument("--learning-rate", type=float, default=1e-5)
+    parser.add_argument(
+        "--reuse-head-run",
+        type=Path,
+        help="Reuse a completed run's frozen head/normalization; never refit.",
+    )
     parser.add_argument("--training-pairs", type=int, default=16)
     parser.add_argument("--development-pairs", type=int, default=16)
     parser.add_argument("--proposals", type=int, default=8)
@@ -50,6 +55,40 @@ def parse_args():
     parser.add_argument("--noise-seed", type=int, default=2026091630)
     parser.add_argument("--development-seed", type=int, default=1110983)
     return parser.parse_args()
+
+
+def reuse_bearing_head(run, *, checkpoint, representation_manifest, device):
+    """Controlled comparison: same source and same ordered anatomical readout."""
+    previous = json.loads((run / "report.json").read_text())
+    if previous["status"] != "complete":
+        raise ValueError("head reuse requires a completed reference run")
+    if Path(previous["arguments"]["checkpoint"]).resolve() != checkpoint.resolve():
+        raise ValueError("head source checkpoint differs")
+    previous_manifest = previous["native_path_manifest"]["representation_stage"]
+    if previous_manifest["selected_body_ids"] != representation_manifest["selected_body_ids"]:
+        raise ValueError("frozen head neuron identity/order differs")
+    state = torch.load(
+        run / "training-only-bearing-head.pt", map_location=device, weights_only=True
+    )
+    head = representation.FrozenBearingHead(**state)
+    n = len(representation_manifest["selected_body_ids"])
+    if (
+        head.center.shape != (n,)
+        or head.scale.shape != (n,)
+        or head.weight.shape != (n, 2)
+        or head.offset.shape != (2,)
+        or head.source_mse.ndim != 0
+        or not all(bool(v.isfinite().all()) for v in head.buffers())
+        or not bool((head.scale > 0).all())
+        or not bool(head.source_mse > 0)
+    ):
+        raise ValueError("invalid frozen bearing head")
+    return head, dict(
+        previous["bearing_head_fit"],
+        reused_from_run=str(run),
+        fit_metrics_are_from_original_run=True,
+        refitted=False,
+    )
 
 
 def main():
@@ -168,6 +207,15 @@ def main():
         )
         report("source-development", metrics=baseline)
         head = critic = critic_optimizer = None
+        if args.reuse_head_run is not None:
+            head, result["bearing_head_fit"] = reuse_bearing_head(
+                args.reuse_head_run,
+                checkpoint=args.checkpoint,
+                representation_manifest=representation_manifest,
+                device=device,
+            )
+            torch.save(head.state_dict(), args.output_dir / "training-only-bearing-head.pt")
+            report("bearing-head-reused", metrics=result["bearing_head_fit"])
         last_revision = 0
         for number in range(1, args.rounds + 1):
             base_seed = args.seed + 3 * (number - 1)
@@ -210,14 +258,15 @@ def main():
                 report("bearing-head-fit", metrics=result["bearing_head_fit"])
             rng = torch.Generator().manual_seed(base_seed)
             holdout_rng = torch.Generator().manual_seed(base_seed + 10000)
-            heldout_windows = [
+            first_holdout = representation.choose_windows(banks, holdout_rng, 0, heldout=True)
+            heldout_windows = [first_holdout] + [
                 representation.choose_windows(
                     banks,
                     holdout_rng,
                     i,
                     heldout=True,
                 )
-                for i in range(6)
+                for i in range(1, first_holdout[3]["available_paired_groups"])
             ]
 
             @torch.no_grad()
@@ -268,7 +317,7 @@ def main():
             controller.requires_grad_(False)
             entry["heldout_after"] = heldout_losses()
             save_native("post-representation-controller.pt", number, None)
-            del optimizer, banks, heldout_windows, heldout_losses, bank
+            del optimizer, banks, heldout_windows, heldout_losses, bank, first_holdout
             report("representation-complete", round=number, heldout=entry["heldout_after"])
 
             # New slice and fresh full-native cache AFTER upstream changes.
@@ -308,7 +357,7 @@ def main():
             data = data.select(range(data.valid.shape[1]), device)
             advantages = advantages.to(device)
             entry["sink_recording_check"] = ppo.verify_sink_recording(sink, data)
-            report("outcome-collection", round=number, metrics=data.metrics)
+            report("outcome-collection", round=number, metrics=entry["outcome_collection"])
             sink_mask = torch.ones_like(sink.edge_magnitude, dtype=torch.bool)
 
             def replay_fn(backward, sink=sink, data=data, advantages=advantages):

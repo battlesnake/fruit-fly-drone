@@ -144,7 +144,18 @@ def test_strata_holdout_is_whole_pair_and_windows_exclude_failure_and_invisible_
         assert rows[0] % 2 == 0 and rows[1] % 2 == 1
         assert max(rows) < 4 and len(starts) == 2
         groups.append((info["kind"], info["phase"]))
+        assert info["available_paired_groups"] == 6
     assert len(set(groups)) == 6
+
+    data.replay.active[75:, -1] = False
+    _, _, _, info = bearing.choose_windows(
+        [data, bank("roll-assisted")],
+        torch.Generator().manual_seed(1),
+        0,
+        heldout=True,
+    )
+    assert info["available_paired_groups"] == 5
+    assert info["coverage"]["native/later-gates/1"] == 0
 
 
 def test_head_and_normalizers_frozen_with_scalar_combined_source_mse_and_no_holdout_leak():
@@ -159,6 +170,43 @@ def test_head_and_normalizers_frozen_with_scalar_combined_source_mse_and_no_hold
     activity = data.source_features[:2].clone().requires_grad_(True)
     head(activity).sum().backward()
     assert activity.grad is not None and activity.grad.norm() > 0
+
+
+def test_reuse_frozen_head_requires_same_source_and_neuron_order(tmp_path):
+    import json
+
+    import train_pragmatic_premotor_bearing as driver
+
+    head, fit = bearing.fit_bearing_head([bank()], device=torch.device("cpu"), seed=3)
+    torch.save(head.state_dict(), tmp_path / "training-only-bearing-head.pt")
+    source = tmp_path / "source.pt"
+    manifest = dict(selected_body_ids=[10, 20, 30])
+    report = dict(
+        status="complete",
+        arguments=dict(checkpoint=str(source)),
+        native_path_manifest=dict(representation_stage=manifest),
+        bearing_head_fit=fit,
+    )
+    (tmp_path / "report.json").write_text(json.dumps(report))
+    loaded, metrics = driver.reuse_bearing_head(
+        tmp_path, checkpoint=source, representation_manifest=manifest, device=torch.device("cpu")
+    )
+    assert all(torch.equal(v, loaded.state_dict()[k]) for k, v in head.state_dict().items())
+    assert not metrics["refitted"] and metrics["fit_metrics_are_from_original_run"]
+    with pytest.raises(ValueError, match="identity/order"):
+        driver.reuse_bearing_head(
+            tmp_path,
+            checkpoint=source,
+            representation_manifest=dict(selected_body_ids=[20, 10, 30]),
+            device=torch.device("cpu"),
+        )
+    with pytest.raises(ValueError, match="source checkpoint"):
+        driver.reuse_bearing_head(
+            tmp_path,
+            checkpoint=tmp_path / "different.pt",
+            representation_manifest=manifest,
+            device=torch.device("cpu"),
+        )
 
 
 class TinyActor(torch.nn.Module):
@@ -204,6 +252,10 @@ def test_window_replays_current_full_prefix_then_only_window_gradients_and_label
     )
     assert actor.prefix_calls == 19 and actor.gradient_calls == 4
     assert stats["visible_frames"] == 7 and stats["gradient_is_window_truncated"]
+    assert len(stats["normalized_bearing_mse_by_branch"]) == 2
+    assert sum(stats["normalized_bearing_mse_by_branch"]) / 2 == pytest.approx(
+        stats["normalized_bearing_mse"]
+    )
     loss.backward()
     assert actor.edge_magnitude.grad[0] != 0
     original = float(loss.detach())
@@ -308,6 +360,7 @@ def test_alternating_driver_refreshes_sink_after_representation_and_exports_only
         representation_pairs=2,
         representation_updates=1,
         learning_rate=0.001,
+        reuse_head_run=None,
         training_pairs=2,
         development_pairs=2,
         proposals=1,
@@ -353,7 +406,7 @@ def test_alternating_driver_refreshes_sink_after_representation_and_exports_only
     monkeypatch.setattr(
         driver.representation,
         "choose_windows",
-        lambda banks, *a, **k: (banks[0], [0, 1], [0, 0], {}),
+        lambda banks, *a, **k: (banks[0], [0, 1], [0, 0], {"available_paired_groups": 6}),
     )
     monkeypatch.setattr(
         driver.representation,
