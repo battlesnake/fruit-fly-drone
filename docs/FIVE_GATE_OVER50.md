@@ -2834,3 +2834,59 @@ This calibration bank is consumed training data, never a later fresh held-out
 goal bank. The deterministic deployed controller has no sampler, exploration
 history or critic. No external implementation, model or dataset was downloaded
 or added to git for this preparation.
+
+#### Generation-four result and recurrent policy-gradient preparation
+
+The outcome search's generation-four standalone checks both achieved **0/32
+clean completions**. Its centre passed 27 first gates and accumulated 63 clean-
+prefix gates, with 26 ring-contact episodes and two wrong-order episodes. The
+generation winner passed 29 first gates and accumulated 45 prefix gates, with
+19 ring-contact episodes, one wrong-order and one wrong-direction episode.
+Both had zero ground/invalid episodes. The same-run 11/32 source remains selected;
+the six-generation process was verified live in generation five. No fresh native
+validation or controller promotion is warranted by these results.
+
+While that bounded search continues, `scripts/pragmatic_recurrent_policy_gradient.py`
+implements the core replay operation for a possible PPO pilot. It is **not a
+trainer**: no collector, critic, optimizer loop or GPU learning run has been added.
+It replays a complete episode microbatch from zero neural state under current
+weights, uses ten noise-free/no-gradient warmup frames, accumulates joint four-axis
+clipped policy gradients over short neural chunks and leaves optimizer steps to
+the caller. The recorded old density must be the unsquashed latent density and
+is checked against the old conditional distribution with ordinary FP32 tolerance.
+
+Each chunk after the first re-evaluates the preceding frame with gradient from
+its detached input state. This keeps both current and previous native means in
+the AR conditional gradient without altering the numerical neural trajectory or
+retaining full-flight activations. These are extra **training replay** forwards,
+not extra physical brain ticks. A new optimizer step requires a new full episode
+replay; there are no reusable stale neural states. Gradient truncation remains an
+approximation. Losses normalize by the whole microbatch's valid command count;
+if several calls are accumulated before one step, an explicit gradient scale
+provides their valid-count weights. Diagnostics include joint conditional KL
+mean/p99/max, clipping, all-axis deterministic mean displacement and native clamps.
+
+Astra caught and re-reviewed an important robustness fix: masking a sample only
+after likelihood arithmetic does not prevent NaN padding from contaminating
+gradients. All stored replay values, including inactive rows, must now be finite;
+observations and actor outputs/state are checked before each chunk's backward
+pass, and accumulated gradients must be finite before successful return. A caller
+must discard partial gradients after an error. Tests include poisoned inactive
+latents/observations, incorrect behavior densities and gradient scaling. The
+overlap test checks that chunking preserves the feedforward policy gradient,
+whereas recurrent tests check continuous values without claiming exact full-
+history gradients. All **648 tests pass**, with no remaining review blocker.
+
+For the later collector, preserve the current outcome score through incremental
+rewards: +1 per clean-prefix gate, +0.2/5 times its centering credit, -2 once on
+first failure, -25 once on the first ground-or-invalid union event, and +5 only
+at the final 30-second command if the whole course remains clean. Ring/order
+failure alone must **not** terminate training collection: a later ground strike
+still incurs its penalty. At ground/invalid, include the causing command, then
+make the remaining row absorbing with zero reward and no bootstrap; no clean
+success or further prefix credit can survive that event. This is return-equivalent
+to the existing full-tail score. Candidate evaluation still runs its unchanged
+full 30 seconds. The helper supplies undiscounted reward-to-go with tests for
+ring-then-ground and delayed clean-tail credit, but actual collection is not yet
+implemented. Exploration calibration and a measured GPU replay cost remain the
+next prerequisites, not a reason to claim PPO or improved flight already exists.
