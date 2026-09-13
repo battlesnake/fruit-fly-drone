@@ -35,29 +35,11 @@ may still occur later. No value bootstrap is used beyond the complete episode.
     return result
 
 
-def replay_joint_policy_gradient(
-    controller, observe, latents, old_means, old_log_prob, advantages, valid,
-    *, stationary_std, rho, chunk_steps=20, warmup_steps=10, clip=0.1, backward=True,
-    gradient_scale=1.0, include_kl_samples=False,
+def prepare_policy_replay(
+    latents, old_means, old_log_prob, advantages, valid, *, stationary_std, rho,
+    chunk_steps, warmup_steps, clip, gradient_scale,
 ):
-    """Replay complete physical observation histories under CURRENT weights.
-
-observe(t) returns (RGB, roll/pitch) reconstructed from stored physical state.
-No plant gradients, replayed neural states, previous motor inputs or oracle actor
-features are used. Short neural chunks truncate gradients only, never values.
-The preceding frame is re-evaluated with gradient at each chunk boundary so the
-AR conditional's previous native mean is not accidentally detached.
-
-    Returns diagnostics and accumulates gradients normalized by this microbatch's
-    total valid commands. Does not zero gradients, change weights or take a step.
-    old_log_prob MUST be the unsquashed latent density. All padding and replayed
-    observations must be finite, including absorbing rows. To accumulate multiple
-    microbatches before ONE optimizer step, set gradient_scale to this batch's valid
-    count divided by the combined count; otherwise each call is independently normalized.
-On error the caller must discard any partially accumulated gradients.
-Set include_kl_samples to aggregate exact quantiles across microbatches; averaging
-microbatch p99 values is not a global p99.
-"""
+    """Shared fixed-data validation and AR densities for short/full gradients."""
     if latents.ndim != 3 or latents.shape[-1] != 4 or old_means.shape != latents.shape:
         raise ValueError("latents and old means must have shape (time, episodes, 4)")
     times, episodes, _ = latents.shape
@@ -86,6 +68,38 @@ microbatch p99 values is not a global p99.
     expected_log_prob = joint_log_prob(latents, old_conditional, std, squashed=False)
     if not torch.allclose(old_log_prob[valid], expected_log_prob[valid], rtol=1e-5, atol=1e-4):
         raise ValueError("behavior log probabilities must match unsquashed latent densities")
+    return sample_count, previous_latents, old_conditional, std
+
+
+def replay_joint_policy_gradient(
+    controller, observe, latents, old_means, old_log_prob, advantages, valid,
+    *, stationary_std, rho, chunk_steps=20, warmup_steps=10, clip=0.1, backward=True,
+    gradient_scale=1.0, include_kl_samples=False,
+):
+    """Replay complete physical observation histories under CURRENT weights.
+
+observe(t) returns (RGB, roll/pitch) reconstructed from stored physical state.
+No plant gradients, replayed neural states, previous motor inputs or oracle actor
+features are used. Short neural chunks truncate gradients only, never values.
+The preceding frame is re-evaluated with gradient at each chunk boundary so the
+AR conditional's previous native mean is not accidentally detached.
+
+    Returns diagnostics and accumulates gradients normalized by this microbatch's
+    total valid commands. Does not zero gradients, change weights or take a step.
+    old_log_prob MUST be the unsquashed latent density. All padding and replayed
+    observations must be finite, including absorbing rows. To accumulate multiple
+    microbatches before ONE optimizer step, set gradient_scale to this batch's valid
+    count divided by the combined count; otherwise each call is independently normalized.
+On error the caller must discard any partially accumulated gradients.
+Set include_kl_samples to aggregate exact quantiles across microbatches; averaging
+microbatch p99 values is not a global p99.
+"""
+    sample_count, previous_latents, old_conditional, std = prepare_policy_replay(
+        latents, old_means, old_log_prob, advantages, valid, stationary_std=stationary_std,
+        rho=rho, chunk_steps=chunk_steps, warmup_steps=warmup_steps, clip=clip,
+        gradient_scale=gradient_scale,
+    )
+    times, episodes, _ = latents.shape
     neural = controller.initial_state(episodes, device=latents.device, dtype=latents.dtype)
     with torch.no_grad():
         image, attitude = observe(0)

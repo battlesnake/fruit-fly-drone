@@ -6,6 +6,7 @@ import copy
 import math
 
 import torch
+from pragmatic_full_policy_gradient import replay_full_policy_gradient
 from pragmatic_recurrent_policy_gradient import replay_joint_policy_gradient
 
 
@@ -92,7 +93,7 @@ def aggregate_replays(parts):
 
 
 def replay_round(controller, data, advantages, *, camera, gate_config, microbatch=4,
-                 chunk_steps=20, backward=True, progress=None):
+                 chunk_steps=20, backward=True, progress=None, full_history=False):
     device = next(controller.parameters()).device
     count = int(data.valid.sum())
     parts = []
@@ -102,7 +103,8 @@ def replay_round(controller, data, advantages, *, camera, gate_config, microbatc
         n = int(batch.valid.sum())
         if not n:
             continue
-        stats = replay_joint_policy_gradient(
+        replay = replay_full_policy_gradient if full_history else replay_joint_policy_gradient
+        stats = replay(
             controller, lambda t, b=batch: b.observation(t, camera, gate_config), batch.latents,
             batch.old_means, batch.old_log_prob, advantages[:, rows].to(device), batch.valid,
             stationary_std=batch.stationary_std, rho=batch.rho, chunk_steps=chunk_steps,

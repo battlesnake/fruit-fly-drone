@@ -3265,3 +3265,71 @@ of loss changes versus repeat variability, non-descent optimizer directions,
 source restoration on success and replay failure, and weights-only-readable
 archives. Ruff/whitespace checks pass; Astra's implementation review found no
 launch blocker.
+
+#### Directional test result and untruncated-gradient comparison
+
+`pragmatic-policy-direction-001` completed normally in **232.1 s**, restored the
+source and exported no controller. The eight training flights had zero clean
+completions, five first-gate passes, 13 clean-prefix gates and zero ground/invalid
+events. They are retained as fixed diagnostic data, not replaced with easier cases.
+Raw masked gradient norm was **2.27864** and the fresh Adam displacement norm
+**.00104253**. The three unchanged-source replay losses spanned **1.40e-6**, giving
+the predeclared interpretation tolerance **7.00e-6**.
+
+| Step scale | Predicted loss change | Observed loss change |
+| --- | --- | --- |
+| 1 | −.0005697 | +.0035203 |
+| .5 | −.0002848 | +.0012812 |
+| .25 | −.0001424 | +.0004319 |
+| .125 | −.0000711 | +.0002167 |
+| −.125 | +.0000708 | +.0001622 |
+
+All positive scales worsen the full-history fixed-data objective above repeat
+variability despite predicted descent. The negative probe also worsens it and
+projects 2,650 magnitudes at their bounds, so this is not a symmetric finite
+difference and does not alone identify the true local derivative. These results
+justify comparing untruncated autograd before another short-gradient training run;
+they do not yet prove a truncation cause or rule out curvature/conditioning.
+
+`pragmatic_full_policy_gradient.py` now implements checkpointed **untruncated
+autograd** through the fly's full recurrent history, including the ten warmup
+frames and previous latent mean across every chunk boundary. It shares the
+existing replay validation and density setup. Existing PPO still defaults to
+20-frame TBPTT; no deployed inputs, states or topology change. Checkpoint functions
+capture fixed time bounds, reconstruct RGB from saved physical data, and return
+their diagnostics rather than mutating external lists during recomputation.
+
+Independent CPU reference tests compare against one ordinary fully unrolled
+recurrent calculation, for checkpoint chunks of 1, 3 and 17 frames, including
+warmup derivatives, gradient scaling and finite absorbing padding. They also
+demonstrate the gradient difference caused by detaching warmup even with a full
+physical-frame unroll. These are implementation checks, not GPU flight evidence.
+
+The next GPU probe, `probe_pragmatic_full_gradient.py`, reads the exact eight-
+episode `fixed-training-data.pt` archive. It collects **no new flights** and
+compares raw masked full/truncated gradient norms and cosine, especially each
+gradient's dot product with the **original materialized Adam displacement**.
+Positive full-gradient contraction with that old step would support a wrong
+short-gradient direction; a negative value keeps finite-step curvature and
+conditioning in play. It measures cost and GPU memory rather than assuming
+checkpointing is affordable or gradients remain finite over 30 seconds.
+
+If the full gradient is finite, materialize one fresh Adam1e-6 step with the same
+mask, clipping and native bounds. Probe fixed scales **[0, .125, .03125, 0]**,
+chosen before seeing the full gradient, with actual rounded-displacement
+predictions and repeated-zero variability. Restore source weights on success or
+failure. Even resolved full-gradient surrogate descent is not native-flight
+improvement or a >50% result; the archive and gradient tensors remain ignored
+local training artifacts.
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/probe_pragmatic_full_gradient.py \
+  --archive runs/gate/pragmatic-policy-direction-001/fixed-training-data.pt \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output-dir runs/gate/pragmatic-full-gradient-probe-001
+```
+
+All **689 tests pass**, including the new independent-gradient reference and
+full probe success/failure restoration checks. The latter caught and fixed a
+duplicate elapsed-time logging argument before GPU launch. Ruff and whitespace
+checks pass; Astra's focused implementation review found no remaining blocker.
