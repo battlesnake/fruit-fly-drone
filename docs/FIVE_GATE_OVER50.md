@@ -2890,3 +2890,83 @@ full 30 seconds. The helper supplies undiscounted reward-to-go with tests for
 ring-then-ground and delayed clean-tail credit, but actual collection is not yet
 implemented. Exploration calibration and a measured GPU replay cost remain the
 next prerequisites, not a reason to claim PPO or improved flight already exists.
+
+#### Six-generation outcome search finished without improvement
+
+The corrected search terminated normally after all six generations in **1,961.79
+seconds**. Generation six's centre scored **1/32 clean** (1 negative / 0 positive),
+28 first gates and 65 prefix gates, with 28 ring-contact episodes and two wrong-
+order episodes. Its generation winner scored **4/32 clean** (1/3), 25 first gates
+and 73 prefix gates, with 26 ring-contact episodes and four wrong-order episodes.
+Both had zero ground/invalid/wrong-direction episodes. The selected parameter
+vector is exactly zero: the retained checkpoint is still the unchanged source,
+at 11/32 in this run's reused development bank. No fresh validation is nominated.
+
+This rejects the tested run, not all outcome learning or all motor-coordinate
+search. In generations one through five, respectively 12, 12, 15, 16 and 14 of
+16 candidates had zero clean training completions. There was no same-bank source
+training control, so perturbation scale, changing course difficulty and centre
+drift are confounded. Astra recommends allowing at most one **source-centred scale
+screen** at 0.1x and 0.25x the original perturbations, with fixed matched antithetic
+directions and a source control on the same new courses, before abandoning this
+small search family. Do not move the centre during that screen. A brief ES follow-
+up is justified only by meaningful matched improvement while preserving useful
+competence; mere preservation or another destructive screen should close that
+branch. This is a future option, not another launched search or a claim of a
+proven neural-capacity problem.
+
+After verifying the previous process's successful terminal exit, the documented
+six-condition action-noise calibration was launched at
+`runs/gate/pragmatic-course-exploration-calibration-001/report.json`, using the
+unchanged source and the planned seeds 2026091391/2026091392. It is the only new
+GPU job. No condition, threshold, course geometry or flight duration was changed
+in response to the search result. Its results must be recorded separately; the
+launch itself is not evidence for useful exploration or improved flight.
+
+#### Full-flight correlated exploration calibration completed
+
+The calibration terminated normally after **198.88 seconds** and its report has
+`status: complete`. All six conditions used the same 32 new varied training cases,
+the unchanged source weights and full 30-second flight tails. **None of the 192
+flights had ground contact, an invalid state or stick saturation.** Gate-ring and
+wrong-order failures remain common; this is not general safe racing.
+
+| Condition | Clean completions (negative / positive) | Clean first gates | Clean-prefix gates | Ring-contact episodes | Wrong-order episodes |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Native baseline | 3/32 (2 / 1) | 28 | 79 | 28 | 4 |
+| Zero-noise latent roundtrip | 3/32 (2 / 1) | 28 | 79 | 28 | 4 |
+| Independent noise, full scale | 5/32 (5 / 0) | 26 | 74 | 24 | 7 |
+| AR, quarter scale | 3/32 (3 / 0) | 27 | 76 | 27 | 6 |
+| AR, half scale | 4/32 (2 / 2) | 26 | 60 | 26 | 11 |
+| AR, full scale | 5/32 (3 / 2) | 24 | 68 | 22 | 8 |
+
+No condition had a wrong-direction episode. The source's 3/32 on this new bank
+is weaker than its repeatedly reused 11–12/32 development score. This bank is
+now calibration/training data, not a fresh final-goal test, and reinforces the
+need for broader untouched native validation before any completion claim.
+
+The zero-noise control passes: no native values were clamped, the maximum local
+command roundtrip discrepancy was 8.94e-8, and the principal outcome counts match.
+The numerical trajectories are not byte-identical: before either flight failed,
+lateral position difference RMS was 0.0166 m and roll RC difference RMS 0.00221.
+This ordinary closed-loop variation is recorded, not used to launch an FP64 audit.
+
+All three AR scales pass the predefined coarse survival screen, so the nominated
+setting is the largest, **full scale**, with four-axis stationary latent standard
+deviations **[0.006, 0.002, 0.001, 0.0025]**, correlation time **0.6 s** and
+`rho = 0.9672161005`. Its measured latent residual RMS is approximately
+[0.005903, 0.002015, 0.001011, 0.002457]. Before either matched flight failed, its
+position difference RMS was [0.135, 0.401, 0.080] m and RC difference RMS
+[0.0776, 0.0287, 0.00379, 0.00376]. These latter differences include the native
+controller's responses along diverging trajectories; they are **not** an isolated
+actuator transfer-gain measurement. They are substantially above the zero-noise
+control's drift and establish physically effective exploration on this bank.
+
+The noisy 5/32 outcome is **not learned improvement**: weights were untouched,
+the sampler is training-only, and this was not a held-out deterministic evaluation.
+The >50% varied-course goal remains unmet. This supplies a practical exploration
+setting for the planned outcome-learning pilot; actual GPU recurrent-gradient
+throughput and the collection/critic/training loop still remain to be implemented
+or measured. The single bounded source-centred parameter-scale screen described
+above remains an option before committing to that larger training run; neither
+branch is allowed to treat these noisy flights as deployed fly success.
