@@ -366,7 +366,7 @@ def test_alternating_driver_refreshes_sink_after_representation_and_exports_only
             assert not any(p.requires_grad for p in controller.parameters())
             sink_entries.append(controller.edge_magnitude.detach().clone())
             self.edge_magnitude = torch.nn.Parameter(controller.edge_magnitude[1:].detach().clone())
-            self.sink = SimpleNamespace(parents=torch.tensor([0]))
+            self.sink = SimpleNamespace(parents=torch.tensor([0]), manifest=lambda: {"edges": 1})
 
         @torch.no_grad()
         def compile_into(self, controller):
@@ -412,8 +412,54 @@ def test_alternating_driver_refreshes_sink_after_representation_and_exports_only
     assert torch.equal(exported["controller"]["edge_magnitude"], evaluated[-1])
     assert set(exported["controller"]) == set(actors[0].state_dict())
     assert not exported["auxiliary_head_is_deployed"]
+    assert exported["native_path_manifest"]["outcome_stage"]["edges"] == 1
+    assert "representation_stage" in exported["native_path_manifest"]
     assert exported["training_round"] == 2
     report = json.loads((args.output_dir / "report.json").read_text())
     assert report["status"] == "complete" and report["selected_round"] == 2
     assert report["policy_revision"] == 4 and not report["goal_verified"]
     assert report["rounds"][1]["outcome_seed"] == 25
+
+
+def test_completed_representation_row_cannot_acquire_ground_failure_from_padding(monkeypatch):
+    original_sampler = bearing.replay.sample_two_gate_cases
+
+    def sample(*a, **kwargs):
+        cases, _ = original_sampler(*a, **kwargs)
+        cases.state.position[:] = torch.tensor([0.0, 0.0, 1.0])
+        gate = AnnularGate(torch.tensor([[1.0, 0.0, 1.0]]).expand(4, -1), torch.zeros(4))
+        return cases, (gate,)
+
+    class Quad:
+        def __init__(self, config):
+            self.step = 0
+
+        def to(self, device):
+            return self
+
+        def __call__(self, rc, state, mass):
+            self.step += 1
+            position = state.position.clone()
+            position[0, 0] = 1.1  # Row zero completes the only gate in tick one.
+            if self.step > 1:
+                position[0, 2] = 0.01  # Synthetic inactive-row proposal, not a real flight tail.
+            return replace(state, position=position)
+
+    monkeypatch.setattr(bearing.replay, "sample_two_gate_cases", sample)
+    monkeypatch.setattr(bearing.replay, "DifferentiableQuad", Quad)
+    data = bearing.collect_bearing_bank(
+        TinyActor(),
+        TinyActor(),
+        torch.tensor([0]),
+        pairs=2,
+        seed=2,
+        kind="native",
+        camera=CameraSpec(32, 20, 125),
+        config=HoverConfig(),
+        gate_config=GateConfig(),
+        seconds=0.06,
+    )
+    assert data.replay.active[:, 0].tolist() == [True, False, False]
+    assert data.metrics["ground_contacts"] == 0 and data.metrics["failures"] == 0
+    assert data.metrics["clean_prefix_completions"] == 1
+    assert data.metrics["full_flight_success_is_not_assessed"]

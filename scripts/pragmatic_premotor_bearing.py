@@ -163,6 +163,9 @@ def collect_bearing_bank(
             raise FloatingPointError("nonfinite representation collection")
         for _ in range(2):
             live = ~tracker.failed & (current < len(gates))
+            # This collection stops at first failure/completion, unlike the PPO
+            # full-flight collector. Synthetic padding must not create events.
+            tracker.absorbed |= ~live
             rc, proposed_sticks = legs(motor, sticks)
             proposed = quad(rc, state, cases.mass_scale)
             events = replay.classify_course_step(

@@ -77,7 +77,15 @@ def main():
     original, _ = replay.load_controller(args, device)
     controller.eval().requires_grad_(False)
     original.eval().requires_grad_(False)
-    mask, nodes, manifest = representation.premotor_mask(args.graph, args.annotations, device)
+    mask, nodes, representation_manifest = representation.premotor_mask(
+        args.graph, args.annotations, device
+    )
+    manifest = dict(
+        representation_stage=representation_manifest,
+        outcome_stage=dict(scope="all existing roll-sink incoming edges; not yet constructed"),
+        total_plasticity="union of representation incoming mask and roll-sink incoming edges",
+        outgoing_freeze_applies_only_during_representation=True,
+    )
     config = replay.HoverConfig(**source["hover_config"])
     camera = replay.CameraSpec(*source["image_resolution"], source["camera_hfov_degrees"])
     gate_config = replace(replay.GateConfig(**source["gate_config"]), back_pattern="checkerboard")
@@ -265,6 +273,10 @@ def main():
 
             # New slice and fresh full-native cache AFTER upstream changes.
             sink = ppo.NativeRollSinkPolicy(controller)
+            manifest["outcome_stage"] = dict(
+                sink.sink.manifest(),
+                scope="all existing roll-sink incoming edges; upstream frozen in this phase",
+            )
             cases = replay.sample_two_gate_cases(
                 args.training_pairs,
                 seed=entry["outcome_seed"],

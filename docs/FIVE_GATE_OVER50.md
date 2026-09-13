@@ -4122,3 +4122,11 @@ produce actual flight evidence before any progress claim about completion rate.
 Full regression suite: **800 tests passed in 11.46 s**; Ruff and whitespace checks
 pass. Read-only host inspection found no previous training process alive and the
 RTX 5080 at **620 MiB / 1% utilization** before launch.
+
+Astra's launch review found two bookkeeping corrections, now applied: inactive
+representation rows stop event accounting before synthetic padded proposals can
+create failures, and checkpoint manifests distinguish representation-only outgoing
+freezing from the subsequent sink-PPO plasticity. The outcome collector's full-tail
+safety semantics are unchanged. The 800-test suite passed again in **11.70 s**;
+an additional regression covers a completed representation row followed by a
+synthetic ground proposal. Ten targeted representation/driver tests pass.
