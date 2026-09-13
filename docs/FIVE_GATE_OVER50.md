@@ -3450,3 +3450,52 @@ focused review found no launch blockers. The source scored **12/32** clean on
 the reused development set (**9 negative / 3 positive**), with **28/32** clean
 first gates, **101** clean-prefix gates, and **zero ground/invalid episodes**.
 This is the baseline for this run, not a new learned result or fresh validation.
+
+The first full-history eight-episode backward microbatch completed in **31.03 s**
+with **4,954 MiB** peak GPU reservation and no memory fallback. This makes the
+eight-episode batch practical; later microbatches also fit at the same reservation.
+
+Round one collected **4/32** clean noisy training flights (**3/1 by side**),
+63 clean-prefix gates and no ground/invalid episodes. Its full masked gradient
+norm was **830.38**. The `5e-5` proposal predicted **−5.236e-5** but improved
+measured loss by only **3.580e-6**, below its **5.236e-6** acceptance threshold.
+The half-target retry improved loss by only **6.401e-7**, below **5e-6**. Both
+passed trust bounds, but **neither was accepted**; parameters were restored and
+the second proposal was correctly skipped. Proposed parameter displacements
+were only **7.040e-8** and **3.486e-8 L2**, respectively. One fixed bank's local
+descent therefore does not guarantee useful steps across fresh course banks.
+
+The unchanged round-one actor again scored **12/32** on development (**9/3**,
+28 first gates, 100 clean-prefix gates, zero ground/invalid). It could not nominate
+a learned checkpoint. Round two then collected **5/32** clean noisy flights
+(**4/1**, 74 clean-prefix gates, zero ground/invalid) on its separately seeded
+courses; that is not a learning gain, because no update has yet been accepted.
+The declared pilot continues; do not conclude from this first rejection alone
+that full-history learning has failed.
+
+#### Retained design idea: faster abstract forelegs, separately labeled
+
+A read-only control-model review with Astra identifies an optional future **2×
+foreleg bandwidth** ablation, not a change to the running pilot. The present
+abstract gimbal reaches 90% of a small stick step in about 0.60 s. In
+`ForelegStickPlant`, scaling spring **25→100**, motor strength **100→400** and
+damping **8→16** preserves the equilibrium motor→joint→stick mapping and the
+linear damping ratio **0.8**, while doubling the ideal natural frequency. The
+discrete 100 Hz integrator and joint limits mean the response must be measured,
+not assumed to be an exact time-scaled copy.
+
+This would retain neural motor outputs → moving physical joints → measured stick
+positions, with no direct-control shortcut or new actor inputs/memory. It would
+nevertheless be a **different actuator benchmark**, explicitly labeled in any
+result; neither the original nor faster gimbal is identified fly biomechanics.
+The existing plant is demonstrably controllable by privileged roll assistance,
+so its slow response is a possible avoidable modeling burden, not a demonstrated
+cause of learning failure. Do not interrupt the corrected PPO pilot for it.
+
+If later useful, the smallest test compares the same frozen source on matched
+courses/initial equilibria under the original and faster plant, keeping geometry,
+quad dynamics, actor timing and sensors fixed. Use full-tail clean completion and
+safety scoring. Improvement establishes bandwidth sensitivity, **not easier
+learning**; deterioration may simply expose tuning to the original plant. No
+test seeds are reserved, no new job is launched, and no plant parameters have
+been changed for this idea.
