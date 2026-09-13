@@ -23,6 +23,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import train_pragmatic_course_replay as replay  # noqa: E402
+from pragmatic_box_natural import box_natural_actor_proposal  # noqa: E402
 from pragmatic_policy_optimization import (  # noqa: E402
     OutcomeCritic,
     actor_proposal,
@@ -61,10 +62,12 @@ def parse_args():
     parser.add_argument("--microbatch", type=int, default=4)
     parser.add_argument("--chunk-steps", type=int, default=20)
     parser.add_argument("--learning-rate", type=float, default=1e-6)
-    parser.add_argument("--actor-update", choices=("adam", "steepest", "natural"), default="adam")
+    parser.add_argument("--actor-update", choices=("adam", "steepest", "natural", "box-natural"),
+                        default="adam")
     parser.add_argument("--full-history", action="store_true",
                         help="Differentiate warmup and all recurrent history; checkpoint chunks.")
-    parser.add_argument("--predicted-decrease", type=float, default=5e-5)
+    parser.add_argument("--predicted-decrease", type=float, default=5e-5,
+                        help="Loss target for steepest/natural; unused by KL-budgeted box-natural.")
     parser.add_argument("--actor-scope", choices=("full", "roll-sinks"), default="full")
     parser.add_argument("--failure-aware-advantages", action="store_true",
                         help="Zero-baseline uncentered safety returns on already-failed tails.")
@@ -78,11 +81,13 @@ def main():
         raise SystemExit("positive sizes and learning rate required")
     if not math.isfinite(args.predicted_decrease) or args.predicted_decrease <= 0:
         raise SystemExit("finite positive predicted decrease required")
-    if args.actor_update in ("steepest", "natural") and not args.full_history:
-        raise SystemExit("steepest/natural updates require --full-history")
-    if args.actor_scope == "roll-sinks" and args.actor_update not in ("steepest", "natural"):
-        raise SystemExit("roll-sinks requires --actor-update steepest/natural --full-history")
-    if args.actor_update == "natural" and args.actor_scope != "roll-sinks":
+    if args.actor_update in ("steepest", "natural", "box-natural") and not args.full_history:
+        raise SystemExit("steepest/natural/box-natural updates require --full-history")
+    if args.actor_scope == "roll-sinks" and args.actor_update not in (
+        "steepest", "natural", "box-natural",
+    ):
+        raise SystemExit("roll-sinks requires steepest/natural/box-natural and --full-history")
+    if args.actor_update in ("natural", "box-natural") and args.actor_scope != "roll-sinks":
         raise SystemExit("natural updates require --actor-scope roll-sinks")
     if args.development_seed in range(args.seed, args.seed + args.rounds):
         raise SystemExit("training and development seeds must differ")
@@ -122,6 +127,7 @@ def main():
                   actor_update=args.actor_update, full_history=args.full_history,
                   actor_scope=args.actor_scope,
                   failure_aware_advantages=args.failure_aware_advantages,
+                  local_kl_budget=.002 if args.actor_update == "box-natural" else None,
                   effective_microbatch=args.microbatch, oom_fallbacks=0,
                   selected_round=0, accepted_steps=0, policy_revision=0,
                   rounds=[], goal_verified=False)
@@ -236,7 +242,9 @@ def main():
                 proposed_at = perf_counter()
                 if device.type == "cuda":
                     torch.cuda.reset_peak_memory_stats(device)
-                if args.actor_update == "natural":
+                if args.actor_update == "box-natural":
+                    stats = box_natural_actor_proposal(sink, data, mask, replay_fn)
+                elif args.actor_update == "natural":
                     stats = natural_sink_actor_proposal(
                         sink, data, mask, replay_fn, predicted_decrease=args.predicted_decrease,
                     )

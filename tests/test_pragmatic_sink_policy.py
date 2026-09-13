@@ -168,7 +168,7 @@ def test_sink_mode_refuses_adam_before_loading_controller(monkeypatch, tmp_path)
 
 
 @pytest.mark.parametrize("development_every", [1, 2, 4])
-@pytest.mark.parametrize("actor_update", ["steepest", "natural"])
+@pytest.mark.parametrize("actor_update", ["steepest", "natural", "box-natural"])
 @pytest.mark.parametrize("failure_aware", [False, True])
 def test_sink_pilot_compiles_before_fresh_collection_and_assessment(
     monkeypatch, tmp_path, development_every, actor_update, failure_aware,
@@ -260,6 +260,9 @@ def test_sink_pilot_compiles_before_fresh_collection_and_assessment(
     monkeypatch.setattr(driver, "fit_critic", lambda *a, **kw: {})
     monkeypatch.setattr(driver, "steepest_actor_proposal", proposal)
     monkeypatch.setattr(driver, "natural_sink_actor_proposal",
+                        lambda actor, data, mask, replay_fn, **kw:
+                        proposal(actor, mask, replay_fn, **kw))
+    monkeypatch.setattr(driver, "box_natural_actor_proposal",
                         lambda actor, data, mask, replay_fn, **kw:
                         proposal(actor, mask, replay_fn, **kw))
     monkeypatch.setattr(driver, "verify_compiled_sink_policy", verify)

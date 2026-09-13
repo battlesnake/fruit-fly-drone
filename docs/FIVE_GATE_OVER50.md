@@ -3890,3 +3890,81 @@ aira confine --memory-reserve 8G -- .venv/bin/python scripts/train_pragmatic_cou
   --training-pairs 16 --development-pairs 16 \
   --seed 2026091560 --noise-seed 2026091570 --development-seed 1110983
 ```
+
+#### Failure-aware replacement complete: no meaningful native gain
+
+`pragmatic-course-ppo-failure-aware-002` completed normally in **234.54 s**,
+accepting **54** updates (16/23/15). Source development was **11/32 (8/3),
+prefix 99**. Native rounds scored **12/32 (9/3), prefix 94**;
+**11/32 (8/3), prefix 95**; and **9/32 (6/3), prefix 89**. Every training and
+native assessment had zero ground/invalid episodes. Round one is only an
+exploratory **+1/32** selection, not the required meaningful nominee; no fresh
+goal validation or promotion is warranted. The globally retained source stays.
+
+The fresh noisy training banks scored **4/32 (3/1), 6/32 (3/3), 6/32 (5/1)**.
+Already-failed zero-return tails contained **22,508 / 20,713 / 20,301** of each
+bank's 48,000 commands. Their squared advantages fell **1992.82 / 6625.39 /
+4834.52 → 0** without changing healthy-command credit, returns or safety scoring.
+Final accepted surrogate improvements were **.000769 / .001046 / .000704**,
+with mean KL **.000399 / .000624 / .000381** and roll-mean shifts only
+**.0297 / .0350 / .0383σ**. Thus the credit change works computationally but
+has not demonstrated improved flight. The >50% objective remains unmet.
+
+#### Final optimizer-only comparison: box-feasible, KL-budgeted native updates
+
+Astra recommends **one final optimizer intervention**, then a clear switch to
+task-relevant upstream representation learning if it does not nominate a native
+improvement. Current within-round shifts below .06σ are below .00036 native
+roll-motor units; they do not show that substantial reward-directed changes have
+exhausted the fixed parent features. They are not cumulative source-to-final
+displacements. Do not continue an indefinite sequence of tiny-step pilots.
+
+Implement opt-in `--actor-update box-natural`, still restricted to roll sinks and
+full history. Build the same current-weight FP32 empirical Fisher and damping
+`H = F + .01*mean(diag(F))*I`. From `d = -solve(H,g)`, choose
+`k = sqrt(.002 / (.5*d'F*d))` and solve the training-only box quadratic
+`min .5*delta'H*delta + k*g'delta`, subject to `-w <= delta <= 8-w`.
+An active-set Newton solve starts at zero, stops at bounds, and releases bounds
+whose multiplier signs become wrong. It retains its best feasible model-decreasing
+iterate under a **128-iteration cap**; a capped answer is reported approximate,
+not as a converged KKT solution. Nonfinite values/failed solves remain errors;
+finite lack of useful feasible descent stops a round normally.
+
+Materialize native magnitudes in FP32 and measure the actual displacement. Scale
+down if its local predicted mean KL exceeds **.002**, then test the fixed
+**1, 1/2, …, 1/128** ladder from the same base. Recheck raw-gradient contraction
+after rounding; retain the existing measured surrogate decrease, behavior-relative
+KL and per-axis mean-shift ceilings. This replaces the arbitrary **5e-5 loss
+target**, not safety checks. Local predicted KL is not cumulative round KL, and
+this approximate update is not claimed to be an exact TRPO solution.
+
+Keep failure-aware advantages, the retained source, all 726 existing magnitudes,
+critic, sensors, full-connectome inference and physical plant unchanged. Run
+**3 fresh rounds × 32 episodes**, with at most **8 updates per round**, and native
+development each round. Reserve course **2026091580–2026091582** and noise
+**2026091590–2026091592**; development stays selection-only seed 1110983.
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/train_pragmatic_course_ppo.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output-dir runs/gate/pragmatic-course-ppo-box-natural-001 \
+  --actor-scope roll-sinks --actor-update box-natural --full-history \
+  --failure-aware-advantages --rounds 3 --proposals 8 \
+  --training-pairs 16 --development-pairs 16 \
+  --seed 2026091580 --noise-seed 2026091590 --development-seed 1110983
+```
+
+A meaningful safe development nominee goes to the original fresh >50% validation.
+Otherwise **stop optimizer-only work after this comparison**. If movement and
+surrogate improvement are substantial but flight is still flat, move upstream;
+if movement is still negligible, record unresolved conditioning rather than
+claiming insufficient features, but make the same switch in learning focus.
+
+All **791 tests pass** (11.39 s). New coverage compares tiny bound-constrained
+quadratics against independent face enumeration, checks interior solutions and
+release of a wrongly active bound, demonstrates feasible descent where clipping
+loses it, verifies iteration-cap reporting and transactional backtracking, and
+exercises actual native recurrence plus compiled-only export through the driver.
+Ruff and whitespace checks pass. Astra's focused implementation review found
+**no launch blockers** for the bounded run; no additional solver certification
+or separate GPU diagnostic is required before trying actual learning.
