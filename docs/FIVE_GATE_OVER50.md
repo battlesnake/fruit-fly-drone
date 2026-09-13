@@ -3222,3 +3222,46 @@ TBPTT is responsible: finite-step curvature, the materialized optimizer directio
 and replay variability must be separated. It does prioritize the bounded
 directional test described above over extending this configuration, changing
 anatomy or adding denser rewards. No pilot GPU process remains running.
+
+#### Fixed-rollout update-direction diagnostic
+
+The next bounded diagnostic is `scripts/audit_pragmatic_policy_direction.py`.
+Collect **eight complete 30-second training flights** (four mirrored pairs),
+course seed **2026091420**, noise seed **2026091421**, from the globally retained
+phase-balanced source. Use the selected AR exploration and globally normalized
+zero-baseline Monte Carlo advantages, with no new critic fitting. This is a new
+diagnostic direction, not an exact reconstruction of a previous pilot proposal.
+
+Compute one whole-bank 20-frame TBPTT gradient in four-episode microbatches.
+Save its **raw masked gradient before clipping**, then materialize one fresh-Adam
+1e-6 step using the existing norm-1 clipping and [0,8] magnitude bounds. Freeze
+that direction; do not recompute it at each scale or use inherited momentum.
+Evaluate the fixed-data full-history surrogate at scales
+**[0, 0, 1, .5, .25, .125, -.125, 0]**, restarting from source parameters and
+current-weight neural history for every trial. Predictions use the actual
+FP32-rounded, projected displacement at each scale. The negative step is a
+separate probe, not assumed to be an exactly symmetric finite difference.
+
+Compare **absolute** loss changes against the raw-gradient prediction. Three
+zero-step losses provide an ordinary replay-variability range; use
+`max(5 * zero_step_range, 1e-6)` as a coarse interpretation tolerance. Report
+resolved increases/decreases without automatically attributing them to TBPTT
+or selecting a controller. All temporary source changes are restored even on
+failure. Plain tensor/primitive rollout, advantages, raw gradient, materialized
+Adam displacement and mask are retained locally for a longer-gradient comparison;
+there is no deployed controller export, development selection or fresh goal test.
+
+Planned command:
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/audit_pragmatic_policy_direction.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output-dir runs/gate/pragmatic-policy-direction-001 \
+  --seed 2026091420 --noise-seed 2026091421
+```
+
+All **681 tests pass**, including masked/rounded/projected scaling, interpretation
+of loss changes versus repeat variability, non-descent optimizer directions,
+source restoration on success and replay failure, and weights-only-readable
+archives. Ruff/whitespace checks pass; Astra's implementation review found no
+launch blocker.
