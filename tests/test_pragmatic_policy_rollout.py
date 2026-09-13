@@ -103,6 +103,20 @@ def test_critic_features_precede_innovation_and_replay_rows_keep_sensor_interfac
     assert image.shape == (1, 3, 20, 32) and attitude.shape == (1, 2)
 
 
+def test_sink_cache_includes_warmup_and_records_presynaptic_activity_before_each_tick(monkeypatch):
+    cases, gates, options = setup_case(monkeypatch)
+    actor = StubActor()
+    data = collection.collect_policy_rollout(
+        actor, cases, gates, record_sink_parents=torch.tensor([0]), **options,
+    )
+    assert actor.calls == 6
+    assert data.sink_features.shape == (6, 2, 1)
+    assert torch.allclose(data.sink_features[:, 0, 0], torch.tanh(torch.arange(6)*.01))
+    selected = data.select([1], torch.device("cpu"))
+    assert torch.equal(selected.sink_features[:, 0], data.sink_features[:, 1])
+    assert selected.sink_parent_nodes.tolist() == [0]
+
+
 def test_collected_unsquashed_densities_replay_with_correct_joint_policy_gradient(monkeypatch):
     cases, gates, options = setup_case(monkeypatch)
     actor = StubActor()

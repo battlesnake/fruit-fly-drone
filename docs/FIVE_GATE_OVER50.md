@@ -3499,3 +3499,96 @@ safety scoring. Improvement establishes bandwidth sensitivity, **not easier
 learning**; deterioration may simply expose tuning to the original plant. No
 test seeds are reserved, no new job is launched, and no plant parameters have
 been changed for this idea.
+
+#### Corrected full-network pilot completes without a meaningful nominee
+
+`pragmatic-course-ppo-steepest-001` completed normally in **1,092.25 s**. It
+accepted only **one of four** proposed updates (round 2, proposal 1). That update
+predicted loss change **−4.513e-5** and measured **−1.160e-5**, passing the
+descent/trust checks. However, its parameter displacement was only **5.765e-9 L2**
+across 4,459 edges, and its four action-mean displacements were only about
+**.00073–.00143 exploration standard deviations**. Its raw full gradient norm
+was **14,142.48**. Neither parameter norm alone nor a small surrogate decrease
+establishes useful behavioral learning.
+
+| Stage | Clean native courses | Negative / positive | Clean-prefix gates |
+| --- | ---: | ---: | ---: |
+| Source | 12/32 | 9 / 3 | 101 |
+| Round 1, no accepted update | 12/32 | 9 / 3 | 100 |
+| Round 2, one accepted update | 12/32 | 9 / 3 | 100 |
+| Round 3, same weights as round 2 | 13/32 | 9 / 4 | 102 |
+
+Every native check kept **28/32 clean first gates** and **zero ground/invalid**
+episodes. The round-three reevaluation was an unchanged policy revision and
+correctly could not nominate a new learned checkpoint. Round-two proposal 2
+(gradient norm 22,363.25) and round-three proposal 1 (152.42) both failed the
+descent check at both sizes. The final noisy training bank scored **4/32**
+(4 negative / 0 positive), 81 clean-prefix gates and zero ground/invalid episodes.
+Across all three rounds, differences between independently sampled noisy banks
+are not a training trend. No checkpoint is promoted, no fresh goal holdout was
+consumed, and the original source remains retained.
+
+This is limited policy movement with no meaningful native gain, **not proof that
+full-network reinforcement learning cannot work**. Astra recommends a practical
+conditioning comparison before more whole-network tiny-step training: outcome
+PPO restricted to existing roll motor-sink inputs. This changes both conditioning
+and the available policy class, so it is not a clean isolation of either cause.
+
+#### Next bounded learning pilot: reward-based native motor-sink PPO
+
+`--actor-scope roll-sinks` trains **all 726 existing incoming synapses** of the
+six native roll motor neurons. These cells have no outgoing neural edges and
+no direct sensory injection. Their 363 presynaptic neurons and the rest of the
+full brain remain frozen. Fixed signs, nonnegative magnitudes, biases, time
+constants, camera, relative gate colors, forelegs and quad dynamics stay as before.
+This is **not** another teacher-action imitation fit: earlier sink imitation
+failed, but that does not settle learning from actual course outcomes.
+
+Each ordinary full-brain training flight records parent activity **before** every
+neural tick, including all ten warmup ticks. The cache is valid only for that
+fixed sensory history while ancestors stay frozen. New collections always run
+the full compiled controller and record fresh histories; the cache never enters
+deployed inference. Direct motor recurrence runs through every recorded tick,
+without the old motor-slice convolution's tiny-tail truncation. All four AR
+conditional action means are used; the three non-roll means are unchanged on
+fixed observations by the disjoint sink structure, not by a deployed bypass.
+
+Before each round, source-mean reconstruction must agree within `1e-5` latent
+units. After the first accepted update, replay one complete training pair through
+the ordinary compiled full controller and compare all four action means against
+the training slice. Report RMS/max errors; stop if RMS exceeds 10% of exploration
+sigma. This tolerates ordinary FP32 full-network accumulation differences, not a
+materially different controller. Independent CPU tests compare the values and
+PPO gradients against an independently implemented full sparse recurrent network.
+
+The pilot starts from the retained source, with **three fresh 32-flight rounds**,
+course seeds **2026091460–2026091462**, noise seeds **2026091470–2026091472** and
+reused development seed **1110983**. Keep the same outcome rewards, privileged
+training-only critic, AR exploration and full-history projected-steepest update.
+Allow **up to eight updates per round**, stopping on exhausted half-target retry
+or the existing KL stop; this is a cap, not eight mandatory steps. Each update
+targets `5e-5` predicted decrease, with one `2.5e-5` retry and the same measured
+descent requirement. Keep latest accepted training weights, compile before every
+new collection and native evaluation, and select exports by native flight scores.
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/train_pragmatic_course_ppo.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output-dir runs/gate/pragmatic-course-ppo-sinks-001 \
+  --actor-scope roll-sinks --actor-update steepest --full-history \
+  --predicted-decrease 5e-5 --rounds 3 --proposals 8 \
+  --training-pairs 16 --development-pairs 16 \
+  --seed 2026091460 --noise-seed 2026091470 --development-seed 1110983
+```
+
+All **724 tests pass** (9.60 s), including cache timing/whole-history selection,
+direct recurrent gradient parity, invalid-cache rejection, compiled-controller
+comparison and detection of non-roll parameter changes, compile-before-collection
+and evaluation, and native-only checkpoint export. Ruff and whitespace checks
+pass. A meaningful development nominee (at least four additional clean flights,
+zero ground/invalid) goes to the existing fresh-validation path; a surrogate-only
+improvement does not establish five-gate success or satisfy the >50% goal.
+
+Astra's focused implementation review found **no launch blockers**: the pre-tick
+cache/warmup timing, direct recurrence, AR previous-mean gradients, sink-structure
+constraints, compilation before fresh flights and native-only exports are intact.

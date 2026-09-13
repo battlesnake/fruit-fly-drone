@@ -64,8 +64,8 @@ class SinkMotorSlice(nn.Module):
         kernel = (1 - decay[:, None]) * decay[:, None].pow(powers[None])
         self.register_buffer("kernel", kernel.flip(1)[:, None])
 
-    def forward(self, features):
-        """Return native motor drive for (time, episode, parent) source activities."""
+    def targets(self, features):
+        """Synaptic drive from existing incoming edges and fixed motor biases."""
         magnitudes = self.source_magnitudes.index_copy(0, self.train_slots, self.magnitudes)
         matrix = (
             features.new_zeros(self.motor_count * len(self.parents))
@@ -73,7 +73,11 @@ class SinkMotorSlice(nn.Module):
             .reshape(self.motor_count, len(self.parents))
         )
         drive = F.linear(features, matrix, self.bias)
-        target = 5 * torch.tanh(drive / 5)
+        return 5 * torch.tanh(drive / 5)
+
+    def forward(self, features):
+        """Return native motor drive using the tiny-tail convolution approximation."""
+        target = self.targets(features)
         states = F.conv1d(
             target.permute(1, 2, 0),
             self.kernel,
@@ -84,6 +88,23 @@ class SinkMotorSlice(nn.Module):
         return rates[..., : self.positive_count].mean(-1) - rates[..., self.positive_count :].mean(
             -1
         )
+
+    def forward_recurrent(self, features):
+        """All six-cell time steps from zero, including supplied warmup features.
+
+        This uses the full controller's membrane update without a truncated filter
+        tail or detached boundaries. Features are activities BEFORE each brain tick.
+        """
+        target = self.targets(features)
+        state = target.new_zeros(target.shape[1:])
+        states = []
+        alpha = 1 - self.decay
+        for frame in target:
+            state = state + alpha * (frame - state)
+            states.append(state)
+        rates = torch.sigmoid(torch.stack(states))
+        return (rates[..., :self.positive_count].mean(-1)
+                - rates[..., self.positive_count:].mean(-1))
 
     @torch.no_grad()
     def project_parameters(self):

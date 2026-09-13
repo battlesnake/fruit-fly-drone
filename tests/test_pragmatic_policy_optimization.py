@@ -165,7 +165,7 @@ def test_pilot_selects_only_changed_accepted_policy(
                            development_seed=30, rounds=1, proposals=1, training_pairs=1,
                            development_pairs=16, microbatch=8, chunk_steps=2, learning_rate=1e-6,
                            actor_update=actor_update, full_history=actor_update == "steepest",
-                           predicted_decrease=5e-5)
+                           predicted_decrease=5e-5, actor_scope="full")
     source = dict(hover_config=vars(HoverConfig()), gate_config=vars(GateConfig()),
                   image_resolution=[32, 20], camera_hfov_degrees=125)
     base = dict(clean_course_success_rate=.25, clean_course_negative_success_rate=.3,

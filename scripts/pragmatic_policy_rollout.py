@@ -101,6 +101,8 @@ class PolicyRollout:
     rho: float
     warmup_steps: int
     metrics: dict
+    sink_features: torch.Tensor | None = None  # Includes neural warmup, then every command.
+    sink_parent_nodes: torch.Tensor | None = None
 
     def select(self, rows, device):
         rows = torch.as_tensor(rows, device=self.valid.device, dtype=torch.long)
@@ -112,6 +114,9 @@ class PolicyRollout:
         )}
         return replace(
             self, states=tuple(take(value) for value in self.states),
+            sink_features=take(self.sink_features) if self.sink_features is not None else None,
+            sink_parent_nodes=(self.sink_parent_nodes.to(device)
+                               if self.sink_parent_nodes is not None else None),
             gates=tuple(AnnularGate(g.center.index_select(0, rows).to(device),
                                    g.yaw.index_select(0, rows).to(device)) for g in self.gates),
             metrics={"scope": "selected replay rows, not original bank metrics"}, **fields,
@@ -127,7 +132,8 @@ class PolicyRollout:
 @torch.no_grad()
 def collect_policy_rollout(controller, cases, gates, *, camera, config, gate_config,
                            stationary_std=(0.006, 0.002, 0.001, 0.0025),
-                           tau=0.6, noise_seed=1, seconds=30, warmup_steps=10):
+                           tau=0.6, noise_seed=1, seconds=30, warmup_steps=10,
+                           record_sink_parents=None):
     """Collect from zero neural state; fixed weights, complete clean-flight tails.
 
 stationary_std=None is a deterministic diagnostic, not data for Gaussian-policy
@@ -144,6 +150,17 @@ valid. Ring/order failures continue, so later ground penalties are not erased.
     state = QuadState(*(value.clone() for value in cases.state.as_tuple()))
     sticks = StickState(*(value.clone() for value in stick_values(cases.sticks)))
     neural = controller.initial_state(count, device=device, dtype=state.position.dtype)
+    sink_features = []
+    if record_sink_parents is not None:
+        record_sink_parents = record_sink_parents.to(device=device)
+        if (record_sink_parents.ndim != 1 or record_sink_parents.dtype != torch.long
+                or not len(record_sink_parents) or int(record_sink_parents.min()) < 0
+                or int(record_sink_parents.max()) >= neural.shape[1]):
+            raise ValueError("invalid sink parent neuron indices")
+
+    def record_parents():
+        if record_sink_parents is not None:
+            sink_features.append(torch.tanh(neural[:, record_sink_parents]).clone())
     current = torch.zeros(count, device=device, dtype=torch.long)
     tracker = CourseRewardTracker(count, len(gates), device)
     quad, legs = DifferentiableQuad(config).to(device), ForelegStickPlant(config).to(device)
@@ -152,6 +169,7 @@ valid. Ring/order failures continue, so later ground penalties are not erased.
     initial_image = render_annular_gates_rgb(state, gates, current_gate_index=current,
                                              camera=camera, gate_config=gate_config)
     for _ in range(warmup_steps):
+        record_parents()
         _, neural = controller(initial_image, state.euler[:, :2], neural)
     previous_mean = previous_latent = None
     histories = [[] for _ in state.as_tuple()]
@@ -163,6 +181,7 @@ valid. Ring/order failures continue, so later ground penalties are not erased.
         valid.append((~tracker.absorbed).clone())
         image = render_annular_gates_rgb(state, gates, current_gate_index=current,
                                          camera=camera, gate_config=gate_config)
+        record_parents()
         native, neural = controller(image, state.euler[:, :2], neural)
         mean = torch.atanh(native.clamp(-0.999999, 0.999999))
         if not bool(mean.isfinite().all() & neural.isfinite().all()):
@@ -230,6 +249,9 @@ valid. Ring/order failures continue, so later ground penalties are not erased.
         current=torch.stack(roles).cpu(), latents=torch.stack(latents).cpu(),
         old_means=torch.stack(means).cpu(), old_log_prob=torch.stack(log_probs).cpu(),
         rewards=reward_tensor.cpu(), returns=reward_to_go(reward_tensor, valid_tensor).cpu(),
+        sink_features=torch.stack(sink_features).cpu() if sink_features else None,
+        sink_parent_nodes=(record_sink_parents.cpu()
+                           if record_sink_parents is not None else None),
         valid=valid_tensor.cpu(), critic_features=torch.stack(features).cpu(),
         stationary_std=None if stationary_std is None else tuple(stationary_std),
         rho=rho, warmup_steps=warmup_steps, metrics=metrics,

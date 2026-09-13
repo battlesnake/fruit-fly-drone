@@ -34,6 +34,12 @@ from pragmatic_policy_optimization import (  # noqa: E402
     steepest_actor_proposal,
 )
 from pragmatic_policy_rollout import collect_policy_rollout  # noqa: E402
+from pragmatic_sink_policy import (  # noqa: E402
+    NativeRollSinkPolicy,
+    replay_sink_policy_gradient,
+    verify_compiled_sink_policy,
+    verify_sink_recording,
+)
 
 
 def parse_args():
@@ -57,6 +63,7 @@ def parse_args():
     parser.add_argument("--full-history", action="store_true",
                         help="Differentiate warmup and all recurrent history; checkpoint chunks.")
     parser.add_argument("--predicted-decrease", type=float, default=5e-5)
+    parser.add_argument("--actor-scope", choices=("full", "roll-sinks"), default="full")
     return parser.parse_args()
 
 
@@ -69,6 +76,8 @@ def main():
         raise SystemExit("finite positive predicted decrease required")
     if args.actor_update == "steepest" and not args.full_history:
         raise SystemExit("steepest updates require --full-history")
+    if args.actor_scope == "roll-sinks" and args.actor_update != "steepest":
+        raise SystemExit("roll-sinks requires --actor-update steepest --full-history")
     if args.development_seed in range(args.seed, args.seed + args.rounds):
         raise SystemExit("training and development seeds must differ")
     if args.output_dir.exists():
@@ -76,8 +85,15 @@ def main():
     device = torch.device(args.device)
     controller, source = replay.load_controller(args, device)
     controller.eval().requires_grad_(False)
-    controller.edge_magnitude.requires_grad_(True)
-    mask, manifest = replay.roll_preservation_mask(args.graph, device, hop_budget=7)
+    sink = NativeRollSinkPolicy(controller) if args.actor_scope == "roll-sinks" else None
+    actor = sink if sink is not None else controller
+    if sink is None:
+        controller.edge_magnitude.requires_grad_(True)
+        mask, manifest = replay.roll_preservation_mask(args.graph, device, hop_budget=7)
+    else:
+        mask = torch.ones_like(sink.edge_magnitude, dtype=torch.bool)
+        manifest = dict(sink.sink.manifest(), scope="all existing roll-sink incoming edges",
+                        recurrent_motor_update="direct, no filter-tail truncation")
     manifest["supervision"] = "joint correlated-action outcome PPO; no teacher"
     optimizer = (torch.optim.Adam([controller.edge_magnitude], lr=args.learning_rate)
                  if args.actor_update == "adam" else None)
@@ -98,6 +114,7 @@ def main():
                   actor_memory="existing connectome recurrence only",
                   critic_is_training_only=True, exploration_is_training_only=True,
                   actor_update=args.actor_update, full_history=args.full_history,
+                  actor_scope=args.actor_scope,
                   effective_microbatch=args.microbatch, oom_fallbacks=0,
                   selected_round=0, accepted_steps=0, policy_revision=0,
                   rounds=[], goal_verified=False)
@@ -110,6 +127,8 @@ def main():
         print(json.dumps(dict(elapsed_seconds=perf_counter() - started, **event)), flush=True)
 
     def assess():
+        if sink is not None:
+            sink.compile_into(controller)
         return replay.evaluate(controller, *development, seconds=30, warmup_steps=10,
                                camera=camera, hover_config=config, gate_config=gate_config)
 
@@ -123,7 +142,8 @@ def main():
                        teacher_config=None, roll_teacher=None, preservation_source_checkpoint=None,
                        parent_checkpoint=str(args.checkpoint),
                        critic_is_training_only=True, exploration_is_training_only=True)
-        payload.update(actor_update=args.actor_update, full_history=args.full_history)
+        payload.update(actor_update=args.actor_update, full_history=args.full_history,
+                       actor_scope=args.actor_scope)
         torch.save(payload, args.output_dir / name)
 
     report()
@@ -146,8 +166,11 @@ def main():
                 hover_config=config, **replay.GEOMETRY,
             )
             collected_at = perf_counter()
+            if sink is not None:
+                sink.compile_into(controller)
             data = collect_policy_rollout(controller, *bank, camera=camera, config=config,
-                                           gate_config=gate_config, noise_seed=entry["noise_seed"])
+                                           gate_config=gate_config, noise_seed=entry["noise_seed"],
+                                           record_sink_parents=sink.sink.parents if sink else None)
             entry.update(collection=data.metrics,
                          collection_wall_seconds=perf_counter()-collected_at)
             if critic is None:
@@ -163,8 +186,15 @@ def main():
             entry.update(stationary_std=data.stationary_std, rho=data.rho)
             report()
             progress(dict(stage="collection-complete", round=round_number, metrics=data.metrics))
+            if sink is not None:
+                data = data.select(range(data.valid.shape[1]), device)
+                advantages = advantages.to(device)
+                entry["sink_recording_check"] = verify_sink_recording(sink, data)
+                report()
 
             def replay_fn(backward, data=data, advantages=advantages):
+                if sink is not None:
+                    return replay_sink_policy_gradient(sink, data, advantages, backward=backward)
                 try:
                     return replay_round(controller, data, advantages, camera=camera,
                                         gate_config=gate_config,
@@ -196,7 +226,7 @@ def main():
                     torch.cuda.reset_peak_memory_stats(device)
                 if args.actor_update == "steepest":
                     stats = steepest_actor_proposal(
-                        controller, mask, replay_fn, data.stationary_std,
+                        actor, mask, replay_fn, data.stationary_std,
                         predicted_decrease=args.predicted_decrease,
                     )
                 else:
@@ -207,6 +237,11 @@ def main():
                 result["accepted_steps"] += int(stats["accepted"])
                 result["policy_revision"] += int(
                     stats["accepted"] and stats["proposed_edge_delta_l2"] > 0)
+                if sink is not None and stats["accepted"] and "sink_compile_check" not in result:
+                    sink.compile_into(controller)
+                    result["sink_compile_check"] = verify_compiled_sink_policy(
+                        controller, sink, data, camera=camera, gate_config=gate_config,
+                    )
                 report()
                 progress(dict(stage="proposal-complete", round=round_number, **stats))
                 if stats["stop_round"]:
