@@ -34,6 +34,7 @@ from pragmatic_policy_optimization import (  # noqa: E402
     steepest_actor_proposal,
 )
 from pragmatic_policy_rollout import collect_policy_rollout  # noqa: E402
+from pragmatic_sink_fisher import natural_sink_actor_proposal  # noqa: E402
 from pragmatic_sink_policy import (  # noqa: E402
     NativeRollSinkPolicy,
     replay_sink_policy_gradient,
@@ -60,7 +61,7 @@ def parse_args():
     parser.add_argument("--microbatch", type=int, default=4)
     parser.add_argument("--chunk-steps", type=int, default=20)
     parser.add_argument("--learning-rate", type=float, default=1e-6)
-    parser.add_argument("--actor-update", choices=("adam", "steepest"), default="adam")
+    parser.add_argument("--actor-update", choices=("adam", "steepest", "natural"), default="adam")
     parser.add_argument("--full-history", action="store_true",
                         help="Differentiate warmup and all recurrent history; checkpoint chunks.")
     parser.add_argument("--predicted-decrease", type=float, default=5e-5)
@@ -75,10 +76,12 @@ def main():
         raise SystemExit("positive sizes and learning rate required")
     if not math.isfinite(args.predicted_decrease) or args.predicted_decrease <= 0:
         raise SystemExit("finite positive predicted decrease required")
-    if args.actor_update == "steepest" and not args.full_history:
-        raise SystemExit("steepest updates require --full-history")
-    if args.actor_scope == "roll-sinks" and args.actor_update != "steepest":
-        raise SystemExit("roll-sinks requires --actor-update steepest --full-history")
+    if args.actor_update in ("steepest", "natural") and not args.full_history:
+        raise SystemExit("steepest/natural updates require --full-history")
+    if args.actor_scope == "roll-sinks" and args.actor_update not in ("steepest", "natural"):
+        raise SystemExit("roll-sinks requires --actor-update steepest/natural --full-history")
+    if args.actor_update == "natural" and args.actor_scope != "roll-sinks":
+        raise SystemExit("natural updates require --actor-scope roll-sinks")
     if args.development_seed in range(args.seed, args.seed + args.rounds):
         raise SystemExit("training and development seeds must differ")
     if args.output_dir.exists():
@@ -228,7 +231,11 @@ def main():
                 proposed_at = perf_counter()
                 if device.type == "cuda":
                     torch.cuda.reset_peak_memory_stats(device)
-                if args.actor_update == "steepest":
+                if args.actor_update == "natural":
+                    stats = natural_sink_actor_proposal(
+                        sink, data, mask, replay_fn, predicted_decrease=args.predicted_decrease,
+                    )
+                elif args.actor_update == "steepest":
                     stats = steepest_actor_proposal(
                         actor, mask, replay_fn, data.stationary_std,
                         predicted_decrease=args.predicted_decrease,

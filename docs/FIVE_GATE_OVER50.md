@@ -3667,3 +3667,78 @@ movement. The direct motor recurrence permits a training-only mean Jacobian;
 the AR conditional uses `J[t] - rho * J[t-1]` (and `J[0]` at episode start).
 This is not implemented or a launched side experiment. Current evidence does
 not yet show it is needed; the next action is the larger learning run above.
+
+#### Longer sink run: budget increase did not improve native flight
+
+`pragmatic-course-ppo-sinks-002`, launched from **c67d83a**, completed normally
+in **547.58 s**. It accepted **125/137** proposals across 384 fresh training
+episodes. Accepted updates per round were **9, 8, 6, 12, 8, 26, 7, 11, 3, 9,
+13, 13**: every round exhausted actual-descent backtracking before the 32-update
+cap. Final accepted mean KL ranged **.000273–.000468**, far below the .005
+stop threshold; roll-mean movement ranged **.00717–.09695σ** per training bank.
+
+| Native development | Clean / 32 | Negative / positive | Clean-prefix gates |
+| --- | ---: | ---: | ---: |
+| Source | 11 | 8 / 3 | 100 |
+| Round 4 | 9 | 7 / 2 | 92 |
+| Round 8 | 8 | 6 / 2 | 95 |
+| Round 12 | 8 | 7 / 1 | 90 |
+
+All 384 training flights and all native assessments had **zero ground/invalid**
+episodes. No trained checkpoint beat the source on development; no nominee or
+fresh goal validation is warranted. This is evidence against simply extending
+the same small projected-steepest updates, not proof that outcome learning or
+the frozen parent features cannot work. The >50% goal remains unmet.
+
+#### Next bounded learning comparison: conditional Fisher direction
+
+Implement `--actor-update natural --actor-scope roll-sinks --full-history`.
+The policy and plant remain unchanged. Only the **726 existing incoming roll
+motor magnitudes** are trainable; the full connectome still processes raw RGB
+and roll/pitch in every fresh flight and all inference exports. No optimizer,
+Jacobian, critic, parent cache, exploration state or added decoder is deployed.
+
+The training calculation differentiates each motor membrane through all frames,
+including warmup, to obtain the native latent roll-mean Jacobian `J[t]`. The
+conditional Jacobian is `J[0]/sigma` at the first physical command, then
+`(J[t] - rho*J[t-1]) / (sigma*sqrt(1-rho^2))`. Its valid-command mean outer
+product is the empirical Fisher. At **each proposal's current weights**, solve
+`(F + .01*mean(diag(F))*I) x = raw_gradient` in **FP32** and try direction `-x`.
+This is training-only natural-gradient conditioning, not an exact TRPO solver
+or a guarantee of flight improvement.
+
+Keep the previous **5e-5 predicted-decrease target**, **2.5e-5 half retry**,
+PPO clipping, rewards and actual-descent/trust checks. Size against raw gradient
+contracted with the actual rounded, bounded parameter displacement, never the
+preconditioned vector's contraction. Projection is not assumed monotone. A
+finite unresolved sizing attempt retries the half target; two finite failures
+restore the actor and stop the round. Nonfinite calculations or invalid solves
+remain fatal. Log local quadratic predicted KL alongside behavior-relative
+measured KL; these have different reference policies after the first update.
+
+Astra reviewed the derivative, warmup/AR timing and export path, and identified
+the finite-sizing retry control-flow fix above. **750 tests pass** (9.73 s),
+including independent full-brain autograd Jacobian/Fisher comparisons, masked
+padding, changed-weight recomputation, projected/nonmonotone sizing, half-target
+recovery, rollback and compiled fresh-flight/export coverage. Ruff and whitespace
+checks pass. The first test invocation had temporary-parent-directory setup
+errors; subsequent complete suites used the existing task directory under
+`/home/mark/tmp`, not `/tmp`.
+
+Restart from the retained source for **3 fresh rounds × 32 episodes**, up to
+**32 proposals per round**, native development after each round. Use course
+seeds **2026091520–2026091522** and noise seeds **2026091530–2026091532**;
+development seed 1110983 remains selection-only, not fresh validation. Preserve
+latest training weights/critic between rounds. A safe gain of at least four
+extra clean development flights goes to the existing fresh varied-course
+validation; surrogate improvement alone does not count as progress in flight.
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/train_pragmatic_course_ppo.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output-dir runs/gate/pragmatic-course-ppo-natural-001 \
+  --actor-scope roll-sinks --actor-update natural --full-history \
+  --predicted-decrease 5e-5 --rounds 3 --proposals 32 \
+  --training-pairs 16 --development-pairs 16 \
+  --seed 2026091520 --noise-seed 2026091530 --development-seed 1110983
+```

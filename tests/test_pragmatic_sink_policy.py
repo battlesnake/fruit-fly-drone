@@ -168,8 +168,9 @@ def test_sink_mode_refuses_adam_before_loading_controller(monkeypatch, tmp_path)
 
 
 @pytest.mark.parametrize("development_every", [1, 2, 4])
+@pytest.mark.parametrize("actor_update", ["steepest", "natural"])
 def test_sink_pilot_compiles_before_fresh_collection_and_assessment(
-    monkeypatch, tmp_path, development_every,
+    monkeypatch, tmp_path, development_every, actor_update,
 ):
     import train_pragmatic_course_ppo as driver
 
@@ -183,7 +184,7 @@ def test_sink_pilot_compiles_before_fresh_collection_and_assessment(
                            development_seed=30, rounds=2, proposals=2, training_pairs=2,
                            development_pairs=16, development_every=development_every,
                            microbatch=4, chunk_steps=20, learning_rate=1e-6,
-                           actor_update="steepest", full_history=True, predicted_decrease=5e-5,
+                           actor_update=actor_update, full_history=True, predicted_decrease=5e-5,
                            actor_scope="roll-sinks")
     source = dict(hover_config=vars(HoverConfig()), gate_config=vars(GateConfig()),
                   image_resolution=[32, 20], camera_hfov_degrees=125)
@@ -253,6 +254,9 @@ def test_sink_pilot_compiles_before_fresh_collection_and_assessment(
     monkeypatch.setattr(driver, "round_advantages", lambda *a, **kw: (advantages, {}))
     monkeypatch.setattr(driver, "fit_critic", lambda *a, **kw: {})
     monkeypatch.setattr(driver, "steepest_actor_proposal", proposal)
+    monkeypatch.setattr(driver, "natural_sink_actor_proposal",
+                        lambda actor, data, mask, replay_fn, **kw:
+                        proposal(actor, mask, replay_fn, **kw))
     monkeypatch.setattr(driver, "verify_compiled_sink_policy", verify)
     assert driver.main() == 0
     assert len(collections) == 2 and collections[0] is not collections[1]

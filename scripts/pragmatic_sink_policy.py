@@ -29,7 +29,7 @@ class NativeRollSinkPolicy(torch.nn.Module):
     def compile_into(self, controller):
         self.sink.compile_into(controller)
 
-    def means(self, data):
+    def validate_recording(self, data):
         if data.sink_features is None or data.sink_parent_nodes is None:
             raise ValueError("sink replay requires freshly recorded parent activities")
         if not torch.equal(data.sink_parent_nodes, self.sink.parents):
@@ -40,6 +40,9 @@ class NativeRollSinkPolicy(torch.nn.Module):
             raise ValueError("sink features must be detached complete histories including warmup")
         if not bool(data.sink_features.isfinite().all()):
             raise FloatingPointError("nonfinite recorded sink features")
+
+    def means(self, data):
+        self.validate_recording(data)
         roll = self.sink.forward_recurrent(data.sink_features)[data.warmup_steps:]
         if not bool(roll.isfinite().all()):
             raise FloatingPointError("nonfinite recurrent sink output")

@@ -212,9 +212,47 @@ def steepest_parameters(base, gradient, mask, target):
     raise ValueError("projected FP32 step could not resolve target within 10 percent")
 
 
-def steepest_actor_proposal(controller, mask, replay_fn, stationary_std, *,
-                            predicted_decrease=5e-5):
-    """Full-history gradient, projected steepest step, and at most one half retry.
+class UnresolvedProjectedStep(ValueError):
+    """Finite local sizing exhausted; caller may retry a smaller target."""
+
+
+def directional_parameters(base, gradient, direction, mask, target):
+    """Bounded local sizing without assuming projected contraction is monotone.
+
+    Clipping a preconditioned direction can destroy descent. Try local scale
+    corrections, checking the actual rounded displacement against RAW gradient
+    every time; never accept an unresolved or non-descending materialized step.
+    """
+    gradient, direction = gradient * mask, direction * mask
+    contraction_rate = float((gradient * direction).sum())
+    if (not bool(direction.isfinite().all()) or not math.isfinite(contraction_rate)
+            or contraction_rate >= 0 or not 0 < target < float("inf")):
+        raise ValueError("need finite descending direction and positive target")
+    eta = target / -contraction_rate
+    for attempt in range(24):
+        proposed, projections = scaled_parameters(base, direction, eta, mask)
+        contraction = float((gradient * (proposed-base)).sum())
+        if not math.isfinite(contraction):
+            raise FloatingPointError("nonfinite projected directional contraction")
+        if abs(contraction + target) <= .1 * target:
+            return proposed, dict(eta=eta, projected_magnitudes=projections,
+                                  predicted_loss_change=contraction,
+                                  target_predicted_decrease=target, sizing_attempts=attempt+1)
+        if contraction > 0:
+            eta *= .5  # Projection lost descent: retreat, not a monotone bracket.
+        elif contraction == 0:
+            # A rounded zero step may need enlargement; a nonzero step with no
+            # contraction needs retreat because projection changed its direction.
+            eta *= 2 if torch.equal(proposed, base) else .5
+        else:
+            eta *= min(2., max(.25, target / -contraction))
+    raise UnresolvedProjectedStep(
+        "projected direction could not resolve descending target within 10 percent")
+
+
+def projected_actor_proposal(controller, mask, replay_fn, stationary_std, *,
+                             predicted_decrease=5e-5, conditioner=None):
+    """Full-history gradient, projected direction, and at most one half retry.
 
     The caller must use untruncated current-weight replay including warmup.
     Both trials start at the same base and use the same raw masked gradient.
@@ -233,9 +271,35 @@ def steepest_actor_proposal(controller, mask, replay_fn, stationary_std, *,
         gradient = parameter.grad.detach() * mask
         if not bool(gradient.isfinite().all()):
             raise FloatingPointError("nonfinite steepest actor gradient")
+        direction, conditioning, fisher = (None, {}, None)
+        if conditioner is not None:
+            direction, conditioning, fisher = conditioner(gradient)
         attempts = []
         for target in (predicted_decrease, .5 * predicted_decrease):
-            proposed, sizing = steepest_parameters(before, gradient, mask, target)
+            if direction is None:
+                proposed, sizing = steepest_parameters(before, gradient, mask, target)
+            else:
+                try:
+                    proposed, sizing = directional_parameters(
+                        before, gradient, direction, mask, target)
+                except UnresolvedProjectedStep as error:
+                    # Projection can make the full target unattainable while the
+                    # half target remains feasible. This is not a broken solve.
+                    with torch.no_grad():
+                        parameter.copy_(before)
+                    decision = trust_decision(before_stats, stationary_std)
+                    accepted = False
+                    attempts.append(dict(
+                        after=before_stats, accepted=False, sizing_failure=str(error),
+                        target_predicted_decrease=target, predicted_loss_change=None,
+                        observed_loss_change=0., surrogate_descent=False, trust_accepted=None,
+                        proposed_edge_delta_l2=0., changed_edge_count=0,
+                        native_mean_shift_in_stationary_std=
+                        decision["native_mean_shift_in_stationary_std"],
+                    ))
+                    continue
+                delta = proposed - before
+                sizing["predicted_local_joint_kl"] = float(.5 * delta @ fisher @ delta)
             with torch.no_grad():
                 parameter.copy_(proposed)
             if not bool(parameter.isfinite().all()):
@@ -263,13 +327,22 @@ def steepest_actor_proposal(controller, mask, replay_fn, stationary_std, *,
                 parameter.copy_(before)
         return dict(before=before_stats, **attempts[-1], gradient_norm=float(gradient.norm()),
                     stop_round=not accepted or decision["stop_round"], attempts=attempts,
-                    update_method="full-history projected steepest; no momentum")
+                    conditioning=conditioning,
+                    update_method=("full-history projected damped natural gradient; no momentum"
+                                   if conditioner else
+                                   "full-history projected steepest; no momentum"))
     except BaseException:
         with torch.no_grad():
             parameter.copy_(before)
         raise
     finally:
         parameter.grad = None
+
+
+def steepest_actor_proposal(controller, mask, replay_fn, stationary_std, *,
+                            predicted_decrease=5e-5):
+    return projected_actor_proposal(controller, mask, replay_fn, stationary_std,
+                                    predicted_decrease=predicted_decrease)
 
 
 def native_score(metrics):
