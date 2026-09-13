@@ -22,10 +22,41 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import train_pragmatic_course_replay as replay  # noqa: E402
 from audit_pragmatic_policy_direction import scaled_parameters, summarize_direction  # noqa: E402
-from pragmatic_policy_optimization import replay_round  # noqa: E402
+from pragmatic_policy_optimization import replay_round, trust_decision  # noqa: E402
 from pragmatic_policy_rollout import PolicyRollout  # noqa: E402
 
 SCALES = (0., .125, .03125, 0.)
+
+
+def steepest_parameters(base, gradient, mask, target):
+    """Parameter-only sizing against actual projected FP32 contraction, not loss."""
+    gradient = gradient * mask
+    squared = float(gradient.square().sum())
+    if not 0 < squared < float("inf") or not 0 < target < float("inf"):
+        raise ValueError("need finite nonzero gradient and positive target")
+    low, high = 0., 2 * target / squared
+    best, best_error = None, float("inf")
+    bracketed = False
+    for attempt in range(24):
+        eta = .5 * (low + high) if bracketed else high
+        proposed, projections = scaled_parameters(base, -gradient, eta, mask)
+        contraction = float((gradient * (proposed-base)).sum())
+        error = abs(contraction+target)
+        if error < best_error:
+            best_error = error
+            best = proposed, dict(eta=eta, projected_magnitudes=projections,
+                                  predicted_loss_change=contraction,
+                                  target_predicted_decrease=target, sizing_attempts=attempt+1)
+        if error <= .1 * target:
+            return best
+        if -contraction < target:
+            low = eta
+            if not bracketed:
+                high *= 2
+        else:
+            high = eta
+            bracketed = True
+    raise ValueError("projected FP32 step could not resolve target within 10 percent")
 
 
 def main():
@@ -38,9 +69,13 @@ def main():
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--microbatch", type=int, default=4)
     parser.add_argument("--chunk-steps", type=int, default=20)
+    parser.add_argument("--reuse-gradient", type=Path)
+    parser.add_argument("--steepest", action="store_true")
     args = parser.parse_args()
     if args.output_dir.exists() or min(args.microbatch, args.chunk_steps) < 1:
         raise SystemExit("need a new output directory and positive batch/chunk sizes")
+    if args.steepest and args.reuse_gradient is None:
+        raise SystemExit("steepest comparison requires the archived full gradient")
     archive = torch.load(args.archive, map_location="cpu", weights_only=True)
     if (archive.get("schema") != "plain-native-policy-direction-v1"
             or Path(archive["source_checkpoint"]).resolve() != args.checkpoint.resolve()):
@@ -57,15 +92,30 @@ def main():
     fields = dict(archive["rollout"])
     fields["gates"] = tuple(replay.AnnularGate(**g) for g in fields["gates"])
     data, advantages = PolicyRollout(**fields), archive["advantages"]
+    reused_gradient = None
+    if args.reuse_gradient is not None:
+        origin = json.loads((args.reuse_gradient.parent / "report.json").read_text())
+        if (Path(origin["archive"]).resolve() != args.archive.resolve()
+                or Path(origin["checkpoint"]).resolve() != args.checkpoint.resolve()):
+            raise SystemExit("gradient provenance does not match this fixed rollout/source")
+        saved = torch.load(args.reuse_gradient, map_location="cpu", weights_only=True)
+        if not torch.equal(saved["mask"], mask.cpu()):
+            raise SystemExit("gradient mask does not match the archived direction")
+        reused_gradient = saved["gradient"].to(device)
+        if reused_gradient.shape != base.shape or not bool(reused_gradient.isfinite().all()):
+            raise SystemExit("invalid archived full gradient")
     gate_config = replace(replay.GateConfig(**source["gate_config"]), back_pattern="checkerboard")
     camera = replay.CameraSpec(*source["image_resolution"], source["camera_hfov_degrees"])
     args.output_dir.mkdir(parents=True)
     started = perf_counter()
+    scales = (0., 1., .5, 0.) if args.steepest else SCALES
     result = dict(experiment="native-full-history-gradient-probe-v1", status="running",
                   archive=str(args.archive), checkpoint=str(args.checkpoint),
                   episodes=data.valid.shape[1], frames=data.valid.shape[0],
                   activation_chunk_steps=args.chunk_steps, microbatch=args.microbatch,
-                  scales=SCALES, entries=[], new_flights_collected=0, controller_exported=False,
+                  scales=scales, entries=[], new_flights_collected=0, controller_exported=False,
+                  direction="projected steepest descent" if args.steepest else "fresh Adam1e-6",
+                  reused_gradient=str(args.reuse_gradient) if args.reuse_gradient else None,
                   scope="untruncated autograd on fixed data; not gradient through physics")
 
     def report():
@@ -92,9 +142,14 @@ def main():
             torch.cuda.reset_peak_memory_stats(device)
         sync()
         timed = perf_counter()
-        result["gradient_replay"] = assess(True)
+        if reused_gradient is None:
+            result["gradient_replay"] = assess(True)
+        else:
+            controller.edge_magnitude.grad = reused_gradient.clone()
+            result["gradient_replay"] = None
         sync()
-        result["full_gradient_wall_seconds"] = perf_counter()-timed
+        result["full_gradient_wall_seconds"] = (
+            perf_counter()-timed if reused_gradient is None else None)
         controller.edge_magnitude.grad.mul_(mask)
         gradient = controller.edge_magnitude.grad.detach().clone()
         result.update(
@@ -111,27 +166,42 @@ def main():
         )
         report()
         progress(dict(stage="full-gradient-complete", **result))
-        torch.nn.utils.clip_grad_norm_([controller.edge_magnitude], 1., error_if_nonfinite=True)
-        optimizer.step()
-        with torch.no_grad():
-            controller.edge_magnitude[mask] = controller.edge_magnitude[mask].clamp(0, 8)
-            controller.edge_magnitude[~mask] = base[~mask]
-            delta = controller.edge_magnitude.detach().clone()-base
-            controller.edge_magnitude.copy_(base)
+        if not args.steepest:
+            torch.nn.utils.clip_grad_norm_([controller.edge_magnitude], 1., error_if_nonfinite=True)
+            optimizer.step()
+            with torch.no_grad():
+                controller.edge_magnitude[mask] = controller.edge_magnitude[mask].clamp(0, 8)
+                controller.edge_magnitude[~mask] = base[~mask]
+                delta = controller.edge_magnitude.detach().clone()-base
+                controller.edge_magnitude.copy_(base)
+        else:
+            delta = torch.zeros_like(base)
         optimizer.zero_grad(set_to_none=True)
         if not bool(delta.isfinite().all()):
             raise FloatingPointError("nonfinite full-gradient Adam displacement")
-        torch.save(dict(gradient=gradient.cpu(), displacement=delta.cpu(), mask=mask.cpu()),
-                   args.output_dir / "full-gradient-data.pt")
-        for scale in SCALES:
-            proposed, projections = scaled_parameters(base, delta, scale, mask)
+        if not args.steepest:
+            torch.save(dict(gradient=gradient.cpu(), displacement=delta.cpu(), mask=mask.cpu()),
+                       args.output_dir / "full-gradient-data.pt")
+        # Size both steepest proposals before observing either trial's loss.
+        planned = []
+        for scale in scales:
+            if args.steepest and scale:
+                proposed, sizing = steepest_parameters(base, gradient, mask, scale*1e-4)
+            else:
+                proposed, projections = scaled_parameters(base, delta, scale, mask)
+                sizing = dict(projected_magnitudes=projections)
+            planned.append((scale, proposed, sizing))
+        result["planned_steps"] = [dict(scale=s, **info) for s, _, info in planned]
+        report()
+        for scale, proposed, sizing in planned:
             with torch.no_grad():
                 controller.edge_magnitude.copy_(proposed)
             actual = proposed-base
-            entry = dict(scale=scale, predicted_loss_change=float((gradient*actual).sum()),
-                         actual_displacement_l2=float(actual.norm()),
+            entry = dict(scale=scale, actual_displacement_l2=float(actual.norm()),
                          nonzero_edge_changes=int((actual != 0).sum()),
-                         projected_magnitudes=projections, diagnostics=assess(False))
+                         **sizing, diagnostics=assess(False))
+            entry["predicted_loss_change"] = float((gradient*actual).sum())
+            entry["trust"] = trust_decision(entry["diagnostics"], data.stationary_std)
             result["entries"].append(entry)
             report()
             progress(dict(stage="scale-complete", **entry))

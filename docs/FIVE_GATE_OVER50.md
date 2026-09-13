@@ -3333,3 +3333,47 @@ All **689 tests pass**, including the new independent-gradient reference and
 full probe success/failure restoration checks. The latter caught and fixed a
 duplicate elapsed-time logging argument before GPU launch. Ruff and whitespace
 checks pass; Astra's focused implementation review found no remaining blocker.
+
+#### Untruncated GPU result: short gradient predicts the wrong direction
+
+`pragmatic-full-gradient-probe-001` completed normally in **144.8 s**, restored
+the source and exported no controller. Full-history backward on the same eight
+flights took **62.46 s**, with **2,724 MiB peak reserved GPU memory**. Gradients
+were finite. Raw masked gradient norm was **84.30**, versus **2.2786** for the
+short gradient; their cosine was **.01055** (almost orthogonal). Most importantly,
+the full gradient's contraction with the **original** Adam displacement was
+**+.0005465**, whereas the truncated gradient predicted **−.0005697**. This
+supports a wrong short-gradient direction on this fixed bank. It is not a claim
+of byte-exact GPU derivatives or improved native flight.
+
+The newly computed full-gradient Adam direction still overshoots at both tested
+scales. At .125 it predicts −.0007868 but changes loss by **+.0008914**; at .03125
+it predicts −.0001984 but changes loss by **+.0000783**. Repeated-zero tolerance
+was **.0000191**. The larger step also exceeds the policy trust limits (mean KL
+.01936, p99 .376); the smaller passes those bounds (mean .001100, p99 .01941) but
+does not produce descent. Fixing gradient truncation is therefore not sufficient
+by itself to authorize more training with the old Adam settings.
+
+Astra recommends one **projected steepest-descent** comparison, not another Adam
+scale sweep. Reuse the saved full gradient, source, mask and fixed rollout; do
+not collect flights or recompute gradients. Size **two** proposals for actual
+predicted decreases **1e-4 and 5e-5**. A bounded parameter-only search accounts
+for native bounds and FP32 rounding and must reach each target within 10% before
+either loss is evaluated. Evaluate both between unchanged-source repeats and
+record the existing KL/mean-shift bounds. Success requires actual full-history
+loss descent above repeat variability **and** acceptable policy movement; a
+negative predicted change alone is insufficient. This probes optimizer geometry
+without changing anatomy, inputs, rewards or deployed recurrence.
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/probe_pragmatic_full_gradient.py \
+  --archive runs/gate/pragmatic-policy-direction-001/fixed-training-data.pt \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --reuse-gradient runs/gate/pragmatic-full-gradient-probe-001/full-gradient-data.pt \
+  --steepest --output-dir runs/gate/pragmatic-steepest-probe-001
+```
+
+All **693 tests pass**, including actual-contraction sizing with blocked edges
+at native bounds, both probe modes, archive reuse and source restoration after
+deliberate replay failures. Ruff/whitespace checks pass; Astra reviewed the new
+sizing/reuse branches and found no launch blocker.
