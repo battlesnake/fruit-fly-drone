@@ -3818,3 +3818,40 @@ the same **32-proposal cap**, **5e-5/half** targets and per-round native
 development. No implementation or run has started yet. The existing threshold
 for a meaningful development nominee and the full fresh >50% validation remain
 unchanged.
+
+#### Failure-aware comparison implementation
+
+The driver now supports opt-in `--failure-aware-advantages`; its default remains
+the original construction. `PolicyRollout` records a separate boolean
+`failed_before_command` **before both physics ticks**, carries it through episode
+selection, and permits its absence in old archives used with ordinary advantages.
+The new mode requires a matching latched boolean history and never infers failure
+from zero return. It uses exactly the original mean/scale, then replaces only
+valid already-failed entries with uncentered remaining returns. Neither the
+rollout nor the original validity, rewards, critic fit or neural path changes.
+
+Report how many valid commands are in failed tails, how many have zero remaining
+return versus future safety cost, and their original/revised squared-advantage
+totals. These are training-credit diagnostics, not evidence of flight improvement.
+Record the mode as training metadata in reports and saved checkpoints; the failure
+latch itself is absent from actor observations, recurrence and inference exports.
+
+All **766 tests pass** (10.01 s), including gate failure on either physics tick,
+unchanged failure-causing credit, later **−25 ground/invalid** credit, still-clean
+completion-tail **+5**, padding/old-archive behavior, exact healthy-command
+advantage preservation and native export/driver propagation. Ruff and whitespace
+checks pass. Use the previously reserved seeds and unchanged natural optimizer:
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/train_pragmatic_course_ppo.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output-dir runs/gate/pragmatic-course-ppo-failure-aware-001 \
+  --actor-scope roll-sinks --actor-update natural --full-history \
+  --failure-aware-advantages --predicted-decrease 5e-5 --rounds 3 --proposals 32 \
+  --training-pairs 16 --development-pairs 16 \
+  --seed 2026091540 --noise-seed 2026091550 --development-seed 1110983
+```
+
+No easier geometry, safety exemption, teacher action or deployed controller head
+is introduced. Only fresh full-distribution native completion can satisfy the
+active goal; these implementation tests do not do so.

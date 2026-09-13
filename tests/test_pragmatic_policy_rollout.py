@@ -82,6 +82,9 @@ def test_absorbing_collection_matches_full_evaluator_return_and_keeps_clean_tail
     assert data.metrics["ground_contacts"] == data.metrics["invalid_episodes"] == 1
     assert data.valid[:, 0].tolist() == [True, True, True, False]
     assert data.valid[:, 1].tolist() == [True] * 4
+    assert data.failed_before_command[:, 0].tolist() == [False, False, False, True]
+    # Passing every gate is not failure; the full clean-flight tail still earns +5.
+    assert not bool(data.failed_before_command[:, 1].any())
     assert data.rewards[2, 0] == -27  # One generic failure + one ground/invalid union cost.
     assert data.rewards[3, 0] == 0 and data.rewards[3, 1] == 5
     assert data.states[0][-1, 0, 2] == 1  # Finite pre-contact padding, not the invalid proposal.
@@ -99,6 +102,9 @@ def test_critic_features_precede_innovation_and_replay_rows_keep_sensor_interfac
     selected = a.select([1], torch.device("cpu"))
     assert selected.valid.shape == (4, 1)
     assert torch.equal(selected.latents[:, 0], a.latents[:, 1])
+    assert torch.equal(selected.failed_before_command[:, 0], a.failed_before_command[:, 1])
+    old_archive = replace(a, failed_before_command=None).select([1], torch.device("cpu"))
+    assert old_archive.failed_before_command is None
     image, attitude = selected.observation(1, options["camera"], options["gate_config"])
     assert image.shape == (1, 3, 20, 32) and attitude.shape == (1, 2)
 
@@ -164,3 +170,43 @@ def test_ring_failure_does_not_erase_later_ground_cost_or_allow_same_tick_pass()
     assert passed.passed.item()
     assert tracker.step(passed, state_at(ground), config).item() == -27
     assert tracker.prefix.item() == 0 and not tracker.clean().item()
+
+
+@pytest.mark.parametrize("failure_tick", [0, 1])
+@pytest.mark.parametrize("later_ground", [False, True])
+def test_recorded_failure_precedes_both_ticks_and_keeps_full_tail_safety_credit(
+    monkeypatch, failure_tick, later_ground,
+):
+    from pragmatic_policy_optimization import OutcomeCritic, round_advantages
+
+    cases, gates, options = setup_case(monkeypatch)
+    cases.state.position[0, 1] = .7  # First episode clips the annulus.
+
+    class RingThenGroundQuad(ScriptedQuad):
+        def __call__(self, rc, state, mass):
+            time = self.step
+            result = super().__call__(rc, state, mass)
+            if time == 0 and failure_tick == 0:
+                result.position[:, 0] = 1.01
+            if time == 5 and not later_ground:
+                result.position[0, 2] = 1.
+            return result
+
+    monkeypatch.setattr(collection, "DifferentiableQuad", RingThenGroundQuad)
+    data = collection.collect_policy_rollout(StubActor(), cases, gates, **options)
+    assert data.failed_before_command[:, 0].tolist() == [False, True, True, True]
+    assert data.failed_before_command[:, 1].tolist() == [False]*4
+    assert data.rewards[0, 0] == -2
+    assert data.rewards[2, 0] == (-25 if later_ground else 0)
+    assert data.rewards[-1, 1] == 5  # Still-healthy completed episode earns clean bonus.
+    assert data.valid[:, 0].tolist() == [True, True, True, not later_ground]
+    critic = OutcomeCritic(data.critic_features.shape[-1])
+    original, old_stats = round_advantages(data, critic, zero_baseline=True)
+    revised, _ = round_advantages(data, critic, zero_baseline=True, failure_aware=True)
+    assert revised[0, 0] == original[0, 0]  # No hindsight reclassification of causing action.
+    assert torch.equal(revised[:, 1], original[:, 1])
+    if later_ground:
+        assert revised[1:3, 0].tolist() == pytest.approx([-25 / old_stats["raw_std"]]*2)
+        assert revised[3, 0] == 0
+    else:
+        assert torch.equal(revised[1:, 0], torch.zeros(3))

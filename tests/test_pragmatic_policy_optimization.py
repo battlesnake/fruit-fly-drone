@@ -108,6 +108,62 @@ def test_advantages_global_and_frozen_before_independent_critic_fit():
     assert not later["zero_baseline"]
 
 
+@pytest.mark.parametrize("zero_baseline", [False, True])
+def test_failure_aware_advantages_preserve_healthy_credit_and_later_safety_returns(zero_baseline):
+    torch.manual_seed(7)
+    # First episode later hits ground, second has a ring failure but no later
+    # safety cost, third remains healthy despite having zero future reward.
+    data = SimpleNamespace(
+        critic_features=torch.randn(5, 3, 3),
+        returns=torch.tensor([[-27., -2., 0.], [-27., -2., 0.], [-25., 0., 0.],
+                              [-25., 0., 0.], [0., 0., 0.]]),
+        valid=torch.tensor([[True]*3]*4 + [[False, True, True]]),
+        failed_before_command=torch.tensor([[False]*3]*2 + [[True, True, False]]*3),
+    )
+    saved_returns, saved_valid = data.returns.clone(), data.valid.clone()
+    critic = ppo.OutcomeCritic(3)
+    original, original_stats = ppo.round_advantages(data, critic, zero_baseline=zero_baseline)
+    revised, stats = ppo.round_advantages(data, critic, zero_baseline=zero_baseline,
+                                         failure_aware=True)
+    healthy = ~data.failed_before_command & data.valid
+    assert torch.equal(revised[healthy], original[healthy])
+    assert torch.equal(revised[:2, :2], original[:2, :2])  # Includes failure-causing commands.
+    assert torch.equal(revised[2:, 1], torch.zeros(3))
+    assert bool((original[2:, 1] != 0).all())
+    assert revised[2:4, 0].tolist() == pytest.approx([-25 / original_stats["raw_std"]]*2)
+    assert revised[4, 0] == 0  # Absorbed padding remains excluded.
+    assert torch.equal(revised[:, 2], original[:, 2])  # Not inferred from return == zero.
+    assert stats["raw_mean"] == original_stats["raw_mean"]
+    assert stats["raw_std"] == original_stats["raw_std"]
+    assert stats["failed_tail_valid_commands"] == 5
+    assert stats["failed_tail_zero_return_commands"] == 3
+    assert stats["failed_tail_safety_return_commands"] == 2
+    assert torch.equal(saved_returns, data.returns) and torch.equal(saved_valid, data.valid)
+    assert not revised.requires_grad and bool(revised.isfinite().all())
+    assert float(revised[data.valid].mean()) != pytest.approx(0., abs=1e-5)
+
+
+@pytest.mark.parametrize("fault", ["missing", "shape", "dtype", "revival"])
+def test_failure_aware_advantages_require_actual_latched_precommand_status(fault):
+    data = SimpleNamespace(returns=torch.zeros(3, 2), valid=torch.ones(3, 2, dtype=torch.bool),
+                           critic_features=torch.zeros(3, 2, 1),
+                           failed_before_command=torch.zeros(3, 2, dtype=torch.bool))
+    if fault == "missing":
+        data.failed_before_command = None
+    elif fault == "shape":
+        data.failed_before_command = data.failed_before_command[:2]
+    elif fault == "dtype":
+        data.failed_before_command = data.failed_before_command.float()
+    else:
+        data.failed_before_command[1, 0] = True
+    critic = ppo.OutcomeCritic(1)
+    original, stats = ppo.round_advantages(data, critic, zero_baseline=True)
+    assert torch.equal(original, torch.zeros_like(original))
+    assert stats["raw_std"] == pytest.approx(1e-6)
+    with pytest.raises(ValueError):
+        ppo.round_advantages(data, critic, zero_baseline=True, failure_aware=True)
+
+
 @pytest.mark.parametrize("full_history", [False, True])
 def test_microbatches_are_count_weighted_without_optimizer_steps(monkeypatch, full_history):
     actor = ParameterActor()
@@ -166,7 +222,8 @@ def test_pilot_selects_only_changed_accepted_policy(
                            development_pairs=16, development_every=1,
                            microbatch=8, chunk_steps=2, learning_rate=1e-6,
                            actor_update=actor_update, full_history=actor_update == "steepest",
-                           predicted_decrease=5e-5, actor_scope="full")
+                           predicted_decrease=5e-5, actor_scope="full",
+                           failure_aware_advantages=False)
     source = dict(hover_config=vars(HoverConfig()), gate_config=vars(GateConfig()),
                   image_resolution=[32, 20], camera_hfov_degrees=125)
     base = dict(clean_course_success_rate=.25, clean_course_negative_success_rate=.3,

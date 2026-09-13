@@ -169,8 +169,9 @@ def test_sink_mode_refuses_adam_before_loading_controller(monkeypatch, tmp_path)
 
 @pytest.mark.parametrize("development_every", [1, 2, 4])
 @pytest.mark.parametrize("actor_update", ["steepest", "natural"])
+@pytest.mark.parametrize("failure_aware", [False, True])
 def test_sink_pilot_compiles_before_fresh_collection_and_assessment(
-    monkeypatch, tmp_path, development_every, actor_update,
+    monkeypatch, tmp_path, development_every, actor_update, failure_aware,
 ):
     import train_pragmatic_course_ppo as driver
 
@@ -185,7 +186,7 @@ def test_sink_pilot_compiles_before_fresh_collection_and_assessment(
                            development_pairs=16, development_every=development_every,
                            microbatch=4, chunk_steps=20, learning_rate=1e-6,
                            actor_update=actor_update, full_history=True, predicted_decrease=5e-5,
-                           actor_scope="roll-sinks")
+                           actor_scope="roll-sinks", failure_aware_advantages=failure_aware)
     source = dict(hover_config=vars(HoverConfig()), gate_config=vars(GateConfig()),
                   image_resolution=[32, 20], camera_hfov_degrees=125)
     monkeypatch.setattr(driver, "parse_args", lambda: args)
@@ -251,7 +252,11 @@ def test_sink_pilot_compiles_before_fresh_collection_and_assessment(
 
     monkeypatch.setattr(driver, "collect_policy_rollout", collect)
     monkeypatch.setattr(driver.replay, "evaluate", evaluate)
-    monkeypatch.setattr(driver, "round_advantages", lambda *a, **kw: (advantages, {}))
+    def compute_advantages(*a, **kw):
+        assert kw["failure_aware"] is failure_aware
+        return advantages, {}
+
+    monkeypatch.setattr(driver, "round_advantages", compute_advantages)
     monkeypatch.setattr(driver, "fit_critic", lambda *a, **kw: {})
     monkeypatch.setattr(driver, "steepest_actor_proposal", proposal)
     monkeypatch.setattr(driver, "natural_sink_actor_proposal",
@@ -263,6 +268,8 @@ def test_sink_pilot_compiles_before_fresh_collection_and_assessment(
     assert len(assessments) == (3 if development_every == 1 else 2) and len(checks) == 1
     result = json.loads((args.output_dir / "report.json").read_text())
     assert result["accepted_steps"] == 4 and result["actor_scope"] == "roll-sinks"
+    assert result["failure_aware_advantages"] is failure_aware
     saved = torch.load(args.output_dir / "last-controller.pt", weights_only=True)
+    assert saved["failure_aware_advantages"] is failure_aware
     assert torch.equal(saved["controller"]["edge_magnitude"], brain.edge_magnitude)
     assert all("sink" not in key for key in saved["controller"])

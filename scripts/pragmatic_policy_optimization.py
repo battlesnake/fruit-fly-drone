@@ -33,8 +33,14 @@ class OutcomeCritic(torch.nn.Module):
 
 
 @torch.no_grad()
-def round_advantages(data, critic, *, zero_baseline=False):
-    """Freeze advantages once across ALL valid samples, before critic fitting."""
+def round_advantages(data, critic, *, zero_baseline=False, failure_aware=False):
+    """Freeze advantages once across ALL valid samples, before critic fitting.
+
+    Optionally replace ALREADY failed tails with uncentered remaining returns.
+    Preserve original normalization and healthy-command credit exactly, including
+    the failure-causing command. Later ground/invalid costs remain in the return;
+    no safety rewards, validity masks or actor observations are changed.
+    """
     device = next(critic.parameters()).device
     baseline = (torch.zeros_like(data.returns) if zero_baseline else
                 critic(data.critic_features.to(device)).cpu())
@@ -44,8 +50,28 @@ def round_advantages(data, critic, *, zero_baseline=False):
         raise FloatingPointError("nonfinite critic baseline or returns")
     mean, scale = values.mean(), values.std(unbiased=False).clamp_min(1e-6)
     result = torch.where(data.valid, (raw - mean) / scale, 0).detach()
-    return result, dict(zero_baseline=zero_baseline, raw_mean=float(mean), raw_std=float(scale),
-                        baseline_mse=float((baseline - data.returns)[data.valid].square().mean()))
+    stats = dict(zero_baseline=zero_baseline, raw_mean=float(mean), raw_std=float(scale),
+                 baseline_mse=float((baseline - data.returns)[data.valid].square().mean()),
+                 failure_aware=failure_aware)
+    if failure_aware:
+        failed = getattr(data, "failed_before_command", None)
+        if (failed is None or failed.shape != data.valid.shape or failed.dtype != torch.bool
+                or failed.device != data.valid.device):
+            raise ValueError("failure-aware advantages require matching boolean pre-command flags")
+        if bool((failed[:-1] & ~failed[1:]).any()):
+            raise ValueError("latched course failure cannot clear within a rollout")
+        tail = failed & data.valid
+        original_tail_squared = float(result[tail].square().sum())
+        result = torch.where(tail, data.returns / scale, result)
+        stats.update(
+            failed_tail_valid_commands=int(tail.sum()),
+            failed_tail_zero_return_commands=int((tail & (data.returns == 0)).sum()),
+            failed_tail_safety_return_commands=int((tail & (data.returns < 0)).sum()),
+            original_failed_tail_squared_advantage_sum=original_tail_squared,
+            revised_failed_tail_squared_advantage_sum=float(result[tail].square().sum()),
+            original_normalization_preserved=True,
+        )
+    return result, stats
 
 
 def fit_critic(critic, optimizer, data, *, epochs=5, batch_size=1024, seed=1):

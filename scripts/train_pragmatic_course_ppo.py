@@ -66,6 +66,8 @@ def parse_args():
                         help="Differentiate warmup and all recurrent history; checkpoint chunks.")
     parser.add_argument("--predicted-decrease", type=float, default=5e-5)
     parser.add_argument("--actor-scope", choices=("full", "roll-sinks"), default="full")
+    parser.add_argument("--failure-aware-advantages", action="store_true",
+                        help="Zero-baseline uncentered safety returns on already-failed tails.")
     return parser.parse_args()
 
 
@@ -119,6 +121,7 @@ def main():
                   critic_is_training_only=True, exploration_is_training_only=True,
                   actor_update=args.actor_update, full_history=args.full_history,
                   actor_scope=args.actor_scope,
+                  failure_aware_advantages=args.failure_aware_advantages,
                   effective_microbatch=args.microbatch, oom_fallbacks=0,
                   selected_round=0, accepted_steps=0, policy_revision=0,
                   rounds=[], goal_verified=False)
@@ -150,7 +153,8 @@ def main():
                        parent_checkpoint=str(args.checkpoint),
                        critic_is_training_only=True, exploration_is_training_only=True)
         payload.update(actor_update=args.actor_update, full_history=args.full_history,
-                       actor_scope=args.actor_scope)
+                       actor_scope=args.actor_scope,
+                       failure_aware_advantages=args.failure_aware_advantages)
         torch.save(payload, args.output_dir / name)
 
     report()
@@ -187,6 +191,7 @@ def main():
                 critic_optimizer = torch.optim.Adam(critic.parameters(), lr=3e-4)
             advantages, entry["advantages"] = round_advantages(
                 data, critic, zero_baseline=round_number == 1,
+                failure_aware=args.failure_aware_advantages,
             )
             # Critic is fitted only AFTER the round's baseline and advantages freeze.
             entry["critic_fit"] = fit_critic(critic, critic_optimizer, data, seed=entry["seed"])
@@ -274,6 +279,7 @@ def main():
             save_native("last-controller.pt", round_number, metrics)
             torch.save(dict(actor_optimizer=optimizer.state_dict() if optimizer else None,
                             actor_update=args.actor_update, critic=critic.state_dict(),
+                            failure_aware_advantages=args.failure_aware_advantages,
                             critic_optimizer=critic_optimizer.state_dict(), round=round_number),
                        args.output_dir / "training-state.pt")
             report()

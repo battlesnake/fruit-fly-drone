@@ -103,6 +103,7 @@ class PolicyRollout:
     metrics: dict
     sink_features: torch.Tensor | None = None  # Includes neural warmup, then every command.
     sink_parent_nodes: torch.Tensor | None = None
+    failed_before_command: torch.Tensor | None = None  # Training bookkeeping, never actor input.
 
     def select(self, rows, device):
         rows = torch.as_tensor(rows, device=self.valid.device, dtype=torch.long)
@@ -117,6 +118,8 @@ class PolicyRollout:
             sink_features=take(self.sink_features) if self.sink_features is not None else None,
             sink_parent_nodes=(self.sink_parent_nodes.to(device)
                                if self.sink_parent_nodes is not None else None),
+            failed_before_command=(take(self.failed_before_command)
+                                   if self.failed_before_command is not None else None),
             gates=tuple(AnnularGate(g.center.index_select(0, rows).to(device),
                                    g.yaw.index_select(0, rows).to(device)) for g in self.gates),
             metrics={"scope": "selected replay rows, not original bank metrics"}, **fields,
@@ -174,11 +177,13 @@ valid. Ring/order failures continue, so later ground penalties are not erased.
     previous_mean = previous_latent = None
     histories = [[] for _ in state.as_tuple()]
     roles, latents, means, log_probs, rewards, valid, features = ([] for _ in range(7))
+    prior_failures = []
     for time in range(steps):
         for history, value in zip(histories, state.as_tuple(), strict=True):
             history.append(value.clone())
         roles.append(current.clone())
         valid.append((~tracker.absorbed).clone())
+        prior_failures.append(tracker.failed.clone())  # Before BOTH physics ticks.
         image = render_annular_gates_rgb(state, gates, current_gate_index=current,
                                          camera=camera, gate_config=gate_config)
         record_parents()
@@ -252,6 +257,7 @@ valid. Ring/order failures continue, so later ground penalties are not erased.
         sink_features=torch.stack(sink_features).cpu() if sink_features else None,
         sink_parent_nodes=(record_sink_parents.cpu()
                            if record_sink_parents is not None else None),
+        failed_before_command=torch.stack(prior_failures).cpu(),
         valid=valid_tensor.cpu(), critic_features=torch.stack(features).cpu(),
         stationary_std=None if stationary_std is None else tuple(stationary_std),
         rho=rho, warmup_steps=warmup_steps, metrics=metrics,
