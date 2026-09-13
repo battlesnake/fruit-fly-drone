@@ -3742,3 +3742,79 @@ aira confine --memory-reserve 8G -- .venv/bin/python scripts/train_pragmatic_cou
   --training-pairs 16 --development-pairs 16 \
   --seed 2026091520 --noise-seed 2026091530 --development-seed 1110983
 ```
+
+Retained design idea from Astra while this comparison runs: if better-conditioned
+surrogate learning still fails to improve flight, try **failure-aware training
+advantages** before concluding that frozen parent features are insufficient.
+After an irreversible ring/order failure, the episode continues to detect later
+ground/invalid events, but usually has no remaining reward. Global centering or
+an imperfect critic can nevertheless give these long tails nonzero advantages.
+This is a finite-sample variance concern, not proof of an expectation-level bias.
+For commands already failed at their start, an uncentered remaining return with
+zero baseline would give zero advantage when no later safety event occurs, while
+retaining the full later **−25** penalty if one does. Keep ordinary advantages
+through the first failure-causing command, a common positive scale, and no final
+global recentering that makes zero tails nonzero again. Keep full-tail physics,
+likelihood/trust checks and the actor unchanged. **Not implemented or launched**;
+first finish the current natural-gradient comparison. Also record whether native
+magnitude bounds stop its projected direction before the actual-descent test,
+rather than mistaking such a stop for insufficient flight data.
+
+#### Natural-gradient comparison complete: better surrogate optimization, no flight gain
+
+`pragmatic-course-ppo-natural-001`, launched from **4925b3c**, completed normally
+in **281.26 s**, accepting **63/66** proposals (22, 21 and 20). Median proposal
+time was **.675 s**, including full-history analytic Fisher construction and its
+726-dimensional FP32 solve. The first predicted loss change **−5.00009e-5**
+matched measured **−5.00056e-5**; its predicted local KL **4.0091e-7** matched
+measured **4.0139e-7**. The native compiled-controller check passed, with maximum
+per-axis RMS discrepancy **.000339 exploration standard deviations**.
+
+| Native development | Clean / 32 | Negative / positive | Clean-prefix gates |
+| --- | ---: | ---: | ---: |
+| Source | 12 | 9 / 3 | 100 |
+| Round 1 | 11 | 8 / 3 | 99 |
+| Round 2 | 11 | 7 / 4 | 97 |
+| Round 3 | 11 | 7 / 4 | 96 |
+
+The three fresh noisy training banks scored **7/32, 3/32 and 6/32**; those
+different-bank counts are not a training curve. All training and native flights
+had **zero ground/invalid episodes**. There is **no development nominee**, no
+fresh goal-validation result, and no promotion; the globally retained source
+remains unchanged. The objective is still **unmet**.
+
+Final accepted surrogate losses were **−.00100384**, **−.00101528** and
+**−.00092051**, a larger reduction than the previous steepest runs. Mean KL
+was **.000723/.000565/.000505**, with native roll shifts **.0230/.0550/.0319σ**
+relative to each bank's collecting policy. Round one stopped after both targets
+failed finite directional sizing. Rounds two and three failed full-target sizing,
+then sized the half target but rejected its actual loss increase. Five sizing
+attempts in total were unresolved; they did not crash the run. This does not
+prove no feasible native update exists: the bounded sizing heuristic and
+unconstrained Fisher direction can themselves limit progress near magnitude
+bounds. Active/free-subspace conditioning is retained, not implemented.
+
+The next learning change is the **failure-aware advantage** comparison above,
+keeping the natural optimizer, source, rewards, scope and full-tail safety checks
+fixed. Do not interpret better surrogate fitting as proof of adequate sensory
+representation; the current evidence has not isolated that question. The
+original foreleg-bandwidth and auxiliary native bearing-representation ideas
+remain available, not discarded or silently substituted into this benchmark.
+
+For the next comparison, Astra specifies the smallest controlled change:
+compute the **original valid-command mean and standard deviation unchanged**,
+including the existing standard-deviation floor. Keep ordinary normalized
+advantages for commands not previously failed. Only override commands whose
+latched failure flag was already true **before their two physics ticks** with
+`remaining_return / original_std`. Do not recenter or renormalize afterward.
+Capture the explicit environment-side failure latch, not `return == 0`; the
+failure-causing command and completed-but-still-clean flights retain ordinary
+credit. Keep critic fitting and all validity masks unchanged. This bookkeeping
+is training-only and is not another actor observation or memory channel.
+
+Reserve **2026091540–2026091542** course and **2026091550–2026091552** noise
+seeds for a retained-source **3 × 32-flight** comparison, natural updates with
+the same **32-proposal cap**, **5e-5/half** targets and per-round native
+development. No implementation or run has started yet. The existing threshold
+for a meaningful development nominee and the full fresh >50% validation remain
+unchanged.
