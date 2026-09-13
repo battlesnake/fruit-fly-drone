@@ -3855,3 +3855,38 @@ aira confine --memory-reserve 8G -- .venv/bin/python scripts/train_pragmatic_cou
 No easier geometry, safety exemption, teacher action or deployed controller head
 is introduced. Only fresh full-distribution native completion can satisfy the
 active goal; these implementation tests do not do so.
+
+#### Failure-aware 001 interrupted; fresh bounded replacement
+
+After an execution-context interruption, handle **36843** was missing. At
+**2026-09-13 04:36:12 UTC**, a host process-table check found no training Python
+process; the report's last modification was **02:21:07 UTC**. This is a stopped
+job, not a restart based on an observation timeout. The cause is unknown.
+
+The partial run recorded **25 accepted updates**: 14 in completed round one,
+11 in incomplete round two. Source development was **12/32 (9/3), prefix 101**;
+round one was **10/32 (7/3), prefix 98**, both with zero ground/invalid. Only
+round one's native/critic recovery checkpoints were saved. No partial round-two
+weights or eventual flight result are claimed, and no model is promoted.
+
+The credit bookkeeping behaved as intended: 24,993/48,000 and 22,152/48,000
+commands were already-failed zero-return tails in the two collected banks. Their
+squared-advantage totals changed **234.45→0** and **7716.70→0**, respectively;
+no later safety event occurred in those banks. This is not flight improvement.
+
+Preserve the partial artifacts and run the same complete **three-round, 32-flight,
+32-update-cap** protocol from the retained source in
+`pragmatic-course-ppo-failure-aware-002`, with new course seeds
+**2026091560–2026091562** and noise seeds **2026091570–2026091572**. The previous
+seed range remains recorded as partially consumed/reserved, not a fresh holdout.
+All learning settings, development selection and goal validation stay unchanged.
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/train_pragmatic_course_ppo.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output-dir runs/gate/pragmatic-course-ppo-failure-aware-002 \
+  --actor-scope roll-sinks --actor-update natural --full-history \
+  --failure-aware-advantages --predicted-decrease 5e-5 --rounds 3 --proposals 32 \
+  --training-pairs 16 --development-pairs 16 \
+  --seed 2026091560 --noise-seed 2026091570 --development-seed 1110983
+```
