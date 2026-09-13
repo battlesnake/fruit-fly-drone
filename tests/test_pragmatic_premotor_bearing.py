@@ -341,9 +341,11 @@ def test_collector_never_imitation_targets_teacher_and_ground_stops_supervision(
     assert torch.equal(motors[0][0], torch.tensor(expected))
 
 
+@pytest.mark.parametrize("centered", [False, True])
 def test_alternating_driver_refreshes_sink_after_representation_and_exports_only_native(
     monkeypatch,
     tmp_path,
+    centered,
 ):
     import json
     from types import SimpleNamespace
@@ -361,6 +363,7 @@ def test_alternating_driver_refreshes_sink_after_representation_and_exports_only
         representation_updates=1,
         learning_rate=0.001,
         reuse_head_run=None,
+        center_premotor_inputs=centered,
         training_pairs=2,
         development_pairs=2,
         proposals=1,
@@ -369,6 +372,10 @@ def test_alternating_driver_refreshes_sink_after_representation_and_exports_only
         development_seed=100,
     )
     actors = [TinyActor(), TinyActor()]
+    for actor in actors:
+        actor.register_buffer("edge_pre", torch.tensor([0, 0]))
+        actor.register_buffer("edge_post", torch.tensor([0, 0]))
+        actor.register_buffer("edge_sign", torch.ones(2))
     initial = [actor.edge_magnitude.detach().clone() for actor in actors]
     source = dict(
         hover_config=vars(HoverConfig()),
@@ -393,7 +400,12 @@ def test_alternating_driver_refreshes_sink_after_representation_and_exports_only
         assert not any(p.requires_grad for p in controller.parameters())
         assert torch.equal(original.edge_magnitude, initial[1])
         collected.append(kwargs["seed"])
-        return bank(kwargs["kind"])
+        data = bank(kwargs["kind"])
+        if kwargs["presynaptic_nodes"] is not None:
+            data.input_moments = dict(
+                nodes=torch.tensor([0]), sums=torch.full((6, 1), 0.2), counts=torch.ones(6)
+            )
+        return data
 
     monkeypatch.setattr(driver.representation, "collect_bearing_bank", collect)
     head_fits = []
@@ -403,6 +415,7 @@ def test_alternating_driver_refreshes_sink_after_representation_and_exports_only
         return torch.nn.Linear(1, 2).requires_grad_(False), {}
 
     monkeypatch.setattr(driver.representation, "fit_bearing_head", fit)
+    monkeypatch.setattr(driver.representation, "source_window_bearing", lambda *a, **k: {})
     monkeypatch.setattr(
         driver.representation,
         "choose_windows",
@@ -411,7 +424,10 @@ def test_alternating_driver_refreshes_sink_after_representation_and_exports_only
     monkeypatch.setattr(
         driver.representation,
         "bearing_window_loss",
-        lambda controller, *a, **k: (controller.edge_magnitude.square().sum(), {}),
+        lambda actor, *a, **k: (
+            getattr(actor, "controller", actor).edge_magnitude.square().sum(),
+            {},
+        ),
     )
 
     class Sink:
@@ -472,6 +488,14 @@ def test_alternating_driver_refreshes_sink_after_representation_and_exports_only
     assert report["status"] == "complete" and report["selected_round"] == 2
     assert report["policy_revision"] == 4 and not report["goal_verified"]
     assert report["rounds"][1]["outcome_seed"] == 25
+    if centered:
+        assert exported["controller"]["bias"].item() == pytest.approx(
+            0.2 * (initial[0][0] - evaluated[-1][0]).item()
+        )
+        assert report["source_input_mean"]["heldout_episodes_excluded"]
+        assert not exported["native_path_manifest"]["representation_stage"][
+            "biases_independently_optimized"
+        ]
 
 
 def test_completed_representation_row_cannot_acquire_ground_failure_from_padding(monkeypatch):
@@ -511,8 +535,14 @@ def test_completed_representation_row_cannot_acquire_ground_failure_from_padding
         config=HoverConfig(),
         gate_config=GateConfig(),
         seconds=0.06,
+        presynaptic_nodes=torch.tensor([0]),
     )
     assert data.replay.active[:, 0].tolist() == [True, False, False]
     assert data.metrics["ground_contacts"] == 0 and data.metrics["failures"] == 0
     assert data.metrics["clean_prefix_completions"] == 1
     assert data.metrics["full_flight_success_is_not_assessed"]
+    assert data.input_moments["counts"].tolist() == [1, 3, 0, 0, 0, 0]
+    # Statistics use pre-image warmup tick ten, not post-image tick eleven.
+    assert data.input_moments["sums"][0, 0].item() == pytest.approx(
+        torch.tensor(0.05 * (1 - 0.8**10)).tanh().item(), abs=1e-7
+    )

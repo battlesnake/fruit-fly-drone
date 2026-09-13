@@ -15,6 +15,7 @@ import numpy as np
 import pyarrow.feather as feather
 import torch
 import train_pragmatic_course_replay as replay
+from pragmatic_centered_premotor import PresynapticMoments
 from pragmatic_policy_rollout import CourseRewardTracker, stick_values
 
 from flydrone.hover import StickState, rotation_matrix
@@ -83,6 +84,7 @@ class BearingBank:
     labels: torch.Tensor
     visible: torch.Tensor  # already masked by task-active at command time
     metrics: dict
+    input_moments: dict | None = None
 
 
 @torch.no_grad()
@@ -98,6 +100,7 @@ def collect_bearing_bank(
     config,
     gate_config,
     seconds=30,
+    presynaptic_nodes=None,
 ):
     if kind not in ("native", "roll-assisted"):
         raise ValueError("native or explicitly training-only roll-assisted collection required")
@@ -126,13 +129,17 @@ def collect_bearing_bank(
     )
     histories = [[] for _ in state.as_tuple()]
     roles, actives, references, features, labels, visibility = ([] for _ in range(6))
-    for _ in range(round(seconds * 50)):
+    moments = PresynapticMoments(presynaptic_nodes) if presynaptic_nodes is not None else None
+    for frame in range(round(seconds * 50)):
         active = ~tracker.failed & (current < len(gates))
         if not bool(active.any()):
             break
         image = replay.render_annular_gates_rgb(
             state, gates, current_gate_index=current, camera=camera, gate_config=gate_config
         )
+        active_visible = active & visible_current_gate(image)
+        if moments is not None:
+            moments.observe(source_neural, current, active_visible, frame)
         reference, source_neural = source_controller(image, state.euler[:, :2], source_neural)
         native, neural = controller(image, state.euler[:, :2], neural)
         for history, value in zip(histories, state.as_tuple(), strict=True):
@@ -146,7 +153,7 @@ def collect_bearing_bank(
         references.append(consistency.cpu())  # No teacher motor targets.
         features.append(source_neural[:, nodes].tanh().cpu())
         labels.append(bearing_labels(state, gates, current).cpu())
-        visibility.append((active & visible_current_gate(image)).cpu())
+        visibility.append(active_visible.cpu())
         if kind == "native":
             motor = native
         else:
@@ -229,6 +236,7 @@ def collect_bearing_bank(
     for value in (*bank.states, result.source_features, result.labels, bank.target):
         if not bool(value.isfinite().all()):
             raise FloatingPointError("nonfinite representation archive")
+    result.input_moments = moments.archive() if moments is not None else None
     return result
 
 
@@ -398,6 +406,23 @@ def bearing_window_loss(
         supervised_frames=unroll,
         prefix_is_current_weight=True,
         gradient_is_window_truncated=True,
+    )
+
+
+@torch.no_grad()
+def source_window_bearing(head, bank, rows, starts, *, unroll=20):
+    """Decode original-source activities already recorded on these exact histories."""
+    times = torch.tensor(starts)[None, :] + torch.arange(unroll)[:, None]
+    device = head.center.device
+    visible = bank.visible[times, rows].to(device)
+    if not bool(visible.any(0).all()):
+        raise ValueError("source comparison needs visible labels on both branches")
+    predicted = head(bank.source_features[times, rows].to(device))
+    error = (predicted - bank.labels[times, rows].to(device)).square() / head.source_mse
+    by_branch = (error * visible[..., None]).sum((0, 2)) / (2 * visible.sum(0))
+    return dict(
+        original_source_normalized_bearing_mse=float(by_branch.mean()),
+        original_source_normalized_bearing_mse_by_branch=by_branch.tolist(),
     )
 
 

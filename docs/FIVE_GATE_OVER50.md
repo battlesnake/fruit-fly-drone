@@ -4210,3 +4210,123 @@ decisive, not the auxiliary error threshold.
 The full suite passed **802 tests in 10.69 s**, including same-source/ordered-neuron
 head reuse and missing held-out group accounting. Bearing diagnostics additionally
 report each branch separately (negative then positive side in paired windows).
+
+#### Conditional next representation variant: compensate reference mean synaptic drive
+
+While the stronger run is executing, early large bearing-loss excursions despite
+small command changes suggest a **hypothesis**, not a diagnosed cause: incoming
+weight updates may mostly shift tonic input rather than improve stimulus-dependent
+coding. Astra agrees that, **if the completed stronger run is flat**, a single
+source-mean-compensated plasticity variant is defensible before changing anatomical
+regions or bearing targets. Finish the current run before selecting the next one.
+
+For each selected postsynaptic neuron `p`, tie its existing native bias to
+`b[p] = b0[p] - sum(sign[e] * (w[e]-w0[e]) * mean_activity[pre[e]])` over selected
+incoming edges. The changed synaptic drive is then proportional to deviations
+from reference presynaptic activity. This preserves **mean input drive on fixed
+reference histories**, not necessarily firing activity or closed-loop trim.
+
+This **changes the permitted plasticity**: selected native biases would no longer
+be frozen, but could move only by that deterministic compensation. They must not
+be independently optimized or clipped in a way that silently breaks the tie.
+Signs/topology, mask, head/normalizations, labels, all other biases, time constants,
+sensor interface, physical plant and outcome-PPO stage would remain unchanged.
+
+Estimate/freeze means on training episodes only, balanced over declared collection
+kind/side/phase strata. They must be **pre-tick `tanh(state)` of external
+presynaptic neurons feeding the selected edges**. The bank's existing post-tick
+selected-cell features are for the decoder and are not the required input means.
+Running sums/counts can avoid archiving whole-brain histories. Exclude the held-out
+pair from every mean statistic.
+
+Differentiate through the tied bias in every supervised forward, including its
+effect on short-window recurrence; compensation only after the optimizer step
+would give the wrong gradient. A training-only functional parameter substitution
+can express the tie without changing the deployed controller interface. Prefixes
+must still be current-weight full-brain replays. Compile both magnitudes and
+derived biases into the ordinary controller before native collection/evaluation
+or export. Neither reference means nor a compensation wrapper is deployed.
+
+Judge this variant using the existing side/phase held-out and unassisted full-flight
+checks. It is not justification for another preparatory diagnostic campaign or a
+new learning-rate ladder, and is not yet implemented or evidence of better flight.
+
+#### Stronger premotor-bearing run completed; still no native improvement
+
+`pragmatic-premotor-bearing-002`, launched from **468978c**, completed normally
+in **653.51 s**. All **150 representation updates** and **24/24 sink-PPO proposals**
+completed; the exact head/normalizations from run 001 were reused without refitting.
+
+| Native development | Clean / 32 | Negative / positive | Clean-prefix gates |
+| --- | ---: | ---: | ---: |
+| Source | 12 | 9 / 3 | 101 |
+| Round 1 | 10 | 8 / 2 | 97 |
+| Round 2 | 8 | 5 / 3 | 93 |
+| Round 3 | 8 | 5 / 3 | 92 |
+
+All training collections and native assessments had **zero ground/invalid** episodes.
+No candidate was promoted and no fresh goal-validation run was justified. The
+retained source is unchanged; the >50% varied-course objective remains unmet.
+
+Paired held-out mean normalized bearing errors were **.71823→.71313**,
+**2.19446→2.13150**, and **2.04182→1.05933**. The first two rounds barely improved.
+Round 3 improved about **48% relative to its round-entry actor**, but the native
+later-gate negative branch worsened **2.772→6.715**, while the positive branch
+improved **2.107→.435**. Other branches improved. These are different rounds'
+sampled histories; neither cross-round means nor improvement over a potentially
+degraded round-entry actor establishes better perception than the retained source.
+Thus inaccessible downstream readout has not been isolated as the cause.
+
+Maximum per-axis held-out command RMS shifts were **.04058σ / .11081σ / .04326σ**.
+The noisy native outcome banks scored **6/32 (5/1)**, **4/32 (4/0)** and
+**2/32 (0/2)**. Final sink surrogate improvements were **.001568 / .001430 /
+.001442**, with roll shifts **.03967σ / .03856σ / .06752σ** relative to collecting
+policies. Stop this learning-rate comparison; do not extend it into a sweep.
+
+#### Mean-compensated variant implemented for one matched learning trial
+
+`pragmatic_centered_premotor.py` implements the conditional idea above. An opt-in
+`--center-premotor-inputs` flag leaves existing runs' behavior unchanged.
+
+- On the first round's original-source replay, running sums/counts record
+  **pre-tick external presynaptic `tanh(state)`**, excluding held-out pairs and
+  inactive/invisible frames. Average nonempty kind/side/phase means equally and
+  freeze that reference for all three rounds. There is no whole-brain history cache.
+- A training-only functional call substitutes the differentiably tied native bias
+  during both full-prefix replay and short-window supervision. The optimizer still
+  owns only masked incoming magnitudes. Gradients include the bias tie; this is not
+  post-step-only compensation. Derived biases are not independently clipped.
+- After each update, compile the derived bias into the ordinary native controller.
+  Subsequent fresh native collection, sink-PPO, full-flight evaluation and exports
+  use that controller without the wrapper, reference means or external computation.
+  Manifests explicitly declare the added constrained native-bias plasticity.
+- Held-out diagnostics now additionally decode the original source's **already
+  recorded post-tick activities on the exact same windows**. This requires no new
+  flight or full-brain replay and distinguishes learning from recovery of prior drift.
+
+Use **one matched three-round trial**, the existing **1e-4** representation rate,
+50 updates/round and eight sink proposals, restarting the retained source. Reuse
+the frozen head and course/noise schedule from runs 001/002; this deliberately reuses
+training cases and is not fresh goal evidence. All native task and nomination rules
+remain unchanged. This tests a plausible representation change, not a proven
+tonic-drift diagnosis or a claim that biological fly homeostasis works this way.
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/train_pragmatic_premotor_bearing.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output-dir runs/gate/pragmatic-premotor-bearing-centered-001 \
+  --reuse-head-run runs/gate/pragmatic-premotor-bearing-001 \
+  --learning-rate 1e-4 --center-premotor-inputs \
+  --rounds 3 --representation-pairs 4 --representation-updates 50 \
+  --training-pairs 16 --development-pairs 16 --proposals 8 \
+  --seed 2026091600 --noise-seed 2026091630 --development-seed 1110983
+```
+
+Targeted checks exercise the exact tied-bias derivative, mean-drive preservation,
+compiled native recurrent outputs, pre-tick versus post-tick timing, exclusion of
+held-out/inactive/invisible rows, balanced statistics, original-source same-window
+diagnostics and two-round native-only export with centering enabled and disabled.
+The compensated variant's flight result is not yet known.
+
+Full regression suite: **808 tests passed in 12.26 s**. All 17 targeted
+premotor/centering/driver tests pass; Ruff and whitespace checks are clean.

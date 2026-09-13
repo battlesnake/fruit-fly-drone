@@ -23,6 +23,10 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 import pragmatic_premotor_bearing as representation  # noqa: E402
 import train_pragmatic_course_ppo as ppo  # noqa: E402
 import train_pragmatic_course_replay as replay  # noqa: E402
+from pragmatic_centered_premotor import (  # noqa: E402
+    MeanCompensatedPremotor,
+    balanced_input_mean,
+)
 
 
 def parse_args():
@@ -43,6 +47,11 @@ def parse_args():
     parser.add_argument("--representation-pairs", type=int, default=4)
     parser.add_argument("--representation-updates", type=int, default=50)
     parser.add_argument("--learning-rate", type=float, default=1e-5)
+    parser.add_argument(
+        "--center-premotor-inputs",
+        action="store_true",
+        help="Tie existing premotor biases to preserve reference mean input drive.",
+    )
     parser.add_argument(
         "--reuse-head-run",
         type=Path,
@@ -119,12 +128,25 @@ def main():
     mask, nodes, representation_manifest = representation.premotor_mask(
         args.graph, args.annotations, device
     )
+    source_input_nodes = (
+        torch.unique(controller.edge_pre[mask]) if args.center_premotor_inputs else None
+    )
+    if args.center_premotor_inputs:
+        representation_manifest.pop("outgoing_edges_biases_and_time_constants_frozen", None)
+        representation_manifest.update(
+            outgoing_edges_and_time_constants_frozen=True,
+            bias_plasticity="existing selected biases tied to source-mean input compensation",
+            biases_independently_optimized=False,
+            centering_wrapper_is_deployed=False,
+        )
     manifest = dict(
         representation_stage=representation_manifest,
         outcome_stage=dict(scope="all existing roll-sink incoming edges; not yet constructed"),
         total_plasticity="union of representation incoming mask and roll-sink incoming edges",
         outgoing_freeze_applies_only_during_representation=True,
     )
+    if args.center_premotor_inputs:
+        manifest["total_plasticity"] += "; plus constrained selected-premotor native biases"
     config = replay.HoverConfig(**source["hover_config"])
     camera = replay.CameraSpec(*source["image_resolution"], source["camera_hfov_degrees"])
     gate_config = replace(replay.GateConfig(**source["gate_config"]), back_pattern="checkerboard")
@@ -206,7 +228,7 @@ def main():
             selected_controller=str(args.checkpoint),
         )
         report("source-development", metrics=baseline)
-        head = critic = critic_optimizer = None
+        head = critic = critic_optimizer = centered = None
         if args.reuse_head_run is not None:
             head, result["bearing_head_fit"] = reuse_bearing_head(
                 args.reuse_head_run,
@@ -244,6 +266,7 @@ def main():
                         camera=camera,
                         config=config,
                         gate_config=gate_config,
+                        presynaptic_nodes=source_input_nodes if centered is None else None,
                     )
                 )
                 entry["representation_collection"] = [b.metrics for b in banks]
@@ -256,6 +279,17 @@ def main():
                 )
                 torch.save(head.state_dict(), args.output_dir / "training-only-bearing-head.pt")
                 report("bearing-head-fit", metrics=result["bearing_head_fit"])
+            if args.center_premotor_inputs and centered is None:
+                mean, result["source_input_mean"] = balanced_input_mean(banks, source_input_nodes)
+                centered = MeanCompensatedPremotor(controller, mask, source_input_nodes, mean)
+                torch.save(
+                    dict(
+                        nodes=source_input_nodes.cpu(), mean=mean.cpu(), **centered.training_state()
+                    ),
+                    args.output_dir / "training-only-centering.pt",
+                )
+                report("source-input-mean-frozen", metrics=result["source_input_mean"])
+            training_actor = centered if centered is not None else controller
             rng = torch.Generator().manual_seed(base_seed)
             holdout_rng = torch.Generator().manual_seed(base_seed + 10000)
             first_holdout = representation.choose_windows(banks, holdout_rng, 0, heldout=True)
@@ -270,12 +304,12 @@ def main():
             ]
 
             @torch.no_grad()
-            def heldout_losses(head=head, windows=heldout_windows):
+            def heldout_losses(head=head, windows=heldout_windows, actor=training_actor):
                 return [
                     dict(
                         selection=selection,
                         **representation.bearing_window_loss(
-                            controller,
+                            actor,
                             head,
                             nodes,
                             bank,
@@ -284,6 +318,7 @@ def main():
                             camera=camera,
                             gate_config=gate_config,
                         )[1],
+                        **representation.source_window_bearing(head, bank, rows, starts),
                     )
                     for bank, rows, starts, selection in windows
                 ]
@@ -297,9 +332,9 @@ def main():
                     controller,
                     optimizer,
                     mask,
-                    lambda head=head, bank=bank, rows=rows, starts=starts: (
+                    lambda head=head, bank=bank, rows=rows, starts=starts, actor=training_actor: (
                         representation.bearing_window_loss(
-                            controller,
+                            actor,
                             head,
                             nodes,
                             bank,
@@ -310,6 +345,8 @@ def main():
                         )
                     ),
                 )
+                if centered is not None:
+                    stats.update(centered.compile_bias())
                 stats.update(update=update + 1, selection=selection)
                 entry["representation_updates"].append(stats)
                 result["policy_revision"] += int(stats["edge_delta_l2"] > 0)
@@ -397,6 +434,7 @@ def main():
                     bearing_head=head.state_dict(),
                     critic=critic.state_dict(),
                     critic_optimizer=critic_optimizer.state_dict(),
+                    centering=centered.training_state() if centered is not None else None,
                 ),
                 args.output_dir / "training-state.pt",
             )
