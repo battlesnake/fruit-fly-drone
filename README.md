@@ -45,6 +45,8 @@ current quantitative results are in the [hover milestone](docs/HOVER_MILESTONE.m
 
 ## Repository guide
 
+- [`docs/CLAUDE_HANDOFF.md`](docs/CLAUDE_HANDOFF.md) — latest stop/resumption handoff,
+  retained checkpoint, recent negative results, task boundaries and future options.
 - [`docs/PLAN.md`](docs/PLAN.md) — architecture, simulator decision, curriculum,
   experiments, safety, and milestones.
 - [`docs/FIVE_GATE_OVER50.md`](docs/FIVE_GATE_OVER50.md) — active >50% varied-course goal,

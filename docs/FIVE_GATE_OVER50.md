@@ -5,6 +5,11 @@ completing all five gates cleanly in more than half of held-out flights. It rema
 unmet. A passing short imitation loss, one successful flight, or a perfect teacher
 preflight does not meet it.
 
+**Handoff status, 2026-09-13:** stopped at the user's request after the final
+three-round experiment. No successor job is scheduled. Start from
+[CLAUDE_HANDOFF.md](CLAUDE_HANDOFF.md) and the completed result at the end of this
+ledger; historical “next experiment” instructions below may have been superseded.
+
 ## Course and evaluation protocol
 
 Use uninterrupted 30-second flights from the existing slightly perturbed airborne
@@ -4535,3 +4540,88 @@ gradient modes, refreshed collection, native-only exports and changed/safe
 selection. **831 tests pass in 10.57 s**; Ruff/whitespace checks pass. Astra's
 launch review found no blocker. No native result from this imitation trial is
 available yet; the >50% objective remains unmet.
+
+#### Full-history local-roll imitation completed; stopping for Claude handoff
+
+`pragmatic-whole-approach-full-prefix-001`, launched from **3f37f81** with the exact
+command above, exited normally after **828.53 s**. All **30 updates** completed
+with finite losses/gradients and changed native weights. The full seven-hop mask
+contains **1,097,500 edges /92,640 nodes**, including 2,168 selected photoreceptors
+and six roll motor neurons; the shortest selected sensory-to-roll path is four
+hops. This is not the smaller 11,781-edge premotor auxiliary mask.
+
+| Native development, seed 1110983 | Clean /32 | Negative / positive | Clean first gate /32 | Clean-prefix gates | Ring-contact episodes |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Source | 12 | 9 / 3 | 28 | 101 | 19 |
+| Round 1, update 10 | 3 | 3 / 0 | 22 | 54 | 25 |
+| Round 2, update 20 | 2 | 0 / 2 | 28 | 69 | 29 |
+| Round 3, update 30 | 5 | 2 / 3 | 31 | 85 | 27 |
+
+All native checks had **zero ground, invalid and wrong-direction episodes**.
+Wrong-order episode counts were source **2**, then **1 /0 /0**. The selected
+update is **0**, `development_extra_clean=0`, and
+`meaningful_development_nominee=false`. The retained phase-balanced source is
+unchanged; no fresh validation or controller promotion is warranted. Round three's
+better first-gate capture but worse completion means its regression cannot be
+explained simply by losing the first approach.
+
+For completeness, fixed **training-window** roll-motor RMSE before→after each
+round, aggregated by the *actual* source/phase/side, is below. Each entry is the
+root mean squared per-window RMSE; these are motor-output units, not radians,
+position error or held-out flight. Round-one entry is the source; subsequent
+entries are the previous learner, not new original-source comparisons.
+
+| Training windows | Round 1 | Round 2 | Round 3 |
+| --- | ---: | ---: | ---: |
+| Native early, negative | .01998→.01989 | .02111→.01768 | .02493→.02237 |
+| Native early, positive | .03098→.02245 | .02702→.02285 | .01983→.01814 |
+| Assisted early, negative | .01917→.01631 | .01890→.01754 | .02153→.01976 |
+| Assisted early, positive | .02651→.01799 | .02681→.02368 | .01156→.00953 |
+| Native later, negative | .02788→.02537 | .01638→.01587 | .01753→.01652 |
+| Native later, positive | .02570→.02798 | .01432→.01021 | .01579→.01575 |
+| Assisted later, negative | .02008→.01393 | .00687→.01121 | .01222→.00883 |
+| Assisted later, positive | .01192→.01549 | .01228→.00865 | .00343→.00408 |
+
+Early groups have four probe windows each. Later native negative/positive counts
+are **3/4**, **4/1**, **2/4**; assisted counts are **5/4**, **4/7**, **6/4**,
+respectively. This reflects explicit assisted fallback, not balanced native
+coverage of every later phase. The largest grouped non-roll-axis RMSE after each
+round is **.002658 / .003375 / .002837**. Frozen-source pitch/yaw/throttle labels
+do not freeze those learner outputs. Partial fitting gains did not transfer to
+better flight, even after making the entire neural prefix differentiable.
+
+Collections refreshed under the current learner, using the same source-PYT
+reference and predetermined native/assisted seeds:
+
+| Round / source | Seed | Episodes | Recorded time steps | Active frame counts, gates 1–5 | Collector `failed_lessons` |
+| --- | ---: | ---: | ---: | --- | ---: |
+| 1 native | 2026091310 | 16 | 990 | 5276, 2132, 1592, 1107, 482 | 16 |
+| 1 assisted | 2026091311 | 8 | 1017 | 2558, 1393, 1324, 1126, 1032 | 1 |
+| 2 native | 2026091330 | 16 | 873 | 5224, 1553, 580, 126, 150 | 15 |
+| 2 assisted | 2026091331 | 8 | 1031 | 2805, 1261, 1301, 1163, 1181 | 2 |
+| 3 native | 2026091350 | 16 | 1012 | 5435, 2521, 1860, 617, 412 | 14 |
+| 3 assisted | 2026091351 | 8 | 978 | 2582, 1110, 1105, 1300, 1126 | 1 |
+
+Frame counts sum across episodes, whereas recorded time steps are the bank's time
+dimension. `failed_lessons` includes historical training-cutoff/inactive-row
+bookkeeping; **it is not full-flight clean success/failure**. In round two native
+positive examples did not reach gates 3–5; in round three native negative examples
+did not reach gates 4–5. The full report preserves side-specific exposure and
+sampler substitutions. No successful-course redraw or changed evaluation rule
+was introduced.
+
+This closes the bounded comparison without an improved native candidate. Do not
+extend it unchanged or reinterpret its first-gate gains as achieving the course
+goal. Dense full-trajectory labels and a different representation site are only
+tentative next design options, not established fixes; the new prefix gradient
+still has labels only in selected twenty-frame windows. Broader alternatives and
+the retained teacher/hint, control-theory and leg-bandwidth ideas are recorded in
+[CLAUDE_HANDOFF.md](CLAUDE_HANDOFF.md), alongside exact assets, task boundaries,
+resumption commands and the earlier negative branches.
+
+At the user's request, **stop here** for quota/handoff. No successor learning or
+fresh validation was launched, and a host process check found no remaining
+project experiment. The >50% goal remains unmet, not completed or declared
+blocked. The source and full graph checksums were reverified; diagnostic models
+and reports remain local/ignored. This handoff changes documentation only; the
+code's last recorded regression result remains **831 passing tests** at 3f37f81.
