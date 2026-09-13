@@ -369,6 +369,7 @@ def evaluate(
     frozen_vision: bool = False,
     compact_policies: int | None = None,
     diagnostic_teacher_axes: tuple[bool, bool, bool, bool] | None = None,
+    trajectory_observer=None,
 ) -> dict[str, object] | list[dict[str, float | int]]:
     device = cases.side.device
     count = len(cases.side)
@@ -492,6 +493,9 @@ def evaluate(
             maximum_tilt,
             torch.linalg.vector_norm(state.euler[:, :2], dim=1),
         )
+        if trajectory_observer is not None:
+            # Read-only training diagnostics, never observations or control inputs.
+            trajectory_observer(state, rc, failed_prefix)
 
     final_gate_signed, _, _ = gate_coordinates(state.position, gates[-1])
     first = passed[:, 0]

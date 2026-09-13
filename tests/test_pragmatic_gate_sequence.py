@@ -59,11 +59,18 @@ def test_evaluator_distinguishes_clean_completion_from_eventual_passes(
             return torch.zeros(2, 4), neural
 
     monkeypatch.setattr(sequence, "DifferentiableQuad", ScriptedQuad)
+    observations = []
     metrics = sequence.evaluate(
         StubActor(), cases, gates, seconds=0.04, warmup_steps=0,
         camera=CameraSpec(width=32, height=20, horizontal_fov_degrees=125.0),
         hover_config=HoverConfig(), gate_config=GateConfig(back_pattern="checkerboard"),
+        trajectory_observer=lambda state, rc, failed: observations.append(
+            (state.position.clone(), rc.clone(), failed.clone())
+        ),
     )
+    assert len(observations) == 2
+    assert observations[-1][0][0, 0] == 2.5
+    assert bool(observations[-1][2].all()) == (ground_contact or backtrack)
     compact = sequence.evaluate(
         StubActor(), cases, gates, seconds=0.04, warmup_steps=0,
         camera=CameraSpec(width=32, height=20, horizontal_fov_degrees=125.0),

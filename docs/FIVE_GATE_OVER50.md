@@ -2745,3 +2745,92 @@ Each chunk needs one overlapping previous-mean evaluation with gradient for the
 AR likelihood. A new optimizer step must be followed by a new from-zero episode
 replay, never continuation from stale recurrent state. This is a proposed memory/
 throughput tradeoff to benchmark, not a claim that a full PPO training loop exists.
+
+#### First standalone outcome-search checks: no improvement
+
+Generation two of `pragmatic-phase-balanced-motor-es-002` completed its standalone
+32-case development checks. The updated centre achieved **2/32 clean** (0 negative,
+2 positive), 28 first gates and 75 clean-prefix gates; 28 episodes hit a ring and
+three incurred wrong-order events. The generation's best training candidate
+achieved **6/32 clean** (3/3), 29 first gates and 85 prefix gates, with 21 ring-contact
+episodes and two wrong-order episodes. Both had zero ground/invalid episodes.
+Neither replaced the same-run source, which remains **11/32 clean** (8/3), 28 first
+gates and 100 prefix gates. Development seed 1110983 is repeatedly reused and is
+not fresh goal validation.
+
+Generation three's updated centre subsequently achieved 1/16 clean training
+completions, 13 first gates and 40 prefix gates on new training seed 2026091372,
+with zero ground/invalid episodes. There is no standalone generation-three check.
+The search was verified live in generation four; its six-generation budget and
+settings are unchanged. The >50% varied-course goal is still unmet.
+
+#### Prepared full-flight exploration calibration
+
+`scripts/calibrate_pragmatic_course_exploration.py` implements the next bounded
+prerequisite if the outcome search finishes without a useful candidate. This is
+**not PPO and does not update or save controller weights**. It loads the retained
+source and compares six conditions on one new **32-case training bank**, course
+seed 2026091391 and noise seed 2026091392:
+
+1. Unmodified native motor commands.
+2. Zero-noise `tanh(atanh(clamped_native_motor))` control.
+3. Independent latent noise at the CPU probe's original four-axis scales.
+4. AR noise with 0.6-second correlation and one-quarter of those scales.
+5. The same AR noise at half scale.
+6. The same AR noise at full scale.
+
+The complete current five-gate geometry, 320x200/125-degree camera, RGB plus
+roll/pitch inputs, 50 Hz native recurrence and 100 Hz plant remain unchanged. All
+conditions use the same initial courses, ten noise-free static warmup frames, and
+full 30-second flights, including the post-completion tail. The first physical
+command gets a stationary residual. Innovations match across noisy conditions by
+episode and command index, remain independent across rows, and never restart at
+gates or failures. Residuals are measured against each noisy flight's **own**
+native command, not against commands from a different baseline trajectory.
+
+A read-only evaluator observer records position, actual RC and latched failure
+flags after each physical command interval. Paired trajectory/stick differences
+use only times before either flight's first failure, so arbitrary post-crash
+motion does not establish useful exploration. Overall safety/completion metrics
+still cover all 30 seconds. Command statistics explicitly include the full tail.
+No observed simulator state is fed into the native actor or noise sampler.
+
+Nominate the **largest AR scale** satisfying this coarse screen, rather than the
+scale with the largest chance success count: zero ground and invalid episodes,
+at least half the deterministic clean completions (and at least one), at least
+75% of its clean-first passes, no more than five percentage points additional
+stick saturation, roll-RC difference RMS at least 1e-4 and some position-axis RMS
+difference at least 1 mm. These are training-calibration thresholds, not a safety
+claim or evidence that learning works. The white-noise condition is a bandwidth
+control, not a competing deployment controller.
+
+Nomination also requires the zero-noise control to show no native-output clamps,
+maximum local command discrepancy at most 1e-6, no additional ground/invalid
+episodes, and clean/clean-first rates within the larger of two episodes or ten
+percentage points of baseline. This permits ordinary small run variation without
+introducing FP64 or byte-exact validation. Report all conditions even if these
+checks fail; do not automatically authorize a PPO run when nothing qualifies.
+
+All **640 tests pass**. New tests cover untouched warmup, stationary initialization,
+continuous correlated residuals around changing native means, independent rows,
+episode reset, zero-noise clamp accounting, copied read-only trajectory records,
+failure-excluded differences and nomination criteria. Existing full/compact flight
+scoring remains consistent with and without the observer. At this entry the
+calibration is prepared but **not launched**; the existing search owns the GPU.
+Astra's implementation review found no launch blocker. A reported nomination is
+provisional until the calibration report has `status: complete`; partial reports
+must not trigger learning.
+
+Planned command after a non-improving terminal search:
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/calibrate_pragmatic_course_exploration.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output runs/gate/pragmatic-course-exploration-calibration-001/report.json \
+  --pairs 16 --seed 2026091391 --noise-seed 2026091392
+```
+
+This calibration bank is consumed training data, never a later fresh held-out
+goal bank. The deterministic deployed controller has no sampler, exploration
+history or critic. No external implementation, model or dataset was downloaded
+or added to git for this preparation.
