@@ -2,7 +2,8 @@
 
 The decoder, visibility mask and labels never enter deployed control. Changed
 premotor cells are not sinks: every supervised window replays a full, fresh
-current-weight sensory prefix, then differentiates only its short window.
+current-weight sensory prefix. Full-prefix learning can differentiate that history
+as well as the supervised window, using training-only activation checkpointing.
 """
 
 from __future__ import annotations
@@ -17,6 +18,7 @@ import torch
 import train_pragmatic_course_replay as replay
 from pragmatic_centered_premotor import PresynapticMoments
 from pragmatic_policy_rollout import CourseRewardTracker, stick_values
+from torch.utils.checkpoint import checkpoint
 
 from flydrone.hover import StickState, rotation_matrix
 
@@ -366,12 +368,61 @@ def choose_windows(banks, rng, update, *, unroll=20, heldout=False):
     )
 
 
+def differentiable_prefix_state(controller, window, camera, gate_config, *, chunk_steps=20):
+    """Differentiate warmup and every prefix tick, without caching old neural states.
+
+    Checkpoint boundaries save memory, not truncate gradients. Each closure owns
+    immutable time bounds and re-renders its fixed training observations. Shorter
+    branches hold their state once they reach their respective lesson start.
+    """
+    if chunk_steps < 1:
+        raise ValueError("positive prefix checkpoint chunk size required")
+    starts = window[4]
+    neural = controller.initial_state(len(starts), device=starts.device, dtype=torch.float32)
+
+    def run(function, state):
+        if torch.is_grad_enabled():
+            return checkpoint(function, state, use_reentrant=False, preserve_rng_state=False)
+        return function(state)
+
+    def warmup(state):
+        observations = replay.window_observations(
+            window, torch.zeros_like(starts), camera, gate_config
+        )
+        for _ in range(10):
+            _, state = controller(*observations, state)
+        return state
+
+    def segment(first, end):
+        def advance(state):
+            for time in range(first, end):
+                times = torch.minimum(torch.full_like(starts, time), starts)
+                _, advanced = controller(
+                    *replay.window_observations(window, times, camera, gate_config), state
+                )
+                state = torch.where((time < starts)[:, None], advanced, state)
+            return state
+
+        return advance
+
+    neural = run(warmup, neural)
+    stop = int(starts.max())
+    for first in range(0, stop, chunk_steps):
+        neural = run(segment(first, min(first + chunk_steps, stop)), neural)
+    return neural
+
+
 def bearing_window_loss(
-    controller, head, nodes, bank, rows, starts, *, camera, gate_config, unroll=20
+    controller, head, nodes, bank, rows, starts, *, camera, gate_config, unroll=20,
+    full_prefix_gradient=False,
 ):
     device = controller.bias.device
     window = replay.prepare_window(bank.replay, rows, starts, unroll, device)
-    neural = replay.replay_prefix_state(controller, window, camera, gate_config).detach()
+    neural = (
+        differentiable_prefix_state(controller, window, camera, gate_config)
+        if full_prefix_gradient
+        else replay.replay_prefix_state(controller, window, camera, gate_config).detach()
+    )
     indices = torch.arange(len(rows), device=device)
     predicted, commands = [], []
     for frame in range(unroll):
@@ -405,7 +456,9 @@ def bearing_window_loss(
         visible_frames=int(visible.sum()),
         supervised_frames=unroll,
         prefix_is_current_weight=True,
-        gradient_is_window_truncated=True,
+        gradient_is_window_truncated=not full_prefix_gradient,
+        prefix_and_warmup_differentiated=full_prefix_gradient,
+        prefix_frames_by_branch=list(starts),
     )
 
 

@@ -48,6 +48,11 @@ def parse_args():
     parser.add_argument("--representation-updates", type=int, default=50)
     parser.add_argument("--learning-rate", type=float, default=1e-5)
     parser.add_argument(
+        "--full-prefix-gradient",
+        action="store_true",
+        help="Differentiate warmup and the full sensory prefix before each bearing lesson.",
+    )
+    parser.add_argument(
         "--center-premotor-inputs",
         action="store_true",
         help="Tie existing premotor biases to preserve reference mean input drive.",
@@ -171,6 +176,13 @@ def main():
         privileged_labels_are_deployed=False,
         roll_consistency="round-entry native actor on same histories",
         pitch_yaw_throttle_consistency="original source on same histories",
+        representation_gradient=dict(
+            full_prefix=args.full_prefix_gradient,
+            warmup_differentiated=args.full_prefix_gradient,
+            activation_chunk_steps=20 if args.full_prefix_gradient else None,
+            supervised_window_frames=20,
+            observations_are_fixed_training_data=True,
+        ),
         policy_revision=0,
         selected_round=0,
         rounds=[],
@@ -209,6 +221,7 @@ def main():
             selection_metrics=metrics,
             selection_metrics_round=round_number if metrics is not None else None,
             supervision="training-only bearing head then native sink outcome PPO",
+            representation_gradient=result["representation_gradient"],
             teacher_inputs_are_actor_inputs=False,
             auxiliary_head_is_deployed=False,
             critic_is_training_only=True,
@@ -317,6 +330,7 @@ def main():
                             starts,
                             camera=camera,
                             gate_config=gate_config,
+                            full_prefix_gradient=args.full_prefix_gradient,
                         )[1],
                         **representation.source_window_bearing(head, bank, rows, starts),
                     )
@@ -342,6 +356,7 @@ def main():
                             starts,
                             camera=camera,
                             gate_config=gate_config,
+                            full_prefix_gradient=args.full_prefix_gradient,
                         )
                     ),
                 )

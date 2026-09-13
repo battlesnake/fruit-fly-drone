@@ -4330,3 +4330,95 @@ The compensated variant's flight result is not yet known.
 
 Full regression suite: **808 tests passed in 12.26 s**. All 17 targeted
 premotor/centering/driver tests pass; Ruff and whitespace checks are clean.
+
+#### Compensated premotor-bearing run completed: no meaningful native gain
+
+`pragmatic-premotor-bearing-centered-001`, launched from **29645d5**, exited
+normally after **652.26 s**. All **150 representation updates** and **24/24
+sink-PPO proposals** completed. The reference means covered all 12 collection
+kind/side/phase strata and 4,822 external presynaptic neurons, with held-out
+episodes excluded.
+
+| Native development | Clean / 32 | Negative / positive | Clean-prefix gates |
+| --- | ---: | ---: | ---: |
+| Source | 12 | 9 / 3 | 101 |
+| Round 1 | 12 | 6 / 6 | 98 |
+| Round 2 | 13 | 9 / 4 | 100 |
+| Round 3 | 10 | 6 / 4 | 92 |
+
+All collections and native checks had **zero ground/invalid** episodes. Round two
+is saved as this run's local best, but **one extra clean development flight** is
+below the four-flight nomination threshold. It is not promoted over the retained
+source and does not justify fresh goal validation. The >50% target remains unmet.
+
+On identical held-out image histories, mean normalized bearing error from original
+source to post-representation learner was **.71910→.74824**, **4.59557→4.61256**,
+and **1.61022→1.64401**. These sampled histories differ across rounds, so compare
+source versus learner within a round, not the raw errors across rounds. The
+compensation has not established a better spatial representation. Maximum
+held-out per-axis command RMS shifts were **.07317σ / .15756σ / .02937σ**.
+Noisy outcome collections completed **6/32 (5/1)**, **4/32 (3/1)** and **2/32
+(1/1)**. Sink surrogate improvements remained small: **.001654 / .001596 /
+.001743**, with final roll shifts **.03924σ / .05029σ / .04982σ**.
+
+This closes the mean-compensation comparison without a native-flight gain large
+enough to pursue. Proceed with the full-prefix comparison below, not another
+centering or learning-rate variant.
+
+#### Next bounded comparison: full-prefix representation gradients
+
+Astra's reassessment recommends resolving a remaining credit-assignment limitation
+before moving the auxiliary decoder to a different anatomical region. The existing
+bearing objective measures a current-weight full-prefix replay, but differentiates
+only its last 20 frames. Earlier changes to the state entering that lesson receive
+no gradient. The earlier policy-gradient experiment demonstrated a short/full
+gradient sign reversal; that is motivation, **not proof of the same fault in this
+11,781-edge auxiliary**.
+
+`--full-prefix-gradient` now differentiates all ten warmup ticks and every preceding
+sensory frame, with no detached neural boundaries. Pure 20-frame activation
+checkpoint chunks re-render fixed observations and preserve gradients across
+their boundaries. Unequal-length branches hold their state at their own lesson
+start; no extra ticks are given to the shorter branch. Only the original 20-frame
+window receives labels and command-consistency losses. Neither earlier privileged
+labels nor differentiable flight physics have been added.
+
+The compensated trial is now terminal without a meaningful native nominee. Run
+**one three-round comparison from the retained source**:
+
+- Restore run 002's **uncentered** 11,781-edge representation mask, frozen source
+  head and normalization, LR **1e-4**, 50 updates per round and eight subsequent
+  sink-outcome proposals. Biases and time constants remain frozen during this
+  representation stage. Change only the gradient coverage.
+- Reuse the same course/noise schedule for this controlled training comparison.
+  Collections are still refreshed each round; changed actors can produce different
+  trajectories on those same courses. These seeds are not fresh goal validation.
+- Retain original-source same-window held-out comparisons and all full 30-second
+  native development checks. At least four extra clean development flights with
+  zero ground/invalid events are needed to nominate a fresh goal test. Better
+  bearing fitting alone cannot promote the controller.
+- A flat result closes this particular frozen-head/premotor formulation rather
+  than opening another learning-rate ladder or proving that the whole fly graph
+  lacks spatial information. Strong two-sided bearing gains without native flight
+  gains would instead strengthen the motor-accessibility hypothesis.
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/train_pragmatic_premotor_bearing.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output-dir runs/gate/pragmatic-premotor-bearing-full-prefix-001 \
+  --reuse-head-run runs/gate/pragmatic-premotor-bearing-001 \
+  --learning-rate 1e-4 --full-prefix-gradient \
+  --rounds 3 --representation-pairs 4 --representation-updates 50 \
+  --training-pairs 16 --development-pairs 16 --proposals 8 \
+  --seed 2026091600 --noise-seed 2026091630 --development-seed 1110983
+```
+
+Independent CPU references cover zero and unequal prefix lengths, checkpoint
+chunks of 1/3/20 frames, warmup derivatives and held-out no-grad replay. The same
+bearing objective now gives the full-history gradient, while visibility masking
+and native-only exports remain unchanged. All **29 focused tests pass**; Astra's
+implementation review found no launch blocker. This is an implementation result,
+not evidence of better flight. The opt-in leaves historical run behavior available.
+
+Full regression suite: **820 tests passed in 34.22 s**; Ruff and whitespace checks
+pass. No full-prefix native flight result is available yet.

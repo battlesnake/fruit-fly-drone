@@ -287,6 +287,98 @@ def test_representation_update_changes_only_existing_masked_magnitudes():
     assert actor.bias.grad is None
 
 
+@pytest.mark.parametrize("starts", [[0, 0], [0, 7], [5, 29]])
+@pytest.mark.parametrize("chunk_steps", [1, 3, 20])
+def test_full_prefix_checkpoint_gradient_matches_independent_unequal_branch_recurrence(
+    monkeypatch, starts, chunk_steps,
+):
+    class DrivenActor(TinyActor):
+        def forward(self, image, attitude, neural):
+            state = self.edge_magnitude[0] * neural + self.edge_magnitude[1] * attitude[:, :1]
+            return state.tanh().expand(-1, 4), state
+
+    def observe(window, times, camera, gate_config):
+        drive = (1 + times.float() * 0.1) * torch.tensor([1.0, 2.0])
+        return torch.zeros(2, 3, 2, 2), drive[:, None].expand(-1, 2)
+
+    monkeypatch.setattr(bearing.replay, "window_observations", observe)
+    actor = DrivenActor()
+    with torch.no_grad():
+        actor.edge_magnitude[0] = 0.9
+    window = bearing.replay.prepare_window(bank().replay, [0, 1], starts, 4, "cpu")
+    actual = bearing.differentiable_prefix_state(
+        actor, window, CameraSpec(), GateConfig(), chunk_steps=chunk_steps
+    )
+    actual.square().sum().backward()
+
+    def independently_unroll(weights, *, detach_warmup=False):
+        states = []
+        for row, start in enumerate(starts):
+            state = weights.new_zeros(())
+            for _ in range(10):
+                state = weights[0] * state + weights[1] * (row + 1)
+            if detach_warmup:
+                state = state.detach()
+            for time in range(start):
+                state = weights[0] * state + weights[1] * (1 + time * 0.1) * (row + 1)
+            states.append(state)
+        return torch.stack(states)[:, None]
+
+    weights = actor.edge_magnitude.detach().clone().requires_grad_(True)
+    expected = independently_unroll(weights)
+    expected.square().sum().backward()
+    torch.testing.assert_close(actual, expected, atol=2e-6, rtol=2e-6)
+    torch.testing.assert_close(actor.edge_magnitude.grad, weights.grad, atol=2e-5, rtol=2e-6)
+    full_gradient = weights.grad.clone()
+    weights.grad = None
+    no_warmup = independently_unroll(weights, detach_warmup=True)
+    if no_warmup.requires_grad:
+        no_warmup.square().sum().backward()
+    assert weights.grad is None or not torch.allclose(full_gradient, weights.grad)
+    with torch.no_grad():
+        heldout = bearing.differentiable_prefix_state(
+            actor, window, CameraSpec(), GateConfig(), chunk_steps=chunk_steps
+        )
+    torch.testing.assert_close(heldout, actual)
+    assert not heldout.requires_grad
+
+
+def test_full_prefix_bearing_changes_gradient_not_objective_or_visible_labels(monkeypatch):
+    monkeypatch.setattr(
+        bearing.replay, "window_observations",
+        lambda w, t, c, g: (torch.zeros(len(t), 3, 2, 2), torch.zeros(len(t), 2)),
+    )
+    data, actor = bank(), TinyActor()
+    head = bearing.FrozenBearingHead(
+        torch.zeros(1), torch.ones(1), torch.tensor([[1.0, 2.0]]), torch.zeros(2), torch.tensor(0.2)
+    )
+    options = dict(camera=CameraSpec(), gate_config=GateConfig(), unroll=4)
+    data.visible[6, 0] = False
+    truncated, _ = bearing.bearing_window_loss(
+        actor, head, torch.tensor([0]), data, [0, 1], [5, 9], **options
+    )
+    truncated.backward()
+    short_gradient = actor.edge_magnitude.grad.clone()
+    actor.zero_grad(set_to_none=True)
+    full, stats = bearing.bearing_window_loss(
+        actor, head, torch.tensor([0]), data, [0, 1], [5, 9],
+        full_prefix_gradient=True, **options,
+    )
+    full.backward()
+    torch.testing.assert_close(full, truncated)
+    assert not torch.allclose(actor.edge_magnitude.grad, short_gradient)
+    assert not stats["gradient_is_window_truncated"]
+    assert stats["prefix_and_warmup_differentiated"]
+    assert stats["prefix_frames_by_branch"] == [5, 9] and stats["visible_frames"] == 7
+    data.labels[6, 0] = 1e5
+    with torch.no_grad():
+        unchanged, _ = bearing.bearing_window_loss(
+            actor, head, torch.tensor([0]), data, [0, 1], [5, 9],
+            full_prefix_gradient=True, **options,
+        )
+    torch.testing.assert_close(unchanged, full)
+
+
 @pytest.mark.parametrize("kind", ["native", "roll-assisted"])
 def test_collector_never_imitation_targets_teacher_and_ground_stops_supervision(monkeypatch, kind):
     motors = []
@@ -342,10 +434,12 @@ def test_collector_never_imitation_targets_teacher_and_ground_stops_supervision(
 
 
 @pytest.mark.parametrize("centered", [False, True])
+@pytest.mark.parametrize("full_prefix", [False, True])
 def test_alternating_driver_refreshes_sink_after_representation_and_exports_only_native(
     monkeypatch,
     tmp_path,
     centered,
+    full_prefix,
 ):
     import json
     from types import SimpleNamespace
@@ -364,6 +458,7 @@ def test_alternating_driver_refreshes_sink_after_representation_and_exports_only
         learning_rate=0.001,
         reuse_head_run=None,
         center_premotor_inputs=centered,
+        full_prefix_gradient=full_prefix,
         training_pairs=2,
         development_pairs=2,
         proposals=1,
@@ -421,14 +516,14 @@ def test_alternating_driver_refreshes_sink_after_representation_and_exports_only
         "choose_windows",
         lambda banks, *a, **k: (banks[0], [0, 1], [0, 0], {"available_paired_groups": 6}),
     )
-    monkeypatch.setattr(
-        driver.representation,
-        "bearing_window_loss",
-        lambda actor, *a, **k: (
+    def window_loss(actor, *a, **kwargs):
+        assert kwargs["full_prefix_gradient"] == full_prefix
+        return (
             getattr(actor, "controller", actor).edge_magnitude.square().sum(),
             {},
-        ),
-    )
+        )
+
+    monkeypatch.setattr(driver.representation, "bearing_window_loss", window_loss)
 
     class Sink:
         def __init__(self, controller):
@@ -484,6 +579,7 @@ def test_alternating_driver_refreshes_sink_after_representation_and_exports_only
     assert exported["native_path_manifest"]["outcome_stage"]["edges"] == 1
     assert "representation_stage" in exported["native_path_manifest"]
     assert exported["training_round"] == 2
+    assert exported["representation_gradient"]["full_prefix"] == full_prefix
     report = json.loads((args.output_dir / "report.json").read_text())
     assert report["status"] == "complete" and report["selected_round"] == 2
     assert report["policy_revision"] == 4 and not report["goal_verified"]
