@@ -3129,3 +3129,96 @@ Astra found a source-alias selection issue during review; it is fixed and tested
 policy revision advances only for an accepted nonzero parameter change, and a
 repeat evaluation of unchanged weights cannot update the selected checkpoint or
 manufacture a nomination. Ruff and whitespace checks pass.
+
+#### Preserve these post-pilot diagnostic options
+
+Two pilot proposals have worsened the **full-history fixed-data surrogate** after
+their Adam step, including one that passed the KL bounds. This motivates a
+directional check before extending training or blaming sparse rewards. Finish
+the bounded pilot first; do not alter its settings mid-run.
+
+On one fixed training rollout, freeze observations, behavior actions/densities
+and advantages. Compare the truncated gradient prediction `g dot d` with actual
+full-history surrogate changes along the **materialized Adam displacement** `d`
+at a small, fixed scale ladder. An ordinary repeated zero-step replay supplies
+the noise floor; no FP64/byte-exact audit. A nonnegative prediction points first
+to optimizer/momentum; a negative prediction that agrees at smaller steps points
+to curvature/update size. Persistent disagreement above replay variability makes
+the short recurrent gradient window a leading suspect, not a proven cause.
+
+If indicated, test full recurrent backpropagation with activation checkpointing.
+Carry neural state **and previous latent mean without detaching**, include the
+ten warmup frames in differentiation, sum the complete fixed-data PPO surrogate,
+then backward once. This is a derivative through the recurrent policy, **not**
+through flight physics, and introduces no deployed state. Use pure replay
+functions with immutable chunk indices and do not capture all rendered images in
+closures. The installed Torch 2.12 development build exposes non-reentrant
+checkpointing; the [official checkpoint documentation](https://docs.pytorch.org/docs/stable/checkpoint.html)
+describes recomputing intermediates to save memory and warns that changed
+recomputation behavior can invalidate gradients. Memory, cost and long-horizon
+gradient growth still need a bounded GPU test; this option is not implemented.
+
+If updates become well behaved but native improvement remains unclear, compare
+source/candidate with noise off/on on one matched **training-only** course bank,
+using common AR innovations. Noisy-only improvement suggests an exploration-to-
+deployment gap; training improvement without development improvement suggests
+coverage/generalization. Neither improving suggests optimization or noisy return
+estimation before a new anatomy change. A stronger outcome critic and GAE are
+later variance-reduction options, not changes to make during this pilot.
+
+Teacher-derived potential shaping remains an option but must be described
+honestly: with gamma=1 and terminal potential zero, shaped reward-to-go is
+`G(t) - Phi(state(t))`, a state baseline rather than additional long-term reward
+information. Non-potential centering/speed/path rewards genuinely change the
+objective and can reward lingering or post-miss path tracking. Preserve that
+idea for a demonstrated reward problem; do not relax ordered-gate or ground rules.
+
+#### First PPO pilot complete: operational, no completion-rate improvement
+
+`runs/gate/pragmatic-course-ppo-001/report.json` is **complete**; the process exited
+normally after **914.8 seconds**. The tested implementation is commit `76d90db`,
+pushed to master. All three fresh training collections and four standalone
+development evaluations ran the complete 30-second course. **No ground or invalid
+episodes occurred** in any of them. The pilot made three proposals, accepted two,
+and stopped the second proposal in every round under its predeclared trust rules.
+
+| Native development | Clean (negative / positive) | Clean first gates | Clean-prefix gates |
+| --- | --- | --- | --- |
+| Same-run source | 13/32 (10 / 3) | 28 | 102 |
+| Round 1, rejected step / unchanged source | 12/32 (9 / 3) | 28 | 101 |
+| Round 2, one accepted step | 9/32 (6 / 3) | 28 | 94 |
+| Round 3, two accepted steps | 13/32 (9 / 4) | 28 | 97 |
+
+The unchanged round-one repeat is not a learned change. Round three ties the
+source's clean count and wins only the side-balance tie-breaker, so the experiment
+retains it as an **exploratory** `best-controller.pt` (also its last controller).
+It gains **zero** clean flights, fails the four-extra-flight nomination threshold,
+and has **not** received fresh goal validation. The globally retained source is
+not replaced by this tie. The varied-course >50% objective remains unmet.
+
+The fresh noisy training batches scored **4/32 (4 / 0)**, **2/32 (2 / 0)** and
+**8/32 (5 / 3)**. They are different course banks, so their increasing/decreasing
+counts are not matched evidence of learning or of noisy-to-native transfer.
+They used 48,000 valid command samples each. Four-episode full-flight gradient
+microbatches took about 18–19 s; whole-round backward plus post-step trust replay
+took **233, 232 and 229 s**. No extra runtime actor features or memory were added.
+
+| Proposal | Mean conditional KL | Global p99 KL | Decision | Replay loss before → after |
+| --- | --- | --- | --- | --- |
+| Round 1 | .008214 | .140834 | Reject; restore weights and Adam | .0000374 → .001575 |
+| Round 2 | .008400 | .025068 | Accept; stop round | .0000165 → .000445 |
+| Round 3 | .007845 | .061407 | Accept; stop round | .00000175 → .000855 |
+
+Round one exceeds the .10 p99 bound. Rounds two and three pass rejection bounds
+but exceed the .005 mean-KL early-stop threshold. Native latent mean displacement
+RMS stays below .04 stationary sigma on every axis; this is not the rejection
+cause. Ordinary unchanged-policy replay differences are reported (before-update
+mean KL .000161, .000286 and .00000596), not hidden or pursued into a byte-exact
+reproducibility project.
+
+All three actual Adam steps worsen the full-history fixed-data PPO surrogate,
+despite finite gradients and two accepted trust checks. This does **not** prove
+TBPTT is responsible: finite-step curvature, the materialized optimizer direction
+and replay variability must be separated. It does prioritize the bounded
+directional test described above over extending this configuration, changing
+anatomy or adding denser rewards. No pilot GPU process remains running.
