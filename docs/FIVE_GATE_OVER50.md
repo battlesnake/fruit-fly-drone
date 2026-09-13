@@ -3968,3 +3968,77 @@ exercises actual native recurrence plus compiled-only export through the driver.
 Ruff and whitespace checks pass. Astra's focused implementation review found
 **no launch blockers** for the bounded run; no additional solver certification
 or separate GPU diagnostic is required before trying actual learning.
+
+#### Box-natural comparison completed; optimizer-only branch closed
+
+`pragmatic-course-ppo-box-natural-001`, launched from **7795223**, completed
+normally in **240.04 s** and accepted all **24/24** proposals (8 per round).
+The native development checks still failed to improve on the starting policy:
+
+| Native development | Clean / 32 | Negative / positive | Clean-prefix gates |
+| --- | ---: | ---: | ---: |
+| Source | 13 | 9 / 4 | 101 |
+| Round 1 | 9 | 6 / 3 | 93 |
+| Round 2 | 11 | 8 / 3 | 100 |
+| Round 3 | 12 | 8 / 4 | 99 |
+
+All three newly sampled noisy training banks and all native checks had **zero
+ground/invalid** episodes. There is no development nominee, no fresh goal
+validation and no promotion. The globally retained source remains unchanged.
+The **>50% varied-course objective remains unmet**.
+
+The noisy training banks scored **7/32 (4/3), 6/32 (4/2), 6/32 (4/2)**.
+Final surrogate improvements were **.001728 / .001676 / .001771**; final mean
+KL was **.000846 / .000920 / .000862**, with roll shifts **.0843 / .0613 /
+.0528σ** relative to each collecting policy. Even the maximum within-round shift
+was only **.0894σ** (about **.000536 native roll units**), so useful-sized movement
+is not established. Median proposal time was **.634 s**. Five of 24 box solves
+hit the iteration cap; eight returned iterates met the logged KKT tolerance.
+Approximate solves were reported honestly, and 79 materialized backtracking trials
+produced the 24 accepted updates. The compiled full-controller comparison passed
+with maximum per-axis RMS discrepancy **.00139 exploration standard deviations**.
+
+Box-feasible updates remove the previous finite-sizing barrier, but success at
+optimizing the sampled surrogate has still not produced better autonomous flight.
+As predeclared, **do not extend this optimizer-only branch or start another
+damping/step-size sweep**. This does not prove that fixed motor-parent features
+are insufficient, nor that a globally optimal native controller was found.
+
+#### Next learning focus: premotor bearing representation, then native outcome adaptation
+
+Astra recommends an alternating representation/outcome run, not another motor
+teacher-imitation experiment or reopening the million-edge actor mask:
+
+1. Select annotated `descending_neuron` / `vnc_intrinsic` neurons among the
+   **363 direct roll-motor parents**, after resolving their official annotations.
+   Train only their existing incoming synaptic magnitudes. Freeze their biases,
+   time constants and outgoing weights during the representation phase. Do not
+   silently broaden this to every two-hop ancestor.
+2. Collect balanced native and roll-assisted histories covering launch, first-gate
+   approach and later gates, using diverse windows rather than the old nine fixed
+   lessons. Fit a training-only linear head on source activity to predict
+   body-relative current-gate **sin/cos bearing**, then freeze that head for the run.
+   Apply bearing labels only while the current gate is visually available and the
+   trajectory remains task-active; balance sides/phases and report missing coverage.
+3. For **50 supervised updates per round**, replay current-weight full-network
+   prefixes and use 20-frame supervised windows. Combine **0.1 × source-normalized
+   bearing MSE** with source-command consistency on all four axes, scaled by the
+   existing exploration sigmas. There is no privileged roll-command imitation.
+   This is short-window supervised learning, not a claim of untruncated PPO gradients.
+4. Freeze the updated upstream weights, collect **fresh native trajectories**, and
+   apply the existing bounded native sink-PPO updates to all 726 roll-motor inputs.
+   Evaluate ordinary native flights after each of three rounds. Preserve the original
+   source independently; only native completion earns further training or validation.
+
+These premotor neurons are generally **not sinks**: their changes can affect other
+brain regions and return through recurrence. Frozen parent caches are invalid for
+the representation phase, so that phase must run the full native network. Sink
+caching becomes valid again while upstream weights are frozen. Neither the linear
+head nor its predicted bearing, privileged labels or training bookkeeping is deployed.
+
+Better auxiliary decoding alone is not a solution: an arbitrary linear head can
+read information that the existing signed motor connections cannot exploit. The
+same-round native outcome adaptation and unassisted flight checks are decisive.
+The implementation and first run of this representation stage are **not started**;
+resolve annotation coverage and the bounded data/learning settings as implementation
+work, without adding another prerequisite diagnostic campaign.
