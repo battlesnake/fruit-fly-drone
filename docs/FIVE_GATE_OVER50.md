@@ -3444,3 +3444,9 @@ parameter restoration and gradient clearing after rejection/nonfinite errors,
 full-history mode routing, absence of actor Adam state, unchanged-policy
 selection protection, and simulated partial-gradient CUDA OOM fallback 8→4.
 Ruff and whitespace checks pass.
+
+Launched `pragmatic-course-ppo-steepest-001` from commit **8a05255**, after Astra's
+focused review found no launch blockers. The source scored **12/32** clean on
+the reused development set (**9 negative / 3 positive**), with **28/32** clean
+first gates, **101** clean-prefix gates, and **zero ground/invalid episodes**.
+This is the baseline for this run, not a new learned result or fresh validation.
