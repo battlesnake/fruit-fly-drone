@@ -4042,3 +4042,83 @@ same-round native outcome adaptation and unassisted flight checks are decisive.
 The implementation and first run of this representation stage are **not started**;
 resolve annotation coverage and the bounded data/learning settings as implementation
 work, without adding another prerequisite diagnostic campaign.
+
+#### Premotor bearing stage implemented; first bounded alternating run
+
+The official MaleCNS superclass lookup resolves the **363** direct roll-motor
+parents as **286 `vnc_intrinsic`, 43 `descending_neuron`, 27 `ascending_neuron`
+and 7 `vnc_sensory`**. Select the first two classes: **329 neurons** with
+**13,981 incoming edges**. Excluding all **2,200 selected→selected edges** keeps
+every selected-cell outgoing weight frozen during representation learning,
+leaving **11,781 trainable incoming magnitudes**. Biases, time constants, topology,
+signs and all other parameters stay fixed in that phase. Native sink-PPO then
+intentionally changes the existing 726 roll-motor incoming magnitudes.
+
+`pragmatic_premotor_bearing.py` and `train_pragmatic_premotor_bearing.py` implement
+the documented alternating stage. The concrete first-run settings are:
+
+- Three rounds, each collecting **4 mirrored pairs native + 4 mirrored pairs
+  training-only current-gate-roll-assisted** on fresh varied courses. Assistance
+  uses original-source pitch/yaw/throttle, not a new deployed controller.
+- Last whole pair of each bank excluded from auxiliary-head fitting and SGD.
+  Training examples balance collection kind, side and three phases: launch
+  (first second, before gate one), remaining first-gate approach, and later gates.
+  Frame/window coverage—including empty groups—is reported. Pairs have independent
+  sampled window starts; this is not a small fixed set of memorized lessons.
+- Bearing labels require task-active status and **at least four actual rendered
+  current-gate-colour pixels**, using `G-R > .15` and `G-B > .08`. This accounts
+  for partial rings and rendered occlusion; it is not a centre-frustum claim.
+  The mask, body-relative sin/cos labels and all physical state remain training-only.
+  Outside-aperture plane crossings remain recoverable, matching the goal rules.
+  Representation records end at failure/completion, with finite padding; they are
+  not full-tail success evaluations. The outcome collector/evaluator retain all
+  original ground penalties and the complete 30-second clean-flight requirement.
+- Fit one weighted FP32 ridge head (ridge **.01**) from **post-tick tanh activity**
+  of the retained source. Freeze head, feature mean/std (floor **.01**) and the
+  **combined scalar sin/cos source MSE** (floor **1e-4**) for the entire run. A
+  separate cosine denominator could amplify low-variance cosine errors undesirably.
+- **50 Adam updates/round**, learning rate **1e-5**, gradient norm cap **1**,
+  magnitudes constrained to **[0,8]**, two side-balanced **20-frame** windows/update.
+  Each update recomputes the whole current-weight full-brain prefix, then detaches
+  it for short-window supervision. Loss is **0.1 × normalized bearing MSE** plus
+  mean all-four-axis latent command MSE divided by the existing exploration
+  sigmas **(.006,.002,.001,.0025)**. No teacher action enters the loss.
+- Following Astra's review, roll consistency uses the **round-entry native actor
+  on the same recorded observations**, not the globally retained original roll.
+  Otherwise rounds 2–3 could train upstream activity to cancel preceding sink-PPO
+  learning. P/Y/T consistency stays anchored to original-source outputs. The
+  round-entry brain is also replayed during assisted collection to obtain this
+  reference; actual assisted roll commands are never imitation targets.
+- Freeze upstream; construct a new native sink slice; collect **32 fresh native
+  noisy episodes**, then up to **8 existing box-natural proposals** with
+  failure-aware advantages. Do not reuse parent activity across upstream changes.
+  Evaluate **32 ordinary unassisted full flights** after each round. Only native
+  full-controller weights are exported; head/critic/training data are not deployed.
+
+Reserve course seeds **2026091600–2026091608** as consecutive triples
+`native representation / assisted representation / native outcome`, and noise
+seeds **2026091630–2026091632**. Development seed **1110983** remains reused
+selection-only data. The retained source is unchanged; a safe nominee needs at
+least **four extra clean development flights** before the original fresh matched
+validation. Decoder gains or assisted completions alone do not satisfy the goal.
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/train_pragmatic_premotor_bearing.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output-dir runs/gate/pragmatic-premotor-bearing-001 \
+  --rounds 3 --representation-pairs 4 --representation-updates 50 \
+  --training-pairs 16 --development-pairs 16 --proposals 8 \
+  --seed 2026091600 --noise-seed 2026091630 --development-seed 1110983
+```
+
+The nine new targeted tests pass. They cover annotation-only selection and frozen
+internal/outgoing edges, actual role-colour visibility, body-relative labels,
+whole-pair holdout and side/phase windows, frozen scalar head normalization,
+fresh-prefix/short-window gradient timing, masked magnitudes, no teacher-action
+targets, ground-contact supervision masking, and two-round native-only export.
+The original >50% varied-course goal is still unverified; the run below must
+produce actual flight evidence before any progress claim about completion rate.
+
+Full regression suite: **800 tests passed in 11.46 s**; Ruff and whitespace checks
+pass. Read-only host inspection found no previous training process alive and the
+RTX 5080 at **620 MiB / 1% utilization** before launch.
