@@ -4422,3 +4422,39 @@ not evidence of better flight. The opt-in leaves historical run behavior availab
 
 Full regression suite: **820 tests passed in 34.22 s**; Ruff and whitespace checks
 pass. No full-prefix native flight result is available yet.
+
+#### Conditional fallback retained: full-prefix local-roll imitation
+
+The full-prefix bearing run launched from **2dff5d9**. Its first native round is
+**14/32 clean (9 negative / 5 positive), versus 12/32 (9/3) source**, with zero
+ground/invalid events. This is only two extra flights on reused development data,
+not a meaningful nominee yet. Finish all three rounds before choosing another run.
+
+If it finishes without a meaningful nominee, Astra recommends one **full-prefix
+version of the existing whole-approach coverage pilot**, ahead of moving the
+auxiliary to a different brain region. Code inspection confirms this is untested:
+`replay_window_loss` still detaches its recomputed prefix. Earlier whole-flight
+physical learning used a different tracking loss and one-/two-second state
+detaches; full-history PPO optimized a different outcome objective. Neither tests
+full-history imitation of the local-roll teacher that achieved 27/32 with native PYT.
+
+Restart the retained source for **three rounds × ten updates**, using the existing
+seven-hop mask, LR **1e-4**, contrast/anchor losses, refreshed native/from-start
+roll-assisted banks and four equally weighted paired lessons per update. Keep
+local-current-gate roll labels and original-source pitch/yaw/throttle labels.
+Differentiate all ten warmup ticks and every prefix frame through to each labeled
+window. If needed, accumulate pair microbatches with the same weights before one
+clip/optimizer step. No auxiliary head or alternating sink-PPO is included.
+
+Preserve the historical coverage sampler for the matched comparison, including
+explicit assisted substitutions and its conservative end-of-training-eligibility
+at missed plane crossings. That collection cutoff is **not** a new evaluation
+failure: the full native evaluator still permits recovery outside the annulus and
+enforces the unchanged full 30-second clean-flight rules. Ground/invalid states
+also end training eligibility through `state_is_valid`.
+
+Report fitting by actual source, phase and side separately from flight outcomes.
+The existing **four-extra-clean / zero-ground-invalid** rule still gates fresh
+goal validation. A neuron-region change remains a possible later intervention,
+but connectivity or a region's reputation alone does not establish a useful
+control representation. This fallback is documented, **not implemented or launched**.
