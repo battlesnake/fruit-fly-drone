@@ -56,6 +56,7 @@ def parse_args():
     parser.add_argument("--proposals", type=int, default=2)
     parser.add_argument("--training-pairs", type=int, default=16)
     parser.add_argument("--development-pairs", type=int, default=16)
+    parser.add_argument("--development-every", type=int, default=1)
     parser.add_argument("--microbatch", type=int, default=4)
     parser.add_argument("--chunk-steps", type=int, default=20)
     parser.add_argument("--learning-rate", type=float, default=1e-6)
@@ -70,7 +71,7 @@ def parse_args():
 def main():
     args = parse_args()
     if min(args.rounds, args.proposals, args.training_pairs, args.development_pairs,
-           args.microbatch, args.chunk_steps, args.learning_rate) <= 0:
+           args.development_every, args.microbatch, args.chunk_steps, args.learning_rate) <= 0:
         raise SystemExit("positive sizes and learning rate required")
     if not math.isfinite(args.predicted_decrease) or args.predicted_decrease <= 0:
         raise SystemExit("finite positive predicted decrease required")
@@ -133,11 +134,14 @@ def main():
                                camera=camera, hover_config=config, gate_config=gate_config)
 
     def save_native(name, round_number, metrics):
+        if sink is not None:
+            sink.compile_into(controller)
         payload = dict(source)
         payload.update(controller={k: v.detach().cpu() for k, v in controller.state_dict().items()},
                        experiment=result["experiment"], training_round=round_number,
                        native_path_manifest=manifest, gate_config=vars(gate_config),
                        course_geometry=replay.GEOMETRY, selection_metrics=metrics,
+                       selection_metrics_round=round_number if metrics is not None else None,
                        supervision="outcome PPO; no teacher", teacher_inputs_are_actor_inputs=False,
                        teacher_config=None, roll_teacher=None, preservation_source_checkpoint=None,
                        parent_checkpoint=str(args.checkpoint),
@@ -246,23 +250,29 @@ def main():
                 progress(dict(stage="proposal-complete", round=round_number, **stats))
                 if stats["stop_round"]:
                     break
-            metrics = assess()
-            entry["native_development"] = metrics
+            metrics = None
             entry["policy_revision"] = result["policy_revision"]
-            # Development chooses an export, never resets the continuing training state.
-            if select_new_native(metrics, best, result["policy_revision"], last_evaluated_revision):
-                best = metrics
-                result.update(best_development=best, selected_round=round_number,
-                              selected_controller=str(args.output_dir / "best-controller.pt"))
-                save_native("best-controller.pt", round_number, metrics)
-            last_evaluated_revision = result["policy_revision"]
+            if round_number % args.development_every == 0 or round_number == args.rounds:
+                metrics = assess()
+                entry["native_development"] = metrics
+                # Development chooses an export, never resets continuing training.
+                if select_new_native(metrics, best, result["policy_revision"],
+                                     last_evaluated_revision):
+                    best = metrics
+                    result.update(best_development=best, selected_round=round_number,
+                                  selected_controller=str(args.output_dir / "best-controller.pt"))
+                    save_native("best-controller.pt", round_number, metrics)
+                last_evaluated_revision = result["policy_revision"]
+            # A recovery checkpoint without assessment must not inherit stale scores.
             save_native("last-controller.pt", round_number, metrics)
             torch.save(dict(actor_optimizer=optimizer.state_dict() if optimizer else None,
                             actor_update=args.actor_update, critic=critic.state_dict(),
                             critic_optimizer=critic_optimizer.state_dict(), round=round_number),
                        args.output_dir / "training-state.pt")
             report()
-            progress(dict(stage="native-development", round=round_number, metrics=metrics,
+            progress(dict(stage="native-development" if metrics is not None else
+                          "round-complete-without-native-check",
+                          round=round_number, metrics=metrics,
                           selected_round=result["selected_round"]))
         gain = best["clean_course_success_rate"] - baseline["clean_course_success_rate"]
         result.update(status="complete",

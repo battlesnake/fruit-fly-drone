@@ -163,7 +163,8 @@ def test_pilot_selects_only_changed_accepted_policy(
     args = SimpleNamespace(checkpoint=tmp_path / "source.pt", output_dir=tmp_path / "run",
                            graph=tmp_path / "graph.npz", device="cpu", seed=10, noise_seed=20,
                            development_seed=30, rounds=1, proposals=1, training_pairs=1,
-                           development_pairs=16, microbatch=8, chunk_steps=2, learning_rate=1e-6,
+                           development_pairs=16, development_every=1,
+                           microbatch=8, chunk_steps=2, learning_rate=1e-6,
                            actor_update=actor_update, full_history=actor_update == "steepest",
                            predicted_decrease=5e-5, actor_scope="full")
     source = dict(hover_config=vars(HoverConfig()), gate_config=vars(GateConfig()),

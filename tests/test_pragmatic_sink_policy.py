@@ -167,7 +167,10 @@ def test_sink_mode_refuses_adam_before_loading_controller(monkeypatch, tmp_path)
         driver.main()
 
 
-def test_sink_pilot_compiles_before_fresh_collection_and_assessment(monkeypatch, tmp_path):
+@pytest.mark.parametrize("development_every", [1, 2, 4])
+def test_sink_pilot_compiles_before_fresh_collection_and_assessment(
+    monkeypatch, tmp_path, development_every,
+):
     import train_pragmatic_course_ppo as driver
 
     from flydrone.gate import GateConfig
@@ -178,7 +181,8 @@ def test_sink_pilot_compiles_before_fresh_collection_and_assessment(monkeypatch,
     args = SimpleNamespace(checkpoint=tmp_path / "source.pt", output_dir=tmp_path / "run",
                            graph=tmp_path / "graph.npz", device="cpu", seed=10, noise_seed=20,
                            development_seed=30, rounds=2, proposals=2, training_pairs=2,
-                           development_pairs=16, microbatch=4, chunk_steps=20, learning_rate=1e-6,
+                           development_pairs=16, development_every=development_every,
+                           microbatch=4, chunk_steps=20, learning_rate=1e-6,
                            actor_update="steepest", full_history=True, predicted_decrease=5e-5,
                            actor_scope="roll-sinks")
     source = dict(hover_config=vars(HoverConfig()), gate_config=vars(GateConfig()),
@@ -196,6 +200,12 @@ def test_sink_pilot_compiles_before_fresh_collection_and_assessment(monkeypatch,
 
     def collect(*a, **kw):
         check_compiled()
+        if collections:
+            saved = torch.load(args.output_dir / "last-controller.pt", weights_only=True)
+            assert torch.equal(saved["controller"]["edge_magnitude"], brain.edge_magnitude)
+            if development_every > 1:
+                assert saved["selection_metrics"] is None
+                assert saved["selection_metrics_round"] is None
         assert torch.equal(kw["record_sink_parents"], model.sink.parents)
         with torch.no_grad():
             features, means = brain.rollout(observations)
@@ -246,7 +256,7 @@ def test_sink_pilot_compiles_before_fresh_collection_and_assessment(monkeypatch,
     monkeypatch.setattr(driver, "verify_compiled_sink_policy", verify)
     assert driver.main() == 0
     assert len(collections) == 2 and collections[0] is not collections[1]
-    assert len(assessments) == 3 and len(checks) == 1
+    assert len(assessments) == (3 if development_every == 1 else 2) and len(checks) == 1
     result = json.loads((args.output_dir / "report.json").read_text())
     assert result["accepted_steps"] == 4 and result["actor_scope"] == "roll-sinks"
     saved = torch.load(args.output_dir / "last-controller.pt", weights_only=True)

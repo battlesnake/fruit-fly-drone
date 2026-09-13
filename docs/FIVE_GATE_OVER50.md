@@ -3592,3 +3592,78 @@ improvement does not establish five-gate success or satisfy the >50% goal.
 Astra's focused implementation review found **no launch blockers**: the pre-tick
 cache/warmup timing, direct recurrence, AR previous-mean gradients, sink-structure
 constraints, compilation before fresh flights and native-only exports are intact.
+
+#### Sink pilot: fast useful optimization, no native completion improvement yet
+
+`pragmatic-course-ppo-sinks-001`, launched from **7e674eb**, completed normally in
+**241.68 s**. It accepted **20/21** proposed updates (8, 4 and 8 by round), with
+ordinary update calculations generally taking **0.1–0.2 s**. The first raw
+gradient norm was **.3404** and first step displacement **.0001469 L2**, rather
+than the whole-network pilot's extremely small step. The first predicted change
+**−5.000e-5** matched measured **−5.003e-5** closely. The source cache's maximum
+roll-mean error was **1.23e-7**; the first compiled full-controller comparison's
+per-axis RMS errors were at most **.00050 exploration standard deviations**.
+
+| Stage | Accepted updates | Clean native courses | Negative / positive | Clean-prefix gates |
+| --- | ---: | ---: | ---: | ---: |
+| Source | — | 11/32 | 8 / 3 | 100 |
+| Round 1 | 8 | 11/32 | 8 / 3 | 101 |
+| Round 2 | 4 | 10/32 | 8 / 2 | 98 |
+| Round 3 | 8 | 10/32 | 8 / 2 | 100 |
+
+All native checks had zero ground/invalid episodes. The three newly sampled
+noisy training banks scored 8/32, 3/32 and 5/32, also with zero ground/invalid;
+these different-bank counts are not a learning curve. The selected exploratory
+checkpoint is round one only by prefix tie-break, with **zero extra clean
+development completions**; no model is promoted or sent to fresh goal validation.
+
+Per-round final accepted surrogate losses were **−.0002151**, **−.0001347** and
+**−.0002886**, each starting near zero. Final roll-mean changes relative to that
+round's behavior were only **.0212σ**, **.00720σ** and **.00885σ**, respectively;
+mean joint KL was **.000405**, **.000307** and **.000406**. Thus optimization is
+now fast and consistently descends, but movement remains limited. This does not
+establish that frozen parent features are inadequate, or that changes are mainly
+high-frequency. The latter remains an untested conditioning hypothesis.
+
+#### Next: larger continuous on-policy sink learning budget
+
+Astra recommends a larger training budget before a new optimizer: the eight-step
+cap was reached in two of three rounds. Restart from the independently retained
+source for **12 fresh rounds × 32 episodes**, with **up to 32** sink updates per
+round. Within this run, always retain latest accepted training weights and critic;
+development selection never resets them. Keep rewards, parameter scope, sensors,
+exploration, plant, `5e-5` predicted target, half-target retry and all descent/trust
+stops unchanged. Do not force further updates after a round exhausts backtracking.
+
+Course seeds **2026091480–2026091491** and noise seeds
+**2026091500–2026091511** are newly reserved. Assess the unchanged source, then
+native development at **rounds 4/8/12**, using the same selection-only seed
+1110983. The final round is always assessed even for other non-dividing cadences.
+Write an ordinary compiled native recovery checkpoint each round; unchecked
+rounds explicitly carry **no selection metrics**, rather than stale scores from
+another policy. Save critic training state each round, independently of inference
+exports. This run increases actual training exposure without changing success.
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/train_pragmatic_course_ppo.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output-dir runs/gate/pragmatic-course-ppo-sinks-002 \
+  --actor-scope roll-sinks --actor-update steepest --full-history \
+  --predicted-decrease 5e-5 --rounds 12 --proposals 32 \
+  --training-pairs 16 --development-pairs 16 --development-every 4 \
+  --seed 2026091480 --noise-seed 2026091500 --development-seed 1110983
+```
+
+All **726 tests pass** (9.96 s), including default/periodic/forced-final assessment,
+compilation before unchecked recovery saves, and absence of stale native metrics.
+Ruff and whitespace checks pass. A meaningful safe development gain still goes
+to fresh varied-course validation; none of these optimization results satisfies
+the **>50% five-gate completion goal**, which remains unmet.
+
+Retain **damped Fisher/natural-gradient conditioning of the 726 native weights**
+as a later option if this run repeatedly exhausts descent/backtracking far below
+its trust budget, or improves the surrogate substantially without useful policy
+movement. The direct motor recurrence permits a training-only mean Jacobian;
+the AR conditional uses `J[t] - rho * J[t-1]` (and `J[0]` at episode start).
+This is not implemented or a launched side experiment. Current evidence does
+not yet show it is needed; the next action is the larger learning run above.
