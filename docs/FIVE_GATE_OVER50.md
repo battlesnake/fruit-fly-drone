@@ -4458,3 +4458,80 @@ The existing **four-extra-clean / zero-ground-invalid** rule still gates fresh
 goal validation. A neuron-region change remains a possible later intervention,
 but connectivity or a region's reputation alone does not establish a useful
 control representation. This fallback is documented, **not implemented or launched**.
+
+#### Full-prefix bearing run completed; direct-premotor auxiliary closed
+
+`pragmatic-premotor-bearing-full-prefix-001`, launched from **2dff5d9**, exited
+normally in **905.15 s**. All **150 full-prefix representation updates** and
+**24/24 native sink-PPO proposals** completed with finite gradients.
+
+| Native development | Clean / 32 | Negative / positive | Clean-prefix gates |
+| --- | ---: | ---: | ---: |
+| Source | 12 | 9 / 3 | 101 |
+| Round 1 | 14 | 9 / 5 | 103 |
+| Round 2 | 10 | 7 / 3 | 97 |
+| Round 3 | 12 | 7 / 5 | 97 |
+
+All training collections and native checks had **zero ground/invalid** episodes.
+Round one remains this run's local selected checkpoint, but two extra clean
+development flights do not meet the four-flight nomination rule. No fresh goal
+validation is triggered, and the retained source is unchanged.
+
+Same-window original-source→learner normalized bearing errors averaged
+**.71866→.70437**, **.65310→1.00148** and **1.93942→1.74924**. Round three improves
+the aggregate by about 10%, but its native later-gate estimate worsens
+**4.04269→4.27274**. Full-prefix learning therefore has not established reliable
+two-sided spatial improvements or sufficient native flight gains. Maximum
+held-out command shifts were **.04098σ / .08223σ / .03773σ**. Noisy outcome
+collections scored **4/32 (3/1)**, **7/32 (5/2)** and **3/32 (1/2)**; final sink
+surrogate improvements were **.001715 / .001643 / .001315**.
+
+Close this frozen-head/direct-premotor formulation rather than extending its
+learning-rate, centering or optimizer variants. This does not establish that the
+full fly network lacks useful spatial information. The documented direct
+teacher-imitation comparison is now the next learning action.
+
+#### Full-history local-roll imitation implemented
+
+The checkpointed prefix helper now lives in `train_pragmatic_course_replay.py`
+and is shared by bearing and motor-imitation learning. The bearing helper's timing
+and gradients are unchanged. An opt-in `--full-prefix-gradient` makes motor
+imitation differentiate warmup and all preceding sensory frames; supplying a
+fixed diagnostic prefix in this mode is rejected. The existing twenty-frame
+motor objective, labels, normalization and pair-contrast term are unchanged.
+
+`train_pragmatic_course_coverage.py` additionally accepts
+`--replay-pairs-per-batch`. Use **one pair per microbatch** for the new trial:
+each of four paired lessons contributes one quarter of the objective, then the
+existing anchor contributes once, before **one** gradient clip/Adam/projection
+step. No actor updates occur between pairs. This reduces activation memory
+without changing example weights or pair adjacency.
+
+The runner records actual changed edges and policy revisions. An unchanged
+reevaluation or a candidate with ground/invalid events cannot replace the local
+selection. Four additional clean development flights are still required before
+fresh goal validation. Exports contain the ordinary native controller only;
+neither teacher, replay history nor auxiliary decoder is deployed.
+
+Run the source-restarted **3×10** comparison on the original coverage pilot's
+training seeds, preserving its sampler and all task geometry. This is controlled
+training-data reuse, not a fresh-course test:
+
+```sh
+aira confine --memory-reserve 8G -- .venv/bin/python scripts/train_pragmatic_course_coverage.py \
+  --checkpoint runs/gate/pragmatic-phase-balanced-replay-001/best-controller.pt \
+  --output-dir runs/gate/pragmatic-whole-approach-full-prefix-001 \
+  --rounds 3 --updates-per-round 10 --learning-rate 1e-4 \
+  --full-prefix-gradient --replay-pairs-per-batch 1 \
+  --native-pairs 8 --assisted-pairs 4 --unroll 20 --hop-budget 7 \
+  --contrast-weight 1 --anchor-reference-count 19286 \
+  --seed 2026091310 --development-seed 1110983 --development-pairs 16 --seconds 30
+```
+
+Independent tests compare motor-loss gradients against ordinary full unrolls,
+including warmup and unequal branch starts. Pair batches of 1/2/3/4 preserve the
+combined loss, contrast and single-anchor gradient; driver checks cover both
+gradient modes, refreshed collection, native-only exports and changed/safe
+selection. **831 tests pass in 10.57 s**; Ruff/whitespace checks pass. Astra's
+launch review found no blocker. No native result from this imitation trial is
+available yet; the >50% objective remains unmet.

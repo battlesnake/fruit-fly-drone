@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pytest
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
@@ -96,6 +97,21 @@ def test_coverage_selection_reports_fallback_truthfully(monkeypatch):
     assert lessons[0][1]["source_by_side"] == ["native", "roll-assisted"]
 
 
+def test_native_selection_needs_new_weights_and_zero_ground_and_invalid():
+    source = dict(
+        clean_course_success_rate=0.375, clean_course_negative_success_rate=0.5625,
+        clean_course_positive_success_rate=0.1875, gates_before_failure_mean=3.0,
+        course_race_fitness=3.0, ground_contact_rate=0.0, invalid_rate=0.0,
+    )
+    candidate = dict(source, clean_course_success_rate=0.5625)
+    assert coverage.select_native_candidate(candidate, source, 2, 1)
+    assert not coverage.select_native_candidate(candidate, source, 1, 1)
+    for field in ("ground_contact_rate", "invalid_rate"):
+        assert not coverage.select_native_candidate(
+            dict(candidate, **{field: 0.03125}), source, 2, 1
+        )
+
+
 def test_batched_fit_diagnostics_keep_each_pair_and_actual_sources(monkeypatch):
     lessons = [
         (index, dict(phase=index + 1, source_by_side=["native", "roll-assisted"]))
@@ -119,8 +135,9 @@ def test_batched_fit_diagnostics_keep_each_pair_and_actual_sources(monkeypatch):
         ]
 
 
+@pytest.mark.parametrize("full_prefix", [False, True])
 def test_bounded_runner_refreshes_latest_weights_keeps_source_and_scores_native(
-    monkeypatch, tmp_path
+    monkeypatch, tmp_path, full_prefix,
 ):
     class Actor(torch.nn.Module):
         def __init__(self):
@@ -156,6 +173,8 @@ def test_bounded_runner_refreshes_latest_weights_keeps_source_and_scores_native(
         development_seed=1110983,
         development_pairs=16,
         seconds=30,
+        full_prefix_gradient=full_prefix,
+        replay_pairs_per_batch=1 if full_prefix else 4,
     )
     monkeypatch.setattr(coverage, "parse_args", lambda: args)
     monkeypatch.setattr(coverage.replay, "load_controller", lambda *a: (actor, source))
@@ -176,6 +195,7 @@ def test_bounded_runner_refreshes_latest_weights_keeps_source_and_scores_native(
             course_race_fitness=1,
             clean_first_gate_pass_rate=1,
             ground_contact_rate=0,
+            invalid_rate=0,
         )
 
     def collect(controller, pairs, seed, kind, *args, **kwargs):
@@ -197,6 +217,7 @@ def test_bounded_runner_refreshes_latest_weights_keeps_source_and_scores_native(
         return Bank()
 
     def loss(controller, *args, **kwargs):
+        assert kwargs["full_prefix_gradient"] == full_prefix
         value = (controller.edge_magnitude - 1).square().mean()
         return value, value.detach().expand(4)
 
@@ -224,3 +245,59 @@ def test_bounded_runner_refreshes_latest_weights_keeps_source_and_scores_native(
     payload = torch.load(args.output_dir / "best-controller.pt", weights_only=True)
     assert payload["training_update"] == 16 and payload["diagnostic_only"]
     assert not payload["teacher_inputs_are_actor_inputs"]
+    assert payload["replay_gradient"]["full_prefix"] == full_prefix
+    assert report["policy_revision"] == 16
+    assert all(entry["changed_edges"] == 1 for entry in report["history"])
+
+
+@pytest.mark.parametrize("full_prefix", [False, True])
+@pytest.mark.parametrize("pairs_per_batch", [1, 2, 3, 4])
+def test_pair_microbatches_preserve_full_objective_contrast_and_single_anchor_gradient(
+    monkeypatch, full_prefix, pairs_per_batch,
+):
+    from test_pragmatic_course_replay import bank
+
+    class Actor(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.edge_magnitude = torch.nn.Parameter(torch.tensor([0.8, 0.01]))
+
+        def initial_state(self, count, **kwargs):
+            return torch.zeros(count, 1, **kwargs)
+
+        def forward(self, image, attitude, neural):
+            neural = (self.edge_magnitude[0] * neural
+                      + self.edge_magnitude[1] * image[:, 0, 0, 0, None])
+            return neural * neural.new_tensor([1.0, -0.5, 0.2, 0.7]), neural
+
+    monkeypatch.setattr(
+        coverage.replay, "render_annular_gates_rgb",
+        lambda state, *a, **k: state.position[:, :1, None, None].expand(-1, 3, 1, 1),
+    )
+    actor, lessons = Actor(), []
+    for index, starts in enumerate(([0, 1], [2, 5], [3, 0], [4, 6])):
+        data = bank()
+        data.states[0][:, :, 0] += 0.01 * index
+        data.target[:, :, 0] = torch.tensor([0.012, -0.014]) * (index + 1)
+        window = coverage.replay.prepare_window(data, (0, 1), starts, 3, "cpu")
+        lessons.append((window, {}))
+    initial = actor.edge_magnitude.detach().clone() + torch.tensor([0.0, 0.001])
+    mask = torch.ones(2, dtype=torch.bool)
+    options = dict(
+        unroll=3, camera=coverage.replay.CameraSpec(), gate_config=coverage.replay.GateConfig(),
+        contrast_weight=1.0, full_prefix_gradient=full_prefix,
+    )
+    combined = coverage.replay.combine_replay_columns([w for w, _ in lessons])
+    reference_loss, reference_axes = coverage.replay.replay_window_loss(actor, combined, **options)
+    reference_anchor = coverage.edge_anchor_loss(actor.edge_magnitude, initial, mask, 19286)
+    (reference_loss + reference_anchor).backward()
+    reference_gradient = actor.edge_magnitude.grad.clone()
+    actor.zero_grad(set_to_none=True)
+    loss, axes, anchor = coverage.backward_coverage_lessons(
+        actor, lessons, initial, mask, anchor_reference_count=19286,
+        pairs_per_batch=pairs_per_batch, **options,
+    )
+    torch.testing.assert_close(loss, reference_loss)
+    torch.testing.assert_close(axes, reference_axes)
+    torch.testing.assert_close(anchor, reference_anchor)
+    torch.testing.assert_close(actor.edge_magnitude.grad, reference_gradient, atol=2e-5, rtol=2e-6)

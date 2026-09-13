@@ -87,6 +87,39 @@ def fit_summary(controller, lessons, unroll, camera, gate_config, contrast_weigh
     return dict(scope="fixed per-round training examples, not held-out flight", windows=records)
 
 
+def backward_coverage_lessons(
+    controller, lessons, initial, mask, *, unroll, camera, gate_config,
+    contrast_weight, anchor_reference_count, full_prefix_gradient=False, pairs_per_batch=4,
+):
+    """Accumulate equal-pair lessons and one anchor before one optimizer step.
+
+    Pair adjacency preserves the contrast loss. Microbatch boundaries change
+    activation memory, not the selected examples, objective weights or update count.
+    The caller owns zeroing, clipping, stepping and native weight projection.
+    """
+    if not lessons or pairs_per_batch < 1:
+        raise ValueError("positive pair microbatch size and nonempty lessons required")
+    losses, axes = [], []
+    for start in range(0, len(lessons), pairs_per_batch):
+        group = lessons[start : start + pairs_per_batch]
+        window = replay.combine_replay_columns([w for w, _ in group])
+        loss, axis = replay.replay_window_loss(
+            controller, window, unroll, camera, gate_config, contrast_weight,
+            full_prefix_gradient=full_prefix_gradient,
+        )
+        if not bool(loss.isfinite()):
+            raise RuntimeError("nonfinite coverage objective; no update applied")
+        weight = len(group) / len(lessons)
+        (weight * loss).backward()
+        losses.append(weight * loss.detach())
+        axes.append(weight * axis.detach())
+    anchor = edge_anchor_loss(controller.edge_magnitude, initial, mask, anchor_reference_count)
+    if not bool(anchor.isfinite()):
+        raise RuntimeError("nonfinite coverage anchor; no update applied")
+    anchor.backward()
+    return torch.stack(losses).sum(), torch.stack(axes).sum(0), anchor.detach()
+
+
 def native_selection_score(metrics):
     """Overall clean success first; balance breaks ties, not a per-side veto."""
     return (
@@ -97,6 +130,16 @@ def native_selection_score(metrics):
         ),
         metrics["gates_before_failure_mean"],
         metrics["course_race_fitness"],
+    )
+
+
+def select_native_candidate(metrics, best, revision, last_assessed_revision):
+    """Only new, ground/invalid-free native candidates can replace the selection."""
+    return (
+        revision > last_assessed_revision
+        and metrics["ground_contact_rate"] == 0
+        and metrics["invalid_rate"] == 0
+        and native_selection_score(metrics) > native_selection_score(best)
     )
 
 
@@ -114,6 +157,11 @@ def parse_args():
     parser.add_argument("--native-pairs", type=int, default=8)
     parser.add_argument("--assisted-pairs", type=int, default=4)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument("--full-prefix-gradient", action="store_true")
+    parser.add_argument(
+        "--replay-pairs-per-batch", type=int, default=4,
+        help="Accumulate paired lesson microbatches before each single optimizer step.",
+    )
     parser.add_argument("--contrast-weight", type=float, default=1.0)
     parser.add_argument("--hop-budget", type=int, default=7)
     parser.add_argument("--anchor-reference-count", type=int, default=19286)
@@ -137,6 +185,7 @@ def main():
         args.anchor_reference_count,
         args.development_pairs,
         args.seconds,
+        args.replay_pairs_per_batch,
     )
     if not all(math.isfinite(value) and value > 0 for value in sizes):
         raise SystemExit("sizes and rates must be finite and positive")
@@ -198,6 +247,14 @@ def main():
         neural_hz=50,
         physics_hz=100,
         autonomous_goal_established=False,
+        replay_gradient=dict(
+            full_prefix=args.full_prefix_gradient,
+            warmup_differentiated=args.full_prefix_gradient,
+            activation_chunk_steps=20 if args.full_prefix_gradient else None,
+            pairs_per_microbatch=args.replay_pairs_per_batch,
+            observations_are_fixed_training_data=True,
+        ),
+        policy_revision=0,
     )
 
     def report():
@@ -224,6 +281,8 @@ def main():
             supervision="unified-roll",
             teacher_inputs_are_actor_inputs=False,
             diagnostic_only=True,
+            replay_gradient=result["replay_gradient"],
+            policy_revision=result["policy_revision"],
         )
         torch.save(payload, args.output_dir / name)
 
@@ -233,6 +292,7 @@ def main():
     )
     report()
     bank_history = []
+    last_assessed_revision = 0
     for round_index in range(args.rounds):
         round_record = dict(round=round_index + 1, collections=[], status="collecting")
         result["rounds"].append(round_record)
@@ -291,36 +351,38 @@ def main():
             lessons = choose_lessons(
                 bank_history[bank_index], coverage_plan(update), args.unroll, rng, device
             )
-            window = replay.combine_replay_columns([w for w, _ in lessons])
             optimizer.zero_grad(set_to_none=True)
-            loss, axes = replay.replay_window_loss(
-                controller, window, args.unroll, camera, gate_config, args.contrast_weight
+            loss, axes, anchor = backward_coverage_lessons(
+                controller, lessons, initial, mask, unroll=args.unroll, camera=camera,
+                gate_config=gate_config, contrast_weight=args.contrast_weight,
+                anchor_reference_count=args.anchor_reference_count,
+                full_prefix_gradient=args.full_prefix_gradient,
+                pairs_per_batch=args.replay_pairs_per_batch,
             )
-            anchor = edge_anchor_loss(
-                controller.edge_magnitude, initial, mask, args.anchor_reference_count
-            )
-            objective = loss + anchor
-            if not bool(torch.isfinite(objective)):
-                raise RuntimeError("nonfinite coverage objective; no update applied")
-            objective.backward()
             gradient = torch.nn.utils.clip_grad_norm_(
                 controller.parameters(), 1.0, error_if_nonfinite=True
             )
+            before = controller.edge_magnitude.detach()[mask].clone()
             optimizer.step()
             controller.project_parameters()
+            delta = controller.edge_magnitude.detach()[mask] - before
+            changed = int((delta != 0).sum())
+            result["policy_revision"] += int(changed > 0)
             entry = dict(
                 update=update,
                 collection_round=bank_index + 1,
                 loss=float(loss.detach()),
                 anchor=float(anchor.detach()),
                 gradient_norm=float(gradient),
+                changed_edges=changed,
+                edge_delta_l2=float(delta.norm()),
                 axis_losses=axes.tolist(),
                 windows=[dict(**record, loss_weight=0.25) for _, record in lessons],
                 elapsed_seconds=perf_counter() - started,
             )
             result["history"].append(entry)
             print(json.dumps(dict(stage="update", **entry)), flush=True)
-            del objective, loss, anchor, window, lessons
+            del loss, anchor, lessons
             report()
         round_record["fit_after"] = fit_summary(
             controller, probes, args.unroll, camera, gate_config, args.contrast_weight
@@ -329,9 +391,12 @@ def main():
         metrics = assess()
         round_record["development"] = metrics
         save(f"update-{update}.pt", update, metrics)
-        if native_selection_score(metrics) > native_selection_score(best):
+        if select_native_candidate(
+            metrics, best, result["policy_revision"], last_assessed_revision
+        ):
             best, best_update = metrics, update
             save("best-controller.pt", update, metrics)
+        last_assessed_revision = result["policy_revision"]
         round_record["status"] = "complete"
         report()
         print(
@@ -347,6 +412,15 @@ def main():
             flush=True,
         )
     result["status"] = "complete"
+    gain = (best["clean_course_success_rate"] - baseline["clean_course_success_rate"]) * (
+        2 * args.development_pairs
+    )
+    result.update(
+        development_extra_clean=round(gain),
+        meaningful_development_nominee=(
+            gain >= 4 - 1e-6 and best["ground_contact_rate"] == 0 and best["invalid_rate"] == 0
+        ),
+    )
     report()
     print(
         json.dumps(

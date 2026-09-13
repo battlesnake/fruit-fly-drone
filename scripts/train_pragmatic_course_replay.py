@@ -14,6 +14,7 @@ from time import perf_counter
 
 import numpy as np
 import torch
+from torch.utils.checkpoint import checkpoint
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
@@ -497,6 +498,47 @@ def replay_prefix_state(controller, window, camera, gate_config):
     return neural
 
 
+def differentiable_prefix_state(controller, window, camera, gate_config, *, chunk_steps=20):
+    """Replay warmup and the full sensory prefix with no detached gradient boundary.
+
+    Checkpoint closures own immutable bounds and reconstruct fixed observations.
+    Shorter branches hold at their own lesson start, receiving no extra ticks.
+    """
+    if chunk_steps < 1:
+        raise ValueError("positive prefix checkpoint chunk size required")
+    starts = window[4]
+    neural = controller.initial_state(len(starts), device=starts.device, dtype=torch.float32)
+
+    def run(function, state):
+        if torch.is_grad_enabled():
+            return checkpoint(function, state, use_reentrant=False, preserve_rng_state=False)
+        return function(state)
+
+    def warmup(state):
+        observations = window_observations(window, torch.zeros_like(starts), camera, gate_config)
+        for _ in range(10):
+            _, state = controller(*observations, state)
+        return state
+
+    def segment(first, end):
+        def advance(state):
+            for time in range(first, end):
+                times = torch.minimum(torch.full_like(starts, time), starts)
+                _, advanced = controller(
+                    *window_observations(window, times, camera, gate_config), state
+                )
+                state = torch.where((time < starts)[:, None], advanced, state)
+            return state
+
+        return advance
+
+    neural = run(warmup, neural)
+    stop = int(starts.max())
+    for first in range(0, stop, chunk_steps):
+        neural = run(segment(first, min(first + chunk_steps, stop)), neural)
+    return neural
+
+
 def replay_window_loss(
     controller,
     window,
@@ -508,17 +550,22 @@ def replay_window_loss(
     diagnostics=False,
     roll_contrast_weight=None,
     diagnostic_fixed_prefix=None,
+    full_prefix_gradient=False,
 ):
     """Replay with fresh prefixes; a deliberately stale prefix is an audit-only option."""
     _, _, _, targets, starts = window
     device = starts.device
     rows = torch.arange(len(starts), device=device)
-    neural = (
-        replay_prefix_state(controller, window, camera, gate_config)
-        if diagnostic_fixed_prefix is None
-        else diagnostic_fixed_prefix
-    )
-    neural = neural.detach()
+    if full_prefix_gradient:
+        if diagnostic_fixed_prefix is not None:
+            raise ValueError("full-prefix gradients cannot use a fixed diagnostic prefix")
+        neural = differentiable_prefix_state(controller, window, camera, gate_config)
+    else:
+        neural = (
+            replay_prefix_state(controller, window, camera, gate_config)
+            if diagnostic_fixed_prefix is None
+            else diagnostic_fixed_prefix
+        ).detach()
     scale = neural.new_tensor((0.02, 0.02, 0.01, 0.025))
     active = torch.ones(len(starts), device=device, dtype=torch.bool)
     losses, axes, residuals = [], [], []

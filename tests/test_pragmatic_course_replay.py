@@ -356,7 +356,10 @@ def test_pair_selection_aligns_phase_and_falls_back_only_when_native_pair_is_mis
         replay.select_pair_window(native, teacher, 4, 2, np.random.default_rng(3), "approach")
 
 
-def test_replay_matches_each_original_prefix_and_recomputes_after_weight_change(monkeypatch):
+@pytest.mark.parametrize("full_prefix", [False, True])
+def test_replay_matches_each_original_prefix_and_recomputes_after_weight_change(
+    monkeypatch, full_prefix,
+):
     class SmallActor(torch.nn.Module):
         def __init__(self):
             super().__init__()
@@ -377,11 +380,20 @@ def test_replay_matches_each_original_prefix_and_recomputes_after_weight_change(
     actor = SmallActor()
     starts = [0, 4]
     window = replay.prepare_window(data, (0, 1), starts, 3, torch.device("cpu"))
-    kwargs = dict(unroll=3, camera=CameraSpec(), gate_config=GateConfig(), contrast_weight=1)
+    kwargs = dict(
+        unroll=3, camera=CameraSpec(), gate_config=GateConfig(), contrast_weight=1,
+        full_prefix_gradient=full_prefix,
+    )
     prefix = replay.replay_prefix_state(actor, window, kwargs["camera"], kwargs["gate_config"])
     loss, _ = replay.replay_window_loss(actor, window, **kwargs)
-    fixed, _ = replay.replay_window_loss(actor, window, **kwargs, diagnostic_fixed_prefix=prefix)
-    assert torch.equal(loss, fixed)
+    if full_prefix:
+        with pytest.raises(ValueError, match="fixed diagnostic prefix"):
+            replay.replay_window_loss(actor, window, **kwargs, diagnostic_fixed_prefix=prefix)
+    else:
+        fixed, _ = replay.replay_window_loss(
+            actor, window, **kwargs, diagnostic_fixed_prefix=prefix
+        )
+        assert torch.equal(loss, fixed)
     expected = []
     for row, start in enumerate(starts):
         state = torch.zeros(1, 1)
@@ -412,11 +424,19 @@ def test_replay_matches_each_original_prefix_and_recomputes_after_weight_change(
         ]
     ).mean()
     assert torch.allclose(loss, expected_loss, atol=1e-5)
+    expected_gradient = torch.autograd.grad(expected_loss, actor.weight)[0]
     loss.backward()
     assert actor.weight.grad is not None and torch.isfinite(actor.weight.grad)
+    if full_prefix:
+        torch.testing.assert_close(actor.weight.grad, expected_gradient)
+    else:
+        assert not torch.allclose(actor.weight.grad, expected_gradient)
     with torch.no_grad():
         actor.weight.mul_(2)
     changed, _ = replay.replay_window_loss(actor, window, **kwargs)
     assert torch.allclose(changed.detach(), 4 * loss.detach(), atol=1e-5)
-    stale, _ = replay.replay_window_loss(actor, window, **kwargs, diagnostic_fixed_prefix=prefix)
-    assert not torch.allclose(changed, stale)
+    if not full_prefix:
+        stale, _ = replay.replay_window_loss(
+            actor, window, **kwargs, diagnostic_fixed_prefix=prefix
+        )
+        assert not torch.allclose(changed, stale)
